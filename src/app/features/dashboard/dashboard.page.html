@@ -1,0 +1,475 @@
+<section class="flex flex-col gap-5">
+  <header class="flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
+    <div class="min-w-0">
+      <p class="text-[10px] font-semibold uppercase tracking-[0.26em] text-brand-strong">
+        {{ i18n.t('dashboard.eyebrow') }}
+      </p>
+      <h2 class="mt-1.5 font-display text-2xl font-semibold tracking-tight text-ink sm:text-3xl">
+        {{ i18n.t('dashboard.greeting', { name: firstName() }) }}
+      </h2>
+      <p class="mt-1.5 max-w-2xl text-sm leading-6 text-muted">
+        {{ i18n.t('dashboard.subtitle') }}
+      </p>
+    </div>
+
+    <div class="flex flex-wrap items-center gap-2">
+      <a
+        routerLink="/eventos"
+        class="inline-flex h-11 items-center gap-2 rounded-xl border border-line bg-surface-raised/60 px-4 text-sm font-semibold text-ink backdrop-blur-xl transition hover:border-brand/40"
+      >
+        <fa-icon [icon]="icons['events']" class="text-xs text-muted" aria-hidden="true" />
+        {{ i18n.t('nav.events') }}
+      </a>
+      <a
+        routerLink="/criar-evento"
+        class="inline-flex h-11 items-center gap-2 rounded-xl bg-linear-to-r from-brand via-iris to-aqua px-4 text-sm font-semibold text-white shadow-glow transition hover:brightness-110"
+      >
+        <fa-icon [icon]="icons['plus']" class="text-xs" aria-hidden="true" />
+        {{ i18n.t('dashboard.newEvent') }}
+      </a>
+    </div>
+  </header>
+
+  <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+    <app-stat-card
+      [label]="i18n.t('dashboard.stats.events')"
+      [value]="stats().events"
+      [hint]="i18n.t('dashboard.stats.eventsHint')"
+      [icon]="icons['events']"
+      tone="brand"
+      [sparkline]="[2, 3, 3, 4, 4, 5, stats().events]"
+    />
+    <app-stat-card
+      [label]="i18n.t('dashboard.stats.guests')"
+      [value]="i18n.number(stats().total)"
+      [hint]="i18n.t('dashboard.stats.guestsHint')"
+      [icon]="icons['guests']"
+      tone="iris"
+      [sparkline]="[18, 22, 28, 31, 36, 39, stats().total]"
+    />
+    <app-stat-card
+      [label]="i18n.t('dashboard.stats.confirmed')"
+      [value]="i18n.number(stats().confirmed)"
+      [hint]="i18n.t('dashboard.stats.confirmedHint')"
+      [icon]="icons['userCheck']"
+      tone="mint"
+      [trend]="'+12%'"
+      [sparkline]="[8, 11, 13, 16, 17, 19, stats().confirmed]"
+    />
+    <app-stat-card
+      [label]="i18n.t('dashboard.stats.response')"
+      [value]="stats().responseRate + '%'"
+      [hint]="i18n.t('dashboard.stats.responseHint')"
+      [icon]="icons['chartLine']"
+      tone="aqua"
+      [trend]="'+6%'"
+      [sparkline]="[38, 42, 48, 52, 58, 61, stats().responseRate]"
+    />
+  </div>
+
+  <div class="grid gap-4 xl:grid-cols-[minmax(0,1.75fr)_minmax(0,1fr)]">
+    @if (nextEvent(); as event) {
+      <article
+        class="relative overflow-hidden rounded-4xl border border-line bg-surface shadow-card backdrop-blur-2xl"
+      >
+        <div class="grid h-full lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
+          <div class="relative min-h-72 overflow-hidden p-6 sm:p-7">
+            <app-template-artwork
+              [templateId]="event.templateId"
+              variant="hero"
+              class="absolute inset-0"
+            />
+
+            <div class="relative flex h-full flex-col justify-between gap-8 text-white">
+              <div class="flex flex-wrap items-start justify-between gap-3">
+                <span
+                  class="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/15 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.2em] backdrop-blur-md"
+                >
+                  <span class="relative flex size-1.5">
+                    <span
+                      class="absolute inline-flex size-full rounded-full bg-mint opacity-75 motion-safe:animate-pulse-ring"
+                    ></span>
+                    <span class="relative inline-flex size-1.5 rounded-full bg-mint"></span>
+                  </span>
+                  {{ i18n.t('dashboard.nextEvent') }}
+                </span>
+
+                <div
+                  class="rounded-2xl border border-white/20 bg-canvas/45 px-3.5 py-2 text-center backdrop-blur-xl"
+                >
+                  <span class="block font-display text-2xl font-semibold leading-none">
+                    {{ i18n.dayNumber(event.startsAt, event.timezone) }}
+                  </span>
+                  <span
+                    class="mt-1 block text-[10px] font-semibold uppercase tracking-[0.18em] text-white/75"
+                  >
+                    {{ i18n.monthShort(event.startsAt, event.timezone) }}
+                  </span>
+                </div>
+              </div>
+
+              <div class="max-w-lg">
+                <p class="text-[10px] font-semibold uppercase tracking-[0.24em] text-white/70">
+                  {{ typeLabel() }}
+                </p>
+                <h3 class="mt-2 font-display text-2xl font-semibold leading-tight tracking-tight sm:text-3xl">
+                  {{ event.title }}
+                </h3>
+                <div class="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-white/80">
+                  <span class="inline-flex items-center gap-2">
+                    <fa-icon [icon]="icons['calendar']" class="text-[11px]" aria-hidden="true" />
+                    {{ i18n.longDate(event.startsAt, event.timezone) }} ·
+                    {{ i18n.time(event.startsAt, event.timezone) }}
+                  </span>
+                  <span class="inline-flex items-center gap-2">
+                    <fa-icon [icon]="icons['location']" class="text-[11px]" aria-hidden="true" />
+                    {{ event.venue }}, {{ event.city }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex flex-col justify-between gap-5 border-t border-line p-6 lg:border-l lg:border-t-0">
+            <div>
+              <div class="flex items-center justify-between gap-3">
+                <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted">
+                  {{ i18n.t('invitation.countdown') }}
+                </p>
+                <app-status-badge [value]="event.status" />
+              </div>
+
+              <div class="mt-4 grid grid-cols-3 gap-2">
+                @for (
+                  part of [
+                    { value: countdown().days, key: 'dashboard.countdownDays' },
+                    { value: countdown().hours, key: 'dashboard.countdownHours' },
+                    { value: countdown().minutes, key: 'dashboard.countdownMinutes' }
+                  ];
+                  track part.key
+                ) {
+                  <div
+                    class="rounded-2xl border border-line bg-surface-raised/70 p-3 text-center backdrop-blur-md"
+                  >
+                    <p class="font-display text-2xl font-semibold leading-none text-ink">
+                      {{ part.value }}
+                    </p>
+                    <p class="mt-1 text-[9px] font-semibold uppercase tracking-[0.18em] text-muted">
+                      {{ i18n.t($any(part.key)) }}
+                    </p>
+                  </div>
+                }
+              </div>
+
+              @if (nextEventStats(); as eventStats) {
+                <div class="mt-4">
+                  <div class="flex items-center justify-between text-[11px]">
+                    <span class="text-muted">{{ i18n.t('dashboard.responseRate') }}</span>
+                    <span class="font-semibold text-ink">{{ eventStats.responseRate }}%</span>
+                  </div>
+                  <svg
+                    viewBox="0 0 100 4"
+                    preserveAspectRatio="none"
+                    class="mt-2 h-1.5 w-full"
+                    aria-hidden="true"
+                  >
+                    <rect width="100" height="4" rx="2" class="fill-line" />
+                    <rect
+                      [attr.width]="eventStats.responseRate"
+                      height="4"
+                      rx="2"
+                      class="fill-aqua"
+                    />
+                  </svg>
+                  <div class="mt-3 flex items-center gap-2">
+                    <app-avatar [name]="store.profile.name" size="xs" />
+                    <p class="text-[11px] text-muted">
+                      {{ i18n.t('events.card.confirmed', { count: eventStats.confirmed, total: eventStats.total }) }}
+                    </p>
+                  </div>
+                </div>
+              }
+            </div>
+
+            <div class="flex flex-col gap-2">
+              <button
+                type="button"
+                class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-linear-to-r from-brand via-iris to-aqua px-4 text-sm font-semibold text-white shadow-glow transition hover:brightness-110"
+                (click)="openManagement(event.id)"
+              >
+                <fa-icon [icon]="icons['sliders']" class="text-xs" aria-hidden="true" />
+                {{ i18n.t('dashboard.manage') }}
+              </button>
+              <a
+                [routerLink]="['/i', event.invitationToken]"
+                class="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-line bg-surface-raised/70 px-4 text-sm font-semibold text-ink transition hover:border-brand/40"
+              >
+                <fa-icon [icon]="icons['arrowUpRight']" class="text-xs text-muted" aria-hidden="true" />
+                {{ i18n.t('dashboard.openInvitation') }}
+              </a>
+            </div>
+          </div>
+        </div>
+      </article>
+    } @else {
+      <article
+        class="flex min-h-72 flex-col items-center justify-center rounded-4xl border border-dashed border-line bg-surface/60 p-8 text-center backdrop-blur-2xl"
+      >
+        <span class="grid size-14 place-items-center rounded-2xl border border-brand/25 bg-brand/15 text-brand-strong">
+          <fa-icon [icon]="icons['calendarPlus']" class="text-xl" aria-hidden="true" />
+        </span>
+        <h3 class="mt-4 font-display text-xl font-semibold text-ink">
+          {{ i18n.t('dashboard.noUpcoming') }}
+        </h3>
+        <p class="mt-1.5 max-w-sm text-sm leading-6 text-muted">
+          {{ i18n.t('dashboard.noUpcomingText') }}
+        </p>
+        <a
+          routerLink="/criar-evento"
+          class="mt-5 inline-flex h-11 items-center gap-2 rounded-xl bg-linear-to-r from-brand via-iris to-aqua px-4 text-sm font-semibold text-white shadow-glow"
+        >
+          <fa-icon [icon]="icons['plus']" class="text-xs" aria-hidden="true" />
+          {{ i18n.t('dashboard.newEvent') }}
+        </a>
+      </article>
+    }
+
+    <article class="rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl">
+      <div class="flex items-start justify-between gap-3">
+        <div>
+          <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-brand-strong">
+            {{ i18n.t('dashboard.tasksTitle') }}
+          </p>
+          <p class="mt-1 text-xs text-muted">{{ i18n.t('dashboard.tasksHint') }}</p>
+        </div>
+        <span
+          class="rounded-full border border-brand/25 bg-brand/10 px-2.5 py-1 text-[10px] font-semibold text-brand-strong"
+        >
+          {{ i18n.t('dashboard.tasksDone', { done: taskProgress().done, total: taskProgress().total }) }}
+        </span>
+      </div>
+
+      <div class="mt-4 flex gap-1" aria-hidden="true">
+        @for (task of store.tasks(); track task.id) {
+          <span
+            class="h-1.5 flex-1 rounded-full transition"
+            [class]="task.done ? 'bg-mint' : 'bg-line'"
+          ></span>
+        }
+      </div>
+
+      @if (tasks().length === 0) {
+        <p class="mt-6 text-sm text-muted">{{ i18n.t('dashboard.tasksEmpty') }}</p>
+      } @else {
+        <ul class="mt-4 flex flex-col gap-1">
+          @for (task of tasks(); track task.id) {
+            <li>
+              <button
+                type="button"
+                class="flex w-full items-start gap-3 rounded-2xl p-2 text-left transition hover:bg-surface-raised/60"
+                (click)="toggleTask(task.id)"
+              >
+                <span
+                  class="mt-0.5 grid size-5 shrink-0 place-items-center rounded-md border transition"
+                  [class]="
+                    task.done
+                      ? 'border-mint/40 bg-mint/20 text-mint'
+                      : 'border-line bg-surface-raised text-transparent'
+                  "
+                >
+                  <fa-icon [icon]="icons['check']" class="text-[9px]" aria-hidden="true" />
+                </span>
+                <span class="min-w-0 flex-1">
+                  <span
+                    class="block text-xs leading-5 transition"
+                    [class]="task.done ? 'text-muted line-through' : 'text-ink'"
+                  >
+                    {{ taskLabel(task.labelKey) }}
+                  </span>
+                  <span class="mt-0.5 block truncate text-[10px] text-muted/70">
+                    {{ task.eventId ? (store.eventById(task.eventId)?.title ?? '') : '' }}
+                  </span>
+                </span>
+              </button>
+            </li>
+          }
+        </ul>
+      }
+
+      <a
+        routerLink="/eventos"
+        class="mt-4 inline-flex items-center gap-1.5 text-[11px] font-semibold text-brand-strong transition hover:gap-2.5"
+      >
+        {{ i18n.t('dashboard.recentEvents') }}
+        <fa-icon [icon]="icons['arrowRight']" class="text-[9px]" aria-hidden="true" />
+      </a>
+    </article>
+  </div>
+
+  <div class="grid gap-4 xl:grid-cols-[minmax(0,1.75fr)_minmax(0,1fr)]">
+    <section class="rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl">
+      <div class="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-brand-strong">
+            {{ i18n.t('dashboard.recentEvents') }}
+          </p>
+          <p class="mt-1 text-xs text-muted">{{ i18n.t('dashboard.recentEventsHint') }}</p>
+        </div>
+        <a
+          routerLink="/eventos"
+          class="inline-flex items-center gap-1.5 text-[11px] font-semibold text-brand-strong transition hover:gap-2.5"
+        >
+          {{ i18n.t('dashboard.viewAllEvents') }}
+          <fa-icon [icon]="icons['arrowRight']" class="text-[9px]" aria-hidden="true" />
+        </a>
+      </div>
+
+      <div class="mt-4 grid gap-3 md:grid-cols-2">
+        @for (event of recentEvents(); track event.id) {
+          <app-event-card [event]="event" />
+        }
+      </div>
+    </section>
+
+    <section class="rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl">
+      <div class="flex items-start justify-between gap-3">
+        <div>
+          <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-brand-strong">
+            {{ i18n.t('dashboard.activityTitle') }}
+          </p>
+          <p class="mt-1 text-xs text-muted">{{ i18n.t('dashboard.activityHint') }}</p>
+        </div>
+        <span class="grid size-9 place-items-center rounded-xl border border-line bg-surface-raised text-muted">
+          <fa-icon [icon]="icons['history']" class="text-xs" aria-hidden="true" />
+        </span>
+      </div>
+
+      @if (activity().length === 0) {
+        <p class="mt-6 text-sm text-muted">{{ i18n.t('dashboard.activityEmpty') }}</p>
+      } @else {
+        <ol class="mt-4 flex flex-col gap-1">
+          @for (entry of activity(); track entry.item.id) {
+            <li class="flex items-start gap-3 rounded-2xl p-2 transition hover:bg-surface-raised/60">
+              <span
+                class="mt-0.5 grid size-8 shrink-0 place-items-center rounded-xl border"
+                [class]="activityTone(entry.item.kind)"
+              >
+                <fa-icon
+                  [icon]="activityIcon(entry.item.kind)"
+                  class="text-[10px]"
+                  aria-hidden="true"
+                />
+              </span>
+              <div class="min-w-0 flex-1">
+                <p class="text-xs leading-5 text-ink">
+                  {{ activityText(entry.item, entry.event) }}
+                </p>
+                <p class="mt-0.5 text-[10px] text-muted">{{ i18n.relative(entry.item.at) }}</p>
+              </div>
+            </li>
+          }
+        </ol>
+      }
+    </section>
+  </div>
+
+  <div class="grid gap-4 xl:grid-cols-[minmax(0,1.75fr)_minmax(0,1fr)]">
+    <section class="rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl">
+      <div class="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-brand-strong">
+            {{ i18n.t('dashboard.chartTitle') }}
+          </p>
+          <p class="mt-1 text-xs text-muted">{{ i18n.t('dashboard.chartHint') }}</p>
+        </div>
+        <div class="flex items-center gap-3 text-[10px] text-muted">
+          <span class="inline-flex items-center gap-1.5">
+            <span class="size-2 rounded-full bg-aqua"></span>
+            {{ i18n.t('dashboard.chartSeries') }}
+          </span>
+        </div>
+      </div>
+
+      <div class="mt-5">
+        <svg
+          viewBox="0 0 100 34"
+          preserveAspectRatio="none"
+          class="h-32 w-full"
+          role="img"
+          [attr.aria-label]="i18n.t('dashboard.chartTitle')"
+        >
+          <line x1="0" y1="33.5" x2="100" y2="33.5" class="stroke-line" stroke-width="0.3" />
+          @for (day of week(); track $index) {
+            <rect
+              [attr.x]="$index * 14 + 3"
+              [attr.y]="32 - day.height"
+              [attr.width]="8"
+              [attr.height]="day.height"
+              rx="2"
+              class="fill-aqua/70"
+            />
+            <rect
+              [attr.x]="$index * 14 + 3"
+              [attr.y]="32 - day.height"
+              [attr.width]="8"
+              [attr.height]="Math.min(day.height, 4)"
+              rx="2"
+              class="fill-aqua"
+            />
+          }
+        </svg>
+        <div class="mt-2 grid grid-cols-7 gap-1 text-center">
+          @for (day of week(); track $index) {
+            <div>
+              <p class="text-[9px] font-semibold uppercase tracking-[0.14em] text-muted">
+                {{ day.label }}
+              </p>
+              <p class="mt-0.5 text-[11px] font-semibold text-ink">{{ day.value }}</p>
+            </div>
+          }
+        </div>
+      </div>
+    </section>
+
+    <section class="rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl">
+      <div class="flex items-start justify-between gap-3">
+        <div>
+          <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-brand-strong">
+            {{ i18n.t('dashboard.pendingTitle') }}
+          </p>
+          <p class="mt-1 text-xs text-muted">{{ i18n.t('dashboard.pendingHint') }}</p>
+        </div>
+        <span
+          class="rounded-full border border-amber/25 bg-amber/10 px-2.5 py-1 text-[10px] font-semibold text-amber"
+        >
+          {{ stats().pending }}
+        </span>
+      </div>
+
+      @if (pending().length === 0) {
+        <p class="mt-6 text-sm text-muted">{{ i18n.t('dashboard.pendingEmpty') }}</p>
+      } @else {
+        <ul class="mt-4 flex flex-col gap-1">
+          @for (entry of pending(); track entry.guest.id) {
+            <li class="flex items-center gap-3 rounded-2xl p-2 transition hover:bg-surface-raised/60">
+              <app-avatar [name]="entry.guest.name" size="sm" />
+              <div class="min-w-0 flex-1">
+                <p class="truncate text-xs font-semibold text-ink">{{ entry.guest.name }}</p>
+                <p class="truncate text-[10px] text-muted">{{ entry.event.title }}</p>
+              </div>
+              <button
+                type="button"
+                class="grid size-8 shrink-0 place-items-center rounded-lg border border-line bg-surface-raised text-muted transition hover:border-brand/40 hover:text-brand-strong"
+                [attr.aria-label]="i18n.t('dashboard.sendReminder')"
+                [attr.title]="i18n.t('dashboard.sendReminder')"
+                (click)="reminder(entry.guest)"
+              >
+                <fa-icon [icon]="icons['paperPlane']" class="text-[10px]" aria-hidden="true" />
+              </button>
+            </li>
+          }
+        </ul>
+      }
+    </section>
+  </div>
+</section>

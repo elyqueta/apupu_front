@@ -1,0 +1,333 @@
+<div class="relative min-h-dvh">
+  <div class="pointer-events-none fixed inset-0 -z-10 overflow-hidden" aria-hidden="true">
+    <div
+      class="absolute -left-48 top-0 size-[42rem] rounded-full bg-brand/20 blur-[140px] motion-safe:animate-aurora"
+    ></div>
+    <div
+      class="absolute -right-40 top-1/4 size-[36rem] rounded-full bg-iris/15 blur-[130px] motion-safe:animate-float-slow"
+    ></div>
+    <div
+      class="absolute -bottom-40 left-1/3 size-[34rem] rounded-full bg-aqua/10 blur-[130px]"
+    ></div>
+    <div
+      class="absolute inset-0 opacity-[0.16] bg-[linear-gradient(to_right,var(--ap-line)_1px,transparent_1px),linear-gradient(to_bottom,var(--ap-line)_1px,transparent_1px)] bg-[size:72px_72px] [mask-image:radial-gradient(ellipse_at_center,black,transparent_78%)]"
+    ></div>
+  </div>
+
+  @if (mobileOpen()) {
+    <button
+      type="button"
+      class="fixed inset-0 z-40 bg-canvas/70 backdrop-blur-sm lg:hidden"
+      [attr.aria-label]="i18n.t('common.closeMenu')"
+      (click)="mobileOpen.set(false)"
+    ></button>
+  }
+
+  <div class="mx-auto flex w-full max-w-[1800px] items-start lg:gap-4 lg:px-4 lg:py-4">
+    <aside
+      class="fixed inset-y-0 left-0 z-50 w-[19.5rem] max-w-[86vw] p-3 transition-transform duration-300 lg:sticky lg:top-4 lg:z-30 lg:h-[calc(100dvh-2rem)] lg:w-[18.5rem] lg:max-w-none lg:translate-x-0 lg:p-0"
+      [class.-translate-x-full]="!mobileOpen()"
+      aria-label="Navegação principal"
+    >
+      <div
+        class="flex h-full flex-col rounded-4xl border border-line bg-surface/85 p-4 shadow-card backdrop-blur-2xl"
+      >
+        <div class="flex items-center justify-between gap-3">
+          <app-brand />
+          <button
+            type="button"
+            class="grid size-9 place-items-center rounded-xl border border-line bg-surface-raised text-muted transition hover:text-ink lg:hidden"
+            [attr.aria-label]="i18n.t('common.closeMenu')"
+            (click)="mobileOpen.set(false)"
+          >
+            <fa-icon [icon]="icons['close']" class="text-sm" />
+          </button>
+        </div>
+
+        <a
+          routerLink="/definicoes"
+          class="mt-6 flex items-center gap-3 rounded-2xl border border-line bg-surface-raised/60 p-3 transition hover:border-brand/35"
+        >
+          <span
+            class="grid size-10 shrink-0 place-items-center rounded-xl border border-brand/25 bg-brand/15 text-brand-strong"
+          >
+            <fa-icon [icon]="icons['dashboardAlt']" class="text-sm" aria-hidden="true" />
+          </span>
+          <span class="min-w-0 flex-1">
+            <span class="block text-[9px] font-semibold uppercase tracking-[0.22em] text-muted">
+              {{ i18n.t('nav.workspace') }}
+            </span>
+            <span class="mt-0.5 block truncate text-sm font-semibold text-ink">
+              {{ i18n.t('nav.workspaceName') }}
+            </span>
+          </span>
+          <fa-icon [icon]="icons['chevronDown']" class="text-[10px] text-muted" aria-hidden="true" />
+        </a>
+
+        <nav class="mt-5 flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto pr-0.5">
+          <p class="mb-2 px-2 text-[9px] font-semibold uppercase tracking-[0.24em] text-muted/80">
+            {{ i18n.t('nav.hostArea') }}
+          </p>
+
+          @for (item of navItems; track item.path) {
+            <a
+              [routerLink]="item.path"
+              routerLinkActive
+              #rla="routerLinkActive"
+              [routerLinkActiveOptions]="{ exact: item.exact }"
+              [class]="
+                rla.isActive
+                  ? 'group flex items-center gap-3 rounded-2xl border border-brand/30 bg-brand/15 px-3 py-2.5 text-ink shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]'
+                  : 'group flex items-center gap-3 rounded-2xl border border-transparent px-3 py-2.5 text-muted transition hover:border-line hover:bg-surface-raised/60 hover:text-ink'
+              "
+              (click)="closeMenus()"
+            >
+              <span
+                [class]="
+                  rla.isActive
+                    ? 'grid size-8 place-items-center rounded-xl bg-linear-to-br from-brand to-iris text-white shadow-glow'
+                    : 'grid size-8 place-items-center rounded-xl border border-line bg-surface-raised text-muted transition group-hover:text-ink'
+                "
+              >
+                <fa-icon [icon]="item.icon" class="text-xs" aria-hidden="true" />
+              </span>
+              <span class="min-w-0 flex-1 truncate text-sm font-medium">
+                {{ i18n.t(item.labelKey) }}
+              </span>
+              @if (rla.isActive) {
+                <span class="size-1.5 rounded-full bg-aqua shadow-[0_0_10px_var(--ap-aqua)]"></span>
+              }
+            </a>
+          }
+
+          <div class="my-3 h-px bg-line"></div>
+
+          <a
+            routerLink="/gestao"
+            routerLinkActive
+            #mgmt="routerLinkActive"
+            [class]="
+              mgmt.isActive
+                ? 'group flex items-center gap-3 rounded-2xl border border-aqua/30 bg-aqua/10 px-3 py-2.5 text-ink'
+                : 'group flex items-center gap-3 rounded-2xl border border-transparent px-3 py-2.5 text-muted transition hover:border-line hover:bg-surface-raised/60 hover:text-ink'
+            "
+            (click)="closeMenus()"
+          >
+            <span
+              class="grid size-8 place-items-center rounded-xl border border-aqua/25 bg-aqua/10 text-aqua"
+            >
+              <fa-icon [icon]="icons['shield']" class="text-xs" aria-hidden="true" />
+            </span>
+            <span class="min-w-0 flex-1 truncate text-sm font-medium">
+              {{ i18n.t('nav.management') }}
+            </span>
+            <fa-icon [icon]="icons['key']" class="text-[10px] text-aqua/70" aria-hidden="true" />
+          </a>
+
+          <a
+            routerLink="/definicoes"
+            class="group mt-1 flex items-center gap-3 rounded-2xl border border-transparent px-3 py-2.5 text-muted transition hover:border-line hover:bg-surface-raised/60 hover:text-ink"
+            (click)="closeMenus()"
+          >
+            <span class="grid size-8 place-items-center rounded-xl border border-line bg-surface-raised text-muted">
+              <fa-icon [icon]="icons['help']" class="text-xs" aria-hidden="true" />
+            </span>
+            <span class="min-w-0 flex-1">
+              <span class="block truncate text-sm font-medium">{{ i18n.t('nav.help') }}</span>
+              <span class="block truncate text-[10px] text-muted/70">
+                {{ i18n.t('nav.helpHint') }}
+              </span>
+            </span>
+          </a>
+        </nav>
+
+        <div class="mt-4 rounded-2xl border border-line bg-surface-raised/60 p-3.5">
+          <div class="flex items-center gap-2">
+            <span class="grid size-7 place-items-center rounded-lg bg-amber/15 text-amber">
+              <fa-icon [icon]="icons['bolt']" class="text-[10px]" aria-hidden="true" />
+            </span>
+            <p class="text-[10px] font-semibold uppercase tracking-[0.16em] text-amber">
+              {{ i18n.t('app.demoBadge') }}
+            </p>
+          </div>
+          <p class="mt-2 text-[11px] font-semibold text-ink">{{ i18n.t('nav.demoCardTitle') }}</p>
+          <p class="mt-1 text-[10px] leading-4 text-muted">{{ i18n.t('nav.demoCardText') }}</p>
+        </div>
+
+        <a
+          routerLink="/definicoes"
+          class="mt-3 flex items-center gap-3 rounded-2xl border border-line bg-surface-raised/60 p-2.5 transition hover:border-brand/35"
+          [attr.aria-label]="i18n.t('shell.openProfile')"
+        >
+          <app-avatar [name]="store.profile.name" size="md" />
+          <span class="min-w-0 flex-1">
+            <span class="block truncate text-xs font-semibold text-ink">{{ store.profile.name }}</span>
+            <span class="block truncate text-[10px] text-muted">{{ store.profile.email }}</span>
+          </span>
+          <fa-icon [icon]="icons['settings']" class="text-xs text-muted" aria-hidden="true" />
+        </a>
+      </div>
+    </aside>
+
+    <div class="flex min-h-dvh min-w-0 flex-1 flex-col">
+      <header class="sticky top-0 z-40 px-3 pt-3 sm:px-4 lg:px-0 lg:pt-4">
+        <div
+          class="flex flex-wrap items-center gap-2.5 rounded-3xl border border-line bg-surface/80 p-2.5 shadow-card backdrop-blur-2xl sm:gap-3 sm:rounded-4xl sm:p-3"
+        >
+          <button
+            type="button"
+            class="grid size-10 shrink-0 place-items-center rounded-xl border border-line bg-surface-raised text-muted transition hover:text-ink lg:hidden"
+            [attr.aria-label]="i18n.t('common.openMenu')"
+            (click)="mobileOpen.set(true)"
+          >
+            <fa-icon [icon]="icons['menu']" class="text-base" />
+          </button>
+
+          <app-brand [compact]="true" class="lg:hidden" />
+
+          <div class="hidden min-w-0 flex-1 lg:block">
+            <p class="text-[9px] font-semibold uppercase tracking-[0.22em] text-muted">
+              {{ i18n.t('nav.workspace') }} · {{ store.profile.name }}
+            </p>
+            <h1 class="truncate font-display text-lg font-semibold tracking-tight text-ink">
+              {{ i18n.t(pageTitle()) }}
+            </h1>
+          </div>
+
+          <form
+            class="relative hidden items-center md:flex md:w-56 lg:w-72"
+            role="search"
+            (submit)="$event.preventDefault(); search()"
+          >
+            <fa-icon
+              [icon]="icons['search']"
+              class="pointer-events-none absolute left-3 text-xs text-muted"
+              aria-hidden="true"
+            />
+            <input
+              type="search"
+              [value]="searchTerm()"
+              (input)="searchTerm.set($any($event.target).value)"
+              class="h-10 w-full rounded-xl border border-line bg-surface-raised/70 pl-9 pr-3 text-xs text-ink outline-none transition placeholder:text-muted/60 focus:border-brand/50"
+              [placeholder]="i18n.t('shell.searchPlaceholder')"
+              [attr.aria-label]="i18n.t('shell.searchPlaceholder')"
+            />
+          </form>
+
+          <div class="ml-auto flex items-center gap-2">
+            <a
+              routerLink="/criar-evento"
+              class="inline-flex h-10 items-center gap-2 rounded-xl bg-linear-to-r from-brand via-iris to-aqua px-3 text-xs font-semibold text-white shadow-glow transition hover:brightness-110 sm:px-4"
+            >
+              <fa-icon [icon]="icons['plus']" class="text-[11px]" aria-hidden="true" />
+              <span class="hidden sm:inline">{{ i18n.t('shell.newEvent') }}</span>
+            </a>
+
+            <app-preference-controls class="hidden sm:flex" />
+
+            <div class="relative">
+              <button
+                type="button"
+                class="relative grid size-10 place-items-center rounded-xl border border-line bg-surface-raised/60 text-muted transition hover:border-brand/40 hover:text-ink"
+                [attr.aria-label]="i18n.t('common.notifications')"
+                [attr.aria-expanded]="notificationsOpen()"
+                (click)="notificationsOpen.set(!notificationsOpen())"
+              >
+                <fa-icon [icon]="icons['bell']" class="text-sm" />
+                @if (notifications().length > 0) {
+                  <span class="absolute right-2.5 top-2.5 size-1.5 rounded-full bg-aqua shadow-[0_0_8px_var(--ap-aqua)]"></span>
+                }
+              </button>
+
+              @if (notificationsOpen()) {
+                <button
+                  type="button"
+                  class="fixed inset-0 z-40 cursor-default"
+                  [attr.aria-label]="i18n.t('common.close')"
+                  (click)="notificationsOpen.set(false)"
+                ></button>
+                <div
+                  class="absolute right-0 top-full z-50 mt-2 w-[min(92vw,22rem)] overflow-hidden rounded-3xl border border-line bg-surface-solid/95 shadow-card backdrop-blur-2xl animate-rise"
+                >
+                  <div class="flex items-center justify-between gap-3 border-b border-line p-4">
+                    <p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted">
+                      {{ i18n.t('shell.notificationsTitle') }}
+                    </p>
+                    <span class="size-1.5 rounded-full bg-aqua"></span>
+                  </div>
+
+                  @if (notifications().length === 0) {
+                    <p class="p-5 text-xs text-muted">{{ i18n.t('shell.notificationsEmpty') }}</p>
+                  } @else {
+                    <div class="max-h-80 overflow-y-auto p-2">
+                      @for (entry of notifications(); track entry.item.id) {
+                        <a
+                          [routerLink]="['/eventos', entry.event.id]"
+                          class="flex items-start gap-3 rounded-2xl p-2.5 transition hover:bg-surface-raised/70"
+                          (click)="notificationsOpen.set(false)"
+                        >
+                          <span
+                            class="mt-0.5 grid size-8 shrink-0 place-items-center rounded-xl border"
+                            [class]="activityTone(entry.item.kind)"
+                          >
+                            <fa-icon
+                              [icon]="activityIcon(entry.item.kind)"
+                              class="text-[10px]"
+                              aria-hidden="true"
+                            />
+                          </span>
+                          <span class="min-w-0 flex-1">
+                            <span class="block text-xs leading-5 text-ink">
+                              {{ activityText(entry.event.id, entry.item) }}
+                            </span>
+                            <span class="mt-1 block text-[10px] text-muted">
+                              {{ i18n.relative(entry.item.at) }}
+                            </span>
+                          </span>
+                        </a>
+                      }
+                    </div>
+                    <a
+                      routerLink="/relatorios"
+                      class="flex items-center justify-center gap-2 border-t border-line p-3 text-[11px] font-semibold text-brand-strong transition hover:bg-surface-raised/60"
+                      (click)="notificationsOpen.set(false)"
+                    >
+                      {{ i18n.t('common.viewAll') }}
+                      <fa-icon [icon]="icons['arrowRight']" class="text-[9px]" aria-hidden="true" />
+                    </a>
+                  }
+                </div>
+              }
+            </div>
+
+            <a
+              routerLink="/definicoes"
+              class="hidden rounded-full transition hover:opacity-80 sm:block"
+              [attr.aria-label]="i18n.t('shell.openProfile')"
+            >
+              <app-avatar [name]="store.profile.name" size="sm" />
+            </a>
+          </div>
+        </div>
+      </header>
+
+      <main class="flex-1 px-3 py-4 pb-8 sm:px-4 lg:px-0 lg:py-5">
+        <router-outlet />
+      </main>
+
+      <footer
+        class="flex flex-wrap items-center justify-between gap-2 px-3 pb-5 text-[10px] text-muted/70 sm:px-4 lg:px-1"
+      >
+        <p>{{ i18n.t('footer.rights', { year: 2026 }) }}</p>
+        <div class="flex items-center gap-3">
+          <span class="inline-flex items-center gap-1.5">
+            <span class="size-1 rounded-full bg-mint"></span>
+            {{ i18n.t('settings.development') }}
+          </span>
+          <span>·</span>
+          <span>{{ i18n.t('footer.made') }}</span>
+        </div>
+      </footer>
+    </div>
+  </div>
+</div>

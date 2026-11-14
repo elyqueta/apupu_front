@@ -1,0 +1,128 @@
+<section class="flex flex-col gap-5">
+  <header class="flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
+    <div class="min-w-0">
+      <p class="text-[10px] font-semibold uppercase tracking-[0.26em] text-brand-strong">
+        {{ i18n.t('events.eyebrow') }}
+      </p>
+      <h2 class="mt-1.5 font-display text-2xl font-semibold tracking-tight text-ink sm:text-3xl">
+        {{ i18n.t('events.title') }}
+      </h2>
+      <p class="mt-1.5 max-w-2xl text-sm leading-6 text-muted">
+        {{ i18n.t('events.subtitle') }}
+      </p>
+    </div>
+
+    <a
+      routerLink="/criar-evento"
+      class="inline-flex h-11 w-fit items-center gap-2 rounded-xl bg-linear-to-r from-brand via-iris to-aqua px-4 text-sm font-semibold text-white shadow-glow transition hover:brightness-110"
+    >
+      <fa-icon [icon]="icons['plus']" class="text-xs" aria-hidden="true" />
+      {{ i18n.t('events.create') }}
+    </a>
+  </header>
+
+  <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+    <app-stat-card
+      [label]="i18n.t('events.stat.active')"
+      [value]="stats().events"
+      [hint]="i18n.t('statusHint.published')"
+      [icon]="icons['events']"
+      tone="brand"
+    />
+    <app-stat-card
+      [label]="i18n.t('events.stat.guests')"
+      [value]="i18n.number(stats().total)"
+      [hint]="i18n.t('dashboard.stats.guestsHint')"
+      [icon]="icons['guests']"
+      tone="iris"
+    />
+    <app-stat-card
+      [label]="i18n.t('events.stat.confirmed')"
+      [value]="i18n.number(stats().confirmed)"
+      [hint]="i18n.t('dashboard.stats.confirmedHint')"
+      [icon]="icons['userCheck']"
+      tone="mint"
+    />
+    <app-stat-card
+      [label]="i18n.t('events.stat.rate')"
+      [value]="averageRate() + '%'"
+      [hint]="i18n.t('dashboard.stats.responseHint')"
+      [icon]="icons['chartLine']"
+      tone="aqua"
+    />
+  </div>
+
+  <div
+    class="flex flex-col gap-3 rounded-3xl border border-line bg-surface/70 p-3 shadow-card backdrop-blur-2xl lg:flex-row lg:items-center lg:justify-between"
+  >
+    <div class="flex flex-wrap items-center gap-1.5" role="tablist" [attr.aria-label]="i18n.t('common.filter')">
+      @for (filter of filters; track filter.id) {
+        <button
+          type="button"
+          role="tab"
+          [attr.aria-selected]="activeFilter() === filter.id"
+          class="inline-flex h-9 items-center gap-2 rounded-xl px-3 text-xs font-semibold transition"
+          [class]="
+            activeFilter() === filter.id
+              ? 'border border-brand/30 bg-brand/15 text-ink'
+              : 'border border-transparent text-muted hover:bg-surface-raised/60 hover:text-ink'
+          "
+          (click)="setFilter(filter.id)"
+        >
+          {{ i18n.t(filter.labelKey) }}
+          <span
+            class="rounded-full px-1.5 py-0.5 text-[9px]"
+            [class]="
+              activeFilter() === filter.id
+                ? 'bg-brand/20 text-brand-strong'
+                : 'bg-surface-raised text-muted'
+            "
+          >
+            {{ count(filter.id) }}
+          </span>
+        </button>
+      }
+    </div>
+
+    <label class="relative flex items-center lg:w-72">
+      <fa-icon
+        [icon]="icons['search']"
+        class="pointer-events-none absolute left-3 text-xs text-muted"
+        aria-hidden="true"
+      />
+      <input
+        type="search"
+        [value]="search()"
+        (input)="search.set($any($event.target).value)"
+        class="h-10 w-full rounded-xl border border-line bg-surface-raised/70 pl-9 pr-3 text-xs text-ink outline-none transition placeholder:text-muted/60 focus:border-brand/50"
+        [placeholder]="i18n.t('events.search')"
+        [attr.aria-label]="i18n.t('events.search')"
+      />
+    </label>
+  </div>
+
+  @if (filtered().length === 0) {
+    <div
+      class="flex flex-col items-center justify-center rounded-4xl border border-dashed border-line bg-surface/60 px-6 py-16 text-center backdrop-blur-2xl"
+    >
+      <span class="grid size-14 place-items-center rounded-2xl border border-brand/25 bg-brand/15 text-brand-strong">
+        <fa-icon [icon]="icons['calendarPlus']" class="text-xl" aria-hidden="true" />
+      </span>
+      <h3 class="mt-4 font-display text-lg font-semibold text-ink">{{ i18n.t('events.empty') }}</h3>
+      <p class="mt-1.5 max-w-md text-sm leading-6 text-muted">{{ i18n.t('events.emptyHint') }}</p>
+      <a
+        routerLink="/criar-evento"
+        class="mt-5 inline-flex h-11 items-center gap-2 rounded-xl bg-linear-to-r from-brand via-iris to-aqua px-4 text-sm font-semibold text-white shadow-glow"
+      >
+        <fa-icon [icon]="icons['plus']" class="text-xs" aria-hidden="true" />
+        {{ i18n.t('events.create') }}
+      </a>
+    </div>
+  } @else {
+    <div class="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
+      @for (event of filtered(); track event.id) {
+        <app-event-card [event]="event" />
+      }
+    </div>
+  }
+</section>

@@ -1,0 +1,847 @@
+@if (event(); as event) {
+  <section class="flex flex-col gap-5">
+    <header class="flex flex-col gap-4">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <a
+          routerLink="/eventos"
+          class="inline-flex items-center gap-2 text-[11px] font-semibold text-muted transition hover:text-ink"
+        >
+          <fa-icon [icon]="icons['arrowLeft']" class="text-[10px]" aria-hidden="true" />
+          {{ i18n.t('eventDetail.backToEvents') }}
+        </a>
+
+        <div class="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            class="inline-flex h-10 items-center gap-2 rounded-xl border border-line bg-surface-raised/60 px-3 text-xs font-semibold text-ink backdrop-blur-xl transition hover:border-brand/40"
+            (click)="copyInvitation()"
+          >
+            <fa-icon [icon]="icons['link']" class="text-[11px] text-muted" aria-hidden="true" />
+            {{ i18n.t('eventDetail.copyInvitation') }}
+          </button>
+          <a
+            [routerLink]="['/i', event.invitationToken]"
+            class="inline-flex h-10 items-center gap-2 rounded-xl border border-line bg-surface-raised/60 px-3 text-xs font-semibold text-ink backdrop-blur-xl transition hover:border-brand/40"
+          >
+            <fa-icon [icon]="icons['arrowUpRight']" class="text-[11px] text-muted" aria-hidden="true" />
+            {{ i18n.t('eventDetail.openInvitation') }}
+          </a>
+          @if (isManagement()) {
+            <button
+              type="button"
+              class="inline-flex h-10 items-center gap-2 rounded-xl border border-coral/30 bg-coral/10 px-3 text-xs font-semibold text-coral transition hover:bg-coral/15"
+              (click)="endManagement()"
+            >
+              <fa-icon [icon]="icons['logout']" class="text-[11px]" aria-hidden="true" />
+              {{ i18n.t('eventDetail.endManagement') }}
+            </button>
+          } @else {
+            <button
+              type="button"
+              class="inline-flex h-10 items-center gap-2 rounded-xl bg-linear-to-r from-brand via-iris to-aqua px-3.5 text-xs font-semibold text-white shadow-glow transition hover:brightness-110"
+              (click)="openManagement()"
+            >
+              <fa-icon [icon]="icons['sliders']" class="text-[11px]" aria-hidden="true" />
+              {{ i18n.t('dashboard.manage') }}
+            </button>
+          }
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-start justify-between gap-3">
+        <div class="min-w-0">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.22em] text-brand-strong">
+              <fa-icon [icon]="typeIcon()" class="text-[10px]" aria-hidden="true" />
+              {{ typeLabel() }}
+            </span>
+            <app-status-badge [value]="event.status" />
+          </div>
+          <h2 class="mt-2 font-display text-2xl font-semibold tracking-tight text-ink sm:text-3xl">
+            {{ event.title }}
+          </h2>
+          <p class="mt-1.5 text-sm text-muted">
+            {{ i18n.t('eventDetail.host') }} · {{ event.hostName }}
+          </p>
+        </div>
+      </div>
+
+      @if (isManagement()) {
+        <div
+          class="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-aqua/25 bg-aqua/10 p-3.5"
+        >
+          <div class="flex items-center gap-3">
+            <span class="grid size-9 place-items-center rounded-xl border border-aqua/30 bg-aqua/15 text-aqua">
+              <fa-icon [icon]="icons['key']" class="text-xs" aria-hidden="true" />
+            </span>
+            <div>
+              <p class="text-xs font-semibold text-ink">{{ i18n.t('eventDetail.manageTitle') }}</p>
+              <p class="text-[11px] text-muted">{{ i18n.t('eventDetail.manageHint') }}</p>
+            </div>
+          </div>
+          <span class="text-[10px] font-semibold uppercase tracking-[0.16em] text-aqua">
+            {{ i18n.t('settings.active') }}
+          </span>
+        </div>
+      }
+
+      @if (event.status === 'draft') {
+        <div
+          class="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-amber/25 bg-amber/10 p-3.5"
+        >
+          <p class="flex items-center gap-2 text-xs text-ink">
+            <fa-icon [icon]="icons['info']" class="text-amber" aria-hidden="true" />
+            {{ i18n.t('eventDetail.notPublished') }}
+          </p>
+          <button
+            type="button"
+            class="inline-flex h-9 items-center gap-2 rounded-lg bg-amber/20 px-3 text-[11px] font-semibold text-amber transition hover:bg-amber/25"
+            (click)="publish()"
+          >
+            <fa-icon [icon]="icons['paperPlane']" class="text-[10px]" aria-hidden="true" />
+            {{ i18n.t('eventDetail.publish') }}
+          </button>
+        </div>
+      }
+    </header>
+
+    <article
+      class="relative overflow-hidden rounded-4xl border border-line bg-surface shadow-card backdrop-blur-2xl"
+    >
+      <div class="grid lg:grid-cols-[minmax(0,1.45fr)_minmax(0,0.85fr)]">
+        <div class="relative min-h-64 overflow-hidden p-6 sm:p-7">
+          <app-template-artwork
+            [templateId]="event.templateId"
+            variant="hero"
+            [kicker]="typeLabel()"
+            [title]="event.title"
+            [subtitle]="i18n.t('invitation.hostedBy', { name: event.hostName })"
+            class="absolute inset-0"
+          />
+
+          <div class="relative flex h-full flex-col justify-end gap-4 text-white">
+            <div class="flex flex-wrap items-center gap-3 text-xs text-white/80">
+              <span class="inline-flex items-center gap-1.5">
+                <fa-icon [icon]="icons['calendar']" class="text-[11px]" aria-hidden="true" />
+                {{ i18n.fullDate(event.startsAt, event.timezone) }}
+              </span>
+              <span class="inline-flex items-center gap-1.5">
+                <fa-icon [icon]="icons['clock']" class="text-[11px]" aria-hidden="true" />
+                {{ i18n.time(event.startsAt, event.timezone) }}
+              </span>
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+              <span
+                class="inline-flex items-center gap-1.5 rounded-full border border-white/25 bg-white/15 px-2.5 py-1 text-[10px] font-semibold backdrop-blur-md"
+              >
+                <fa-icon [icon]="icons['location']" class="text-[9px]" aria-hidden="true" />
+                {{ event.venue }}, {{ event.city }}
+              </span>
+              <span
+                class="inline-flex items-center gap-1.5 rounded-full border border-white/25 bg-white/15 px-2.5 py-1 text-[10px] font-semibold backdrop-blur-md"
+              >
+                <fa-icon [icon]="icons['palette']" class="text-[9px]" aria-hidden="true" />
+                {{ templateName() }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex flex-col gap-4 border-t border-line p-5 lg:border-l lg:border-t-0">
+          <div class="grid grid-cols-2 gap-2">
+            @for (
+              cell of [
+                { key: 'eventDetail.stats.guests', value: stats().total, tone: 'text-ink' },
+                { key: 'eventDetail.stats.confirmed', value: stats().confirmed, tone: 'text-mint' },
+                { key: 'eventDetail.stats.pending', value: stats().pending, tone: 'text-amber' },
+                { key: 'eventDetail.stats.declined', value: stats().declined, tone: 'text-coral' }
+              ];
+              track cell.key
+            ) {
+              <div class="rounded-2xl border border-line bg-surface-raised/60 p-3">
+                <p class="text-[9px] font-semibold uppercase tracking-[0.16em] text-muted">
+                  {{ i18n.t($any(cell.key)) }}
+                </p>
+                <p class="mt-1 font-display text-xl font-semibold" [class]="cell.tone">
+                  {{ cell.value }}
+                </p>
+              </div>
+            }
+          </div>
+
+          <div class="rounded-2xl border border-line bg-surface-raised/60 p-3.5">
+            <div class="flex items-center justify-between gap-2">
+              <p class="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
+                {{ i18n.t('eventDetail.progressTitle') }}
+              </p>
+              <span class="text-[11px] font-semibold text-ink">{{ stats().responseRate }}%</span>
+            </div>
+            <svg
+              viewBox="0 0 100 6"
+              preserveAspectRatio="none"
+              class="mt-2 h-1.5 w-full"
+              aria-hidden="true"
+            >
+              <rect width="100" height="6" rx="3" class="fill-line" />
+              <rect [attr.width]="stats().responseRate" height="6" rx="3" class="fill-aqua" />
+            </svg>
+            <p class="mt-2 text-[10px] text-muted">
+              {{ i18n.t('eventDetail.progressHint', { responded: respondedCount(), total: stats().total }) }}
+            </p>
+          </div>
+
+          <div class="mt-auto flex flex-col gap-2">
+            <a
+              [routerLink]="['/i', event.invitationToken]"
+              class="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-line bg-surface-raised/70 px-3 text-xs font-semibold text-ink transition hover:border-brand/40"
+            >
+              <fa-icon [icon]="icons['eye']" class="text-[11px] text-muted" aria-hidden="true" />
+              {{ i18n.t('eventDetail.openInvitation') }}
+            </a>
+            <p class="text-center text-[9px] leading-4 text-muted/70">
+              {{ i18n.t('eventDetail.demoInvitationHint') }}
+            </p>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <nav
+      class="flex flex-wrap items-center gap-1 rounded-2xl border border-line bg-surface/70 p-1.5 backdrop-blur-2xl"
+      role="tablist"
+    >
+      @for (
+        item of [
+          { id: 'overview', labelKey: 'eventDetail.tabs.overview', icon: icons['dashboardAlt'] },
+          { id: 'guests', labelKey: 'eventDetail.tabs.guests', icon: icons['guests'] },
+          { id: 'settings', labelKey: 'eventDetail.tabs.settings', icon: icons['sliders'] }
+        ];
+        track item.id
+      ) {
+        <button
+          type="button"
+          role="tab"
+          [attr.aria-selected]="tab() === item.id"
+          class="inline-flex h-9 items-center gap-2 rounded-xl px-3.5 text-xs font-semibold transition"
+          [class]="
+            tab() === item.id
+              ? 'border border-brand/30 bg-brand/15 text-ink'
+              : 'border border-transparent text-muted hover:bg-surface-raised/60 hover:text-ink'
+          "
+          (click)="setTab($any(item.id))"
+        >
+          <fa-icon [icon]="item.icon" class="text-[11px]" aria-hidden="true" />
+          {{ i18n.t($any(item.labelKey)) }}
+          @if (item.id === 'guests') {
+            <span class="rounded-full bg-surface-raised px-1.5 py-0.5 text-[9px] text-muted">
+              {{ stats().total }}
+            </span>
+          }
+        </button>
+      }
+    </nav>
+
+    @switch (tab()) {
+      @case ('overview') {
+        <div class="grid gap-4 xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
+          <div class="flex flex-col gap-4">
+            <article class="rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl">
+              <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-brand-strong">
+                {{ i18n.t('eventDetail.detailsTitle') }}
+              </p>
+
+              <dl class="mt-4 grid gap-3 sm:grid-cols-2">
+                <div class="rounded-2xl border border-line bg-surface-raised/50 p-3.5">
+                  <dt class="flex items-center gap-1.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-muted">
+                    <fa-icon [icon]="icons['user']" class="text-[9px]" aria-hidden="true" />
+                    {{ i18n.t('eventDetail.host') }}
+                  </dt>
+                  <dd class="mt-1 text-sm font-medium text-ink">{{ event.hostName }}</dd>
+                </div>
+                <div class="rounded-2xl border border-line bg-surface-raised/50 p-3.5">
+                  <dt class="flex items-center gap-1.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-muted">
+                    <fa-icon [icon]="icons['calendar']" class="text-[9px]" aria-hidden="true" />
+                    {{ i18n.t('eventDetail.dateTime') }}
+                  </dt>
+                  <dd class="mt-1 text-sm font-medium text-ink">
+                    {{ i18n.longDate(event.startsAt, event.timezone) }} ·
+                    {{ i18n.time(event.startsAt, event.timezone) }}
+                  </dd>
+                </div>
+                <div class="rounded-2xl border border-line bg-surface-raised/50 p-3.5">
+                  <dt class="flex items-center gap-1.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-muted">
+                    <fa-icon [icon]="icons['location']" class="text-[9px]" aria-hidden="true" />
+                    {{ i18n.t('eventDetail.location') }}
+                  </dt>
+                  <dd class="mt-1 text-sm font-medium text-ink">{{ event.venue }}, {{ event.city }}</dd>
+                </div>
+                <div class="rounded-2xl border border-line bg-surface-raised/50 p-3.5">
+                  <dt class="flex items-center gap-1.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-muted">
+                    <fa-icon [icon]="icons['hourglass']" class="text-[9px]" aria-hidden="true" />
+                    {{ i18n.t('eventDetail.deadline') }}
+                  </dt>
+                  <dd class="mt-1 text-sm font-medium" [class]="deadlinePassed() ? 'text-coral' : 'text-ink'">
+                    @if (event.rsvpDeadline) {
+                      {{ i18n.shortDate(event.rsvpDeadline, event.timezone) }}
+                    } @else {
+                      {{ i18n.t('create.review.noDeadline') }}
+                    }
+                  </dd>
+                </div>
+                <div class="rounded-2xl border border-line bg-surface-raised/50 p-3.5">
+                  <dt class="flex items-center gap-1.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-muted">
+                    <fa-icon [icon]="icons['palette']" class="text-[9px]" aria-hidden="true" />
+                    {{ i18n.t('eventDetail.template') }}
+                  </dt>
+                  <dd class="mt-1 text-sm font-medium text-ink">{{ templateName() }}</dd>
+                </div>
+                <div class="rounded-2xl border border-line bg-surface-raised/50 p-3.5">
+                  <dt class="flex items-center gap-1.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-muted">
+                    <fa-icon [icon]="icons['globe']" class="text-[9px]" aria-hidden="true" />
+                    {{ i18n.t('eventDetail.online') }}
+                  </dt>
+                  <dd class="mt-1 truncate text-sm font-medium text-ink">
+                    @if (event.onlineLink) {
+                      <a
+                        [href]="event.onlineLink"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="text-brand-strong hover:underline"
+                      >{{ event.onlineLink }}</a>
+                    } @else {
+                      <span class="text-muted">—</span>
+                    }
+                  </dd>
+                </div>
+              </dl>
+            </article>
+
+            <article class="relative overflow-hidden rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl">
+              <fa-icon
+                [icon]="icons['quote']"
+                class="absolute right-5 top-5 text-2xl text-brand/15"
+                aria-hidden="true"
+              />
+              <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-brand-strong">
+                {{ i18n.t('eventDetail.message') }}
+              </p>
+              <p class="mt-3 max-w-3xl text-sm leading-7 text-ink">{{ event.message }}</p>
+            </article>
+
+            <div class="grid gap-4 sm:grid-cols-2">
+              <article class="rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl">
+                <p class="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-brand-strong">
+                  <fa-icon [icon]="icons['lines']" class="text-[10px]" aria-hidden="true" />
+                  {{ i18n.t('eventDetail.rules') }}
+                </p>
+                <p class="mt-3 text-sm leading-6 text-muted">{{ event.rules || '—' }}</p>
+              </article>
+              <article class="rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl">
+                <p class="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-brand-strong">
+                  <fa-icon [icon]="icons['shirt']" class="text-[10px]" aria-hidden="true" />
+                  {{ i18n.t('eventDetail.dressCode') }}
+                </p>
+                <p class="mt-3 text-sm leading-6 text-muted">{{ event.dressCode || '—' }}</p>
+              </article>
+            </div>
+
+            <article class="rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl">
+              <div class="flex items-center justify-between gap-3">
+                <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-brand-strong">
+                  {{ i18n.t('eventDetail.activityTitle') }}
+                </p>
+                <span class="grid size-8 place-items-center rounded-lg border border-line bg-surface-raised text-muted">
+                  <fa-icon [icon]="icons['history']" class="text-[11px]" aria-hidden="true" />
+                </span>
+              </div>
+
+              @if (activity().length === 0) {
+                <p class="mt-5 text-sm text-muted">{{ i18n.t('eventDetail.noActivity') }}</p>
+              } @else {
+                <ol class="mt-3 flex flex-col gap-1">
+                  @for (item of activity(); track item.id) {
+                    <li class="flex items-start gap-3 rounded-2xl p-2 transition hover:bg-surface-raised/60">
+                      <span
+                        class="mt-0.5 grid size-8 shrink-0 place-items-center rounded-xl border"
+                        [class]="activityTone(item.kind)"
+                      >
+                        <fa-icon [icon]="activityIcon(item.kind)" class="text-[10px]" aria-hidden="true" />
+                      </span>
+                      <div class="min-w-0 flex-1">
+                        <p class="text-xs leading-5 text-ink">{{ activityText(item) }}</p>
+                        <p class="mt-0.5 text-[10px] text-muted">{{ i18n.relative(item.at) }}</p>
+                      </div>
+                    </li>
+                  }
+                </ol>
+              }
+            </article>
+          </div>
+
+          <div class="flex flex-col gap-4">
+            <article class="rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl">
+              <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-brand-strong">
+                {{ i18n.t('eventDetail.progressTitle') }}
+              </p>
+              <p class="mt-1 text-xs text-muted">
+                {{ i18n.t('eventDetail.progressHint', { responded: respondedCount(), total: stats().total }) }}
+              </p>
+
+              <div class="mt-4 flex flex-col gap-3">
+                @for (row of breakdown(); track row.key) {
+                  <div>
+                    <div class="flex items-center justify-between text-[11px]">
+                      <span class="inline-flex items-center gap-2 text-muted">
+                        <span class="size-1.5 rounded-full" [class]="row.dot"></span>
+                        {{ i18n.t($any('status.' + row.key)) }}
+                      </span>
+                      <span class="font-semibold text-ink">{{ row.value }}</span>
+                    </div>
+                    <svg
+                      viewBox="0 0 100 5"
+                      preserveAspectRatio="none"
+                      class="mt-1.5 h-1.5 w-full"
+                      aria-hidden="true"
+                    >
+                      <rect width="100" height="5" rx="2.5" class="fill-line" />
+                      <rect [attr.width]="row.percent" height="5" rx="2.5" [class]="row.bar" />
+                    </svg>
+                  </div>
+                }
+              </div>
+
+              <div class="mt-4 rounded-2xl border border-line bg-surface-raised/50 p-3.5">
+                <p class="text-[10px] uppercase tracking-[0.16em] text-muted">
+                  {{ i18n.t('dashboard.responseRate') }}
+                </p>
+                <div class="mt-1 flex items-end justify-between gap-3">
+                  <p class="font-display text-3xl font-semibold text-ink">{{ stats().responseRate }}%</p>
+                  <span class="inline-flex items-center gap-1 rounded-full border border-mint/25 bg-mint/10 px-2 py-0.5 text-[10px] font-semibold text-mint">
+                    <fa-icon [icon]="icons['trendUp']" class="text-[9px]" aria-hidden="true" />
+                    {{ respondedCount() }}/{{ stats().total }}
+                  </span>
+                </div>
+              </div>
+            </article>
+
+            <article class="rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl">
+              <div class="flex items-center justify-between gap-3">
+                <div>
+                  <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-brand-strong">
+                    {{ i18n.t('eventDetail.tasksTitle') }}
+                  </p>
+                  <p class="mt-1 text-xs text-muted">{{ i18n.t('eventDetail.tasksHint') }}</p>
+                </div>
+              </div>
+
+              @if (tasks().length === 0) {
+                <p class="mt-5 text-sm text-muted">{{ i18n.t('dashboard.tasksEmpty') }}</p>
+              } @else {
+                <ul class="mt-3 flex flex-col gap-1">
+                  @for (task of tasks(); track task.id) {
+                    <li>
+                      <button
+                        type="button"
+                        class="flex w-full items-start gap-3 rounded-2xl p-2 text-left transition hover:bg-surface-raised/60"
+                        (click)="toggleTask(task.id)"
+                      >
+                        <span
+                          class="mt-0.5 grid size-5 shrink-0 place-items-center rounded-md border transition"
+                          [class]="
+                            task.done
+                              ? 'border-mint/40 bg-mint/20 text-mint'
+                              : 'border-line bg-surface-raised text-transparent'
+                          "
+                        >
+                          <fa-icon [icon]="icons['check']" class="text-[9px]" aria-hidden="true" />
+                        </span>
+                        <span
+                          class="text-xs leading-5"
+                          [class]="task.done ? 'text-muted line-through' : 'text-ink'"
+                        >
+                          {{ taskLabel(task) }}
+                        </span>
+                      </button>
+                    </li>
+                  }
+                </ul>
+              }
+            </article>
+
+            <article class="rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl">
+              <p class="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-brand-strong">
+                <fa-icon [icon]="icons['shield']" class="text-[10px]" aria-hidden="true" />
+                {{ i18n.t('eventDetail.managementNotice') }}
+              </p>
+              <p class="mt-2 text-xs leading-5 text-muted">
+                {{ i18n.t('eventDetail.managementNoticeText') }}
+              </p>
+              <p class="mt-3 rounded-xl border border-line bg-surface-raised/60 p-2.5 text-[10px] leading-5 text-muted">
+                {{ i18n.t('eventDetail.shareWarning') }}
+              </p>
+            </article>
+          </div>
+        </div>
+      }
+
+      @case ('guests') {
+        <div class="flex flex-col gap-4">
+          <article class="rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl">
+            <div class="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-brand-strong">
+                  {{ i18n.t('eventDetail.guestList') }}
+                </p>
+                <p class="mt-1 text-xs text-muted">{{ i18n.t('eventDetail.guestListHint') }}</p>
+              </div>
+              <button
+                type="button"
+                class="inline-flex h-10 items-center gap-2 rounded-xl bg-linear-to-r from-brand via-iris to-aqua px-3.5 text-xs font-semibold text-white shadow-glow transition hover:brightness-110"
+                (click)="guestDialogOpen.set(true)"
+              >
+                <fa-icon [icon]="icons['userPlus']" class="text-[11px]" aria-hidden="true" />
+                {{ i18n.t('eventDetail.addGuest') }}
+              </button>
+            </div>
+
+            <div class="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div class="flex flex-wrap items-center gap-1.5">
+                @for (filter of guestFilters; track filter.id) {
+                  <button
+                    type="button"
+                    class="inline-flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-[11px] font-semibold transition"
+                    [class]="
+                      guestFilter() === filter.id
+                        ? 'border border-brand/30 bg-brand/15 text-ink'
+                        : 'border border-transparent text-muted hover:bg-surface-raised/60 hover:text-ink'
+                    "
+                    (click)="guestFilter.set(filter.id)"
+                  >
+                    {{ i18n.t(filter.labelKey) }}
+                    <span class="text-[9px] text-muted/70">{{ countFor(filter.id) }}</span>
+                  </button>
+                }
+              </div>
+
+              <label class="relative flex items-center sm:w-64">
+                <fa-icon
+                  [icon]="icons['search']"
+                  class="pointer-events-none absolute left-3 text-[11px] text-muted"
+                  aria-hidden="true"
+                />
+                <input
+                  type="search"
+                  [value]="guestSearch()"
+                  (input)="guestSearch.set($any($event.target).value)"
+                  class="h-9 w-full rounded-lg border border-line bg-surface-raised/70 pl-8 pr-3 text-[11px] text-ink outline-none transition placeholder:text-muted/60 focus:border-brand/50"
+                  [placeholder]="i18n.t('eventDetail.searchGuests')"
+                  [attr.aria-label]="i18n.t('eventDetail.searchGuests')"
+                />
+              </label>
+            </div>
+
+            @if (guests().length === 0) {
+              <div class="mt-6 flex flex-col items-center rounded-3xl border border-dashed border-line p-10 text-center">
+                <span class="grid size-12 place-items-center rounded-2xl border border-brand/25 bg-brand/15 text-brand-strong">
+                  <fa-icon [icon]="icons['userPlus']" class="text-lg" aria-hidden="true" />
+                </span>
+                <p class="mt-3 text-sm font-semibold text-ink">{{ i18n.t('eventDetail.noGuests') }}</p>
+                <p class="mt-1 text-xs text-muted">{{ i18n.t('eventDetail.noGuestsHint') }}</p>
+              </div>
+            } @else if (filteredGuests().length === 0) {
+              <p class="mt-6 rounded-2xl border border-dashed border-line p-6 text-center text-sm text-muted">
+                {{ i18n.t('eventDetail.noResults') }}
+              </p>
+            } @else {
+              <div class="mt-4 overflow-x-auto">
+                <table class="w-full min-w-[56rem] border-separate border-spacing-y-1.5 text-left">
+                  <thead>
+                    <tr class="text-[9px] font-semibold uppercase tracking-[0.16em] text-muted">
+                      <th class="px-3 py-2">{{ i18n.t('eventDetail.table.guest') }}</th>
+                      <th class="px-3 py-2">{{ i18n.t('eventDetail.table.status') }}</th>
+                      <th class="px-3 py-2">{{ i18n.t('eventDetail.table.table') }}</th>
+                      <th class="px-3 py-2">{{ i18n.t('eventDetail.table.invited') }}</th>
+                      <th class="px-3 py-2">{{ i18n.t('eventDetail.table.responded') }}</th>
+                      <th class="px-3 py-2 text-right">{{ i18n.t('eventDetail.table.actions') }}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (guest of filteredGuests(); track guest.id) {
+                      <tr class="rounded-2xl bg-surface-raised/45 transition hover:bg-surface-raised/80">
+                        <td class="rounded-l-2xl px-3 py-2.5">
+                          <div class="flex items-center gap-3">
+                            <app-avatar [name]="guest.name" size="sm" />
+                            <div class="min-w-0">
+                              <p class="truncate text-xs font-semibold text-ink">{{ guest.name }}</p>
+                              <p class="truncate text-[10px] text-muted">{{ guest.email }}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td class="px-3 py-2.5">
+                          <app-status-badge [value]="guest.status" />
+                        </td>
+                        <td class="px-3 py-2.5 text-[11px] text-muted">
+                          {{ guest.tableName ?? '—' }}
+                        </td>
+                        <td class="px-3 py-2.5 text-[11px] text-muted">
+                          {{ i18n.shortDate(guest.invitedAt, event.timezone) }}
+                        </td>
+                        <td class="px-3 py-2.5 text-[11px] text-muted">
+                          @if (guest.respondedAt) {
+                            {{ i18n.relative(guest.respondedAt) }}
+                          } @else {
+                            {{ i18n.t('guests.notResponded') }}
+                          }
+                        </td>
+                        <td class="rounded-r-2xl px-3 py-2.5">
+                          <div class="flex items-center justify-end gap-1">
+                            @if (guest.status !== 'confirmed') {
+                              <button
+                                type="button"
+                                class="grid size-8 place-items-center rounded-lg border border-line bg-surface text-mint transition hover:border-mint/40"
+                                [attr.aria-label]="i18n.t('status.confirmed')"
+                                [attr.title]="i18n.t('status.confirmed')"
+                                (click)="setRsvp(guest, 'confirmed')"
+                              >
+                                <fa-icon [icon]="icons['check']" class="text-[10px]" />
+                              </button>
+                            }
+                            @if (guest.status !== 'declined') {
+                              <button
+                                type="button"
+                                class="grid size-8 place-items-center rounded-lg border border-line bg-surface text-coral transition hover:border-coral/40"
+                                [attr.aria-label]="i18n.t('status.declined')"
+                                [attr.title]="i18n.t('status.declined')"
+                                (click)="setRsvp(guest, 'declined')"
+                              >
+                                <fa-icon [icon]="icons['close']" class="text-[10px]" />
+                              </button>
+                            }
+                            <button
+                              type="button"
+                              class="grid size-8 place-items-center rounded-lg border border-line bg-surface text-muted transition hover:border-brand/40 hover:text-brand-strong"
+                              [attr.aria-label]="i18n.t('eventDetail.resend')"
+                              [attr.title]="i18n.t('eventDetail.resend')"
+                              (click)="resend(guest)"
+                            >
+                              <fa-icon [icon]="icons['paperPlane']" class="text-[10px]" />
+                            </button>
+                            <button
+                              type="button"
+                              class="grid size-8 place-items-center rounded-lg border border-line bg-surface text-muted transition hover:border-coral/40 hover:text-coral"
+                              [attr.aria-label]="i18n.t('guests.remove')"
+                              [attr.title]="i18n.t('guests.remove')"
+                              (click)="removeGuest(guest)"
+                            >
+                              <fa-icon [icon]="icons['trash']" class="text-[10px]" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            }
+
+            <p class="mt-4 flex items-start gap-2 rounded-xl border border-line bg-surface-raised/40 p-3 text-[10px] leading-5 text-muted">
+              <fa-icon [icon]="icons['lock']" class="mt-0.5 text-brand-strong" aria-hidden="true" />
+              {{ i18n.t('guests.shareText') }}
+            </p>
+          </article>
+        </div>
+      }
+
+      @case ('settings') {
+        <div class="grid gap-4 xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
+          <article class="rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl">
+            <div class="flex items-start justify-between gap-3">
+              <div>
+                <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-brand-strong">
+                  {{ i18n.t('eventDetail.settingsTitle') }}
+                </p>
+                <p class="mt-1 text-xs text-muted">{{ i18n.t('eventDetail.settingsHint') }}</p>
+              </div>
+              <span class="grid size-9 place-items-center rounded-xl border border-line bg-surface-raised text-muted">
+                <fa-icon [icon]="icons['pen']" class="text-xs" aria-hidden="true" />
+              </span>
+            </div>
+
+            <form class="mt-5 flex flex-col gap-4" [formGroup]="settingsForm" (ngSubmit)="saveSettings()">
+              <label class="block">
+                <span class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
+                  {{ i18n.t('eventDetail.fieldTitle') }}
+                </span>
+                <input
+                  type="text"
+                  formControlName="title"
+                  class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink outline-none transition focus:border-brand/50"
+                />
+                @if (settingsForm.controls.title.touched && settingsForm.controls.title.invalid) {
+                  <span class="mt-1 block text-[11px] text-coral">{{ i18n.t('create.errors.required') }}</span>
+                }
+              </label>
+
+              <div class="grid gap-4 sm:grid-cols-2">
+                <label class="block">
+                  <span class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
+                    {{ i18n.t('eventDetail.fieldVenue') }}
+                  </span>
+                  <input
+                    type="text"
+                    formControlName="venue"
+                    class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink outline-none transition focus:border-brand/50"
+                  />
+                </label>
+                <label class="block">
+                  <span class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
+                    {{ i18n.t('eventDetail.fieldCity') }}
+                  </span>
+                  <input
+                    type="text"
+                    formControlName="city"
+                    class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink outline-none transition focus:border-brand/50"
+                  />
+                </label>
+              </div>
+
+              <label class="block">
+                <span class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
+                  {{ i18n.t('eventDetail.fieldMessage') }}
+                </span>
+                <textarea
+                  formControlName="message"
+                  rows="5"
+                  class="w-full rounded-xl border border-line bg-surface-raised px-3 py-2.5 text-sm leading-6 text-ink outline-none transition focus:border-brand/50"
+                ></textarea>
+              </label>
+
+              <div class="grid gap-4 sm:grid-cols-2">
+                <label class="block">
+                  <span class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
+                    {{ i18n.t('eventDetail.fieldRules') }}
+                  </span>
+                  <textarea
+                    formControlName="rules"
+                    rows="3"
+                    class="w-full rounded-xl border border-line bg-surface-raised px-3 py-2.5 text-sm leading-6 text-ink outline-none transition focus:border-brand/50"
+                  ></textarea>
+                </label>
+                <label class="block">
+                  <span class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
+                    {{ i18n.t('eventDetail.fieldDress') }}
+                  </span>
+                  <textarea
+                    formControlName="dressCode"
+                    rows="3"
+                    class="w-full rounded-xl border border-line bg-surface-raised px-3 py-2.5 text-sm leading-6 text-ink outline-none transition focus:border-brand/50"
+                  ></textarea>
+                </label>
+              </div>
+
+              <div class="flex justify-end">
+                <button
+                  type="submit"
+                  class="inline-flex h-11 items-center gap-2 rounded-xl bg-linear-to-r from-brand via-iris to-aqua px-4 text-sm font-semibold text-white shadow-glow transition hover:brightness-110"
+                >
+                  <fa-icon [icon]="icons['check']" class="text-xs" aria-hidden="true" />
+                  {{ i18n.t('eventDetail.saveChanges') }}
+                </button>
+              </div>
+            </form>
+          </article>
+
+          <div class="flex flex-col gap-4">
+            <article class="rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl">
+              <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-brand-strong">
+                {{ i18n.t('eventDetail.invitationCard') }}
+              </p>
+              <p class="mt-1 text-xs text-muted">{{ i18n.t('eventDetail.invitationHint') }}</p>
+
+              <div class="mt-4 overflow-hidden rounded-2xl border border-line">
+                <app-template-artwork
+                  [templateId]="event.templateId"
+                  variant="thumb"
+                  [kicker]="typeLabel()"
+                  [title]="event.title"
+                  class="block"
+                />
+              </div>
+
+              <div class="mt-3 flex flex-col gap-2">
+                <button
+                  type="button"
+                  class="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-line bg-surface-raised/70 px-3 text-xs font-semibold text-ink transition hover:border-brand/40"
+                  (click)="copyInvitation()"
+                >
+                  <fa-icon [icon]="icons['copy']" class="text-[11px] text-muted" aria-hidden="true" />
+                  {{ i18n.t('eventDetail.copyInvitation') }}
+                </button>
+                <a
+                  [routerLink]="['/i', event.invitationToken]"
+                  class="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-line bg-surface-raised/70 px-3 text-xs font-semibold text-ink transition hover:border-brand/40"
+                >
+                  <fa-icon [icon]="icons['arrowUpRight']" class="text-[11px] text-muted" aria-hidden="true" />
+                  {{ i18n.t('eventDetail.openInvitation') }}
+                </a>
+              </div>
+              <p class="mt-3 text-[10px] leading-5 text-muted/80">
+                {{ i18n.t('eventDetail.shareWarning') }}
+              </p>
+            </article>
+
+            <article class="rounded-4xl border border-coral/25 bg-coral/5 p-5 shadow-card backdrop-blur-2xl">
+              <p class="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-coral">
+                <fa-icon [icon]="icons['warning']" class="text-[10px]" aria-hidden="true" />
+                {{ i18n.t('eventDetail.cancelEvent') }}
+              </p>
+              <p class="mt-2 text-xs leading-5 text-muted">{{ i18n.t('eventDetail.cancelEventHint') }}</p>
+              <button
+                type="button"
+                class="mt-4 inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-coral/30 bg-coral/10 px-3.5 text-xs font-semibold text-coral transition hover:bg-coral/15"
+                (click)="cancelOpen.set(true)"
+              >
+                <fa-icon [icon]="icons['cancelled']" class="text-[11px]" aria-hidden="true" />
+                {{ i18n.t('eventDetail.cancelEvent') }}
+              </button>
+            </article>
+          </div>
+        </div>
+      }
+    }
+
+    <app-guest-dialog
+      [open]="guestDialogOpen()"
+      [fixedEventId]="event.id"
+      (closed)="guestDialogOpen.set(false)"
+    />
+
+    <app-confirm-dialog
+      [open]="cancelOpen()"
+      [title]="i18n.t('eventDetail.cancelEventTitle')"
+      [message]="i18n.t('eventDetail.cancelEventText')"
+      [confirmLabel]="i18n.t('eventDetail.cancelEventConfirm')"
+      [cancelLabel]="i18n.t('common.cancel')"
+      tone="danger"
+      (confirmed)="cancelEvent()"
+      (cancelled)="cancelOpen.set(false)"
+    />
+  </section>
+} @else {
+  <section
+    class="mx-auto flex max-w-xl flex-col items-center rounded-4xl border border-line bg-surface p-10 text-center shadow-card backdrop-blur-2xl"
+  >
+    <span class="grid size-16 place-items-center rounded-3xl border border-coral/25 bg-coral/10 text-coral">
+      <fa-icon [icon]="icons['warning']" class="text-2xl" aria-hidden="true" />
+    </span>
+    <h2 class="mt-5 font-display text-2xl font-semibold text-ink">{{ i18n.t('eventDetail.notFound') }}</h2>
+    <p class="mt-2 text-sm leading-6 text-muted">{{ i18n.t('eventDetail.notFoundHint') }}</p>
+    <a
+      routerLink="/eventos"
+      class="mt-6 inline-flex h-11 items-center gap-2 rounded-xl bg-linear-to-r from-brand via-iris to-aqua px-4 text-sm font-semibold text-white shadow-glow"
+    >
+      <fa-icon [icon]="icons['arrowLeft']" class="text-xs" aria-hidden="true" />
+      {{ i18n.t('eventDetail.backToEvents') }}
+    </a>
+  </section>
+}

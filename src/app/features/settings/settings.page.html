@@ -1,0 +1,333 @@
+<section class="flex flex-col gap-5">
+  <header>
+    <p class="text-[10px] font-semibold uppercase tracking-[0.26em] text-brand-strong">
+      {{ i18n.t('settings.eyebrow') }}
+    </p>
+    <h2 class="mt-1.5 font-display text-2xl font-semibold tracking-tight text-ink sm:text-3xl">
+      {{ i18n.t('settings.title') }}
+    </h2>
+    <p class="mt-1.5 max-w-2xl text-sm leading-6 text-muted">
+      {{ i18n.t('settings.subtitle') }}
+    </p>
+  </header>
+
+  <div class="grid gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(0,0.65fr)]">
+    <div class="flex flex-col gap-4">
+      <article class="rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl">
+        <div class="flex items-start justify-between gap-3">
+          <div>
+            <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-brand-strong">
+              {{ i18n.t('settings.appearance') }}
+            </p>
+            <p class="mt-1 text-xs text-muted">{{ i18n.t('settings.appearanceHint') }}</p>
+          </div>
+          <span class="grid size-9 place-items-center rounded-xl border border-line bg-surface-raised text-muted">
+            <fa-icon [icon]="icons['palette']" class="text-xs" aria-hidden="true" />
+          </span>
+        </div>
+
+        <div class="mt-4 grid gap-2.5 sm:grid-cols-3">
+          @for (option of themeOptions; track option.mode) {
+            <button
+              type="button"
+              class="group relative overflow-hidden rounded-2xl border p-3 text-left transition"
+              [class]="
+                theme.mode() === option.mode
+                  ? 'border-brand/45 bg-brand/10 shadow-glow'
+                  : 'border-line bg-surface-raised/50 hover:border-brand/35'
+              "
+              (click)="setTheme(option.mode)"
+            >
+              <span
+                class="grid size-9 place-items-center rounded-xl border"
+                [class]="
+                  option.mode === 'dark'
+                    ? 'border-brand/30 bg-linear-to-br from-brand/30 to-iris/20 text-brand-strong'
+                    : option.mode === 'light'
+                      ? 'border-amber/30 bg-amber/15 text-amber'
+                      : 'border-aqua/30 bg-aqua/15 text-aqua'
+                "
+              >
+                <fa-icon [icon]="icons[option.icon]" class="text-xs" aria-hidden="true" />
+              </span>
+              <p class="mt-2.5 text-xs font-semibold text-ink">{{ i18n.t(option.labelKey) }}</p>
+              <p class="mt-0.5 text-[10px] leading-4 text-muted">{{ i18n.t(option.hintKey) }}</p>
+              @if (theme.mode() === option.mode) {
+                <span
+                  class="absolute right-2.5 top-2.5 inline-flex items-center gap-1 rounded-full bg-mint/15 px-1.5 py-0.5 text-[8px] font-semibold uppercase tracking-[0.12em] text-mint"
+                >
+                  {{ i18n.t('settings.active') }}
+                </span>
+              }
+            </button>
+          }
+        </div>
+      </article>
+
+      <article class="rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl">
+        <div class="flex items-start justify-between gap-3">
+          <div>
+            <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-brand-strong">
+              {{ i18n.t('settings.language') }}
+            </p>
+            <p class="mt-1 text-xs text-muted">{{ i18n.t('settings.languageHint') }}</p>
+          </div>
+          <span class="grid size-9 place-items-center rounded-xl border border-line bg-surface-raised text-muted">
+            <fa-icon [icon]="icons['globe']" class="text-xs" aria-hidden="true" />
+          </span>
+        </div>
+
+        <div class="mt-4 grid gap-2.5 sm:grid-cols-2">
+          @for (locale of locales; track locale.id) {
+            <button
+              type="button"
+              class="flex items-center gap-3 rounded-2xl border p-3 text-left transition"
+              [class]="
+                i18n.locale() === locale.id
+                  ? 'border-brand/45 bg-brand/10'
+                  : 'border-line bg-surface-raised/50 hover:border-brand/35'
+              "
+              (click)="i18n.setLocale(locale.id)"
+            >
+              <span
+                class="grid size-9 shrink-0 place-items-center rounded-xl border border-line bg-surface text-[10px] font-semibold text-brand-strong"
+              >
+                {{ locale.short }}
+              </span>
+              <span class="min-w-0 flex-1">
+                <span class="block text-xs font-semibold text-ink">{{ i18n.t(locale.labelKey) }}</span>
+                <span class="mt-0.5 block text-[10px] leading-4 text-muted">
+                  {{ locale.id === 'pt-AO' ? i18n.t('settings.portugueseHint') : i18n.t('settings.englishHint') }}
+                </span>
+              </span>
+              @if (i18n.locale() === locale.id) {
+                <fa-icon [icon]="icons['check']" class="text-[11px] text-mint" aria-hidden="true" />
+              }
+            </button>
+          }
+        </div>
+      </article>
+
+      <article class="rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl">
+        <div class="flex items-start justify-between gap-3">
+          <div>
+            <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-brand-strong">
+              {{ i18n.t('settings.preferences') }}
+            </p>
+            <p class="mt-1 text-xs text-muted">{{ i18n.t('settings.preferencesHint') }}</p>
+          </div>
+          <span class="grid size-9 place-items-center rounded-xl border border-line bg-surface-raised text-muted">
+            <fa-icon [icon]="icons['sliders']" class="text-xs" aria-hidden="true" />
+          </span>
+        </div>
+
+        <div class="mt-4 flex flex-col divide-y divide-line">
+          @for (preference of preferences(); track preference.key) {
+            <div class="flex items-center gap-4 py-3 first:pt-0 last:pb-0">
+              <div class="min-w-0 flex-1">
+                <p class="text-xs font-semibold text-ink">{{ i18n.t(preference.labelKey) }}</p>
+                <p class="mt-0.5 text-[10px] leading-4 text-muted">{{ i18n.t(preference.hintKey) }}</p>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                [attr.aria-checked]="preference.value"
+                [attr.aria-label]="i18n.t(preference.labelKey)"
+                class="relative h-6 w-11 shrink-0 rounded-full border transition"
+                [class]="
+                  preference.value
+                    ? 'border-brand/40 bg-brand/70'
+                    : 'border-line bg-surface-raised'
+                "
+                (click)="togglePreference(preference.key)"
+              >
+                <span
+                  class="absolute top-0.5 size-4.5 rounded-full bg-white shadow transition-all"
+                  [class]="preference.value ? 'left-[1.45rem]' : 'left-0.5'"
+                ></span>
+              </button>
+            </div>
+          }
+        </div>
+      </article>
+
+      <article class="rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl">
+        <div class="flex items-start justify-between gap-3">
+          <div>
+            <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-brand-strong">
+              {{ i18n.t('settings.profile') }}
+            </p>
+            <p class="mt-1 text-xs text-muted">{{ i18n.t('settings.profileHint') }}</p>
+          </div>
+          <app-avatar [name]="profile().name" size="md" />
+        </div>
+
+        <form class="mt-4 grid gap-3 sm:grid-cols-2" (submit)="$event.preventDefault(); saveProfile()">
+          <label class="block">
+            <span class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
+              {{ i18n.t('settings.name') }}
+            </span>
+            <input
+              type="text"
+              [value]="profile().name"
+              (input)="updateProfile('name', $any($event.target).value)"
+              class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink outline-none transition focus:border-brand/50"
+            />
+          </label>
+          <label class="block">
+            <span class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
+              {{ i18n.t('settings.email') }}
+            </span>
+            <input
+              type="email"
+              [value]="profile().email"
+              (input)="updateProfile('email', $any($event.target).value)"
+              class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink outline-none transition focus:border-brand/50"
+            />
+          </label>
+          <label class="block">
+            <span class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
+              {{ i18n.t('settings.role') }}
+            </span>
+            <input
+              type="text"
+              [value]="profile().role"
+              (input)="updateProfile('role', $any($event.target).value)"
+              class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink outline-none transition focus:border-brand/50"
+            />
+          </label>
+          <label class="block">
+            <span class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
+              {{ i18n.t('settings.location') }}
+            </span>
+            <input
+              type="text"
+              [value]="profile().location"
+              (input)="updateProfile('location', $any($event.target).value)"
+              class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink outline-none transition focus:border-brand/50"
+            />
+          </label>
+
+          <div class="flex flex-wrap items-center justify-between gap-2 sm:col-span-2">
+            <p class="text-[10px] leading-5 text-muted">{{ i18n.t('settings.noAccounts') }}</p>
+            <button
+              type="submit"
+              class="inline-flex h-10 items-center gap-2 rounded-xl bg-linear-to-r from-brand via-iris to-aqua px-3.5 text-xs font-semibold text-white shadow-glow transition hover:brightness-110"
+            >
+              <fa-icon [icon]="icons['check']" class="text-[11px]" aria-hidden="true" />
+              {{ i18n.t('common.save') }}
+            </button>
+          </div>
+        </form>
+      </article>
+    </div>
+
+    <div class="flex flex-col gap-4">
+      <article class="rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl">
+        <p class="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-brand-strong">
+          <fa-icon [icon]="icons['shield']" class="text-[10px]" aria-hidden="true" />
+          {{ i18n.t('settings.privacy') }}
+        </p>
+        <p class="mt-1 text-xs text-muted">{{ i18n.t('settings.privacyHint') }}</p>
+
+        <div class="mt-3 flex flex-col gap-2">
+          <div class="rounded-2xl border border-line bg-surface-raised/50 p-3">
+            <p class="flex items-center gap-2 text-[11px] font-semibold text-ink">
+              <fa-icon [icon]="icons['key']" class="text-[10px] text-aqua" aria-hidden="true" />
+              {{ i18n.t('settings.privacyManagement') }}
+            </p>
+            <p class="mt-1 text-[10px] leading-5 text-muted">{{ i18n.t('settings.privacyManagementHint') }}</p>
+          </div>
+          <div class="rounded-2xl border border-line bg-surface-raised/50 p-3">
+            <p class="flex items-center gap-2 text-[11px] font-semibold text-ink">
+              <fa-icon [icon]="icons['lock']" class="text-[10px] text-brand-strong" aria-hidden="true" />
+              {{ i18n.t('settings.privacyClaim') }}
+            </p>
+            <p class="mt-1 text-[10px] leading-5 text-muted">{{ i18n.t('settings.privacyClaimHint') }}</p>
+          </div>
+          <div class="rounded-2xl border border-line bg-surface-raised/50 p-3">
+            <p class="flex items-center gap-2 text-[11px] font-semibold text-ink">
+              <fa-icon [icon]="icons['eye']" class="text-[10px] text-mint" aria-hidden="true" />
+              {{ i18n.t('settings.privacyData') }}
+            </p>
+            <p class="mt-1 text-[10px] leading-5 text-muted">{{ i18n.t('settings.privacyDataHint') }}</p>
+          </div>
+        </div>
+      </article>
+
+      <article class="rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl">
+        <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-brand-strong">
+          {{ i18n.t('settings.support') }}
+        </p>
+        <p class="mt-1 text-xs text-muted">{{ i18n.t('settings.supportHint') }}</p>
+        <a
+          href="mailto:equipa@apupu.ao"
+          class="mt-3 inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-line bg-surface-raised/70 px-3 text-xs font-semibold text-ink transition hover:border-brand/40"
+        >
+          <fa-icon [icon]="icons['envelope']" class="text-[11px] text-muted" aria-hidden="true" />
+          {{ i18n.t('settings.supportContact') }}
+        </a>
+        <p class="mt-3 flex items-center justify-between text-[10px] text-muted">
+          <span>{{ i18n.t('settings.version') }}</span>
+          <span class="font-semibold text-ink">0.1.0 · {{ i18n.t('settings.development') }}</span>
+        </p>
+      </article>
+
+      <article class="rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl">
+        <p class="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-brand-strong">
+          <fa-icon [icon]="icons['key']" class="text-[10px]" aria-hidden="true" />
+          {{ i18n.t('settings.danger') }}
+        </p>
+
+        @if (store.managementEvent(); as event) {
+          <p class="mt-2 text-xs leading-5 text-muted">{{ event.title }}</p>
+          <p class="mt-1 text-[10px] leading-5 text-muted/80">{{ i18n.t('settings.endManagementHint') }}</p>
+          <button
+            type="button"
+            class="mt-3 inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-coral/30 bg-coral/10 px-3 text-xs font-semibold text-coral transition hover:bg-coral/15"
+            (click)="endManagement()"
+          >
+            <fa-icon [icon]="icons['logout']" class="text-[11px]" aria-hidden="true" />
+            {{ i18n.t('settings.endManagement') }}
+          </button>
+        } @else {
+          <p class="mt-2 text-[10px] leading-5 text-muted">{{ i18n.t('management.lockedText') }}</p>
+          <a
+            routerLink="/gestao"
+            class="mt-3 inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-line bg-surface-raised/70 px-3 text-xs font-semibold text-ink transition hover:border-brand/40"
+          >
+            <fa-icon [icon]="icons['shield']" class="text-[11px] text-muted" aria-hidden="true" />
+            {{ i18n.t('management.goToEntry') }}
+          </a>
+        }
+      </article>
+
+      <article class="rounded-4xl border border-amber/25 bg-amber/5 p-5 shadow-card backdrop-blur-2xl">
+        <p class="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-amber">
+          <fa-icon [icon]="icons['refresh']" class="text-[10px]" aria-hidden="true" />
+          {{ i18n.t('settings.demoData') }}
+        </p>
+        <p class="mt-2 text-[10px] leading-5 text-muted">{{ i18n.t('settings.resetDemoHint') }}</p>
+        <button
+          type="button"
+          class="mt-3 inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-amber/30 bg-amber/10 px-3 text-xs font-semibold text-amber transition hover:bg-amber/15"
+          (click)="resetOpen.set(true)"
+        >
+          <fa-icon [icon]="icons['refresh']" class="text-[11px]" aria-hidden="true" />
+          {{ i18n.t('settings.resetDemo') }}
+        </button>
+      </article>
+    </div>
+  </div>
+
+  <app-confirm-dialog
+    [open]="resetOpen()"
+    [title]="i18n.t('settings.resetDemo')"
+    [message]="i18n.t('settings.resetDemoHint')"
+    [confirmLabel]="i18n.t('settings.resetDemo')"
+    [cancelLabel]="i18n.t('common.cancel')"
+    tone="primary"
+    (confirmed)="resetDemo()"
+    (cancelled)="resetOpen.set(false)"
+  />
+</section>

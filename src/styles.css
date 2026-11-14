@@ -1,3 +1,254 @@
-/* You can add global styles to this file, and also import other style files */
-
 @import 'tailwindcss';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+ * Apupu design tokens.
+ * The only authored stylesheet of the project. Everything else is Tailwind utility classes.
+ * The default experience is the dark blue "glass" theme from the visual reference.
+ */
+@theme inline {
+  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-display: 'Space Grotesk', 'Inter', ui-sans-serif, system-ui, sans-serif;
+
+  --color-canvas: var(--ap-canvas);
+  --color-surface: var(--ap-surface);
+  --color-surface-raised: var(--ap-surface-raised);
+  --color-surface-solid: var(--ap-surface-solid);
+  --color-line: var(--ap-line);
+  --color-ink: var(--ap-ink);
+  --color-muted: var(--ap-muted);
+  --color-brand: var(--ap-brand);
+  --color-brand-strong: var(--ap-brand-strong);
+  --color-iris: var(--ap-iris);
+  --color-aqua: var(--ap-aqua);
+  --color-mint: var(--ap-mint);
+  --color-amber: var(--ap-amber);
+  --color-coral: var(--ap-coral);
+
+  --radius-4xl: 2rem;
+  --radius-5xl: 2.5rem;
+
+  --shadow-card: var(--ap-shadow-card);
+  --shadow-glow: var(--ap-shadow-glow);
+  --shadow-glow-aqua: var(--ap-shadow-glow-aqua);
+
+  --animate-float: float 9s ease-in-out infinite;
+  --animate-float-slow: float 14s ease-in-out infinite;
+  --animate-aurora: aurora 18s ease-in-out infinite alternate;
+  --animate-rise: rise 0.55s cubic-bezier(0.22, 0.85, 0.3, 1) both;
+  --animate-pulse-ring: pulse-ring 3s ease-out infinite;
+}
+
+:root {
+  color-scheme: light;
+
+  --ap-canvas: #eef2ff;
+  --ap-surface: rgb(255 255 255 / 0.74);
+  --ap-surface-raised: rgb(255 255 255 / 0.92);
+  --ap-surface-solid: #ffffff;
+  --ap-line: rgb(41 62 130 / 0.14);
+  --ap-ink: #101a38;
+  --ap-muted: #58658a;
+  --ap-brand: #3056f5;
+  --ap-brand-strong: #2340c9;
+  --ap-iris: #7457f0;
+  --ap-aqua: #0785ab;
+  --ap-mint: #0d8f63;
+  --ap-amber: #a86b0a;
+  --ap-coral: #cc3f5c;
+
+  --ap-shadow-card: 0 28px 70px -38px rgb(44 63 135 / 0.35), inset 0 1px 0 rgb(255 255 255 / 0.7);
+  --ap-shadow-glow: 0 24px 60px -26px rgb(48 86 245 / 0.5);
+  --ap-shadow-glow-aqua: 0 24px 60px -30px rgb(7 133 171 / 0.4);
+}
+
+.dark {
+  color-scheme: dark;
+
+  --ap-canvas: #070c1d;
+  --ap-surface: rgb(17 27 58 / 0.72);
+  --ap-surface-raised: rgb(27 41 84 / 0.78);
+  --ap-surface-solid: #0e1734;
+  --ap-line: rgb(151 172 255 / 0.14);
+  --ap-ink: #f0f4ff;
+  --ap-muted: #9aa8c9;
+  --ap-brand: #5b83ff;
+  --ap-brand-strong: #8ea6ff;
+  --ap-iris: #a58cff;
+  --ap-aqua: #63e2ff;
+  --ap-mint: #4ce3a4;
+  --ap-amber: #ffcf6b;
+  --ap-coral: #ff7a90;
+
+  --ap-shadow-card: 0 34px 90px -42px rgb(2 7 25 / 0.95), inset 0 1px 0 rgb(255 255 255 / 0.06);
+  --ap-shadow-glow: 0 24px 70px -24px rgb(91 131 255 / 0.55);
+  --ap-shadow-glow-aqua: 0 24px 70px -28px rgb(99 226 255 / 0.38);
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    min-height: 100dvh;
+    background-color: var(--ap-canvas);
+    background-image:
+      radial-gradient(
+        55rem 55rem at 12% -12%,
+        color-mix(in srgb, var(--ap-brand) 20%, transparent),
+        transparent 62%
+      ),
+      radial-gradient(
+        46rem 46rem at 100% -4%,
+        color-mix(in srgb, var(--ap-iris) 17%, transparent),
+        transparent 58%
+      ),
+      radial-gradient(
+        42rem 42rem at 78% 108%,
+        color-mix(in srgb, var(--ap-aqua) 13%, transparent),
+        transparent 62%
+      );
+    background-attachment: fixed;
+    color: var(--ap-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  ::selection {
+    background: color-mix(in srgb, var(--ap-brand) 38%, transparent);
+    color: var(--ap-ink);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--ap-brand-strong);
+    outline-offset: 3px;
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in srgb, var(--ap-brand) 45%, transparent) transparent;
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    border: 3px solid transparent;
+    border-radius: 999px;
+    background-clip: padding-box;
+    background-color: color-mix(in srgb, var(--ap-brand) 45%, transparent);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+/* Font Awesome SVG sizing (FaConfig.autoAddCss is disabled to keep a single stylesheet). */
+.ng-fa-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+svg.svg-inline--fa {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  overflow: visible;
+  vertical-align: -0.125em;
+  fill: currentColor;
+}
+
+svg.svg-inline--fa.fa-fw {
+  width: 1.25em;
+}
+
+svg.svg-inline--fa.fa-spin {
+  animation: fa-spin 2s linear infinite;
+}
+
+svg.svg-inline--fa.fa-beat {
+  animation: fa-beat 1.3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -14px, 0);
+  }
+}
+
+@keyframes aurora {
+  0% {
+    transform: translate3d(-3%, -2%, 0) scale(1);
+    opacity: 0.65;
+  }
+  50% {
+    transform: translate3d(3%, 4%, 0) scale(1.08);
+    opacity: 0.9;
+  }
+  100% {
+    transform: translate3d(-2%, 3%, 0) scale(1.02);
+    opacity: 0.7;
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 16px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes pulse-ring {
+  0% {
+    transform: scale(0.9);
+    opacity: 0.6;
+  }
+  70% {
+    transform: scale(1.35);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1.35);
+    opacity: 0;
+  }
+}
+
+@keyframes fa-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes fa-beat {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.12);
+  }
+}

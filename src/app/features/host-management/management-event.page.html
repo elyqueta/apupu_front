@@ -12,7 +12,7 @@
           routerLink="/painel"
           class="inline-flex h-10 items-center gap-2 rounded-xl border border-line bg-surface-raised/60 px-3 text-xs font-semibold text-ink backdrop-blur-xl transition hover:border-brand/40"
         >
-          <fa-icon [icon]="icons['arrowLeft']" class="text-[10px] text-muted" aria-hidden="true" />
+          <fa-icon [icon]="icons['chevronLeft']" class="text-[10px] text-muted" aria-hidden="true" />
           {{ i18n.t('nav.backToPanel') }}
         </a>
         <app-preference-controls class="hidden sm:flex" />
@@ -35,7 +35,7 @@
             class="mt-5 inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-linear-to-r from-brand via-iris to-aqua px-4 text-sm font-semibold text-white shadow-glow transition hover:brightness-110"
             (click)="continueToEvent()"
           >
-            <fa-icon [icon]="icons['arrowRight']" class="text-xs" aria-hidden="true" />
+            <fa-icon [icon]="icons['chevronRight']" class="text-xs" aria-hidden="true" />
             {{ i18n.t('management.continueButton') }}
           </button>
         </article>

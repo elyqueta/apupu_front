@@ -104,7 +104,7 @@ import { TemplateArtworkComponent } from './template-artwork.component';
             class="inline-flex items-center gap-1.5 text-[11px] font-semibold text-brand-strong transition group-hover:gap-2.5"
           >
             {{ i18n.t('events.card.open') }}
-            <fa-icon [icon]="icons['arrowRight']" class="text-[10px]" aria-hidden="true" />
+            <fa-icon [icon]="icons['chevronRight']" class="text-[10px]" aria-hidden="true" />
           </span>
         </div>
       </div>

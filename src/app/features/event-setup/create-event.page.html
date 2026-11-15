@@ -101,7 +101,7 @@
           routerLink="/eventos"
           class="inline-flex h-10 items-center gap-2 rounded-xl border border-line bg-surface-raised/60 px-3 text-xs font-semibold text-ink backdrop-blur-xl transition hover:border-brand/40"
         >
-          <fa-icon [icon]="icons['arrowLeft']" class="text-[10px] text-muted" aria-hidden="true" />
+          <fa-icon [icon]="icons['chevronLeft']" class="text-[10px] text-muted" aria-hidden="true" />
           {{ i18n.t('nav.events') }}
         </a>
       </div>
@@ -803,7 +803,7 @@
                 class="inline-flex h-10 items-center gap-2 rounded-xl border border-line bg-surface-raised/70 px-3.5 text-xs font-semibold text-ink transition hover:border-brand/40"
                 (click)="previous()"
               >
-                <fa-icon [icon]="icons['arrowLeft']" class="text-[10px] text-muted" aria-hidden="true" />
+                <fa-icon [icon]="icons['chevronLeft']" class="text-[10px] text-muted" aria-hidden="true" />
                 {{ i18n.t('create.previous') }}
               </button>
             } @else {
@@ -822,7 +822,7 @@
                 (click)="next()"
               >
                 {{ i18n.t('create.next') }}
-                <fa-icon [icon]="icons['arrowRight']" class="text-[10px]" aria-hidden="true" />
+                <fa-icon [icon]="icons['chevronRight']" class="text-[10px]" aria-hidden="true" />
               </button>
             } @else {
               <button

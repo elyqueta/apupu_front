@@ -172,7 +172,7 @@
     <div class="flex min-h-dvh min-w-0 flex-1 flex-col">
       <header class="sticky top-0 z-40 px-3 pt-3 sm:px-4 lg:px-0 lg:pt-4">
         <div
-          class="flex flex-wrap items-center gap-2.5 rounded-3xl border border-line bg-surface/80 p-2.5 shadow-card backdrop-blur-2xl sm:gap-3 sm:rounded-4xl sm:p-3"
+          class="relative flex flex-wrap items-center gap-2.5 rounded-3xl border border-line bg-surface/80 p-2.5 shadow-card backdrop-blur-2xl sm:gap-3 sm:rounded-4xl sm:p-3"
         >
           <button
             type="button"
@@ -225,7 +225,7 @@
 
             <app-preference-controls class="hidden sm:flex" />
 
-            <div class="relative">
+            <div>
               <button
                 type="button"
                 class="relative grid size-10 place-items-center rounded-xl border border-line bg-surface-raised/60 text-muted transition hover:border-brand/40 hover:text-ink"
@@ -247,7 +247,7 @@
                   (click)="notificationsOpen.set(false)"
                 ></button>
                 <div
-                  class="absolute right-0 top-full z-50 mt-2 w-[min(92vw,22rem)] overflow-hidden rounded-3xl border border-line bg-surface-solid/95 shadow-card backdrop-blur-2xl animate-rise"
+                  class="absolute right-0 top-full z-50 mt-2 max-h-[calc(100dvh-6rem)] w-[min(calc(100vw-1.5rem),22rem)] overflow-y-auto rounded-3xl border border-line bg-surface-solid/95 shadow-card backdrop-blur-2xl animate-rise sm:w-[min(92vw,22rem)]"
                 >
                   <div class="flex items-center justify-between gap-3 border-b border-line p-4">
                     <p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted">
@@ -293,7 +293,7 @@
                       (click)="notificationsOpen.set(false)"
                     >
                       {{ i18n.t('common.viewAll') }}
-                      <fa-icon [icon]="icons['arrowRight']" class="text-[9px]" aria-hidden="true" />
+                      <fa-icon [icon]="icons['chevronRight']" class="text-[9px]" aria-hidden="true" />
                     </a>
                   }
                 </div>

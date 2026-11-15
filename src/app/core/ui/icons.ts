@@ -1,7 +1,5 @@
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import {
-  faArrowLeft,
-  faArrowRight,
   faArrowRightFromBracket,
   faArrowTrendUp,
   faArrowUpRightFromSquare,
@@ -113,8 +111,8 @@ export const ICONS: Record<string, IconDefinition> = {
   chevronRight: faChevronRight,
   chevronDown: faChevronDown,
   chevronLeft: faChevronLeft,
-  arrowRight: faArrowRight,
-  arrowLeft: faArrowLeft,
+  arrowRight: faChevronRight,
+  arrowLeft: faChevronLeft,
   arrowUpRight: faArrowUpRightFromSquare,
   trendUp: faArrowTrendUp,
   ellipsis: faEllipsis,

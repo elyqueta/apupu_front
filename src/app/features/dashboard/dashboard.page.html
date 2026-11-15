@@ -67,7 +67,7 @@
     />
   </div>
 
-  <div class="grid gap-4 xl:grid-cols-[minmax(0,1.75fr)_minmax(0,1fr)]">
+  <div class="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-4 xl:grid-cols-[minmax(0,1.75fr)_minmax(0,1fr)]">
     @if (nextEvent(); as event) {
       <article
         class="relative overflow-hidden rounded-4xl border border-line bg-surface shadow-card backdrop-blur-2xl"
@@ -306,7 +306,7 @@
     </article>
   </div>
 
-  <div class="grid gap-4 xl:grid-cols-[minmax(0,1.75fr)_minmax(0,1fr)]">
+  <div class="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-4 xl:grid-cols-[minmax(0,1.75fr)_minmax(0,1fr)]">
     <section class="rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl">
       <div class="flex flex-wrap items-start justify-between gap-3">
         <div>
@@ -324,7 +324,7 @@
         </a>
       </div>
 
-      <div class="mt-4 grid gap-3 md:grid-cols-2">
+      <div class="mt-4 grid min-w-0 gap-3 md:grid-cols-2">
         @for (event of recentEvents(); track event.id) {
           <app-event-card [event]="event" />
         }

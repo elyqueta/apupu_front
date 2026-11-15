@@ -12,6 +12,7 @@ import { TemplateArtworkComponent } from './template-artwork.component';
 
 @Component({
   selector: 'app-event-card',
+  host: { class: 'block min-w-0' },
   imports: [
     RouterLink,
     FaIconComponent,

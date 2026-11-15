@@ -114,35 +114,43 @@
             [templateId]="event.templateId"
             variant="hero"
             [kicker]="typeLabel()"
-            [title]="event.title"
-            [subtitle]="i18n.t('invitation.hostedBy', { name: event.hostName })"
             class="absolute inset-0"
           />
 
-          <div class="relative flex h-full flex-col justify-end gap-4 text-white">
-            <div class="flex flex-wrap items-center gap-3 text-xs text-white/80">
-              <span class="inline-flex items-center gap-1.5">
-                <fa-icon [icon]="icons['calendar']" class="text-[11px]" aria-hidden="true" />
-                {{ i18n.fullDate(event.startsAt, event.timezone) }}
-              </span>
-              <span class="inline-flex items-center gap-1.5">
-                <fa-icon [icon]="icons['clock']" class="text-[11px]" aria-hidden="true" />
-                {{ i18n.time(event.startsAt, event.timezone) }}
-              </span>
+          <div class="relative flex h-full flex-col justify-end gap-3 text-white">
+            <div>
+              <h3 class="font-display text-2xl font-semibold leading-tight tracking-tight sm:text-3xl">
+                {{ event.title }}
+              </h3>
+              <p class="mt-1 text-xs text-white/75">
+                {{ i18n.t('invitation.hostedBy', { name: event.hostName }) }}
+              </p>
             </div>
-            <div class="flex flex-wrap items-center gap-2">
-              <span
-                class="inline-flex items-center gap-1.5 rounded-full border border-white/25 bg-white/15 px-2.5 py-1 text-[10px] font-semibold backdrop-blur-md"
-              >
-                <fa-icon [icon]="icons['location']" class="text-[9px]" aria-hidden="true" />
-                {{ event.venue }}, {{ event.city }}
-              </span>
-              <span
-                class="inline-flex items-center gap-1.5 rounded-full border border-white/25 bg-white/15 px-2.5 py-1 text-[10px] font-semibold backdrop-blur-md"
-              >
-                <fa-icon [icon]="icons['palette']" class="text-[9px]" aria-hidden="true" />
-                {{ templateName() }}
-              </span>
+            <div class="flex flex-col gap-2">
+              <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-white/80">
+                <span class="inline-flex items-center gap-1.5">
+                  <fa-icon [icon]="icons['calendar']" class="text-[11px]" aria-hidden="true" />
+                  {{ i18n.fullDate(event.startsAt, event.timezone) }}
+                </span>
+                <span class="inline-flex items-center gap-1.5">
+                  <fa-icon [icon]="icons['clock']" class="text-[11px]" aria-hidden="true" />
+                  {{ i18n.time(event.startsAt, event.timezone) }}
+                </span>
+              </div>
+              <div class="flex flex-wrap items-center gap-2">
+                <span
+                  class="inline-flex max-w-full items-center gap-1.5 rounded-full border border-white/25 bg-white/15 px-2.5 py-1 text-[10px] font-semibold backdrop-blur-md"
+                >
+                  <fa-icon [icon]="icons['location']" class="shrink-0 text-[9px]" aria-hidden="true" />
+                  <span class="min-w-0 break-words">{{ event.venue }}, {{ event.city }}</span>
+                </span>
+                <span
+                  class="inline-flex max-w-full items-center gap-1.5 rounded-full border border-white/25 bg-white/15 px-2.5 py-1 text-[10px] font-semibold backdrop-blur-md"
+                >
+                  <fa-icon [icon]="icons['palette']" class="shrink-0 text-[9px]" aria-hidden="true" />
+                  <span class="min-w-0 break-words">{{ templateName() }}</span>
+                </span>
+              </div>
             </div>
           </div>
         </div>

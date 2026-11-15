@@ -124,7 +124,7 @@ export class TemplateArtworkComponent {
       case 'thumb':
         return 'aspect-[4/3]';
       case 'hero':
-        return 'min-h-56 sm:min-h-72';
+        return 'h-full min-h-56 sm:min-h-72';
       default:
         return 'aspect-[16/9]';
     }

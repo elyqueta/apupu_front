@@ -90,7 +90,7 @@ import { TemplateArtworkComponent } from './template-artwork.component';
           </svg>
         </div>
 
-        <div class="flex items-center justify-between gap-3 border-t border-line pt-4">
+        <div class="flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4">
           <div class="flex items-center gap-2.5">
             @if (guestNames().length > 0) {
               <app-avatar-stack [names]="guestNames()" [max]="3" />

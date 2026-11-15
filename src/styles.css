@@ -11,6 +11,20 @@
   --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-display: 'Space Grotesk', 'Inter', ui-sans-serif, system-ui, sans-serif;
 
+  --text-xs: calc(0.75rem * var(--ap-font-scale));
+  --text-sm: calc(0.875rem * var(--ap-font-scale));
+  --text-base: calc(1rem * var(--ap-font-scale));
+  --text-lg: calc(1.125rem * var(--ap-font-scale));
+  --text-xl: calc(1.25rem * var(--ap-font-scale));
+  --text-2xl: calc(1.5rem * var(--ap-font-scale));
+  --text-3xl: calc(1.875rem * var(--ap-font-scale));
+  --text-4xl: calc(2.25rem * var(--ap-font-scale));
+  --text-5xl: calc(3rem * var(--ap-font-scale));
+  --text-6xl: calc(3.75rem * var(--ap-font-scale));
+  --text-7xl: calc(4.5rem * var(--ap-font-scale));
+  --text-8xl: calc(6rem * var(--ap-font-scale));
+  --text-9xl: calc(8rem * var(--ap-font-scale));
+
   --color-canvas: var(--ap-canvas);
   --color-surface: var(--ap-surface);
   --color-surface-raised: var(--ap-surface-raised);
@@ -42,6 +56,7 @@
 
 :root {
   color-scheme: light;
+  --ap-font-scale: 1;
 
   --ap-canvas: #eef2ff;
   --ap-surface: rgb(255 255 255 / 0.74);
@@ -61,6 +76,32 @@
   --ap-shadow-card: 0 28px 70px -38px rgb(44 63 135 / 0.35), inset 0 1px 0 rgb(255 255 255 / 0.7);
   --ap-shadow-glow: 0 24px 60px -26px rgb(48 86 245 / 0.5);
   --ap-shadow-glow-aqua: 0 24px 60px -30px rgb(7 133 171 / 0.4);
+}
+
+:root[data-font-size='large'] {
+  --ap-font-scale: 1.25;
+}
+
+:root[data-font-size='largest'] {
+  --ap-font-scale: 1.5;
+}
+
+@layer utilities {
+  :root[data-font-size] [class~='text-[8px]'] {
+    font-size: calc(8px * var(--ap-font-scale));
+  }
+
+  :root[data-font-size] [class~='text-[9px]'] {
+    font-size: calc(9px * var(--ap-font-scale));
+  }
+
+  :root[data-font-size] [class~='text-[10px]'] {
+    font-size: calc(10px * var(--ap-font-scale));
+  }
+
+  :root[data-font-size] [class~='text-[11px]'] {
+    font-size: calc(11px * var(--ap-font-scale));
+  }
 }
 
 .dark {

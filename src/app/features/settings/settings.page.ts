@@ -6,6 +6,7 @@ import { LOCALES, TranslationKey } from '../../core/i18n/translations';
 import { ThemeMode } from '../../core/models/models';
 import { ToastService } from '../../core/services/toast.service';
 import { WorkspaceStore } from '../../core/services/workspace.store';
+import { FontSize, FontSizeService } from '../../core/theme/font-size.service';
 import { ThemeService } from '../../core/theme/theme.service';
 import { ICONS } from '../../core/ui/icons';
 import { AvatarComponent } from '../../shared/components/avatar.component';
@@ -27,6 +28,7 @@ export class SettingsPage {
   protected readonly store = inject(WorkspaceStore);
   protected readonly i18n = inject(I18nService);
   protected readonly theme = inject(ThemeService);
+  protected readonly fontSize = inject(FontSizeService);
   private readonly toasts = inject(ToastService);
 
   protected readonly icons = ICONS;
@@ -37,6 +39,12 @@ export class SettingsPage {
     { mode: 'dark', labelKey: 'settings.themeDark', hintKey: 'settings.themeDarkHint', icon: 'moon' },
     { mode: 'light', labelKey: 'settings.themeLight', hintKey: 'settings.themeLightHint', icon: 'sun' },
     { mode: 'system', labelKey: 'settings.themeSystem', hintKey: 'settings.themeSystemHint', icon: 'display' },
+  ];
+
+  protected readonly fontSizeOptions: Array<{ size: FontSize; labelKey: TranslationKey }> = [
+    { size: 'normal', labelKey: 'settings.fontSizeNormal' },
+    { size: 'large', labelKey: 'settings.fontSizeLarge' },
+    { size: 'largest', labelKey: 'settings.fontSizeLargest' },
   ];
 
   protected readonly preferences = signal([
@@ -55,6 +63,11 @@ export class SettingsPage {
 
   protected setTheme(mode: ThemeMode): void {
     this.theme.setMode(mode);
+  }
+
+  protected setFontSize(size: FontSize): void {
+    this.fontSize.setSize(size);
+    this.toasts.success(this.i18n.t('settings.saved'));
   }
 
   protected togglePreference(key: string): void {

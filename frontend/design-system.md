@@ -30,6 +30,7 @@ No tema claro, preservar a identidade azul/violeta usando fundos claros e sombra
 - Não criar qualquer outro `.css`, `.scss`, folha por componente, CSS inline, `<style>` ou estilo específico de componente. Validar esta regra ao rever o diff e a árvore do projecto.
 - Preferir tokens de tema e utilitários Tailwind aos valores arbitrários. Não espalhar códigos hexadecimais repetidos pelos templates.
 - Classes de tema devem ser trocadas no elemento raiz (`html` ou contentor da aplicação), com suporte ao modificador `dark:` e persistência apenas da preferência não sensível do utilizador.
+- As definições devem permitir ampliar os tamanhos de texto da interface sem ampliar margens e espaçamentos; verificar a adaptação em ecrãs pequenos no maior nível disponível.
 
 ## Cor, luz e superfícies
 
@@ -54,4 +55,3 @@ No tema claro, preservar a identidade azul/violeta usando fundos claros e sombra
 - Respeitar `prefers-reduced-motion`; reduzir ou remover animações e efeitos de glow em movimento.
 - Em dispositivos móveis, permitir edição confortável de formulários, leitura de regras longas, uso dos dados bancários e resposta ao convite sem scroll horizontal.
 - A escolha de tema oferece claro, escuro e, se simples no projecto, “seguir sistema”. O padrão deve seguir a preferência do sistema sem bloquear a mudança manual.
-

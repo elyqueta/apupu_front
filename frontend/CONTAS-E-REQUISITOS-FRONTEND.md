@@ -1,7 +1,7 @@
 # Contas de anfitrião e requisitos de backend para o frontend
 
 Este documento especifica **tudo o que o backend tem de acrescentar** para
-suportar as funcionalidades do frontend actual do Conta Comigo e para introduzir a
+suportar as funcionalidades do frontend actual do Conto Contigo e para introduzir a
 camada de autenticação do anfitrião (registo e login com email e senha). É um
 documento de requisitos/planeamento; o contrato efectivamente implementado
 está em [`API-CONTRACT.md`](./API-CONTRACT.md) e o esquema real em

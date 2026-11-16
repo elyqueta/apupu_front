@@ -142,7 +142,7 @@ export class ReportsPage {
     const url = URL.createObjectURL(new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8' }));
     const link = this.document.createElement('a');
     link.href = url;
-    link.download = `conta-comigo-relatorio-${new Date().toISOString().slice(0, 10)}.csv`;
+    link.download = `conto-contigo-relatorio-${new Date().toISOString().slice(0, 10)}.csv`;
     link.hidden = true;
     this.document.body.append(link);
     link.click();

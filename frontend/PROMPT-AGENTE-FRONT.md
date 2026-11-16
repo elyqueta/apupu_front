@@ -1,8 +1,8 @@
-# Prompt para o agente de frontend — Conta Comigo
+# Prompt para o agente de frontend — Conto Contigo
 
 ## Papel
 
-És o agente responsável pelo frontend do **Conta Comigo**, uma aplicação
+És o agente responsável pelo frontend do **Conto Contigo**, uma aplicação
 Angular 22 (standalone, TypeScript estrito, Tailwind CSS) que consome a
 API Node.js/Express já implementada neste repositório.
 

@@ -5,25 +5,25 @@ import { authenticatedGuard } from './core/api/auth.guard';
 export const routes: Routes = [
   {
     path: 'entrar',
-    title: 'Conta Comigo · Entrar',
+    title: 'Conto Contigo · Entrar',
     loadComponent: () => import('./features/auth/auth.page').then((m) => m.AuthPage),
     data: { mode: 'login' },
   },
   {
     path: 'registar',
-    title: 'Conta Comigo · Criar conta',
+    title: 'Conto Contigo · Criar conta',
     loadComponent: () => import('./features/auth/auth.page').then((m) => m.AuthPage),
     data: { mode: 'register' },
   },
   {
     path: 'recuperar-senha',
-    title: 'Conta Comigo · Recuperar senha',
+    title: 'Conto Contigo · Recuperar senha',
     loadComponent: () => import('./features/auth/password.page').then((m) => m.PasswordPage),
     data: { mode: 'forgot' },
   },
   {
     path: 'repor-senha',
-    title: 'Conta Comigo · Repor senha',
+    title: 'Conto Contigo · Repor senha',
     loadComponent: () => import('./features/auth/password.page').then((m) => m.PasswordPage),
     data: { mode: 'reset' },
   },
@@ -39,49 +39,49 @@ export const routes: Routes = [
       },
       {
         path: 'painel',
-        title: 'Conta Comigo · Painel',
+        title: 'Conto Contigo · Painel',
         loadComponent: () =>
           import('./features/dashboard/dashboard.page').then((m) => m.DashboardPage),
       },
       {
         path: 'eventos',
-        title: 'Conta Comigo · Eventos',
+        title: 'Conto Contigo · Eventos',
         loadComponent: () =>
           import('./features/events/events.page').then((m) => m.EventsPage),
       },
       {
         path: 'eventos/:eventId',
-        title: 'Conta Comigo · Evento',
+        title: 'Conto Contigo · Evento',
         loadComponent: () =>
           import('./features/events/event-detail.page').then((m) => m.EventDetailPage),
       },
       {
         path: 'criar-evento',
-        title: 'Conta Comigo · Criar evento',
+        title: 'Conto Contigo · Criar evento',
         loadComponent: () =>
           import('./features/event-setup/create-event.page').then((m) => m.CreateEventPage),
       },
       {
         path: 'convidados',
-        title: 'Conta Comigo · Convidados',
+        title: 'Conto Contigo · Convidados',
         loadComponent: () =>
           import('./features/guests/guests.page').then((m) => m.GuestsPage),
       },
       {
         path: 'templates',
-        title: 'Conta Comigo · Modelos',
+        title: 'Conto Contigo · Modelos',
         loadComponent: () =>
           import('./features/templates/templates.page').then((m) => m.TemplatesPage),
       },
       {
         path: 'relatorios',
-        title: 'Conta Comigo · Relatórios',
+        title: 'Conto Contigo · Relatórios',
         loadComponent: () =>
           import('./features/reports/reports.page').then((m) => m.ReportsPage),
       },
       {
         path: 'definicoes',
-        title: 'Conta Comigo · Definições',
+        title: 'Conto Contigo · Definições',
         loadComponent: () =>
           import('./features/settings/settings.page').then((m) => m.SettingsPage),
       },
@@ -89,19 +89,19 @@ export const routes: Routes = [
   },
   {
     path: 'gestao',
-    title: 'Conta Comigo · Gestão',
+    title: 'Conto Contigo · Gestão',
     loadComponent: () =>
       import('./features/host-management/management-entry.page').then((m) => m.ManagementEntryPage),
   },
   {
     path: 'gerir/:token',
-    title: 'Conta Comigo · Gestão',
+    title: 'Conto Contigo · Gestão',
     loadComponent: () =>
       import('./features/host-management/management-entry.page').then((m) => m.ManagementEntryPage),
   },
   {
     path: 'gestao/evento/:eventId',
-    title: 'Conta Comigo · Gestão do evento',
+    title: 'Conto Contigo · Gestão do evento',
     loadComponent: () =>
       import('./features/host-management/management-event.page').then((m) => m.ManagementEventPage),
   },
@@ -112,25 +112,25 @@ export const routes: Routes = [
   },
   {
     path: 'gestao/:token',
-    title: 'Conta Comigo · Gestão',
+    title: 'Conto Contigo · Gestão',
     loadComponent: () =>
       import('./features/host-management/management-entry.page').then((m) => m.ManagementEntryPage),
   },
   {
     path: 'convite/:token',
-    title: 'Conta Comigo · Convite',
+    title: 'Conto Contigo · Convite',
     loadComponent: () =>
       import('./features/invitation/invitation.page').then((m) => m.InvitationPage),
   },
   {
     path: 'i/:token',
-    title: 'Conta Comigo · Convite',
+    title: 'Conto Contigo · Convite',
     loadComponent: () =>
       import('./features/invitation/invitation.page').then((m) => m.InvitationPage),
   },
   {
     path: '**',
-    title: 'Conta Comigo · Página não encontrada',
+    title: 'Conto Contigo · Página não encontrada',
     loadComponent: () =>
       import('./features/not-found/not-found.page').then((m) => m.NotFoundPage),
   },

@@ -6,7 +6,7 @@ import { I18nService } from '../../core/i18n/i18n.service';
   selector: 'app-brand',
   imports: [RouterLink],
   template: `
-    <a routerLink="/painel" class="group flex items-center gap-3" aria-label="Conta Comigo">
+    <a routerLink="/painel" class="group flex items-center gap-3" aria-label="Conto Contigo">
       <img
         src="/assets/conta-comigo-icone.svg"
         alt=""

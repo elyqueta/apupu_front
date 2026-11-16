@@ -8,7 +8,7 @@ import { ICONS } from '../../core/ui/icons';
   selector: 'app-brand',
   imports: [RouterLink, FaIconComponent],
   template: `
-    <a routerLink="/painel" class="group flex items-center gap-3" aria-label="Apupu">
+    <a routerLink="/painel" class="group flex items-center gap-3" aria-label="Conta Comigo">
       <span
         class="relative grid size-11 shrink-0 place-items-center rounded-2xl bg-linear-to-br from-brand via-iris to-aqua text-white shadow-glow transition duration-500 group-hover:scale-105"
       >

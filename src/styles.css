@@ -3,7 +3,7 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 /*
- * Apupu design tokens.
+ * Conta Comigo design tokens.
  * The only authored stylesheet of the project. Everything else is Tailwind utility classes.
  * The default experience is the dark blue "glass" theme from the visual reference.
  */

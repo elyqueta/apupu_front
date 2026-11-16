@@ -3,7 +3,7 @@ import { inject, Injectable, PLATFORM_ID, signal } from '@angular/core';
 
 export type FontSize = 'normal' | 'large' | 'largest';
 
-const FONT_SIZE_STORAGE_KEY = 'apupu.font-size';
+const FONT_SIZE_STORAGE_KEY = 'contacomigo.font-size';
 
 function isFontSize(value: string | null): value is FontSize {
   return value === 'normal' || value === 'large' || value === 'largest';

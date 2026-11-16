@@ -2,7 +2,7 @@ import { DOCUMENT, isPlatformBrowser } from '@angular/common';
 import { computed, DestroyRef, inject, Injectable, PLATFORM_ID, signal } from '@angular/core';
 import { ThemeMode } from '../models/models';
 
-const THEME_STORAGE_KEY = 'apupu.theme';
+const THEME_STORAGE_KEY = 'contacomigo.theme';
 
 @Injectable({ providedIn: 'root' })
 export class ThemeService {

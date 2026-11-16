@@ -1,5 +1,5 @@
 {
-  "outputDirectory": "dist/apupu_front/browser",
+  "outputDirectory": "dist/conta_comigo_front/browser",
   "rewrites": [
     {
       "source": "/(.*)",

@@ -7,7 +7,7 @@
   },
   "newProjectRoot": "projects",
   "projects": {
-    "apupu_front": {
+    "conta_comigo_front": {
       "projectType": "application",
       "schematics": {},
       "root": "",
@@ -73,10 +73,10 @@
           "builder": "@angular/build:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "apupu_front:build:production"
+              "buildTarget": "conta_comigo_front:build:production"
             },
             "development": {
-              "buildTarget": "apupu_front:build:development"
+              "buildTarget": "conta_comigo_front:build:development"
             }
           },
           "defaultConfiguration": "development"

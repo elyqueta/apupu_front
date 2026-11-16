@@ -1,5 +1,5 @@
 {
-  "name": "apupu-front",
+  "name": "conta-comigo-front",
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
@@ -7,7 +7,7 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "serve:ssr:apupu_front": "node dist/apupu_front/server/server.mjs"
+    "serve:ssr:conta_comigo_front": "node dist/conta_comigo_front/server/server.mjs"
   },
   "private": true,
   "packageManager": "npm@11.16.0",

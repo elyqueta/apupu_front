@@ -3,7 +3,7 @@ import { computed, inject, Injectable, PLATFORM_ID, signal } from '@angular/core
 import { Locale } from '../models/models';
 import { LOCALES, TRANSLATIONS, TranslationKey } from './translations';
 
-const LOCALE_STORAGE_KEY = 'apupu.locale';
+const LOCALE_STORAGE_KEY = 'contacomigo.locale';
 const DEFAULT_LOCALE: Locale = 'pt-AO';
 
 @Injectable({ providedIn: 'root' })

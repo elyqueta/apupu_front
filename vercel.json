@@ -2,6 +2,10 @@
   "outputDirectory": "dist/conta_comigo_front/browser",
   "rewrites": [
     {
+      "source": "/api/v1/(.*)",
+      "destination": "https://apupu-back.onrender.com/api/v1/$1"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.csr.html"
     }

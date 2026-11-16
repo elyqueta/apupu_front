@@ -8,7 +8,7 @@ O contrato partilhado é [`../backend/api-contract.md`](../backend/api-contract.
 - Usar HTTPS em ambientes não locais.
 - Enviar cookies de claim/gestão com `withCredentials` quando a implantação e o contrato exigirem; configurar CORS e cookies no backend para origem exacta, não `*` com credenciais.
 - Durante SSR, encaminhar o cookie HttpOnly `apupu_auth` para a API apenas quando o pedido de entrada e a API usam o mesmo hostname; nunca encaminhar cookies para outro host.
-- No Vercel com a API Render directa, a sessão depende de cookies cross-site aceites pelo browser (`SameSite=None; Secure`) e CORS com a origem exacta do frontend e credenciais. Validar esta configuração no ambiente antes de considerar o refresh autenticado funcional.
+- No Vercel, usar um rewrite same-origin para encaminhar `/api/v1/*` ao Render antes do fallback SPA. O backend deve emitir cookies host-only (sem `Domain=onrender.com`) para que o browser os associe ao domínio Vercel; confirmar esta configuração no ambiente publicado.
 - Não copiar tokens de links para `localStorage`, `sessionStorage`, logs ou query parameters de analytics.
 - Se a API usar um token curto no fragmento URL para a primeira troca, removê-lo do histórico do navegador depois do processo, sem apagar a rota necessária à navegação.
 - Não repetir automaticamente pedidos mutáveis sem uma chave de idempotência quando o contrato a exigir.

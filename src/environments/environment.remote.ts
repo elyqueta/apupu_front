@@ -1,3 +1,3 @@
 export const environment = {
-  apiBaseUrl: 'https://apupu-back.onrender.com/api/v1',
+  apiBaseUrl: '/api/v1',
 };

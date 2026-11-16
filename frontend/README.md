@@ -28,7 +28,7 @@ Não incluído:
 - Permitir apenas um ficheiro CSS global de entrada, por exemplo `src/styles.css`, para a importação e os tokens Tailwind exigidos pelo projecto.
 - Não criar CSS de componente, folhas CSS adicionais, SCSS, `style=""`, `<style>` ou configurações de `styles` específicas de componente para resolver layout.
 - Não manipular estilos através de `ElementRef`, `Renderer2` ou strings CSS. A mudança de tema deve ser feita por classes/modo dark e tokens Tailwind.
-- Ícones da interface devem ser SVG inline locais, consistentes com o estilo futurista e azul/violeta da referência; não usar emojis como ícones de produto nem depender de imagens remotas.
+- Ícones da interface devem ser SVG inline locais e coerentes com os tons neutros e verdes da marca; não usar emojis como ícones de produto nem depender de imagens remotas.
 
 ## Ordem de leitura
 

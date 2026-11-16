@@ -34,7 +34,7 @@ export class StatusBadgeComponent {
         return 'border-mint/30 bg-mint/15 text-mint';
       case 'declined':
       case 'cancelled':
-        return 'border-coral/30 bg-coral/15 text-coral';
+        return 'border-coral/30 bg-coral/10 text-coral';
       case 'completed':
         return 'border-aqua/30 bg-aqua/15 text-aqua';
       case 'pending':

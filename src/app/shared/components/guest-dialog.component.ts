@@ -51,7 +51,9 @@ import { ICONS } from '../../core/ui/icons';
 
           <form class="mt-6 flex flex-col gap-4" [formGroup]="form" (ngSubmit)="submit()">
             <label class="block">
-              <span class="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.16em] text-muted">
+              <span
+                class="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.16em] text-muted"
+              >
                 {{ i18n.t('guests.dialogEvent') }}
               </span>
               @if (fixedEventId()) {
@@ -79,7 +81,9 @@ import { ICONS } from '../../core/ui/icons';
             </label>
 
             <label class="block">
-              <span class="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.16em] text-muted">
+              <span
+                class="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.16em] text-muted"
+              >
                 {{ i18n.t('guests.dialogName') }} *
               </span>
               <input
@@ -90,12 +94,16 @@ import { ICONS } from '../../core/ui/icons';
                 [placeholder]="i18n.t('create.placeholder.guestName')"
               />
               @if (form.controls.name.touched && form.controls.name.invalid) {
-                <span class="mt-1 block text-xs text-coral">{{ i18n.t('create.errors.required') }}</span>
+                <span class="mt-1 block text-xs text-coral">{{
+                  i18n.t('create.errors.required')
+                }}</span>
               }
             </label>
 
             <label class="block">
-              <span class="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.16em] text-muted">
+              <span
+                class="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.16em] text-muted"
+              >
                 {{ i18n.t('guests.dialogEmail') }} *
               </span>
               <input
@@ -106,12 +114,16 @@ import { ICONS } from '../../core/ui/icons';
                 [placeholder]="i18n.t('create.placeholder.guestEmail')"
               />
               @if (form.controls.email.touched && form.controls.email.invalid) {
-                <span class="mt-1 block text-xs text-coral">{{ i18n.t('create.errors.email') }}</span>
+                <span class="mt-1 block text-xs text-coral">{{
+                  i18n.t('create.errors.email')
+                }}</span>
               }
             </label>
 
             <label class="block">
-              <span class="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.16em] text-muted">
+              <span
+                class="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.16em] text-muted"
+              >
                 {{ i18n.t('guests.dialogPhone') }}
                 <span class="font-normal normal-case tracking-normal text-muted/70">
                   ({{ i18n.t('common.optional') }})
@@ -146,7 +158,7 @@ import { ICONS } from '../../core/ui/icons';
               </button>
               <button
                 type="submit"
-                class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-linear-to-r from-brand via-iris to-aqua px-4 text-sm font-semibold text-white shadow-glow transition hover:brightness-110"
+                class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-brand px-4 text-sm font-semibold text-on-secondary transition hover:bg-secondary-hover"
               >
                 <fa-icon [icon]="icons['plus']" class="text-xs" aria-hidden="true" />
                 {{ i18n.t('guests.dialogSubmit') }}

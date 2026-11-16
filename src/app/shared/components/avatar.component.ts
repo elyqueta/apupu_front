@@ -1,13 +1,5 @@
 import { Component, computed, input } from '@angular/core';
 
-const PALETTES = [
-  'bg-linear-to-br from-brand via-iris to-aqua',
-  'bg-linear-to-br from-iris via-brand to-aqua',
-  'bg-linear-to-br from-aqua via-brand to-iris',
-  'bg-linear-to-br from-brand-strong via-brand to-iris',
-  'bg-linear-to-br from-mint via-aqua to-brand',
-];
-
 const SIZES: Record<string, string> = {
   xs: 'size-7 text-[10px]',
   sm: 'size-9 text-xs',
@@ -20,7 +12,7 @@ const SIZES: Record<string, string> = {
   selector: 'app-avatar',
   template: `
     <span
-      class="inline-grid shrink-0 place-items-center rounded-full font-semibold tracking-wide text-white shadow-card ring-2 ring-canvas/50"
+      class="inline-grid shrink-0 place-items-center rounded-full font-semibold tracking-wide text-on-secondary shadow-card ring-2 ring-canvas/50"
       [class]="classes()"
       [attr.title]="name()"
       [attr.aria-label]="name()"
@@ -48,7 +40,6 @@ export class AvatarComponent {
   });
 
   protected readonly classes = computed(() => {
-    const hash = [...this.name()].reduce((sum, char) => sum + char.charCodeAt(0), 0);
-    return `${SIZES[this.size()]} ${PALETTES[hash % PALETTES.length]}`;
+    return `${SIZES[this.size()]} bg-brand`;
   });
 }

@@ -20,14 +20,14 @@ import { I18nService } from '../../core/i18n/i18n.service';
           role="status"
         >
           <span
-            class="mt-0.5 grid size-8 shrink-0 place-items-center rounded-xl border border-white/10 bg-white/10"
+            class="mt-0.5 grid size-8 shrink-0 place-items-center rounded-xl border border-line bg-surface-raised"
           >
             <fa-icon [icon]="icon(toast.tone)" class="text-sm" />
           </span>
           <p class="min-w-0 flex-1 text-sm leading-6 text-ink">{{ toast.message }}</p>
           <button
             type="button"
-            class="grid size-7 shrink-0 place-items-center rounded-lg text-muted transition hover:bg-white/10 hover:text-ink"
+            class="grid size-7 shrink-0 place-items-center rounded-lg text-muted transition hover:bg-surface-raised hover:text-ink"
             [attr.aria-label]="i18n.t('common.close')"
             (click)="toasts.dismiss(toast.id)"
           >

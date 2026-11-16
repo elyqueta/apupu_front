@@ -22,7 +22,7 @@
       </a>
       <a
         routerLink="/criar-evento"
-        class="inline-flex h-11 items-center gap-2 rounded-xl bg-linear-to-r from-brand via-iris to-aqua px-4 text-sm font-semibold text-white shadow-glow transition hover:brightness-110"
+        class="inline-flex h-11 items-center gap-2 rounded-xl bg-brand px-4 text-sm font-semibold text-on-secondary transition hover:bg-secondary-hover"
       >
         <fa-icon [icon]="icons['plus']" class="text-xs" aria-hidden="true" />
         {{ i18n.t('dashboard.newEvent') }}
@@ -67,7 +67,9 @@
     />
   </div>
 
-  <div class="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-4 xl:grid-cols-[minmax(0,1.75fr)_minmax(0,1fr)]">
+  <div
+    class="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-4 xl:grid-cols-[minmax(0,1.75fr)_minmax(0,1fr)]"
+  >
     @if (nextEvent(); as event) {
       <article
         class="relative overflow-hidden rounded-4xl border border-line bg-surface shadow-card backdrop-blur-2xl"
@@ -80,49 +82,50 @@
               class="absolute inset-0"
             />
 
-            <div class="relative flex h-full flex-col justify-between gap-8 text-white">
+            <div class="relative flex h-full flex-col justify-between gap-8 text-ink">
               <div class="flex flex-wrap items-start justify-between gap-3">
                 <span
-                  class="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/15 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.2em] backdrop-blur-md"
+                  class="inline-flex items-center gap-2 rounded-full border border-line bg-surface px-3 py-1.5 text-[10px] font-semibold text-muted"
                 >
-                  <span class="relative flex size-1.5">
-                    <span
-                      class="absolute inline-flex size-full rounded-full bg-mint opacity-75 motion-safe:animate-pulse-ring"
-                    ></span>
-                    <span class="relative inline-flex size-1.5 rounded-full bg-mint"></span>
-                  </span>
+                  <span class="size-1.5 rounded-full bg-brand"></span>
                   {{ i18n.t('dashboard.nextEvent') }}
                 </span>
 
-                <div
-                  class="rounded-2xl border border-white/20 bg-canvas/45 px-3.5 py-2 text-center backdrop-blur-xl"
-                >
+                <div class="rounded-2xl border border-line bg-surface px-3.5 py-2 text-center">
                   <span class="block font-display text-2xl font-semibold leading-none">
                     {{ i18n.dayNumber(event.startsAt, event.timezone) }}
                   </span>
-                  <span
-                    class="mt-1 block text-[10px] font-semibold uppercase tracking-[0.18em] text-white/75"
-                  >
+                  <span class="mt-1 block text-[10px] font-semibold text-muted">
                     {{ i18n.monthShort(event.startsAt, event.timezone) }}
                   </span>
                 </div>
               </div>
 
               <div class="max-w-lg">
-                <p class="text-[10px] font-semibold uppercase tracking-[0.24em] text-white/70">
+                <p class="text-[10px] font-semibold text-muted">
                   {{ typeLabel() }}
                 </p>
-                <h3 class="mt-2 font-display text-2xl font-semibold leading-tight tracking-tight sm:text-3xl">
+                <h3
+                  class="mt-2 font-display text-2xl font-semibold leading-tight tracking-tight sm:text-3xl"
+                >
                   {{ event.title }}
                 </h3>
-                <div class="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-white/80">
+                <div class="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-muted">
                   <span class="inline-flex items-center gap-2">
-                    <fa-icon [icon]="icons['calendar']" class="text-[11px]" aria-hidden="true" />
+                    <fa-icon
+                      [icon]="icons['calendar']"
+                      class="text-[11px] text-brand-strong"
+                      aria-hidden="true"
+                    />
                     {{ i18n.longDate(event.startsAt, event.timezone) }} ·
                     {{ i18n.time(event.startsAt, event.timezone) }}
                   </span>
                   <span class="inline-flex items-center gap-2">
-                    <fa-icon [icon]="icons['location']" class="text-[11px]" aria-hidden="true" />
+                    <fa-icon
+                      [icon]="icons['location']"
+                      class="text-[11px] text-brand-strong"
+                      aria-hidden="true"
+                    />
                     {{ event.venue }}, {{ event.city }}
                   </span>
                 </div>
@@ -130,7 +133,9 @@
             </div>
           </div>
 
-          <div class="flex flex-col justify-between gap-5 border-t border-line p-6 lg:border-l lg:border-t-0">
+          <div
+            class="flex flex-col justify-between gap-5 border-t border-line p-6 lg:border-l lg:border-t-0"
+          >
             <div>
               <div class="flex items-center justify-between gap-3">
                 <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted">
@@ -144,7 +149,7 @@
                   part of [
                     { value: countdown().days, key: 'dashboard.countdownDays' },
                     { value: countdown().hours, key: 'dashboard.countdownHours' },
-                    { value: countdown().minutes, key: 'dashboard.countdownMinutes' }
+                    { value: countdown().minutes, key: 'dashboard.countdownMinutes' },
                   ];
                   track part.key
                 ) {
@@ -178,13 +183,18 @@
                       [attr.width]="eventStats.responseRate"
                       height="4"
                       rx="2"
-                      class="fill-aqua"
+                      class="fill-brand"
                     />
                   </svg>
                   <div class="mt-3 flex items-center gap-2">
                     <app-avatar [name]="store.profile.name" size="xs" />
                     <p class="text-[11px] text-muted">
-                      {{ i18n.t('events.card.confirmed', { count: eventStats.confirmed, total: eventStats.total }) }}
+                      {{
+                        i18n.t('events.card.confirmed', {
+                          count: eventStats.confirmed,
+                          total: eventStats.total,
+                        })
+                      }}
                     </p>
                   </div>
                 </div>
@@ -194,7 +204,7 @@
             <div class="flex flex-col gap-2">
               <button
                 type="button"
-                class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-linear-to-r from-brand via-iris to-aqua px-4 text-sm font-semibold text-white shadow-glow transition hover:brightness-110"
+                class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-brand hover:bg-secondary-hover px-4 text-sm font-semibold text-on-secondary transition"
                 (click)="openManagement(event.id)"
               >
                 <fa-icon [icon]="icons['sliders']" class="text-xs" aria-hidden="true" />
@@ -204,7 +214,11 @@
                 [routerLink]="['/i', event.invitationToken]"
                 class="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-line bg-surface-raised/70 px-4 text-sm font-semibold text-ink transition hover:border-brand/40"
               >
-                <fa-icon [icon]="icons['arrowUpRight']" class="text-xs text-muted" aria-hidden="true" />
+                <fa-icon
+                  [icon]="icons['arrowUpRight']"
+                  class="text-xs text-muted"
+                  aria-hidden="true"
+                />
                 {{ i18n.t('dashboard.openInvitation') }}
               </a>
             </div>
@@ -215,7 +229,9 @@
       <article
         class="flex min-h-72 flex-col items-center justify-center rounded-4xl border border-dashed border-line bg-surface/60 p-8 text-center backdrop-blur-2xl"
       >
-        <span class="grid size-14 place-items-center rounded-2xl border border-brand/25 bg-brand/15 text-brand-strong">
+        <span
+          class="grid size-14 place-items-center rounded-2xl border border-brand/25 bg-brand/15 text-brand-strong"
+        >
           <fa-icon [icon]="icons['calendarPlus']" class="text-xl" aria-hidden="true" />
         </span>
         <h3 class="mt-4 font-display text-xl font-semibold text-ink">
@@ -226,7 +242,7 @@
         </p>
         <a
           routerLink="/criar-evento"
-          class="mt-5 inline-flex h-11 items-center gap-2 rounded-xl bg-linear-to-r from-brand via-iris to-aqua px-4 text-sm font-semibold text-white shadow-glow"
+          class="mt-5 inline-flex h-11 items-center gap-2 rounded-xl bg-brand hover:bg-secondary-hover px-4 text-sm font-semibold text-on-secondary"
         >
           <fa-icon [icon]="icons['plus']" class="text-xs" aria-hidden="true" />
           {{ i18n.t('dashboard.newEvent') }}
@@ -245,7 +261,12 @@
         <span
           class="rounded-full border border-brand/25 bg-brand/10 px-2.5 py-1 text-[10px] font-semibold text-brand-strong"
         >
-          {{ i18n.t('dashboard.tasksDone', { done: taskProgress().done, total: taskProgress().total }) }}
+          {{
+            i18n.t('dashboard.tasksDone', {
+              done: taskProgress().done,
+              total: taskProgress().total,
+            })
+          }}
         </span>
       </div>
 
@@ -306,7 +327,9 @@
     </article>
   </div>
 
-  <div class="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-4 xl:grid-cols-[minmax(0,1.75fr)_minmax(0,1fr)]">
+  <div
+    class="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-4 xl:grid-cols-[minmax(0,1.75fr)_minmax(0,1fr)]"
+  >
     <section class="rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl">
       <div class="flex flex-wrap items-start justify-between gap-3">
         <div>
@@ -339,7 +362,9 @@
           </p>
           <p class="mt-1 text-sm text-muted">{{ i18n.t('dashboard.activityHint') }}</p>
         </div>
-        <span class="grid size-9 place-items-center rounded-xl border border-line bg-surface-raised text-muted">
+        <span
+          class="grid size-9 place-items-center rounded-xl border border-line bg-surface-raised text-muted"
+        >
           <fa-icon [icon]="icons['history']" class="text-xs" aria-hidden="true" />
         </span>
       </div>
@@ -349,7 +374,9 @@
       } @else {
         <ol class="mt-4 flex flex-col gap-1">
           @for (entry of activity(); track entry.item.id) {
-            <li class="flex items-start gap-3 rounded-2xl p-2 transition hover:bg-surface-raised/60">
+            <li
+              class="flex items-start gap-3 rounded-2xl p-2 transition hover:bg-surface-raised/60"
+            >
               <span
                 class="mt-0.5 grid size-8 shrink-0 place-items-center rounded-xl border"
                 [class]="activityTone(entry.item.kind)"
@@ -373,7 +400,9 @@
     </section>
   </div>
 
-  <div class="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-4 xl:grid-cols-[minmax(0,1.75fr)_minmax(0,1fr)]">
+  <div
+    class="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-4 xl:grid-cols-[minmax(0,1.75fr)_minmax(0,1fr)]"
+  >
     <section class="rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl">
       <div class="flex flex-wrap items-start justify-between gap-3">
         <div>
@@ -406,7 +435,7 @@
               [attr.width]="8"
               [attr.height]="day.height"
               rx="2"
-              class="fill-aqua/70"
+              class="fill-brand/70"
             />
             <rect
               [attr.x]="$index * 14 + 3"
@@ -414,7 +443,7 @@
               [attr.width]="8"
               [attr.height]="Math.min(day.height, 4)"
               rx="2"
-              class="fill-aqua"
+              class="fill-brand"
             />
           }
         </svg>
@@ -452,9 +481,18 @@
 
       @if (nextEventStats(); as es) {
         <div class="mt-4 flex flex-wrap gap-2 text-[11px]">
-          <span class="rounded-full border border-mint/25 bg-mint/10 px-2.5 py-1 font-medium text-mint">{{ i18n.t('dashboard.statusConfirmed') }}: {{ es.confirmed }}</span>
-          <span class="rounded-full border border-coral/25 bg-coral/10 px-2.5 py-1 font-medium text-coral">{{ i18n.t('dashboard.statusDeclined') }}: {{ es.declined }}</span>
-          <span class="rounded-full border border-amber/25 bg-amber/10 px-2.5 py-1 font-medium text-amber">{{ i18n.t('dashboard.statusNoResponse') }}: {{ es.pending }}</span>
+          <span
+            class="rounded-full border border-mint/25 bg-mint/10 px-2.5 py-1 font-medium text-mint"
+            >{{ i18n.t('dashboard.statusConfirmed') }}: {{ es.confirmed }}</span
+          >
+          <span
+            class="rounded-full border border-coral/25 bg-coral/10 px-2.5 py-1 font-medium text-coral"
+            >{{ i18n.t('dashboard.statusDeclined') }}: {{ es.declined }}</span
+          >
+          <span
+            class="rounded-full border border-amber/25 bg-amber/10 px-2.5 py-1 font-medium text-amber"
+            >{{ i18n.t('dashboard.statusNoResponse') }}: {{ es.pending }}</span
+          >
         </div>
       }
 
@@ -463,7 +501,9 @@
       } @else {
         <ul class="mt-4 flex flex-col gap-1">
           @for (entry of pending(); track entry.guest.id) {
-            <li class="flex items-center gap-3 rounded-2xl p-2 transition hover:bg-surface-raised/60">
+            <li
+              class="flex items-center gap-3 rounded-2xl p-2 transition hover:bg-surface-raised/60"
+            >
               <app-avatar [name]="entry.guest.name" size="sm" />
               <div class="min-w-0 flex-1">
                 <p class="truncate text-sm font-semibold text-ink">{{ entry.guest.name }}</p>

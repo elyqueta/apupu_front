@@ -11,23 +11,23 @@ const TONES: Record<IconTone, { tile: string; line: string }> = {
   },
   iris: {
     tile: 'border-iris/25 bg-iris/15 text-iris',
-    line: 'text-iris',
+    line: 'text-brand',
   },
   aqua: {
     tile: 'border-aqua/25 bg-aqua/15 text-aqua',
-    line: 'text-aqua',
+    line: 'text-brand',
   },
   mint: {
     tile: 'border-mint/25 bg-mint/15 text-mint',
-    line: 'text-mint',
+    line: 'text-brand',
   },
   amber: {
     tile: 'border-amber/25 bg-amber/15 text-amber',
-    line: 'text-amber',
+    line: 'text-brand',
   },
   coral: {
-    tile: 'border-coral/25 bg-coral/15 text-coral',
-    line: 'text-coral',
+    tile: 'border-coral/25 bg-coral/10 text-coral',
+    line: 'text-brand',
   },
 };
 
@@ -36,7 +36,7 @@ const TONES: Record<IconTone, { tile: string; line: string }> = {
   imports: [FaIconComponent],
   template: `
     <article
-      class="group relative overflow-hidden rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl transition duration-300 hover:-translate-y-0.5 hover:border-brand/35 hover:shadow-glow"
+      class="group relative overflow-hidden rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl transition duration-300 hover:-translate-y-0.5 hover:border-brand/35"
     >
       <div class="flex items-start justify-between gap-3">
         <div class="min-w-0">

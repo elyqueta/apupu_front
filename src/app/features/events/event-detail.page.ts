@@ -31,7 +31,8 @@ type GuestFilter = 'all' | RsvpStatus;
     GuestDialogComponent,
     StatusBadgeComponent,
     TemplateArtworkComponent,
-  ],  templateUrl: './event-detail.page.html',
+  ],
+  templateUrl: './event-detail.page.html',
 })
 export class EventDetailPage {
   private readonly fb = inject(NonNullableFormBuilder);
@@ -116,21 +117,21 @@ export class EventDetailPage {
         key: 'confirmed' as const,
         value: stats.confirmed,
         percent: Math.round((stats.confirmed / total) * 100),
-        bar: 'fill-mint',
+        bar: 'fill-brand',
         dot: 'bg-mint',
       },
       {
         key: 'pending' as const,
         value: stats.pending,
         percent: Math.round((stats.pending / total) * 100),
-        bar: 'fill-amber',
+        bar: 'fill-brand',
         dot: 'bg-amber',
       },
       {
         key: 'declined' as const,
         value: stats.declined,
         percent: Math.round((stats.declined / total) * 100),
-        bar: 'fill-coral',
+        bar: 'fill-brand',
         dot: 'bg-coral',
       },
     ];
@@ -197,9 +198,7 @@ export class EventDetailPage {
     if (!event) {
       return;
     }
-    const copied = await this.share.copy(
-      this.share.absoluteUrl(`/i/${event.invitationToken}`),
-    );
+    const copied = await this.share.copy(this.share.absoluteUrl(`/i/${event.invitationToken}`));
     if (copied) {
       this.toasts.success(this.i18n.t('common.copied'));
     } else {

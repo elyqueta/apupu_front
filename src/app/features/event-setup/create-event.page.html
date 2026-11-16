@@ -3,10 +3,12 @@
     <article
       class="relative overflow-hidden rounded-4xl border border-line bg-surface p-6 shadow-card backdrop-blur-2xl animate-rise sm:p-8"
     >
-      <div class="pointer-events-none absolute -right-24 -top-24 size-72 rounded-full bg-mint/20 blur-3xl"></div>
+      <div
+        class="pointer-events-none absolute -right-24 -top-24 size-72 rounded-full bg-mint/20 blur-3xl"
+      ></div>
       <div class="relative mx-auto flex max-w-2xl flex-col items-center text-center">
         <span
-          class="grid size-16 place-items-center rounded-3xl border border-mint/30 bg-mint/15 text-2xl text-mint shadow-glow-aqua"
+          class="grid size-16 place-items-center rounded-3xl border border-mint/30 bg-mint/15 text-2xl text-mint"
         >
           <fa-icon [icon]="icons['checkDouble']" aria-hidden="true" />
         </span>
@@ -39,7 +41,11 @@
             {{ event.venue }}, {{ event.city }}
           </p>
           <p class="mt-1.5 flex items-center gap-2 text-[11px] text-muted">
-            <fa-icon [icon]="icons['guests']" class="text-[10px] text-brand-strong" aria-hidden="true" />
+            <fa-icon
+              [icon]="icons['guests']"
+              class="text-[10px] text-brand-strong"
+              aria-hidden="true"
+            />
             {{ i18n.t('create.preview.guestCount', { count: eventStats(event.id).total }) }}
           </p>
         </div>
@@ -54,7 +60,7 @@
         <div class="mt-5 flex w-full flex-col gap-2 sm:flex-row sm:justify-center">
           <button
             type="button"
-            class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-linear-to-r from-brand via-iris to-aqua px-4 text-sm font-semibold text-white shadow-glow transition hover:brightness-110"
+            class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-brand hover:bg-secondary-hover px-4 text-sm font-semibold text-on-secondary transition"
             (click)="openCreatedManagement()"
           >
             <fa-icon [icon]="icons['shield']" class="text-xs" aria-hidden="true" />
@@ -101,13 +107,19 @@
           routerLink="/eventos"
           class="inline-flex h-10 items-center gap-2 rounded-xl border border-line bg-surface-raised/60 px-3 text-xs font-semibold text-ink backdrop-blur-xl transition hover:border-brand/40"
         >
-          <fa-icon [icon]="icons['chevronLeft']" class="text-[10px] text-muted" aria-hidden="true" />
+          <fa-icon
+            [icon]="icons['chevronLeft']"
+            class="text-[10px] text-muted"
+            aria-hidden="true"
+          />
           {{ i18n.t('nav.events') }}
         </a>
       </div>
     </header>
 
-    <ol class="grid gap-2 rounded-3xl border border-line bg-surface/70 p-2.5 shadow-card backdrop-blur-2xl sm:grid-cols-2 lg:grid-cols-4">
+    <ol
+      class="grid gap-2 rounded-3xl border border-line bg-surface/70 p-2.5 shadow-card backdrop-blur-2xl sm:grid-cols-2 lg:grid-cols-4"
+    >
       @for (wizardStep of steps; track wizardStep.id; let index = $index) {
         <li>
           <button
@@ -115,7 +127,7 @@
             class="flex w-full items-center gap-2.5 rounded-2xl border px-3 py-2.5 text-left transition"
             [class]="
               step() === index
-                ? 'border-brand/40 bg-brand/15 text-ink shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]'
+                ? 'border-brand/40 bg-brand/15 text-ink'
                 : step() > index
                   ? 'border-mint/25 bg-mint/10 text-ink'
                   : 'border-transparent text-muted hover:border-line hover:bg-surface-raised/50'
@@ -127,7 +139,7 @@
               class="grid size-8 shrink-0 place-items-center rounded-xl border text-[11px] font-semibold"
               [class]="
                 step() === index
-                  ? 'border-brand/30 bg-linear-to-br from-brand to-iris text-white shadow-glow'
+                  ? 'border-brand/30 bg-brand text-on-secondary '
                   : step() > index
                     ? 'border-mint/30 bg-mint/15 text-mint'
                     : 'border-line bg-surface-raised text-muted'
@@ -140,7 +152,9 @@
               }
             </span>
             <span class="min-w-0 flex-1">
-              <span class="block text-[9px] font-semibold uppercase tracking-[0.18em] text-muted/80">
+              <span
+                class="block text-[9px] font-semibold uppercase tracking-[0.18em] text-muted/80"
+              >
                 {{ i18n.t('create.stepOf', { current: index + 1, total: steps.length }) }}
               </span>
               <span class="mt-0.5 block truncate text-xs font-semibold">
@@ -156,7 +170,9 @@
       <form class="flex flex-col gap-4" [formGroup]="form" (ngSubmit)="publish()">
         @switch (step()) {
           @case (0) {
-            <article class="rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl sm:p-6">
+            <article
+              class="rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl sm:p-6"
+            >
               <div class="flex items-start justify-between gap-3">
                 <div>
                   <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-brand-strong">
@@ -164,14 +180,18 @@
                   </p>
                   <p class="mt-1 text-xs text-muted">{{ i18n.t('create.section.detailsHint') }}</p>
                 </div>
-                <span class="grid size-9 place-items-center rounded-xl border border-line bg-surface-raised text-muted">
+                <span
+                  class="grid size-9 place-items-center rounded-xl border border-line bg-surface-raised text-muted"
+                >
                   <fa-icon [icon]="icons['sparkles']" class="text-xs" aria-hidden="true" />
                 </span>
               </div>
 
               <div class="mt-4 grid gap-3 sm:grid-cols-2">
                 <label class="block sm:col-span-2">
-                  <span class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
+                  <span
+                    class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted"
+                  >
                     {{ i18n.t('create.field.title') }} <span class="text-coral">*</span>
                   </span>
                   <input
@@ -187,7 +207,9 @@
                 </label>
 
                 <label class="block">
-                  <span class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
+                  <span
+                    class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted"
+                  >
                     {{ i18n.t('create.field.type') }} <span class="text-coral">*</span>
                   </span>
                   <span class="relative block">
@@ -208,7 +230,9 @@
                 </label>
 
                 <label class="block">
-                  <span class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
+                  <span
+                    class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted"
+                  >
                     {{ i18n.t('create.field.hostName') }} <span class="text-coral">*</span>
                   </span>
                   <input
@@ -219,12 +243,16 @@
                     class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink outline-none transition placeholder:text-muted/60 focus:border-brand/50"
                   />
                   @if (fieldError('hostName')) {
-                    <span class="mt-1 block text-[10px] text-coral">{{ fieldError('hostName') }}</span>
+                    <span class="mt-1 block text-[10px] text-coral">{{
+                      fieldError('hostName')
+                    }}</span>
                   }
                 </label>
 
                 <label class="block sm:col-span-2">
-                  <span class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
+                  <span
+                    class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted"
+                  >
                     {{ i18n.t('create.field.hostEmail') }} <span class="text-coral">*</span>
                   </span>
                   <input
@@ -235,13 +263,17 @@
                     class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink outline-none transition placeholder:text-muted/60 focus:border-brand/50"
                   />
                   @if (fieldError('hostEmail')) {
-                    <span class="mt-1 block text-[10px] text-coral">{{ fieldError('hostEmail') }}</span>
+                    <span class="mt-1 block text-[10px] text-coral">{{
+                      fieldError('hostEmail')
+                    }}</span>
                   }
                 </label>
               </div>
             </article>
 
-            <article class="rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl sm:p-6">
+            <article
+              class="rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl sm:p-6"
+            >
               <div class="flex items-start justify-between gap-3">
                 <div>
                   <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-brand-strong">
@@ -249,14 +281,18 @@
                   </p>
                   <p class="mt-1 text-xs text-muted">{{ i18n.t('create.section.dateHint') }}</p>
                 </div>
-                <span class="grid size-9 place-items-center rounded-xl border border-line bg-surface-raised text-muted">
+                <span
+                  class="grid size-9 place-items-center rounded-xl border border-line bg-surface-raised text-muted"
+                >
                   <fa-icon [icon]="icons['calendarCheck']" class="text-xs" aria-hidden="true" />
                 </span>
               </div>
 
               <div class="mt-4 grid gap-3 sm:grid-cols-2">
                 <label class="block">
-                  <span class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
+                  <span
+                    class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted"
+                  >
                     {{ i18n.t('create.field.date') }} <span class="text-coral">*</span>
                   </span>
                   <input
@@ -270,7 +306,9 @@
                 </label>
 
                 <label class="block">
-                  <span class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
+                  <span
+                    class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted"
+                  >
                     {{ i18n.t('create.field.time') }} <span class="text-coral">*</span>
                   </span>
                   <input
@@ -284,7 +322,9 @@
                 </label>
 
                 <label class="block sm:col-span-2">
-                  <span class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
+                  <span
+                    class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted"
+                  >
                     {{ i18n.t('create.field.timezone') }} <span class="text-coral">*</span>
                   </span>
                   <span class="relative block">
@@ -302,11 +342,15 @@
                       aria-hidden="true"
                     />
                   </span>
-                  <span class="mt-1 block text-[10px] text-muted">{{ i18n.t('create.hint.timezone') }}</span>
+                  <span class="mt-1 block text-[10px] text-muted">{{
+                    i18n.t('create.hint.timezone')
+                  }}</span>
                 </label>
 
                 <label class="block">
-                  <span class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
+                  <span
+                    class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted"
+                  >
                     {{ i18n.t('create.field.venue') }} <span class="text-coral">*</span>
                   </span>
                   <input
@@ -321,7 +365,9 @@
                 </label>
 
                 <label class="block">
-                  <span class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
+                  <span
+                    class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted"
+                  >
                     {{ i18n.t('create.field.city') }} <span class="text-coral">*</span>
                   </span>
                   <input
@@ -336,8 +382,11 @@
                 </label>
 
                 <label class="block sm:col-span-2">
-                  <span class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
-                    {{ i18n.t('create.field.onlineLink') }} <span class="text-muted/60">({{ i18n.t('common.optional') }})</span>
+                  <span
+                    class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted"
+                  >
+                    {{ i18n.t('create.field.onlineLink') }}
+                    <span class="text-muted/60">({{ i18n.t('common.optional') }})</span>
                   </span>
                   <input
                     type="url"
@@ -346,7 +395,9 @@
                     class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink outline-none transition placeholder:text-muted/60 focus:border-brand/50"
                   />
                   @if (fieldError('onlineLink')) {
-                    <span class="mt-1 block text-[10px] text-coral">{{ fieldError('onlineLink') }}</span>
+                    <span class="mt-1 block text-[10px] text-coral">{{
+                      fieldError('onlineLink')
+                    }}</span>
                   }
                 </label>
               </div>
@@ -354,7 +405,9 @@
           }
 
           @case (1) {
-            <article class="rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl sm:p-6">
+            <article
+              class="rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl sm:p-6"
+            >
               <div class="flex items-start justify-between gap-3">
                 <div>
                   <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-brand-strong">
@@ -362,13 +415,17 @@
                   </p>
                   <p class="mt-1 text-xs text-muted">{{ i18n.t('create.devPreview') }}</p>
                 </div>
-                <span class="grid size-9 place-items-center rounded-xl border border-line bg-surface-raised text-muted">
+                <span
+                  class="grid size-9 place-items-center rounded-xl border border-line bg-surface-raised text-muted"
+                >
                   <fa-icon [icon]="icons['palette']" class="text-xs" aria-hidden="true" />
                 </span>
               </div>
 
               @if (store.templates.length === 0) {
-                <div class="mt-4 rounded-2xl border border-dashed border-line bg-surface-raised/40 p-6 text-center">
+                <div
+                  class="mt-4 rounded-2xl border border-dashed border-line bg-surface-raised/40 p-6 text-center"
+                >
                   <p class="text-sm font-semibold text-ink">{{ i18n.t('create.noTemplates') }}</p>
                   <p class="mt-1 text-xs text-muted">{{ i18n.t('create.noTemplatesText') }}</p>
                 </div>
@@ -380,7 +437,7 @@
                       class="group overflow-hidden rounded-2xl border text-left transition"
                       [class]="
                         form.controls.templateId.value === template.id
-                          ? 'border-brand/45 bg-brand/10 shadow-glow'
+                          ? 'border-brand/45 bg-brand/10 '
                           : 'border-line bg-surface-raised/40 hover:border-brand/35'
                       "
                       (click)="selectTemplate(template.id)"
@@ -393,14 +450,22 @@
                       />
                       <span class="flex items-start justify-between gap-2 p-3">
                         <span class="min-w-0">
-                          <span class="block text-xs font-semibold text-ink">{{ templateName(template.id) }}</span>
+                          <span class="block text-xs font-semibold text-ink">{{
+                            templateName(template.id)
+                          }}</span>
                           <span class="mt-0.5 block text-[10px] leading-4 text-muted">
                             {{ templateTag(template.id) }}
                           </span>
                         </span>
                         @if (form.controls.templateId.value === template.id) {
-                          <span class="grid size-6 shrink-0 place-items-center rounded-full bg-mint/15 text-mint">
-                            <fa-icon [icon]="icons['check']" class="text-[9px]" aria-hidden="true" />
+                          <span
+                            class="grid size-6 shrink-0 place-items-center rounded-full bg-mint/15 text-mint"
+                          >
+                            <fa-icon
+                              [icon]="icons['check']"
+                              class="text-[9px]"
+                              aria-hidden="true"
+                            />
                           </span>
                         }
                       </span>
@@ -411,7 +476,9 @@
 
               <div class="mt-5 grid gap-3">
                 <label class="block">
-                  <span class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
+                  <span
+                    class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted"
+                  >
                     {{ i18n.t('create.field.message') }} <span class="text-coral">*</span>
                   </span>
                   <textarea
@@ -421,14 +488,19 @@
                     class="w-full resize-y rounded-xl border border-line bg-surface-raised px-3 py-2.5 text-sm leading-6 text-ink outline-none transition placeholder:text-muted/60 focus:border-brand/50"
                   ></textarea>
                   @if (fieldError('message')) {
-                    <span class="mt-1 block text-[10px] text-coral">{{ fieldError('message') }}</span>
+                    <span class="mt-1 block text-[10px] text-coral">{{
+                      fieldError('message')
+                    }}</span>
                   }
                 </label>
 
                 <div class="grid gap-3 sm:grid-cols-2">
                   <label class="block">
-                    <span class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
-                      {{ i18n.t('create.field.dressCode') }} <span class="text-muted/60">({{ i18n.t('common.optional') }})</span>
+                    <span
+                      class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted"
+                    >
+                      {{ i18n.t('create.field.dressCode') }}
+                      <span class="text-muted/60">({{ i18n.t('common.optional') }})</span>
                     </span>
                     <input
                       type="text"
@@ -439,21 +511,29 @@
                   </label>
 
                   <label class="block">
-                    <span class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
-                      {{ i18n.t('create.field.rsvpDeadline') }} <span class="text-muted/60">({{ i18n.t('common.optional') }})</span>
+                    <span
+                      class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted"
+                    >
+                      {{ i18n.t('create.field.rsvpDeadline') }}
+                      <span class="text-muted/60">({{ i18n.t('common.optional') }})</span>
                     </span>
                     <input
                       type="date"
                       formControlName="rsvpDeadline"
                       class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink outline-none transition focus:border-brand/50"
                     />
-                    <span class="mt-1 block text-[10px] text-muted">{{ i18n.t('create.hint.deadline') }}</span>
+                    <span class="mt-1 block text-[10px] text-muted">{{
+                      i18n.t('create.hint.deadline')
+                    }}</span>
                   </label>
                 </div>
 
                 <label class="block">
-                  <span class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
-                    {{ i18n.t('create.field.rules') }} <span class="text-muted/60">({{ i18n.t('common.optional') }})</span>
+                  <span
+                    class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted"
+                  >
+                    {{ i18n.t('create.field.rules') }}
+                    <span class="text-muted/60">({{ i18n.t('common.optional') }})</span>
                   </span>
                   <textarea
                     formControlName="rules"
@@ -465,13 +545,17 @@
               </div>
             </article>
 
-            <article class="rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl sm:p-6">
+            <article
+              class="rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl sm:p-6"
+            >
               <div class="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-brand-strong">
                     {{ i18n.t('create.section.contribution') }}
                   </p>
-                  <p class="mt-1 text-xs text-muted">{{ i18n.t('create.section.contributionHint') }}</p>
+                  <p class="mt-1 text-xs text-muted">
+                    {{ i18n.t('create.section.contributionHint') }}
+                  </p>
                 </div>
                 <button
                   type="button"
@@ -484,11 +568,17 @@
                       ? 'border-brand/40 bg-brand/70'
                       : 'border-line bg-surface-raised'
                   "
-                  (click)="form.controls.contributionEnabled.setValue(!form.controls.contributionEnabled.value)"
+                  (click)="
+                    form.controls.contributionEnabled.setValue(
+                      !form.controls.contributionEnabled.value
+                    )
+                  "
                 >
                   <span
-                    class="absolute top-0.5 size-4.5 rounded-full bg-white shadow transition-all"
-                    [class]="form.controls.contributionEnabled.value ? 'left-[1.45rem]' : 'left-0.5'"
+                    class="absolute top-0.5 size-4.5 rounded-full bg-surface shadow transition-all"
+                    [class]="
+                      form.controls.contributionEnabled.value ? 'left-[1.45rem]' : 'left-0.5'
+                    "
                   ></span>
                 </button>
               </div>
@@ -496,7 +586,9 @@
               @if (form.controls.contributionEnabled.value) {
                 <div class="mt-4 grid gap-3 sm:grid-cols-2">
                   <label class="block">
-                    <span class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
+                    <span
+                      class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted"
+                    >
                       {{ i18n.t('create.field.bankName') }} <span class="text-coral">*</span>
                     </span>
                     <input
@@ -507,7 +599,9 @@
                     />
                   </label>
                   <label class="block">
-                    <span class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
+                    <span
+                      class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted"
+                    >
                       {{ i18n.t('create.field.accountName') }} <span class="text-coral">*</span>
                     </span>
                     <input
@@ -518,7 +612,9 @@
                     />
                   </label>
                   <label class="block sm:col-span-2">
-                    <span class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
+                    <span
+                      class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted"
+                    >
                       {{ i18n.t('create.field.iban') }} <span class="text-coral">*</span>
                     </span>
                     <input
@@ -527,7 +623,9 @@
                       [placeholder]="i18n.t('create.placeholder.iban')"
                       class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 font-mono text-sm text-ink outline-none transition placeholder:text-muted/60 focus:border-brand/50"
                     />
-                    <span class="mt-1 block text-[10px] text-muted">{{ i18n.t('create.hint.iban') }}</span>
+                    <span class="mt-1 block text-[10px] text-muted">{{
+                      i18n.t('create.hint.iban')
+                    }}</span>
                   </label>
                 </div>
                 @if (!contributionReady()) {
@@ -538,15 +636,23 @@
                 }
               }
 
-              <p class="mt-4 flex items-start gap-2 rounded-2xl border border-line bg-surface-raised/50 p-3 text-[10px] leading-5 text-muted">
-                <fa-icon [icon]="icons['info']" class="mt-0.5 text-[10px] text-aqua" aria-hidden="true" />
+              <p
+                class="mt-4 flex items-start gap-2 rounded-2xl border border-line bg-surface-raised/50 p-3 text-[10px] leading-5 text-muted"
+              >
+                <fa-icon
+                  [icon]="icons['info']"
+                  class="mt-0.5 text-[10px] text-aqua"
+                  aria-hidden="true"
+                />
                 {{ i18n.t('create.hint.contribution') }}
               </p>
             </article>
           }
 
           @case (2) {
-            <article class="rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl sm:p-6">
+            <article
+              class="rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl sm:p-6"
+            >
               <div class="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-brand-strong">
@@ -589,7 +695,9 @@
 
                     <div class="mt-3 grid gap-3 sm:grid-cols-2">
                       <label class="block">
-                        <span class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
+                        <span
+                          class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted"
+                        >
                           {{ i18n.t('create.field.guestName') }}
                         </span>
                         <input
@@ -599,12 +707,16 @@
                           class="h-10 w-full rounded-xl border border-line bg-surface px-3 text-sm text-ink outline-none transition placeholder:text-muted/60 focus:border-brand/50"
                         />
                         @if (guestError(index, 'name')) {
-                          <span class="mt-1 block text-[10px] text-coral">{{ guestError(index, 'name') }}</span>
+                          <span class="mt-1 block text-[10px] text-coral">{{
+                            guestError(index, 'name')
+                          }}</span>
                         }
                       </label>
 
                       <label class="block">
-                        <span class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
+                        <span
+                          class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted"
+                        >
                           {{ i18n.t('create.field.guestEmail') }}
                         </span>
                         <input
@@ -614,13 +726,18 @@
                           class="h-10 w-full rounded-xl border border-line bg-surface px-3 text-sm text-ink outline-none transition placeholder:text-muted/60 focus:border-brand/50"
                         />
                         @if (guestError(index, 'email')) {
-                          <span class="mt-1 block text-[10px] text-coral">{{ guestError(index, 'email') }}</span>
+                          <span class="mt-1 block text-[10px] text-coral">{{
+                            guestError(index, 'email')
+                          }}</span>
                         }
                       </label>
 
                       <label class="block sm:col-span-2">
-                        <span class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
-                          {{ i18n.t('create.field.guestPhone') }} <span class="text-muted/60">({{ i18n.t('common.optional') }})</span>
+                        <span
+                          class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted"
+                        >
+                          {{ i18n.t('create.field.guestPhone') }}
+                          <span class="text-muted/60">({{ i18n.t('common.optional') }})</span>
                         </span>
                         <input
                           type="tel"
@@ -648,15 +765,23 @@
                 {{ i18n.t('create.addGuest') }}
               </button>
 
-              <p class="mt-4 flex items-start gap-2 rounded-2xl border border-line bg-surface-raised/50 p-3 text-[10px] leading-5 text-muted">
-                <fa-icon [icon]="icons['info']" class="mt-0.5 text-[10px] text-aqua" aria-hidden="true" />
+              <p
+                class="mt-4 flex items-start gap-2 rounded-2xl border border-line bg-surface-raised/50 p-3 text-[10px] leading-5 text-muted"
+              >
+                <fa-icon
+                  [icon]="icons['info']"
+                  class="mt-0.5 text-[10px] text-aqua"
+                  aria-hidden="true"
+                />
                 {{ i18n.t('create.hint.phone') }}
               </p>
             </article>
           }
 
           @case (3) {
-            <article class="rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl sm:p-6">
+            <article
+              class="rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl sm:p-6"
+            >
               <div>
                 <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-brand-strong">
                   {{ i18n.t('create.section.review') }}
@@ -668,7 +793,11 @@
                 <section class="rounded-2xl border border-line bg-surface-raised/40 p-4">
                   <div class="flex items-center justify-between gap-2">
                     <p class="flex items-center gap-2 text-xs font-semibold text-ink">
-                      <fa-icon [icon]="icons['calendar']" class="text-[10px] text-brand-strong" aria-hidden="true" />
+                      <fa-icon
+                        [icon]="icons['calendar']"
+                        class="text-[10px] text-brand-strong"
+                        aria-hidden="true"
+                      />
                       {{ i18n.t('create.review.event') }}
                     </p>
                     <button
@@ -701,7 +830,8 @@
                     <div>
                       <dt class="text-muted">{{ i18n.t('create.field.venue') }}</dt>
                       <dd class="mt-0.5 font-semibold text-ink">
-                        {{ formValue().venue || '—' }}<span class="text-muted">, {{ formValue().city || '—' }}</span>
+                        {{ formValue().venue || '—'
+                        }}<span class="text-muted">, {{ formValue().city || '—' }}</span>
                       </dd>
                     </div>
                     <div class="sm:col-span-2">
@@ -716,7 +846,11 @@
                 <section class="rounded-2xl border border-line bg-surface-raised/40 p-4">
                   <div class="flex items-center justify-between gap-2">
                     <p class="flex items-center gap-2 text-xs font-semibold text-ink">
-                      <fa-icon [icon]="icons['palette']" class="text-[10px] text-iris" aria-hidden="true" />
+                      <fa-icon
+                        [icon]="icons['palette']"
+                        class="text-[10px] text-iris"
+                        aria-hidden="true"
+                      />
                       {{ i18n.t('create.review.invitation') }}
                     </p>
                     <button
@@ -731,7 +865,11 @@
                     <div>
                       <dt class="text-muted">{{ i18n.t('create.field.template') }}</dt>
                       <dd class="mt-0.5 font-semibold text-ink">
-                        {{ i18n.t('create.review.template', { name: templateName(formValue().templateId) }) }}
+                        {{
+                          i18n.t('create.review.template', {
+                            name: templateName(formValue().templateId),
+                          })
+                        }}
                       </dd>
                     </div>
                     <div>
@@ -751,7 +889,11 @@
                     <div class="sm:col-span-2">
                       <dt class="text-muted">{{ i18n.t('create.review.contribution') }}</dt>
                       <dd class="mt-0.5 font-semibold text-ink">
-                        {{ formValue().contributionEnabled ? i18n.t('create.review.enabled') : i18n.t('create.review.disabled') }}
+                        {{
+                          formValue().contributionEnabled
+                            ? i18n.t('create.review.enabled')
+                            : i18n.t('create.review.disabled')
+                        }}
                       </dd>
                     </div>
                   </dl>
@@ -760,7 +902,11 @@
                 <section class="rounded-2xl border border-line bg-surface-raised/40 p-4">
                   <div class="flex items-center justify-between gap-2">
                     <p class="flex items-center gap-2 text-xs font-semibold text-ink">
-                      <fa-icon [icon]="icons['guests']" class="text-[10px] text-aqua" aria-hidden="true" />
+                      <fa-icon
+                        [icon]="icons['guests']"
+                        class="text-[10px] text-aqua"
+                        aria-hidden="true"
+                      />
                       {{ i18n.t('create.review.guests') }}
                     </p>
                     <button
@@ -772,15 +918,23 @@
                     </button>
                   </div>
                   @if (guestRows().length === 0) {
-                    <p class="mt-2 text-[11px] leading-5 text-muted">{{ i18n.t('create.review.emptyGuests') }}</p>
+                    <p class="mt-2 text-[11px] leading-5 text-muted">
+                      {{ i18n.t('create.review.emptyGuests') }}
+                    </p>
                   } @else {
                     <p class="mt-2 text-[11px] text-muted">
                       {{ i18n.t('create.review.guestCount', { count: guestRows().length }) }}
                     </p>
                     <div class="mt-2 flex flex-col gap-1.5">
                       @for (row of guestRows(); track $index) {
-                        <p class="flex items-center gap-2 rounded-lg bg-surface px-2.5 py-1.5 text-[11px] text-ink">
-                          <fa-icon [icon]="icons['envelope']" class="text-[9px] text-muted" aria-hidden="true" />
+                        <p
+                          class="flex items-center gap-2 rounded-lg bg-surface px-2.5 py-1.5 text-[11px] text-ink"
+                        >
+                          <fa-icon
+                            [icon]="icons['envelope']"
+                            class="text-[9px] text-muted"
+                            aria-hidden="true"
+                          />
                           <span class="font-semibold">{{ row.name }}</span>
                           <span class="truncate text-muted">{{ row.email }}</span>
                         </p>
@@ -803,11 +957,17 @@
                 class="inline-flex h-10 items-center gap-2 rounded-xl border border-line bg-surface-raised/70 px-3.5 text-xs font-semibold text-ink transition hover:border-brand/40"
                 (click)="previous()"
               >
-                <fa-icon [icon]="icons['chevronLeft']" class="text-[10px] text-muted" aria-hidden="true" />
+                <fa-icon
+                  [icon]="icons['chevronLeft']"
+                  class="text-[10px] text-muted"
+                  aria-hidden="true"
+                />
                 {{ i18n.t('create.previous') }}
               </button>
             } @else {
-              <p class="hidden text-[10px] leading-4 text-muted sm:block">{{ i18n.t('create.requiredHint') }}</p>
+              <p class="hidden text-[10px] leading-4 text-muted sm:block">
+                {{ i18n.t('create.requiredHint') }}
+              </p>
             }
           </div>
 
@@ -818,7 +978,7 @@
             @if (step() < 3) {
               <button
                 type="button"
-                class="inline-flex h-10 items-center gap-2 rounded-xl bg-linear-to-r from-brand via-iris to-aqua px-4 text-xs font-semibold text-white shadow-glow transition hover:brightness-110"
+                class="inline-flex h-10 items-center gap-2 rounded-xl bg-brand hover:bg-secondary-hover px-4 text-xs font-semibold text-on-secondary transition"
                 (click)="next()"
               >
                 {{ i18n.t('create.next') }}
@@ -828,10 +988,14 @@
               <button
                 type="submit"
                 [disabled]="publishing()"
-                class="inline-flex h-10 items-center gap-2 rounded-xl bg-linear-to-r from-brand via-iris to-aqua px-4 text-xs font-semibold text-white shadow-glow transition hover:brightness-110 disabled:cursor-wait disabled:opacity-70"
+                class="inline-flex h-10 items-center gap-2 rounded-xl bg-brand hover:bg-secondary-hover px-4 text-xs font-semibold text-on-secondary transition disabled:cursor-wait disabled:opacity-70"
               >
                 @if (publishing()) {
-                  <fa-icon [icon]="icons['spinner']" class="text-[11px] animate-spin" aria-hidden="true" />
+                  <fa-icon
+                    [icon]="icons['spinner']"
+                    class="text-[11px] animate-spin"
+                    aria-hidden="true"
+                  />
                   {{ i18n.t('create.publishing') }}
                 } @else {
                   <fa-icon [icon]="icons['paperPlane']" class="text-[11px]" aria-hidden="true" />
@@ -844,14 +1008,20 @@
       </form>
 
       <aside class="xl:sticky xl:top-24 xl:self-start">
-        <article class="overflow-hidden rounded-4xl border border-line bg-surface shadow-card backdrop-blur-2xl">
+        <article
+          class="overflow-hidden rounded-4xl border border-line bg-surface shadow-card backdrop-blur-2xl"
+        >
           <div class="relative h-56 overflow-hidden">
             <app-template-artwork
               [templateId]="formValue().templateId"
               variant="hero"
               [kicker]="typeLabel()"
               [title]="previewTitle()"
-              [subtitle]="i18n.t('create.preview.hostedBy', { name: formValue().hostName || store.profile.name })"
+              [subtitle]="
+                i18n.t('create.preview.hostedBy', {
+                  name: formValue().hostName || store.profile.name,
+                })
+              "
               class="absolute inset-0"
             />
           </div>
@@ -866,7 +1036,9 @@
 
             <dl class="mt-4 flex flex-col gap-3 text-[11px]">
               <div class="flex items-start gap-2.5">
-                <span class="grid size-8 shrink-0 place-items-center rounded-xl border border-brand/25 bg-brand/10 text-brand-strong">
+                <span
+                  class="grid size-8 shrink-0 place-items-center rounded-xl border border-brand/25 bg-brand/10 text-brand-strong"
+                >
                   <fa-icon [icon]="icons['calendar']" class="text-[10px]" aria-hidden="true" />
                 </span>
                 <div class="min-w-0">
@@ -884,7 +1056,9 @@
               </div>
 
               <div class="flex items-start gap-2.5">
-                <span class="grid size-8 shrink-0 place-items-center rounded-xl border border-aqua/25 bg-aqua/10 text-aqua">
+                <span
+                  class="grid size-8 shrink-0 place-items-center rounded-xl border border-aqua/25 bg-aqua/10 text-aqua"
+                >
                   <fa-icon [icon]="icons['location']" class="text-[10px]" aria-hidden="true" />
                 </span>
                 <div class="min-w-0">
@@ -893,7 +1067,8 @@
                   </dt>
                   <dd class="mt-0.5 truncate text-ink">
                     @if (formValue().venue) {
-                      {{ formValue().venue }}<span class="text-muted">, {{ formValue().city }}</span>
+                      {{ formValue().venue
+                      }}<span class="text-muted">, {{ formValue().city }}</span>
                     } @else {
                       {{ i18n.t('create.preview.notConfigured') }}
                     }
@@ -902,7 +1077,9 @@
               </div>
 
               <div class="flex items-start gap-2.5">
-                <span class="grid size-8 shrink-0 place-items-center rounded-xl border border-iris/25 bg-iris/10 text-iris">
+                <span
+                  class="grid size-8 shrink-0 place-items-center rounded-xl border border-iris/25 bg-iris/10 text-iris"
+                >
                   <fa-icon [icon]="icons['guests']" class="text-[10px]" aria-hidden="true" />
                 </span>
                 <div class="min-w-0">
@@ -917,7 +1094,9 @@
 
               @if (previewDeadline(); as deadline) {
                 <div class="flex items-start gap-2.5">
-                  <span class="grid size-8 shrink-0 place-items-center rounded-xl border border-amber/25 bg-amber/10 text-amber">
+                  <span
+                    class="grid size-8 shrink-0 place-items-center rounded-xl border border-amber/25 bg-amber/10 text-amber"
+                  >
                     <fa-icon [icon]="icons['hourglass']" class="text-[10px]" aria-hidden="true" />
                   </span>
                   <div class="min-w-0">
@@ -942,7 +1121,7 @@
             </div>
 
             <span
-              class="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-white/10 px-3 py-2 text-[11px] font-semibold text-white backdrop-blur-md"
+              class="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-line bg-surface-raised px-3 py-2 text-[11px] font-semibold text-ink"
             >
               <fa-icon [icon]="icons['check']" class="text-[10px]" aria-hidden="true" />
               {{ i18n.t('create.preview.rsvp') }}

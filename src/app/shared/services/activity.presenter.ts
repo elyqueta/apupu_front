@@ -36,7 +36,7 @@ export class ActivityPresenter {
       case 'rsvp-confirmed':
         return 'border-mint/30 bg-mint/15 text-mint';
       case 'rsvp-declined':
-        return 'border-coral/30 bg-coral/15 text-coral';
+        return 'border-coral/30 bg-coral/10 text-coral';
       case 'guest-added':
         return 'border-brand/30 bg-brand/15 text-brand-strong';
       case 'reminder-sent':

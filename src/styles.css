@@ -2,11 +2,6 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
-/*
- * Conta Comigo design tokens.
- * The only authored stylesheet of the project. Everything else is Tailwind utility classes.
- * The default experience is the dark blue "glass" theme from the visual reference.
- */
 @theme inline {
   --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-display: 'Space Grotesk', 'Inter', ui-sans-serif, system-ui, sans-serif;
@@ -25,57 +20,61 @@
   --text-8xl: calc(6rem * var(--ap-font-scale));
   --text-9xl: calc(8rem * var(--ap-font-scale));
 
-  --color-canvas: var(--ap-canvas);
+  --color-canvas: var(--ap-bg);
   --color-surface: var(--ap-surface);
-  --color-surface-raised: var(--ap-surface-raised);
-  --color-surface-solid: var(--ap-surface-solid);
-  --color-line: var(--ap-line);
-  --color-ink: var(--ap-ink);
-  --color-muted: var(--ap-muted);
-  --color-brand: var(--ap-brand);
-  --color-brand-strong: var(--ap-brand-strong);
-  --color-iris: var(--ap-iris);
-  --color-aqua: var(--ap-aqua);
-  --color-mint: var(--ap-mint);
-  --color-amber: var(--ap-amber);
-  --color-coral: var(--ap-coral);
+  --color-surface-raised: var(--ap-surface-alt);
+  --color-surface-solid: var(--ap-surface);
+  --color-line: var(--ap-border);
+  --color-ink: var(--ap-text);
+  --color-muted: var(--ap-text-muted);
+  --color-brand: var(--ap-secondary);
+  --color-brand-strong: var(--ap-secondary-text);
+  --color-on-secondary: var(--ap-on-secondary);
+  --color-on-danger: var(--ap-on-danger);
+  --color-secondary-hover: var(--ap-secondary-hover);
+  --color-secondary-soft: var(--ap-secondary-soft);
+  --color-success: var(--ap-success);
+  --color-warning: var(--ap-warning);
+  --color-danger: var(--ap-danger);
+  --color-danger-hover: var(--ap-danger-hover);
+  --color-info: var(--ap-info);
+  --color-iris: var(--ap-secondary-text);
+  --color-aqua: var(--ap-secondary-text);
+  --color-mint: var(--ap-success);
+  --color-amber: var(--ap-warning);
+  --color-coral: var(--ap-danger);
 
   --radius-4xl: 2rem;
   --radius-5xl: 2.5rem;
 
   --shadow-card: var(--ap-shadow-card);
-  --shadow-glow: var(--ap-shadow-glow);
-  --shadow-glow-aqua: var(--ap-shadow-glow-aqua);
 
-  --animate-float: float 9s ease-in-out infinite;
-  --animate-float-slow: float 14s ease-in-out infinite;
-  --animate-aurora: aurora 18s ease-in-out infinite alternate;
   --animate-rise: rise 0.55s cubic-bezier(0.22, 0.85, 0.3, 1) both;
-  --animate-pulse-ring: pulse-ring 3s ease-out infinite;
 }
 
 :root {
   color-scheme: light;
   --ap-font-scale: 1;
 
-  --ap-canvas: #eef2ff;
-  --ap-surface: rgb(255 255 255 / 0.74);
-  --ap-surface-raised: rgb(255 255 255 / 0.92);
-  --ap-surface-solid: #ffffff;
-  --ap-line: rgb(41 62 130 / 0.14);
-  --ap-ink: #101a38;
-  --ap-muted: #58658a;
-  --ap-brand: #3056f5;
-  --ap-brand-strong: #2340c9;
-  --ap-iris: #7457f0;
-  --ap-aqua: #0785ab;
-  --ap-mint: #0d8f63;
-  --ap-amber: #a86b0a;
-  --ap-coral: #cc3f5c;
-
-  --ap-shadow-card: 0 28px 70px -38px rgb(44 63 135 / 0.35), inset 0 1px 0 rgb(255 255 255 / 0.7);
-  --ap-shadow-glow: 0 24px 60px -26px rgb(48 86 245 / 0.5);
-  --ap-shadow-glow-aqua: 0 24px 60px -30px rgb(7 133 171 / 0.4);
+  --ap-bg: #f3f6f5;
+  --ap-surface: #fafcfb;
+  --ap-surface-alt: #eaf0ee;
+  --ap-border: #d3dedb;
+  --ap-text: #10201f;
+  --ap-text-muted: #50635f;
+  --ap-secondary: #0f3d3e;
+  --ap-secondary-hover: #0b2f30;
+  --ap-secondary-soft: #e1edea;
+  --ap-secondary-text: #0f3d3e;
+  --ap-on-secondary: #f3f6f5;
+  --ap-on-danger: #f3f6f5;
+  --ap-focus-ring: #0f3d3e;
+  --ap-success: #176f54;
+  --ap-warning: #855800;
+  --ap-danger: #b74335;
+  --ap-danger-hover: #a93a2d;
+  --ap-info: #0f3d3e;
+  --ap-shadow-card: 0 4px 14px rgb(16 32 31 / 0.08);
 }
 
 :root[data-font-size='large'] {
@@ -87,6 +86,21 @@
 }
 
 @layer utilities {
+  p[class~='uppercase'][class*='tracking-'][class*='text-[9px]']:not([class~='text-amber']):not(
+      [class~='text-mint']
+    ):not([class~='text-coral']),
+  p[class~='uppercase'][class*='tracking-'][class*='text-[10px]']:not([class~='text-amber']):not(
+      [class~='text-mint']
+    ):not([class~='text-coral']),
+  p[class~='uppercase'][class*='tracking-'][class*='text-[11px]']:not([class~='text-amber']):not(
+      [class~='text-mint']
+    ):not([class~='text-coral']) {
+    color: var(--ap-text-muted);
+    font-weight: 400;
+    letter-spacing: normal;
+    text-transform: none;
+  }
+
   :root[data-font-size] [class~='text-[8px]'] {
     font-size: calc(8px * var(--ap-font-scale));
   }
@@ -107,24 +121,25 @@
 .dark {
   color-scheme: dark;
 
-  --ap-canvas: #070c1d;
-  --ap-surface: rgb(17 27 58 / 0.72);
-  --ap-surface-raised: rgb(27 41 84 / 0.78);
-  --ap-surface-solid: #0e1734;
-  --ap-line: rgb(151 172 255 / 0.14);
-  --ap-ink: #f0f4ff;
-  --ap-muted: #9aa8c9;
-  --ap-brand: #5b83ff;
-  --ap-brand-strong: #8ea6ff;
-  --ap-iris: #a58cff;
-  --ap-aqua: #63e2ff;
-  --ap-mint: #4ce3a4;
-  --ap-amber: #ffcf6b;
-  --ap-coral: #ff7a90;
-
-  --ap-shadow-card: 0 34px 90px -42px rgb(2 7 25 / 0.95), inset 0 1px 0 rgb(255 255 255 / 0.06);
-  --ap-shadow-glow: 0 24px 70px -24px rgb(91 131 255 / 0.55);
-  --ap-shadow-glow-aqua: 0 24px 70px -28px rgb(99 226 255 / 0.38);
+  --ap-bg: #0a1211;
+  --ap-surface: #0f1a19;
+  --ap-surface-alt: #152423;
+  --ap-border: #223634;
+  --ap-text: #e7efed;
+  --ap-text-muted: #93a7a3;
+  --ap-secondary: #1f7a6b;
+  --ap-secondary-hover: #1f7264;
+  --ap-secondary-soft: rgb(47 164 138 / 0.14);
+  --ap-secondary-text: #5cc4ae;
+  --ap-on-secondary: #fff;
+  --ap-on-danger: #0a1211;
+  --ap-focus-ring: #5cc4ae;
+  --ap-success: #54b98b;
+  --ap-warning: #ffb627;
+  --ap-danger: #e5604d;
+  --ap-danger-hover: #e97562;
+  --ap-info: #5cc4ae;
+  --ap-shadow-card: 0 4px 14px rgb(0 0 0 / 0.22);
 }
 
 @layer base {
@@ -135,43 +150,26 @@
 
   body {
     min-height: 100dvh;
-    background-color: var(--ap-canvas);
-    background-image:
-      radial-gradient(
-        55rem 55rem at 12% -12%,
-        color-mix(in srgb, var(--ap-brand) 20%, transparent),
-        transparent 62%
-      ),
-      radial-gradient(
-        46rem 46rem at 100% -4%,
-        color-mix(in srgb, var(--ap-iris) 17%, transparent),
-        transparent 58%
-      ),
-      radial-gradient(
-        42rem 42rem at 78% 108%,
-        color-mix(in srgb, var(--ap-aqua) 13%, transparent),
-        transparent 62%
-      );
-    background-attachment: fixed;
-    color: var(--ap-ink);
+    background-color: var(--ap-bg);
+    color: var(--ap-text);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
   ::selection {
-    background: color-mix(in srgb, var(--ap-brand) 38%, transparent);
-    color: var(--ap-ink);
+    background: var(--ap-secondary-soft);
+    color: var(--ap-text);
   }
 
   :focus-visible {
-    outline: 2px solid var(--ap-brand-strong);
+    outline: 2px solid var(--ap-focus-ring) !important;
     outline-offset: 3px;
   }
 
   * {
     scrollbar-width: thin;
-    scrollbar-color: color-mix(in srgb, var(--ap-brand) 45%, transparent) transparent;
+    scrollbar-color: var(--ap-secondary) transparent;
   }
 
   ::-webkit-scrollbar {
@@ -183,7 +181,7 @@
     border: 3px solid transparent;
     border-radius: 999px;
     background-clip: padding-box;
-    background-color: color-mix(in srgb, var(--ap-brand) 45%, transparent);
+    background-color: var(--ap-secondary);
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -227,31 +225,6 @@ svg.svg-inline--fa.fa-beat {
   animation: fa-beat 1.3s ease-in-out infinite;
 }
 
-@keyframes float {
-  0%,
-  100% {
-    transform: translate3d(0, 0, 0);
-  }
-  50% {
-    transform: translate3d(0, -14px, 0);
-  }
-}
-
-@keyframes aurora {
-  0% {
-    transform: translate3d(-3%, -2%, 0) scale(1);
-    opacity: 0.65;
-  }
-  50% {
-    transform: translate3d(3%, 4%, 0) scale(1.08);
-    opacity: 0.9;
-  }
-  100% {
-    transform: translate3d(-2%, 3%, 0) scale(1.02);
-    opacity: 0.7;
-  }
-}
-
 @keyframes rise {
   from {
     opacity: 0;
@@ -260,21 +233,6 @@ svg.svg-inline--fa.fa-beat {
   to {
     opacity: 1;
     transform: translate3d(0, 0, 0);
-  }
-}
-
-@keyframes pulse-ring {
-  0% {
-    transform: scale(0.9);
-    opacity: 0.6;
-  }
-  70% {
-    transform: scale(1.35);
-    opacity: 0;
-  }
-  100% {
-    transform: scale(1.35);
-    opacity: 0;
   }
 }
 

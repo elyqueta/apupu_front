@@ -23,7 +23,7 @@ import { TemplateArtworkComponent } from './template-artwork.component';
   template: `
     <a
       [routerLink]="['/eventos', event().id]"
-      class="group relative flex h-full flex-col overflow-hidden rounded-4xl border border-line bg-surface shadow-card backdrop-blur-2xl transition duration-300 hover:-translate-y-1 hover:border-brand/40 hover:shadow-glow focus-visible:-translate-y-1"
+      class="group relative flex h-full flex-col overflow-hidden rounded-4xl border border-line bg-surface shadow-card backdrop-blur-2xl transition duration-300 hover:-translate-y-1 hover:border-brand/40 focus-visible:-translate-y-1"
     >
       <div class="relative p-3 pb-0">
         <app-template-artwork
@@ -38,12 +38,12 @@ import { TemplateArtworkComponent } from './template-artwork.component';
         </div>
 
         <div
-          class="absolute right-6 top-6 min-w-14 rounded-2xl border border-white/20 bg-canvas/55 px-3 py-1.5 text-center text-white shadow-card backdrop-blur-xl"
+          class="absolute right-6 top-6 min-w-14 rounded-2xl border border-line bg-surface px-3 py-1.5 text-center text-ink shadow-card"
         >
           <span class="block font-display text-xl font-semibold leading-none">
             {{ i18n.dayNumber(event().startsAt, event().timezone) }}
           </span>
-          <span class="mt-1 block text-[10px] font-semibold uppercase tracking-[0.18em] text-white/75">
+          <span class="mt-1 block text-[10px] font-semibold text-muted">
             {{ i18n.monthShort(event().startsAt, event().timezone) }}
           </span>
         </div>
@@ -55,12 +55,14 @@ import { TemplateArtworkComponent } from './template-artwork.component';
             <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-brand-strong">
               {{ typeLabel() }}
             </p>
-            <h3 class="mt-1 font-display text-lg font-semibold leading-snug tracking-tight text-ink">
+            <h3
+              class="mt-1 font-display text-lg font-semibold leading-snug tracking-tight text-ink"
+            >
               {{ event().title }}
             </h3>
           </div>
           <span
-            class="grid size-10 shrink-0 place-items-center rounded-2xl border border-line bg-surface-raised text-brand-strong transition duration-300 group-hover:border-brand/30 group-hover:text-brand"
+            class="grid size-10 shrink-0 place-items-center rounded-2xl border border-line bg-surface-raised text-brand-strong transition duration-300 group-hover:border-brand/30 group-hover:text-brand-strong"
           >
             <fa-icon [icon]="typeIcon()" class="text-sm" aria-hidden="true" />
           </span>
@@ -68,7 +70,11 @@ import { TemplateArtworkComponent } from './template-artwork.component';
 
         <div class="flex flex-col gap-2 text-xs text-muted">
           <span class="flex items-center gap-2">
-            <fa-icon [icon]="icons['calendar']" class="text-[11px] text-brand" aria-hidden="true" />
+            <fa-icon
+              [icon]="icons['calendar']"
+              class="text-[11px] text-brand-strong"
+              aria-hidden="true"
+            />
             {{ i18n.longDate(event().startsAt, event().timezone) }}
             <span class="text-muted/60">·</span>
             {{ i18n.time(event().startsAt, event().timezone) }}
@@ -84,9 +90,14 @@ import { TemplateArtworkComponent } from './template-artwork.component';
             <span class="font-medium text-muted">{{ i18n.t('events.card.rate') }}</span>
             <span class="font-semibold text-ink">{{ stats().responseRate }}%</span>
           </div>
-          <svg viewBox="0 0 100 4" preserveAspectRatio="none" class="mt-2 h-1.5 w-full" aria-hidden="true">
+          <svg
+            viewBox="0 0 100 4"
+            preserveAspectRatio="none"
+            class="mt-2 h-1.5 w-full"
+            aria-hidden="true"
+          >
             <rect width="100" height="4" rx="2" class="fill-line" />
-            <rect [attr.width]="stats().responseRate" height="4" rx="2" class="fill-mint" />
+            <rect [attr.width]="stats().responseRate" height="4" rx="2" class="fill-brand" />
           </svg>
         </div>
 
@@ -95,7 +106,12 @@ import { TemplateArtworkComponent } from './template-artwork.component';
             @if (guestNames().length > 0) {
               <app-avatar-stack [names]="guestNames()" [max]="3" />
               <span class="text-[11px] text-muted">
-                {{ i18n.t('events.card.confirmed', { count: stats().confirmed, total: stats().total }) }}
+                {{
+                  i18n.t('events.card.confirmed', {
+                    count: stats().confirmed,
+                    total: stats().total,
+                  })
+                }}
               </span>
             } @else {
               <span class="text-[11px] text-muted">{{ i18n.t('events.card.noGuests') }}</span>
@@ -129,5 +145,7 @@ export class EventCardComponent {
   protected readonly typeLabel = computed(() =>
     this.i18n.t(`type.${this.event().type}` as TranslationKey),
   );
-  protected readonly typeIcon = computed(() => EVENT_TYPE_ICONS[this.event().type] ?? ICONS['star']);
+  protected readonly typeIcon = computed(
+    () => EVENT_TYPE_ICONS[this.event().type] ?? ICONS['star'],
+  );
 }

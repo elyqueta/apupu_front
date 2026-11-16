@@ -1,9 +1,4 @@
 <div class="relative min-h-dvh overflow-hidden">
-  <div class="pointer-events-none fixed inset-0 -z-10 overflow-hidden" aria-hidden="true">
-    <div class="absolute -left-40 -top-32 size-[42rem] rounded-full bg-brand/20 blur-[140px] motion-safe:animate-aurora"></div>
-    <div class="absolute -right-32 bottom-0 size-[34rem] rounded-full bg-aqua/10 blur-[130px]"></div>
-  </div>
-
   <div class="mx-auto flex min-h-dvh w-full max-w-4xl flex-col px-4 py-5 sm:px-6 lg:py-8">
     <header class="flex flex-wrap items-center justify-between gap-3">
       <app-brand />
@@ -11,9 +6,15 @@
     </header>
 
     <main class="flex flex-1 items-center justify-center py-10">
-      <article class="w-full max-w-lg rounded-4xl border border-line bg-surface p-6 text-center shadow-card backdrop-blur-2xl animate-rise sm:p-8">
-        <p class="font-display text-5xl font-semibold tracking-tight text-brand-strong sm:text-6xl">404</p>
-        <span class="mx-auto mt-4 grid size-14 place-items-center rounded-2xl border border-amber/30 bg-amber/15 text-amber">
+      <article
+        class="w-full max-w-lg rounded-4xl border border-line bg-surface p-6 text-center shadow-card backdrop-blur-2xl animate-rise sm:p-8"
+      >
+        <p class="font-display text-5xl font-semibold tracking-tight text-brand-strong sm:text-6xl">
+          404
+        </p>
+        <span
+          class="mx-auto mt-4 grid size-14 place-items-center rounded-2xl border border-amber/30 bg-amber/15 text-amber"
+        >
           <fa-icon [icon]="icons['warning']" class="text-lg" aria-hidden="true" />
         </span>
         <h1 class="mt-4 font-display text-xl font-semibold tracking-tight text-ink">
@@ -23,7 +24,7 @@
 
         <a
           routerLink="/painel"
-          class="mt-5 inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-linear-to-r from-brand via-iris to-aqua px-4 text-sm font-semibold text-white shadow-glow transition hover:brightness-110"
+          class="mt-5 inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-brand hover:bg-secondary-hover px-4 text-sm font-semibold text-on-secondary transition"
         >
           <fa-icon [icon]="icons['chevronLeft']" class="text-xs" aria-hidden="true" />
           {{ i18n.t('notFound.back') }}

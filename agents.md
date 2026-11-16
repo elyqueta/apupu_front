@@ -49,20 +49,20 @@ O frontend será desenvolvido com Angular 22, TypeScript e Tailwind CSS. O backe
 - Convidados podem aceitar, alterar a resposta ou recusar. Uma recusa termina os lembretes futuros e informa o anfitrião por email.
 - O sistema não envia SMS nem mensagens por WhatsApp. A partilha manual de um URL não constitui um canal de envio suportado nem remove a vinculação do convite.
 - Os lembretes automáticos usam a cadência aprovada de 14, 7, 3 e 1 dia antes do início do evento, sempre no fuso horário do evento. Não há lembretes depois de uma recusa ou cancelamento.
-- A interface suporta temas claro e escuro e usa a linguagem visual da imagem de referência: painel futurista, fundo azul-noite, azul eléctrico, acentos violeta/ciano, cartões translúcidos e brilho controlado.
+- A interface suporta temas claro e escuro e usa superfícies neutras com acentos verdes da marca. Usar apenas os tokens definidos para o tema e evitar fundos decorativos, glows e sombras coloridas.
 - O frontend contém no máximo um ficheiro CSS global de entrada, necessário para importar/configurar Tailwind. Não são permitidos CSS de componente, folhas adicionais, estilos inline ou `<style>` em templates.
 
 ## 6. Decisões fechadas para a primeira fase
 
-| Tema | Regra |
-|---|---|
-| Autenticação | Sem contas ou login. A gestão é acessível por um link secreto. |
-| Claim do convite | Vinculado ao primeiro navegador/sessão que o reclamar. Não é uma identificação de hardware. |
-| Canal automático | Apenas email. Telefone pode ser guardado como dado opcional, mas não habilita envio nesta fase. |
-| Partilha | Link pode ser copiado ou partilhado pelo menu nativo do sistema; serviços externos não são integrados para envio. |
-| Lembretes | Emails aos 14, 7, 3 e 1 dias antes do evento. |
-| Templates | Infraestrutura e ponto de extensão podem ser preparados, mas os templates finais serão fornecidos pelo responsável. |
-| Monetização e administração | Fora do âmbito da primeira fase. |
+| Tema                        | Regra                                                                                                               |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| Autenticação                | Sem contas ou login. A gestão é acessível por um link secreto.                                                      |
+| Claim do convite            | Vinculado ao primeiro navegador/sessão que o reclamar. Não é uma identificação de hardware.                         |
+| Canal automático            | Apenas email. Telefone pode ser guardado como dado opcional, mas não habilita envio nesta fase.                     |
+| Partilha                    | Link pode ser copiado ou partilhado pelo menu nativo do sistema; serviços externos não são integrados para envio.   |
+| Lembretes                   | Emails aos 14, 7, 3 e 1 dias antes do evento.                                                                       |
+| Templates                   | Infraestrutura e ponto de extensão podem ser preparados, mas os templates finais serão fornecidos pelo responsável. |
+| Monetização e administração | Fora do âmbito da primeira fase.                                                                                    |
 
 ## 7. Questões que exigem confirmação antes de produção
 

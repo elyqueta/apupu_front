@@ -25,7 +25,7 @@ import { ICONS } from '../../core/ui/icons';
             class="mb-5 grid size-12 place-items-center rounded-2xl border"
             [class]="
               tone() === 'danger'
-                ? 'border-coral/30 bg-coral/15 text-coral'
+                ? 'border-coral/30 bg-coral/10 text-coral'
                 : 'border-brand/30 bg-brand/15 text-brand-strong'
             "
           >
@@ -45,11 +45,11 @@ import { ICONS } from '../../core/ui/icons';
             </button>
             <button
               type="button"
-              class="inline-flex h-11 items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold text-white shadow-glow transition hover:brightness-110"
+              class="inline-flex h-11 items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold transition"
               [class]="
                 tone() === 'danger'
-                  ? 'bg-linear-to-r from-coral to-iris'
-                  : 'bg-linear-to-r from-brand via-iris to-aqua'
+                  ? 'bg-coral text-on-danger hover:bg-danger-hover'
+                  : 'bg-brand text-on-secondary hover:bg-secondary-hover'
               "
               (click)="confirmed.emit()"
             >

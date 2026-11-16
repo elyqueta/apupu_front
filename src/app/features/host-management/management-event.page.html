@@ -1,93 +1,255 @@
 <div class="relative min-h-dvh overflow-hidden">
-  <div class="mx-auto flex min-h-dvh w-full max-w-4xl flex-col px-4 py-5 sm:px-6 lg:py-8">
+  <div class="mx-auto flex min-h-dvh w-full max-w-6xl flex-col px-4 py-5 sm:px-6 lg:py-8">
     <header class="flex flex-wrap items-center justify-between gap-3">
       <app-brand />
       <div class="flex items-center gap-2">
-        <a
-          routerLink="/painel"
-          class="inline-flex h-10 items-center gap-2 rounded-xl border border-line bg-surface-raised/60 px-3 text-xs font-semibold text-ink backdrop-blur-xl transition hover:border-brand/40"
+        <button
+          type="button"
+          [disabled]="pendingAction() === 'end'"
+          class="inline-flex h-10 items-center gap-2 rounded-xl border border-coral/30 bg-coral/10 px-3 text-xs font-semibold text-coral transition hover:bg-coral/15 disabled:cursor-wait disabled:opacity-60"
+          (click)="endSession()"
         >
-          <fa-icon
-            [icon]="icons['chevronLeft']"
-            class="text-[10px] text-muted"
-            aria-hidden="true"
-          />
-          {{ i18n.t('nav.backToPanel') }}
-        </a>
+          <fa-icon [icon]="icons['logout']" class="text-[10px]" aria-hidden="true" />
+          {{ i18n.t('management.endSession') }}
+        </button>
         <app-preference-controls class="hidden sm:flex" />
       </div>
     </header>
 
-    <main class="flex flex-1 items-center justify-center py-10">
-      @if (event(); as event) {
-        <article
-          class="w-full max-w-lg rounded-4xl border border-line bg-surface p-6 text-center shadow-card backdrop-blur-2xl animate-rise sm:p-8"
+    <main class="flex-1 py-8 lg:py-12">
+      @if (loading()) {
+        <app-skeleton variant="detail" />
+      } @else if (error()) {
+        <section
+          role="alert"
+          class="mx-auto max-w-xl rounded-4xl border border-coral/25 bg-surface p-6 text-center shadow-card sm:p-8"
         >
           <span
-            class="mx-auto grid size-14 place-items-center rounded-2xl border border-aqua/30 bg-aqua/15 text-aqua"
+            class="mx-auto grid size-12 place-items-center rounded-2xl border border-coral/25 bg-coral/10 text-coral"
           >
-            <fa-icon [icon]="icons['spinner']" class="text-lg animate-spin" aria-hidden="true" />
+            <fa-icon [icon]="icons['warning']" aria-hidden="true" />
           </span>
-          <p class="mt-4 text-[10px] font-semibold uppercase tracking-[0.24em] text-aqua">
-            {{ i18n.t('management.continueTitle') }}
-          </p>
-          <h1 class="mt-2 font-display text-xl font-semibold tracking-tight text-ink">
-            {{ event.title }}
+          <h1 class="mt-4 font-display text-xl font-semibold text-ink">
+            {{ i18n.t('management.eventTitle') }}
           </h1>
-          <p class="mt-2 text-sm leading-6 text-muted">{{ i18n.t('management.continueText') }}</p>
-          <button
-            type="button"
-            class="mt-5 inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-brand hover:bg-secondary-hover px-4 text-sm font-semibold text-on-secondary transition"
-            (click)="continueToEvent()"
-          >
-            <fa-icon [icon]="icons['chevronRight']" class="text-xs" aria-hidden="true" />
-            {{ i18n.t('management.continueButton') }}
-          </button>
-        </article>
-      } @else {
-        <article
-          class="w-full max-w-lg rounded-4xl border border-line bg-surface p-6 text-center shadow-card backdrop-blur-2xl animate-rise sm:p-8"
-        >
-          <span
-            class="mx-auto grid size-14 place-items-center rounded-2xl border border-amber/30 bg-amber/15 text-amber"
-          >
-            <fa-icon [icon]="icons['lock']" class="text-lg" aria-hidden="true" />
-          </span>
-          <p class="mt-4 text-[10px] font-semibold uppercase tracking-[0.24em] text-amber">
-            {{ i18n.t('management.eyebrow') }}
-          </p>
-          <h1 class="mt-2 font-display text-xl font-semibold tracking-tight text-ink">
-            {{ i18n.t('management.lockedTitle') }}
-          </h1>
-          <p class="mt-2 text-sm leading-6 text-muted">{{ i18n.t('management.lockedText') }}</p>
-
-          <div class="mt-5 flex flex-col gap-2 sm:flex-row sm:justify-center">
-            <a
-              routerLink="/gestao"
-              class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-brand hover:bg-secondary-hover px-4 text-sm font-semibold text-on-secondary transition"
-            >
-              <fa-icon [icon]="icons['key']" class="text-xs" aria-hidden="true" />
-              {{ i18n.t('management.goToEntry') }}
-            </a>
+          <p class="mt-2 text-sm leading-6 text-muted">{{ error() }}</p>
+          <div class="mt-5 flex flex-wrap justify-center gap-2">
             <button
               type="button"
-              class="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-line bg-surface-raised/70 px-4 text-sm font-semibold text-ink transition hover:border-brand/40"
-              (click)="openDemo()"
+              class="inline-flex h-10 items-center gap-2 rounded-xl bg-brand px-4 text-xs font-semibold text-on-secondary transition hover:bg-secondary-hover"
+              (click)="retry()"
             >
-              <fa-icon [icon]="icons['sparkles']" class="text-xs text-amber" aria-hidden="true" />
-              {{ i18n.t('management.demoButton') }}
+              <fa-icon [icon]="icons['refresh']" class="text-[10px]" aria-hidden="true" />
+              {{ i18n.t('common.retry') }}
             </button>
+            <a
+              routerLink="/gestao"
+              class="inline-flex h-10 items-center gap-2 rounded-xl border border-line bg-surface-raised/70 px-4 text-xs font-semibold text-ink transition hover:border-brand/40"
+            >
+              {{ i18n.t('management.goToEntry') }}
+            </a>
           </div>
+        </section>
+      } @else if (event(); as item) {
+        <div class="flex flex-col gap-5">
+          <section
+            class="rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl sm:p-7"
+          >
+            <p class="text-[10px] font-semibold uppercase tracking-[0.24em] text-brand-strong">
+              {{ i18n.t('management.eyebrow') }}
+            </p>
+            <div class="mt-2 flex flex-wrap items-start justify-between gap-4">
+              <div class="min-w-0">
+                <h1 class="font-display text-2xl font-semibold tracking-tight text-ink sm:text-3xl">
+                  {{ item.title }}
+                </h1>
+                <p class="mt-2 text-sm leading-6 text-muted">
+                  {{ i18n.t('management.eventDate') }}:
+                  {{ eventDate(item) }}
+                  @if (item.location.name || item.location.address) {
+                    <span class="mx-1.5 text-line">·</span>
+                    {{ item.location.name || item.location.address }}
+                  }
+                </p>
+              </div>
+              <app-status-badge
+                [value]="item.status === 'scheduled' ? 'published' : item.status"
+              />
+            </div>
 
-          <p class="mt-5 flex items-start justify-center gap-2 text-[10px] leading-5 text-muted">
-            <fa-icon
-              [icon]="icons['info']"
-              class="mt-0.5 text-[9px] text-aqua"
-              aria-hidden="true"
-            />
-            {{ i18n.t('management.sec3Text') }}
-          </p>
-        </article>
+            <div class="mt-5 grid gap-2 sm:grid-cols-4">
+              <div class="rounded-2xl border border-line bg-surface-raised/50 p-3">
+                <p class="text-[10px] uppercase tracking-[0.14em] text-muted">
+                  {{ i18n.t('management.guestsTitle') }}
+                </p>
+                <p class="mt-1 text-xl font-semibold text-ink">{{ invitations().length }}</p>
+              </div>
+              <div class="rounded-2xl border border-line bg-surface-raised/50 p-3">
+                <p class="text-[10px] uppercase tracking-[0.14em] text-muted">
+                  {{ i18n.t('management.accepted') }}
+                </p>
+                <p class="mt-1 text-xl font-semibold text-mint">
+                  {{ item.stats?.accepted ?? 0 }}
+                </p>
+              </div>
+              <div class="rounded-2xl border border-line bg-surface-raised/50 p-3">
+                <p class="text-[10px] uppercase tracking-[0.14em] text-muted">
+                  {{ i18n.t('management.pending') }}
+                </p>
+                <p class="mt-1 text-xl font-semibold text-amber">
+                  {{ item.stats?.pending ?? 0 }}
+                </p>
+              </div>
+              <div class="rounded-2xl border border-line bg-surface-raised/50 p-3">
+                <p class="text-[10px] uppercase tracking-[0.14em] text-muted">
+                  {{ i18n.t('management.declined') }}
+                </p>
+                <p class="mt-1 text-xl font-semibold text-muted">
+                  {{ item.stats?.declined ?? 0 }}
+                </p>
+              </div>
+            </div>
+          </section>
+
+          <div class="grid items-start gap-5 lg:grid-cols-[minmax(0,0.72fr)_minmax(0,1.28fr)]">
+            <section class="rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl">
+              <div class="flex items-start justify-between gap-3">
+                <div>
+                  <h2 class="text-sm font-semibold text-ink">
+                    {{ i18n.t('management.addGuestTitle') }}
+                  </h2>
+                  <p class="mt-1 text-xs text-muted">{{ i18n.t('management.addGuestHint') }}</p>
+                </div>
+                <span
+                  class="grid size-9 place-items-center rounded-xl border border-line bg-surface-raised text-brand-strong"
+                >
+                  <fa-icon [icon]="icons['userPlus']" class="text-xs" aria-hidden="true" />
+                </span>
+              </div>
+
+              <form class="mt-4 flex flex-col gap-3" [formGroup]="guestForm" (ngSubmit)="addGuest()">
+                <label class="block">
+                  <span class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
+                    {{ i18n.t('common.name') }}
+                  </span>
+                  <input
+                    formControlName="name"
+                    type="text"
+                    autocomplete="name"
+                    required
+                    maxlength="160"
+                    class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink outline-none transition focus:border-brand/50"
+                  />
+                </label>
+                <label class="block">
+                  <span class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
+                    {{ i18n.t('common.email') }}
+                  </span>
+                  <input
+                    formControlName="email"
+                    type="email"
+                    autocomplete="email"
+                    required
+                    maxlength="254"
+                    class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink outline-none transition focus:border-brand/50"
+                  />
+                </label>
+                <label class="block">
+                  <span class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
+                    {{ i18n.t('common.phone') }} · {{ i18n.t('common.optional') }}
+                  </span>
+                  <input
+                    formControlName="phone"
+                    type="tel"
+                    autocomplete="tel"
+                    maxlength="40"
+                    class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink outline-none transition focus:border-brand/50"
+                  />
+                </label>
+                @if (actionError()) {
+                  <p role="alert" class="text-xs leading-5 text-coral">{{ actionError() }}</p>
+                }
+                @if (feedback()) {
+                  <p role="status" class="text-xs leading-5 text-mint">{{ feedback() }}</p>
+                }
+                <button
+                  type="submit"
+                  [disabled]="guestForm.invalid || pendingAction() !== null"
+                  class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-brand px-4 text-xs font-semibold text-on-secondary transition hover:bg-secondary-hover disabled:cursor-wait disabled:opacity-60"
+                >
+                  <fa-icon
+                    [icon]="icons[pendingAction() === 'add' ? 'spinner' : 'plus']"
+                    [class.animate-spin]="pendingAction() === 'add'"
+                    class="text-[10px]"
+                    aria-hidden="true"
+                  />
+                  {{ pendingAction() === 'add' ? i18n.t('common.saving') : i18n.t('common.add') }}
+                </button>
+              </form>
+            </section>
+
+            <section class="rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <h2 class="text-sm font-semibold text-ink">{{ i18n.t('management.guestsTitle') }}</h2>
+                  <p class="mt-1 text-xs text-muted">
+                    {{ invitations().length }} {{ i18n.t('management.guestCount') }}
+                  </p>
+                </div>
+                <fa-icon [icon]="icons['userPlus']" class="text-sm text-brand-strong" aria-hidden="true" />
+              </div>
+
+              @if (invitations().length === 0) {
+                <div class="mt-4 rounded-2xl border border-dashed border-line bg-surface-raised/30 p-6 text-center">
+                  <p class="text-xs leading-5 text-muted">{{ i18n.t('management.emptyGuests') }}</p>
+                </div>
+              } @else {
+                <ul class="mt-4 flex flex-col gap-2">
+                  @for (guest of invitations(); track guest.id) {
+                    <li class="rounded-2xl border border-line bg-surface-raised/40 p-3">
+                      <div class="flex flex-wrap items-start justify-between gap-3">
+                        <div class="min-w-0">
+                          <p class="truncate text-xs font-semibold text-ink">{{ guest.guest_name }}</p>
+                          <p class="mt-0.5 break-all text-[10px] text-muted">{{ guest.guest_email }}</p>
+                          <span
+                            class="mt-2 inline-flex rounded-full border border-line bg-surface px-2 py-0.5 text-[9px] font-semibold text-muted"
+                          >
+                            {{ rsvpLabel(guest.rsvp_status) }}
+                          </span>
+                        </div>
+                        <div class="flex shrink-0 gap-1.5">
+                          <button
+                            type="button"
+                            [disabled]="pendingAction() !== null"
+                            [attr.aria-label]="i18n.t('management.resend')"
+                            class="grid size-8 place-items-center rounded-lg border border-line bg-surface text-muted transition hover:border-brand/40 hover:text-brand-strong disabled:opacity-50"
+                            (click)="resend(guest)"
+                          >
+                            <fa-icon
+                              [icon]="icons[pendingAction() === guest.id ? 'spinner' : 'envelope']"
+                              [class.animate-spin]="pendingAction() === guest.id"
+                              class="text-[10px]"
+                              aria-hidden="true"
+                            />
+                          </button>
+                          <button
+                            type="button"
+                            [disabled]="pendingAction() !== null"
+                            [attr.aria-label]="i18n.t('common.remove')"
+                            class="grid size-8 place-items-center rounded-lg border border-coral/20 bg-coral/5 text-coral transition hover:bg-coral/10 disabled:opacity-50"
+                            (click)="remove(guest)"
+                          >
+                            <fa-icon [icon]="icons['trash']" class="text-[10px]" aria-hidden="true" />
+                          </button>
+                        </div>
+                      </div>
+                    </li>
+                  }
+                </ul>
+              }
+            </section>
+          </div>
+        </div>
       }
     </main>
 

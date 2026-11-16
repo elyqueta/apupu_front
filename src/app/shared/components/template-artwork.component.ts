@@ -1,14 +1,13 @@
 import { Component, computed, input } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
-import { TemplateId } from '../../core/models/models';
 import { ICONS } from '../../core/ui/icons';
 
 interface ArtworkStyle {
   icon: IconDefinition;
 }
 
-const ARTWORK: Record<TemplateId, ArtworkStyle> = {
+const ARTWORK: Record<string, ArtworkStyle> = {
   aurora: {
     icon: ICONS['sparkles'],
   },
@@ -68,14 +67,14 @@ const ARTWORK: Record<TemplateId, ArtworkStyle> = {
   `,
 })
 export class TemplateArtworkComponent {
-  readonly templateId = input.required<TemplateId>();
+  readonly templateId = input<string | null>('');
   readonly variant = input<'thumb' | 'cover' | 'hero'>('cover');
   readonly title = input<string>('');
   readonly subtitle = input<string>('');
   readonly kicker = input<string>('');
   readonly showIcon = input(true);
 
-  protected readonly art = computed(() => ARTWORK[this.templateId()]);
+  protected readonly art = computed(() => ARTWORK[this.templateId() ?? ''] ?? ARTWORK['aurora']);
 
   protected readonly variantClass = computed(() => {
     switch (this.variant()) {

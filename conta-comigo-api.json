@@ -1,0 +1,6357 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Conta Comigo API",
+    "version": "0.1.0",
+    "description": "API REST do Conta Comigo — plataforma de convites para eventos. Os anfitriões podem criar conta (email + senha) e gerir eventos no workspace autenticado; o fluxo legado por link secreto continua válido e o aceite público do convite não exige conta. O registo exige verificação do email por código OTP antes da criação da conta. Documentação gerada a partir dos comentários JSDoc das rotas."
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000",
+      "description": "Servidor local de desenvolvimento"
+    }
+  ],
+  "components": {
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "required": [
+          "error"
+        ],
+        "properties": {
+          "error": {
+            "type": "object",
+            "required": [
+              "code",
+              "message",
+              "request_id"
+            ],
+            "properties": {
+              "code": {
+                "type": "string",
+                "example": "validation_failed"
+              },
+              "message": {
+                "type": "string"
+              },
+              "fields": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "request_id": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "EventTemplate": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "preview_image_url": {
+            "type": "string",
+            "nullable": true
+          },
+          "supported_fields": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "themes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "mode": {
+                  "type": "string",
+                  "enum": [
+                    "light",
+                    "dark"
+                  ]
+                },
+                "palette": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "is_active": {
+            "type": "boolean"
+          }
+        }
+      },
+      "EventLocation": {
+        "oneOf": [
+          {
+            "type": "object",
+            "required": [
+              "type",
+              "name"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "venue"
+                ]
+              },
+              "name": {
+                "type": "string"
+              },
+              "address": {
+                "type": "string",
+                "nullable": true
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": [
+              "type",
+              "online_url"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "online"
+                ]
+              },
+              "online_url": {
+                "type": "string",
+                "format": "uri"
+              }
+            }
+          }
+        ]
+      },
+      "EventContribution": {
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "bank_name": {
+            "type": "string",
+            "nullable": true
+          },
+          "account_holder": {
+            "type": "string",
+            "nullable": true
+          },
+          "account_reference": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "EventCategory": {
+        "type": "string",
+        "enum": [
+          "wedding",
+          "birthday",
+          "corporate",
+          "baby",
+          "other"
+        ]
+      },
+      "Event": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "host_name": {
+            "type": "string"
+          },
+          "host_email": {
+            "type": "string",
+            "format": "email"
+          },
+          "category": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EventCategory"
+              }
+            ],
+            "nullable": true
+          },
+          "starts_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "ends_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "timezone": {
+            "type": "string",
+            "example": "Africa/Luanda"
+          },
+          "location": {
+            "$ref": "#/components/schemas/EventLocation"
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "rules": {
+            "type": "string",
+            "nullable": true
+          },
+          "dress_code": {
+            "type": "string",
+            "nullable": true
+          },
+          "template_id": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "theme": {
+            "type": "object",
+            "properties": {
+              "mode": {
+                "type": "string",
+                "enum": [
+                  "light",
+                  "dark"
+                ]
+              },
+              "palette": {
+                "type": "string"
+              }
+            }
+          },
+          "contribution": {
+            "$ref": "#/components/schemas/EventContribution"
+          },
+          "rsvp_deadline": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "scheduled",
+              "cancelled",
+              "completed"
+            ]
+          },
+          "stats": {
+            "type": "object",
+            "properties": {
+              "total_invitations": {
+                "type": "integer"
+              },
+              "accepted": {
+                "type": "integer"
+              },
+              "declined": {
+                "type": "integer"
+              },
+              "pending": {
+                "type": "integer"
+              }
+            }
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "InvitationInput": {
+        "type": "object",
+        "required": [
+          "name",
+          "email"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true
+          },
+          "table_name": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "Invitation": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "event_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "guest_name": {
+            "type": "string"
+          },
+          "guest_email": {
+            "type": "string",
+            "format": "email"
+          },
+          "guest_phone": {
+            "type": "string",
+            "nullable": true
+          },
+          "table_name": {
+            "type": "string",
+            "nullable": true
+          },
+          "rsvp_status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "accepted",
+              "declined"
+            ]
+          },
+          "rsvp_responded_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "send_status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "queued",
+              "sent",
+              "failed"
+            ]
+          },
+          "send_count": {
+            "type": "integer"
+          },
+          "last_sent_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "PublicEvent": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "host_name": {
+            "type": "string"
+          },
+          "starts_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "ends_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "timezone": {
+            "type": "string",
+            "example": "Africa/Luanda"
+          },
+          "location": {
+            "$ref": "#/components/schemas/EventLocation"
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "rules": {
+            "type": "string",
+            "nullable": true
+          },
+          "dress_code": {
+            "type": "string",
+            "nullable": true
+          },
+          "theme": {
+            "type": "object",
+            "properties": {
+              "mode": {
+                "type": "string",
+                "enum": [
+                  "light",
+                  "dark"
+                ]
+              },
+              "palette": {
+                "type": "string"
+              }
+            }
+          },
+          "contribution": {
+            "$ref": "#/components/schemas/EventContribution"
+          },
+          "rsvp_deadline": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "scheduled",
+              "cancelled",
+              "completed"
+            ]
+          }
+        }
+      },
+      "PublicInvitation": {
+        "type": "object",
+        "properties": {
+          "event": {
+            "$ref": "#/components/schemas/PublicEvent"
+          },
+          "guest": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "rsvp_status": {
+                "type": "string",
+                "enum": [
+                  "pending",
+                  "accepted",
+                  "declined"
+                ]
+              },
+              "rsvp_responded_at": {
+                "type": "string",
+                "format": "date-time",
+                "nullable": true
+              }
+            }
+          },
+          "rsvp_deadline_passed": {
+            "type": "boolean"
+          },
+          "csrf_token": {
+            "type": "string"
+          }
+        }
+      },
+      "CreateEvent": {
+        "type": "object",
+        "required": [
+          "event"
+        ],
+        "properties": {
+          "event": {
+            "type": "object",
+            "required": [
+              "title",
+              "host_name",
+              "host_email",
+              "starts_at",
+              "timezone",
+              "location"
+            ],
+            "properties": {
+              "title": {
+                "type": "string"
+              },
+              "host_name": {
+                "type": "string"
+              },
+              "host_email": {
+                "type": "string",
+                "format": "email"
+              },
+              "category": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/EventCategory"
+                  }
+                ],
+                "nullable": true
+              },
+              "starts_at": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "ends_at": {
+                "type": "string",
+                "format": "date-time",
+                "nullable": true
+              },
+              "timezone": {
+                "type": "string",
+                "example": "Africa/Luanda"
+              },
+              "location": {
+                "$ref": "#/components/schemas/EventLocation"
+              },
+              "message": {
+                "type": "string",
+                "nullable": true
+              },
+              "rules": {
+                "type": "string",
+                "nullable": true
+              },
+              "dress_code": {
+                "type": "string",
+                "nullable": true
+              },
+              "template_id": {
+                "type": "string",
+                "format": "uuid",
+                "nullable": true
+              },
+              "theme": {
+                "type": "object",
+                "properties": {
+                  "mode": {
+                    "type": "string",
+                    "enum": [
+                      "light",
+                      "dark"
+                    ]
+                  },
+                  "palette": {
+                    "type": "string"
+                  }
+                }
+              },
+              "contribution": {
+                "$ref": "#/components/schemas/EventContribution"
+              },
+              "rsvp_deadline": {
+                "type": "string",
+                "format": "date-time",
+                "nullable": true
+              }
+            }
+          },
+          "guests": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InvitationInput"
+            }
+          }
+        }
+      },
+      "UpdateEvent": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "host_name": {
+            "type": "string"
+          },
+          "host_email": {
+            "type": "string",
+            "format": "email"
+          },
+          "category": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EventCategory"
+              }
+            ],
+            "nullable": true
+          },
+          "starts_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "ends_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "timezone": {
+            "type": "string"
+          },
+          "location": {
+            "$ref": "#/components/schemas/EventLocation"
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "rules": {
+            "type": "string",
+            "nullable": true
+          },
+          "dress_code": {
+            "type": "string",
+            "nullable": true
+          },
+          "template_id": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "theme": {
+            "type": "object",
+            "properties": {
+              "mode": {
+                "type": "string",
+                "enum": [
+                  "light",
+                  "dark"
+                ]
+              },
+              "palette": {
+                "type": "string"
+              }
+            }
+          },
+          "contribution": {
+            "$ref": "#/components/schemas/EventContribution"
+          },
+          "rsvp_deadline": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "scheduled",
+              "cancelled",
+              "completed"
+            ]
+          }
+        }
+      },
+      "HostProfile": {
+        "type": "object",
+        "properties": {
+          "display_name": {
+            "type": "string",
+            "nullable": true
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true
+          },
+          "birth_date": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Data de calendário (YYYY-MM-DD), opcional."
+          },
+          "locale": {
+            "type": "string",
+            "example": "pt-AO"
+          },
+          "timezone": {
+            "type": "string",
+            "example": "Africa/Luanda"
+          },
+          "avatar_url": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true
+          }
+        }
+      },
+      "Host": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "email_verified": {
+            "type": "boolean"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "suspended",
+              "deleted"
+            ]
+          },
+          "profile": {
+            "$ref": "#/components/schemas/HostProfile"
+          },
+          "profile_complete": {
+            "type": "boolean"
+          },
+          "missing_fields": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "birth_date"
+            ]
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "UpdateProfile": {
+        "type": "object",
+        "properties": {
+          "display_name": {
+            "type": "string",
+            "nullable": true
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true
+          },
+          "birth_date": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Data passada, idade mínima de 18 anos."
+          },
+          "locale": {
+            "type": "string"
+          },
+          "timezone": {
+            "type": "string"
+          },
+          "avatar_url": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true
+          }
+        }
+      },
+      "PaginationMeta": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "page_size": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          },
+          "total": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "total_pages": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "HostGuest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Invitation"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "event": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "title": {
+                    "type": "string"
+                  },
+                  "starts_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "draft",
+                      "scheduled",
+                      "cancelled",
+                      "completed"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "Activity": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "event_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "type": "string",
+            "example": "rsvp_accepted"
+          },
+          "guest_name": {
+            "type": "string",
+            "nullable": true
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "Task": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "event_id": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "label": {
+            "type": "string"
+          },
+          "done": {
+            "type": "boolean"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ActivityWithEvent": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Activity"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "event_title": {
+                "type": "string"
+              }
+            }
+          }
+        ]
+      },
+      "DeliveryStatus": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "queued"
+            ],
+            "description": "O convite foi enfileirado na outbox."
+          }
+        }
+      },
+      "EventCreateResult": {
+        "type": "object",
+        "properties": {
+          "event": {
+            "$ref": "#/components/schemas/Event"
+          },
+          "manage_email_status": {
+            "type": "string",
+            "enum": [
+              "sent",
+              "failed"
+            ]
+          },
+          "deliveries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DeliveryStatus"
+            }
+          }
+        }
+      },
+      "EventCreateEnvelope": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/EventCreateResult"
+          }
+        }
+      },
+      "InvitationResendEnvelope": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "status": {
+                "type": "string",
+                "enum": [
+                  "queued"
+                ]
+              }
+            }
+          }
+        }
+      },
+      "EventList": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Event"
+            }
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationMeta"
+          }
+        }
+      },
+      "HostGuestList": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HostGuest"
+            }
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationMeta"
+          }
+        }
+      },
+      "ActivityList": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ActivityWithEvent"
+            }
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationMeta"
+          }
+        }
+      },
+      "EventActivityList": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Activity"
+            }
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationMeta"
+          }
+        }
+      },
+      "TaskList": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Task"
+            }
+          }
+        }
+      },
+      "HostEnvelope": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "host": {
+                "$ref": "#/components/schemas/Host"
+              }
+            }
+          }
+        }
+      },
+      "EventEnvelope": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/Event"
+          }
+        }
+      },
+      "InvitationEnvelope": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/Invitation"
+          }
+        }
+      },
+      "InvitationListEnvelope": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Invitation"
+            }
+          }
+        }
+      },
+      "TaskEnvelope": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/Task"
+          }
+        }
+      },
+      "LoginEnvelope": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "host": {
+                "$ref": "#/components/schemas/Host"
+              },
+              "csrf_token": {
+                "type": "string"
+              },
+              "expires_at": {
+                "type": "string",
+                "format": "date-time"
+              }
+            }
+          }
+        }
+      },
+      "SessionEnvelope": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "host": {
+                "$ref": "#/components/schemas/Host"
+              },
+              "csrf_token": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "AcceptedEnvelope": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "status": {
+                "type": "string",
+                "enum": [
+                  "accepted"
+                ]
+              }
+            }
+          }
+        }
+      },
+      "RegistrationCodeEnvelope": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "status": {
+                "type": "string",
+                "enum": [
+                  "accepted"
+                ]
+              },
+              "email": {
+                "type": "string",
+                "format": "email"
+              },
+              "expires_at": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "resend_available_at": {
+                "type": "string",
+                "format": "date-time"
+              }
+            }
+          }
+        }
+      },
+      "RegistrationVerificationEnvelope": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "email": {
+                "type": "string",
+                "format": "email"
+              },
+              "verification_token": {
+                "type": "string"
+              },
+              "expires_at": {
+                "type": "string",
+                "format": "date-time"
+              }
+            }
+          }
+        }
+      },
+      "DashboardEnvelope": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "next_event": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/Event"
+                  }
+                ],
+                "nullable": true
+              },
+              "upcoming": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Event"
+                }
+              },
+              "totals": {
+                "type": "object",
+                "properties": {
+                  "events": {
+                    "type": "integer"
+                  },
+                  "drafts": {
+                    "type": "integer"
+                  },
+                  "scheduled": {
+                    "type": "integer"
+                  },
+                  "cancelled": {
+                    "type": "integer"
+                  },
+                  "completed": {
+                    "type": "integer"
+                  },
+                  "total_invitations": {
+                    "type": "integer"
+                  },
+                  "accepted": {
+                    "type": "integer"
+                  },
+                  "declined": {
+                    "type": "integer"
+                  },
+                  "pending": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "ReportEvent": {
+        "type": "object",
+        "properties": {
+          "event_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "scheduled",
+              "cancelled",
+              "completed"
+            ]
+          },
+          "total_invitations": {
+            "type": "integer"
+          },
+          "accepted": {
+            "type": "integer"
+          },
+          "declined": {
+            "type": "integer"
+          },
+          "pending": {
+            "type": "integer"
+          }
+        }
+      },
+      "ReportSummaryEnvelope": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "events": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ReportEvent"
+                }
+              },
+              "totals": {
+                "type": "object",
+                "properties": {
+                  "total_invitations": {
+                    "type": "integer"
+                  },
+                  "accepted": {
+                    "type": "integer"
+                  },
+                  "declined": {
+                    "type": "integer"
+                  },
+                  "pending": {
+                    "type": "integer"
+                  },
+                  "response_rate": {
+                    "type": "number"
+                  },
+                  "acceptance_rate": {
+                    "type": "number"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "DailyReport": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "invitations": {
+            "type": "integer"
+          },
+          "accepted": {
+            "type": "integer"
+          },
+          "declined": {
+            "type": "integer"
+          },
+          "reminders": {
+            "type": "integer"
+          }
+        }
+      },
+      "DailyReportEnvelope": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "event_id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "days": {
+                "type": "integer"
+              },
+              "series": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/DailyReport"
+                }
+              }
+            }
+          }
+        }
+      },
+      "ManageLinkResendEnvelope": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "event_id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "manage_email_status": {
+                "type": "string",
+                "enum": [
+                  "sent",
+                  "failed"
+                ]
+              },
+              "manage_token_expires_at": {
+                "type": "string",
+                "format": "date-time",
+                "nullable": true
+              }
+            }
+          }
+        }
+      },
+      "HostSessionEnvelope": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "event": {
+                "$ref": "#/components/schemas/Event"
+              },
+              "csrf_token": {
+                "type": "string"
+              },
+              "expires_at": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "manage_email_status": {
+                "type": "string",
+                "enum": [
+                  "sent",
+                  "failed"
+                ]
+              },
+              "manage_token_expires_at": {
+                "type": "string",
+                "format": "date-time",
+                "nullable": true
+              }
+            }
+          }
+        }
+      },
+      "EventDetailEnvelope": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "event": {
+                "$ref": "#/components/schemas/Event"
+              },
+              "invitations": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Invitation"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "hostSession": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "apupu_host_<eventId>",
+        "description": "Cookie HttpOnly emitido por POST /host/session. Operações mutáveis exigem também X-CSRF-Token."
+      },
+      "accountSession": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "apupu_auth",
+        "description": "Cookie HttpOnly emitido por POST /auth/login. Operações mutáveis exigem também o cabeçalho X-CSRF-Token (valor devolvido no login ou em GET /auth/session)."
+      }
+    },
+    "responses": {
+      "ValidationError": {
+        "description": "Dados inválidos.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "InvalidJson": {
+        "description": "Corpo da requisição não é um JSON válido.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "error": {
+                "code": "invalid_json",
+                "message": "Corpo da requisição não é um JSON válido.",
+                "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+              }
+            }
+          }
+        }
+      },
+      "HostSessionInvalid": {
+        "description": "Sessão de gestão ou de conta ausente, expirada ou de outro evento.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "error": {
+                "code": "host_session_invalid",
+                "message": "Sessão inválida ou expirada.",
+                "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+              }
+            }
+          }
+        }
+      },
+      "InvalidCredentials": {
+        "description": "Email ou senha inválidos.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "error": {
+                "code": "invalid_credentials",
+                "message": "Email ou senha inválidos.",
+                "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+              }
+            }
+          }
+        }
+      },
+      "CsrfInvalid": {
+        "description": "Falta ou não coincide o token CSRF.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "error": {
+                "code": "csrf_invalid",
+                "message": "Token CSRF inválido ou ausente.",
+                "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+              }
+            }
+          }
+        }
+      },
+      "EmailNotVerified": {
+        "description": "A conta ainda não confirmou o email; a escrita de eventos está bloqueada.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "error": {
+                "code": "email_not_verified",
+                "message": "Confirma o teu email antes de gerir eventos.",
+                "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+              }
+            }
+          }
+        }
+      },
+      "InvitationNotFound": {
+        "description": "Token inválido, convite revogado ou reclamado por outro navegador.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "error": {
+                "code": "invitation_not_found",
+                "message": "Convite não encontrado.",
+                "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+              }
+            }
+          }
+        }
+      },
+      "EventNotFound": {
+        "description": "Evento inexistente ou não pertencente à conta.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "error": {
+                "code": "event_not_found",
+                "message": "Evento não encontrado.",
+                "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+              }
+            }
+          }
+        }
+      },
+      "ManageLinkInvalid": {
+        "description": "Link de gestão inválido, expirado ou já rodado.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "error": {
+                "code": "manage_link_invalid",
+                "message": "Link de gestão inválido ou expirado.",
+                "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+              }
+            }
+          }
+        }
+      },
+      "TaskNotFound": {
+        "description": "Tarefa inexistente ou não pertencente à conta.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "error": {
+                "code": "task_not_found",
+                "message": "Tarefa não encontrada.",
+                "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+              }
+            }
+          }
+        }
+      },
+      "ConflictGeneric": {
+        "description": "Conflito com o estado atual do recurso.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "error": {
+                "code": "event_not_scheduled",
+                "message": "O evento ainda não está agendado.",
+                "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+              }
+            }
+          }
+        }
+      },
+      "EmailDuplicate": {
+        "description": "O email já está na lista de convidados deste evento.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "error": {
+                "code": "invitation_email_duplicate",
+                "message": "Este email já está na lista de convidados.",
+                "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+              }
+            }
+          }
+        }
+      },
+      "InvitationNotResendable": {
+        "description": "O convite está revogado ou não tem um link reutilizável.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "error": {
+                "code": "invitation_not_resendable",
+                "message": "Este convite não pode ser reenviado.",
+                "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+              }
+            }
+          }
+        }
+      },
+      "EmailAlreadyRegistered": {
+        "description": "O email já tem uma conta.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "error": {
+                "code": "email_already_registered",
+                "message": "Este email já está registado.",
+                "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+              }
+            }
+          }
+        }
+      },
+      "ValidationFailed": {
+        "description": "Dados inválidos; `fields` lista os campos e mensagens.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "error": {
+                "code": "validation_failed",
+                "message": "Verifique os campos indicados.",
+                "fields": {
+                  "email": [
+                    "Email inválido."
+                  ]
+                },
+                "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+              }
+            }
+          }
+        }
+      },
+      "VerificationInvalid": {
+        "description": "Token de verificação de email inválido ou expirado.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "error": {
+                "code": "verification_invalid",
+                "message": "Link de verificação inválido ou expirado.",
+                "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+              }
+            }
+          }
+        }
+      },
+      "VerificationRequired": {
+        "description": "É necessário verificar o email antes de criar a conta.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "error": {
+                "code": "verification_required",
+                "message": "Verifica o teu email antes de criar a conta.",
+                "fields": {
+                  "email": [
+                    "Email inválido."
+                  ]
+                },
+                "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+              }
+            }
+          }
+        }
+      },
+      "OtpInvalid": {
+        "description": "Código OTP inválido ou expirado.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "error": {
+                "code": "otp_invalid",
+                "message": "Código inválido ou expirado.",
+                "fields": {
+                  "email": [
+                    "Email inválido."
+                  ]
+                },
+                "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+              }
+            }
+          }
+        }
+      },
+      "OtpAttemptsExceeded": {
+        "description": "O limite de tentativas do código foi atingido; é necessário pedir outro.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "error": {
+                "code": "otp_attempts_exceeded",
+                "message": "Demasiadas tentativas. Pede um novo código.",
+                "fields": {
+                  "email": [
+                    "Email inválido."
+                  ]
+                },
+                "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+              }
+            }
+          }
+        }
+      },
+      "ResetInvalid": {
+        "description": "Token de reposição de senha inválido ou expirado.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "error": {
+                "code": "reset_invalid",
+                "message": "Link de reposição inválido ou expirado.",
+                "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+              }
+            }
+          }
+        }
+      },
+      "AccountLocked": {
+        "description": "Conta temporariamente bloqueada após demasiadas falhas de login.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "error": {
+                "code": "account_locked",
+                "message": "Conta temporariamente bloqueada. Tente novamente mais tarde.",
+                "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+              }
+            }
+          }
+        }
+      },
+      "RateLimited": {
+        "description": "Limite de pedidos excedido.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "error": {
+                "code": "rate_limited",
+                "message": "Demasiados pedidos. Tente novamente mais tarde.",
+                "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+              }
+            }
+          }
+        }
+      },
+      "OtpResendTooSoon": {
+        "description": "Foi pedido um código há menos tempo do que o intervalo mínimo.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "error": {
+                "code": "otp_resend_too_soon",
+                "message": "Aguarda antes de pedir um novo código.",
+                "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+              }
+            }
+          }
+        }
+      },
+      "InternalError": {
+        "description": "Erro inesperado; sem stack trace nem detalhes internos.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "error": {
+                "code": "internal_error",
+                "message": "Erro interno do servidor.",
+                "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+              }
+            }
+          }
+        }
+      },
+      "ServiceUnavailable": {
+        "description": "Serviço externo necessário temporariamente indisponível.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "error": {
+                "code": "service_unavailable",
+                "message": "Serviço temporariamente indisponível.",
+                "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+              }
+            }
+          }
+        }
+      },
+      "AvatarUploadUnavailable": {
+        "description": "Upload de avatar indisponível: credenciais Cloudinary ausentes ou provider inacessível.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "error": {
+                "code": "avatar_upload_unavailable",
+                "message": "O upload de avatar está temporariamente indisponível.",
+                "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/api/v1/templates": {
+      "get": {
+        "tags": [
+          "Templates"
+        ],
+        "summary": "Lista os templates de convite ativos",
+        "description": "A infraestrutura de templates está pronta; os templates visuais finais serão fornecidos pelo responsável do produto. Uma lista vazia é uma resposta válida.\n",
+        "responses": {
+          "200": {
+            "description": "Lista de templates ativos.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/EventTemplate"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Limite de pedidos excedido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "rate_limited",
+                    "message": "Demasiados pedidos. Tente novamente mais tarde.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/public/invitations/{token}/claim": {
+      "post": {
+        "tags": [
+          "Convites públicos"
+        ],
+        "summary": "Reclama o convite no primeiro navegador",
+        "description": "O primeiro claim válido é atómico e emite um cookie HttpOnly de capacidade. Um browser diferente, um token inválido ou um convite revogado recebem sempre o mesmo 404 genérico.\n",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Apresentação pública do convite.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PublicInvitation"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Convite não encontrado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "invitation_not_found",
+                    "message": "Convite não encontrado.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Demasiados pedidos.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "rate_limited",
+                    "message": "Demasiados pedidos. Tente novamente mais tarde.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/public/invitations/{token}": {
+      "get": {
+        "tags": [
+          "Convites públicos"
+        ],
+        "summary": "Consulta o convite com a capacidade do navegador",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Apresentação pública do convite.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PublicInvitation"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Convite não encontrado ou reclamado por outro navegador.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "invitation_not_found",
+                    "message": "Convite não encontrado.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Limite de pedidos excedido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "rate_limited",
+                    "message": "Demasiados pedidos. Tente novamente mais tarde.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/public/invitations/{token}/rsvp": {
+      "put": {
+        "tags": [
+          "Convites públicos"
+        ],
+        "summary": "Aceita, altera ou recusa o convite",
+        "description": "Exige a capacidade do navegador e o token CSRF derivado. Recusar cancela os lembretes futuros e notifica o anfitrião; repetir o mesmo estado não duplica a notificação.\n",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-CSRF-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "status"
+                ],
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "accepted",
+                      "declined"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Resposta registada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PublicInvitation"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Token CSRF inválido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "csrf_invalid",
+                    "message": "Token CSRF inválido ou ausente.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Convite não encontrado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "invitation_not_found",
+                    "message": "Convite não encontrado.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Evento cancelado, terminado ou prazo de resposta excedido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "event_not_scheduled",
+                    "message": "O evento ainda não está agendado.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dados inválidos; `fields` lista os campos e mensagens.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "validation_failed",
+                    "message": "Verifique os campos indicados.",
+                    "fields": {
+                      "email": [
+                        "Email inválido."
+                      ]
+                    },
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Limite de pedidos excedido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "rate_limited",
+                    "message": "Demasiados pedidos. Tente novamente mais tarde.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/host/profile": {
+      "get": {
+        "tags": [
+          "Perfil"
+        ],
+        "summary": "Devolve o perfil completo da conta",
+        "security": [
+          {
+            "accountSession": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Conta e perfil.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HostEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sessão ausente ou expirada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "host_session_invalid",
+                    "message": "Sessão inválida ou expirada.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Perfil"
+        ],
+        "summary": "Actualiza campos do perfil",
+        "security": [
+          {
+            "accountSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-CSRF-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProfile"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Perfil actualizado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HostEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sessão de gestão ou de conta ausente, expirada ou de outro evento.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "host_session_invalid",
+                    "message": "Sessão inválida ou expirada.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Falta ou não coincide o token CSRF.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "csrf_invalid",
+                    "message": "Token CSRF inválido ou ausente.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Data de nascimento ou outro campo inválido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "validation_failed",
+                    "message": "Verifique os campos indicados.",
+                    "fields": {
+                      "email": [
+                        "Email inválido."
+                      ]
+                    },
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Limite de pedidos excedido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "rate_limited",
+                    "message": "Demasiados pedidos. Tente novamente mais tarde.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/host/profile/avatar": {
+      "post": {
+        "tags": [
+          "Perfil"
+        ],
+        "summary": "Define o URL do avatar da conta",
+        "security": [
+          {
+            "accountSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-CSRF-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "avatar_url"
+                ],
+                "properties": {
+                  "avatar_url": {
+                    "type": "string",
+                    "format": "uri"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Avatar actualizado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HostEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sessão de gestão ou de conta ausente, expirada ou de outro evento.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "host_session_invalid",
+                    "message": "Sessão inválida ou expirada.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Falta ou não coincide o token CSRF.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "csrf_invalid",
+                    "message": "Token CSRF inválido ou ausente.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dados inválidos; `fields` lista os campos e mensagens.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "validation_failed",
+                    "message": "Verifique os campos indicados.",
+                    "fields": {
+                      "email": [
+                        "Email inválido."
+                      ]
+                    },
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Limite de pedidos excedido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "rate_limited",
+                    "message": "Demasiados pedidos. Tente novamente mais tarde.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/host/profile/avatar/upload": {
+      "post": {
+        "tags": [
+          "Perfil"
+        ],
+        "summary": "Envia uma imagem e define-a como avatar (Cloudinary)",
+        "description": "Recebe `multipart/form-data` no campo `avatar` (JPEG, PNG ou WebP, até `AVATAR_MAX_BYTES`). O backend assina o upload para o Cloudinary e guarda o URL seguro no perfil; o segredo da API nunca é exposto ao cliente. Sem credenciais Cloudinary configuradas responde `503 avatar_upload_unavailable`; nesse caso continua a ser possível definir o avatar por URL em `POST /api/v1/host/profile/avatar`.\n",
+        "security": [
+          {
+            "accountSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-CSRF-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "avatar"
+                ],
+                "properties": {
+                  "avatar": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Avatar actualizado com o URL do Cloudinary.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HostEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sessão de gestão ou de conta ausente, expirada ou de outro evento.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "host_session_invalid",
+                    "message": "Sessão inválida ou expirada.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Falta ou não coincide o token CSRF.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "csrf_invalid",
+                    "message": "Token CSRF inválido ou ausente.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dados inválidos; `fields` lista os campos e mensagens.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "validation_failed",
+                    "message": "Verifique os campos indicados.",
+                    "fields": {
+                      "email": [
+                        "Email inválido."
+                      ]
+                    },
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Limite de pedidos excedido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "rate_limited",
+                    "message": "Demasiados pedidos. Tente novamente mais tarde.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Upload de avatar indisponível: credenciais Cloudinary ausentes ou provider inacessível.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "avatar_upload_unavailable",
+                    "message": "O upload de avatar está temporariamente indisponível.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/host/events": {
+      "get": {
+        "tags": [
+          "Workspace"
+        ],
+        "summary": "Lista paginada dos eventos da conta",
+        "security": [
+          {
+            "accountSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "status",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "draft",
+                "scheduled",
+                "cancelled",
+                "completed"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "q",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "sort",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "starts_at",
+                "created_at"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Eventos com estatísticas e metadados de paginação.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventList"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sessão de gestão ou de conta ausente, expirada ou de outro evento.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "host_session_invalid",
+                    "message": "Sessão inválida ou expirada.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dados inválidos; `fields` lista os campos e mensagens.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "validation_failed",
+                    "message": "Verifique os campos indicados.",
+                    "fields": {
+                      "email": [
+                        "Email inválido."
+                      ]
+                    },
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Limite de pedidos excedido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "rate_limited",
+                    "message": "Demasiados pedidos. Tente novamente mais tarde.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Workspace"
+        ],
+        "summary": "Cria um evento associado à conta",
+        "description": "Exige email verificado. O link de gestão continua a ser enviado.",
+        "security": [
+          {
+            "accountSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-CSRF-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateEvent"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Evento criado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventCreateEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sessão de gestão ou de conta ausente, expirada ou de outro evento.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "host_session_invalid",
+                    "message": "Sessão inválida ou expirada.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Email por verificar.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "email_not_verified",
+                    "message": "Confirma o teu email antes de gerir eventos.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dados inválidos; `fields` lista os campos e mensagens.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "validation_failed",
+                    "message": "Verifique os campos indicados.",
+                    "fields": {
+                      "email": [
+                        "Email inválido."
+                      ]
+                    },
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Limite de pedidos excedido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "rate_limited",
+                    "message": "Demasiados pedidos. Tente novamente mais tarde.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/host/events/{eventId}": {
+      "delete": {
+        "tags": [
+          "Workspace"
+        ],
+        "summary": "Apaga um evento e os dados associados (cascata)",
+        "security": [
+          {
+            "accountSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "eventId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-CSRF-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Evento apagado."
+          },
+          "401": {
+            "description": "Sessão de gestão ou de conta ausente, expirada ou de outro evento.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "host_session_invalid",
+                    "message": "Sessão inválida ou expirada.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Falta ou não coincide o token CSRF.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "csrf_invalid",
+                    "message": "Token CSRF inválido ou ausente.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Evento não encontrado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "event_not_found",
+                    "message": "Evento não encontrado.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Limite de pedidos excedido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "rate_limited",
+                    "message": "Demasiados pedidos. Tente novamente mais tarde.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Gestão"
+        ],
+        "summary": "Consulta o evento, estatísticas e lista privada de convidados",
+        "security": [
+          {
+            "hostSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "eventId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Evento e convidados.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventDetailEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sessão ausente ou expirada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "host_session_invalid",
+                    "message": "Sessão inválida ou expirada.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Evento inexistente ou não pertencente à conta.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "event_not_found",
+                    "message": "Evento não encontrado.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Gestão"
+        ],
+        "summary": "Actualiza o evento e reconcilia lembretes",
+        "security": [
+          {
+            "hostSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "eventId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-CSRF-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateEvent"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Evento actualizado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sessão de gestão ou de conta ausente, expirada ou de outro evento.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "host_session_invalid",
+                    "message": "Sessão inválida ou expirada.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Token CSRF inválido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "csrf_invalid",
+                    "message": "Token CSRF inválido ou ausente.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Evento inexistente ou não pertencente à conta.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "event_not_found",
+                    "message": "Evento não encontrado.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflito com o estado atual do recurso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "event_not_scheduled",
+                    "message": "O evento ainda não está agendado.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dados inválidos.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "validation_failed",
+                    "message": "Verifique os campos indicados.",
+                    "fields": {
+                      "email": [
+                        "Email inválido."
+                      ]
+                    },
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Limite de pedidos excedido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "rate_limited",
+                    "message": "Demasiados pedidos. Tente novamente mais tarde.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/host/events/{eventId}/manage-link/resend": {
+      "post": {
+        "tags": [
+          "Workspace"
+        ],
+        "summary": "Emite e reenvia um novo link de gestão",
+        "description": "Gera um token novo, substitui o anterior e envia-o por email para `host_email`. O link anterior deixa imediatamente de ser válido. O token nunca é devolvido em JSON.\n",
+        "security": [
+          {
+            "accountSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "eventId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-CSRF-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Novo link emitido e entrega tentada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManageLinkResendEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sessão de gestão ou de conta ausente, expirada ou de outro evento.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "host_session_invalid",
+                    "message": "Sessão inválida ou expirada.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Email por verificar.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "email_not_verified",
+                    "message": "Confirma o teu email antes de gerir eventos.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Evento não encontrado ou de outra conta.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "event_not_found",
+                    "message": "Evento não encontrado.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Demasiados pedidos.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "rate_limited",
+                    "message": "Demasiados pedidos. Tente novamente mais tarde.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/host/dashboard": {
+      "get": {
+        "tags": [
+          "Workspace"
+        ],
+        "summary": "Resumo para o painel (próximo evento, próximos e totais)",
+        "security": [
+          {
+            "accountSession": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Dados do painel.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sessão de gestão ou de conta ausente, expirada ou de outro evento.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "host_session_invalid",
+                    "message": "Sessão inválida ou expirada.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/host/guests": {
+      "get": {
+        "tags": [
+          "Workspace"
+        ],
+        "summary": "Lista paginada de convidados de todos os eventos da conta",
+        "security": [
+          {
+            "accountSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "event_id",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "in": "query",
+            "name": "rsvp_status",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "pending",
+                "accepted",
+                "declined"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "send_status",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "pending",
+                "queued",
+                "sent",
+                "failed"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "q",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Convidados com resumo do evento e paginação.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HostGuestList"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sessão de gestão ou de conta ausente, expirada ou de outro evento.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "host_session_invalid",
+                    "message": "Sessão inválida ou expirada.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dados inválidos; `fields` lista os campos e mensagens.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "validation_failed",
+                    "message": "Verifique os campos indicados.",
+                    "fields": {
+                      "email": [
+                        "Email inválido."
+                      ]
+                    },
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Limite de pedidos excedido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "rate_limited",
+                    "message": "Demasiados pedidos. Tente novamente mais tarde.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/host/activity": {
+      "get": {
+        "tags": [
+          "Workspace"
+        ],
+        "summary": "Feed de actividade de todos os eventos da conta",
+        "security": [
+          {
+            "accountSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Actividade paginada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActivityList"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sessão de gestão ou de conta ausente, expirada ou de outro evento.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "host_session_invalid",
+                    "message": "Sessão inválida ou expirada.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dados inválidos; `fields` lista os campos e mensagens.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "validation_failed",
+                    "message": "Verifique os campos indicados.",
+                    "fields": {
+                      "email": [
+                        "Email inválido."
+                      ]
+                    },
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Limite de pedidos excedido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "rate_limited",
+                    "message": "Demasiados pedidos. Tente novamente mais tarde.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/host/events/{eventId}/activity": {
+      "get": {
+        "tags": [
+          "Workspace"
+        ],
+        "summary": "Feed de actividade de um evento",
+        "security": [
+          {
+            "accountSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "eventId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Actividade paginada do evento.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventActivityList"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sessão de gestão ou de conta ausente, expirada ou de outro evento.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "host_session_invalid",
+                    "message": "Sessão inválida ou expirada.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Evento não encontrado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "event_not_found",
+                    "message": "Evento não encontrado.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dados inválidos; `fields` lista os campos e mensagens.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "validation_failed",
+                    "message": "Verifique os campos indicados.",
+                    "fields": {
+                      "email": [
+                        "Email inválido."
+                      ]
+                    },
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Limite de pedidos excedido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "rate_limited",
+                    "message": "Demasiados pedidos. Tente novamente mais tarde.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/host/reports/summary": {
+      "get": {
+        "tags": [
+          "Workspace"
+        ],
+        "summary": "Agregados globais da conta (por evento e taxas)",
+        "security": [
+          {
+            "accountSession": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resumo de relatórios.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportSummaryEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sessão de gestão ou de conta ausente, expirada ou de outro evento.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "host_session_invalid",
+                    "message": "Sessão inválida ou expirada.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/host/events/{eventId}/reports": {
+      "get": {
+        "tags": [
+          "Workspace"
+        ],
+        "summary": "Série diária de um evento",
+        "description": "Janela em dias (UTC), um ponto por dia, incluindo dias sem movimento.",
+        "security": [
+          {
+            "accountSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "eventId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "in": "query",
+            "name": "days",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 365,
+              "default": 30
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Série diária.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DailyReportEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sessão de gestão ou de conta ausente, expirada ou de outro evento.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "host_session_invalid",
+                    "message": "Sessão inválida ou expirada.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Evento não encontrado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "event_not_found",
+                    "message": "Evento não encontrado.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dados inválidos; `fields` lista os campos e mensagens.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "validation_failed",
+                    "message": "Verifique os campos indicados.",
+                    "fields": {
+                      "email": [
+                        "Email inválido."
+                      ]
+                    },
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Limite de pedidos excedido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "rate_limited",
+                    "message": "Demasiados pedidos. Tente novamente mais tarde.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/host/tasks": {
+      "get": {
+        "tags": [
+          "Workspace"
+        ],
+        "summary": "Lista tarefas da conta (globais e/ou de um evento)",
+        "security": [
+          {
+            "accountSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "event_id",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tarefas.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskList"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sessão de gestão ou de conta ausente, expirada ou de outro evento.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "host_session_invalid",
+                    "message": "Sessão inválida ou expirada.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dados inválidos; `fields` lista os campos e mensagens.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "validation_failed",
+                    "message": "Verifique os campos indicados.",
+                    "fields": {
+                      "email": [
+                        "Email inválido."
+                      ]
+                    },
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Limite de pedidos excedido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "rate_limited",
+                    "message": "Demasiados pedidos. Tente novamente mais tarde.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Workspace"
+        ],
+        "summary": "Cria uma tarefa",
+        "security": [
+          {
+            "accountSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-CSRF-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "label"
+                ],
+                "properties": {
+                  "label": {
+                    "type": "string"
+                  },
+                  "event_id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Tarefa criada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sessão de gestão ou de conta ausente, expirada ou de outro evento.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "host_session_invalid",
+                    "message": "Sessão inválida ou expirada.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Falta ou não coincide o token CSRF.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "csrf_invalid",
+                    "message": "Token CSRF inválido ou ausente.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dados inválidos; `fields` lista os campos e mensagens.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "validation_failed",
+                    "message": "Verifique os campos indicados.",
+                    "fields": {
+                      "email": [
+                        "Email inválido."
+                      ]
+                    },
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Limite de pedidos excedido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "rate_limited",
+                    "message": "Demasiados pedidos. Tente novamente mais tarde.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/host/tasks/{taskId}": {
+      "patch": {
+        "tags": [
+          "Workspace"
+        ],
+        "summary": "Actualiza a descrição ou o estado de uma tarefa",
+        "security": [
+          {
+            "accountSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "taskId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-CSRF-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tarefa actualizada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sessão de gestão ou de conta ausente, expirada ou de outro evento.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "host_session_invalid",
+                    "message": "Sessão inválida ou expirada.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Falta ou não coincide o token CSRF.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "csrf_invalid",
+                    "message": "Token CSRF inválido ou ausente.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Tarefa não encontrada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "task_not_found",
+                    "message": "Tarefa não encontrada.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dados inválidos; `fields` lista os campos e mensagens.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "validation_failed",
+                    "message": "Verifique os campos indicados.",
+                    "fields": {
+                      "email": [
+                        "Email inválido."
+                      ]
+                    },
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Limite de pedidos excedido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "rate_limited",
+                    "message": "Demasiados pedidos. Tente novamente mais tarde.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Workspace"
+        ],
+        "summary": "Remove uma tarefa",
+        "security": [
+          {
+            "accountSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "taskId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-CSRF-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Tarefa removida."
+          },
+          "401": {
+            "description": "Sessão de gestão ou de conta ausente, expirada ou de outro evento.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "host_session_invalid",
+                    "message": "Sessão inválida ou expirada.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Falta ou não coincide o token CSRF.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "csrf_invalid",
+                    "message": "Token CSRF inválido ou ausente.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Tarefa inexistente ou não pertencente à conta.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "task_not_found",
+                    "message": "Tarefa não encontrada.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Limite de pedidos excedido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "rate_limited",
+                    "message": "Demasiados pedidos. Tente novamente mais tarde.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/host/session": {
+      "post": {
+        "tags": [
+          "Gestão"
+        ],
+        "summary": "Troca o segredo do link de gestão por uma sessão HttpOnly",
+        "description": "O segredo nunca é devolvido em JSON nem registado. A sessão é limitada ao evento e expira ao fim de `HOST_SESSION_TTL_MINUTES`. A resposta inclui o `csrf_token` que o cliente deve enviar em `X-CSRF-Token` nos pedidos mutáveis.\n",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "token"
+                ],
+                "properties": {
+                  "token": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Sessão criada; cookies definidos.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HostSessionEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Link de gestão inválido ou expirado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "manage_link_invalid",
+                    "message": "Link de gestão inválido ou expirado.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dados inválidos; `fields` lista os campos e mensagens.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "validation_failed",
+                    "message": "Verifique os campos indicados.",
+                    "fields": {
+                      "email": [
+                        "Email inválido."
+                      ]
+                    },
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Demasiadas tentativas.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "rate_limited",
+                    "message": "Demasiados pedidos. Tente novamente mais tarde.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/host/session/{eventId}": {
+      "delete": {
+        "tags": [
+          "Gestão"
+        ],
+        "summary": "Revoga a sessão de gestão e limpa os cookies",
+        "security": [
+          {
+            "hostSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "eventId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Sessão revogada."
+          },
+          "401": {
+            "description": "Sessão ausente ou expirada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "host_session_invalid",
+                    "message": "Sessão inválida ou expirada.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Token CSRF inválido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "csrf_invalid",
+                    "message": "Token CSRF inválido ou ausente.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Limite de pedidos excedido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "rate_limited",
+                    "message": "Demasiados pedidos. Tente novamente mais tarde.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/host/events/{eventId}/invitations": {
+      "get": {
+        "tags": [
+          "Convidados"
+        ],
+        "summary": "Lista os convidados do evento",
+        "security": [
+          {
+            "hostSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "eventId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de convidados.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvitationListEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sessão de gestão ou de conta ausente, expirada ou de outro evento.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "host_session_invalid",
+                    "message": "Sessão inválida ou expirada.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Evento inexistente ou não pertencente à conta.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "event_not_found",
+                    "message": "Evento não encontrado.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Convidados"
+        ],
+        "summary": "Adiciona um convidado e enfileira o convite",
+        "security": [
+          {
+            "hostSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "eventId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-CSRF-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InvitationInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Convidado criado e convite enfileirado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvitationEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sessão de gestão ou de conta ausente, expirada ou de outro evento.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "host_session_invalid",
+                    "message": "Sessão inválida ou expirada.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Falta ou não coincide o token CSRF.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "csrf_invalid",
+                    "message": "Token CSRF inválido ou ausente.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Evento inexistente ou não pertencente à conta.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "event_not_found",
+                    "message": "Evento não encontrado.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Email duplicado, evento não agendado ou limite atingido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "event_not_scheduled",
+                    "message": "O evento ainda não está agendado.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dados inválidos; `fields` lista os campos e mensagens.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "validation_failed",
+                    "message": "Verifique os campos indicados.",
+                    "fields": {
+                      "email": [
+                        "Email inválido."
+                      ]
+                    },
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Limite de pedidos excedido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "rate_limited",
+                    "message": "Demasiados pedidos. Tente novamente mais tarde.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/host/events/{eventId}/invitations/{invitationId}": {
+      "patch": {
+        "tags": [
+          "Convidados"
+        ],
+        "summary": "Actualiza os dados de um convidado",
+        "security": [
+          {
+            "hostSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "eventId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "in": "path",
+            "name": "invitationId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-CSRF-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InvitationInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Convidado actualizado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvitationEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sessão de gestão ou de conta ausente, expirada ou de outro evento.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "host_session_invalid",
+                    "message": "Sessão inválida ou expirada.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Falta ou não coincide o token CSRF.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "csrf_invalid",
+                    "message": "Token CSRF inválido ou ausente.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Convidado não encontrado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "invitation_not_found",
+                    "message": "Convite não encontrado.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Email duplicado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "invitation_email_duplicate",
+                    "message": "Este email já está na lista de convidados.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dados inválidos; `fields` lista os campos e mensagens.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "validation_failed",
+                    "message": "Verifique os campos indicados.",
+                    "fields": {
+                      "email": [
+                        "Email inválido."
+                      ]
+                    },
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Limite de pedidos excedido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "rate_limited",
+                    "message": "Demasiados pedidos. Tente novamente mais tarde.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Convidados"
+        ],
+        "summary": "Remove um convidado e as entregas associadas",
+        "security": [
+          {
+            "hostSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "eventId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "in": "path",
+            "name": "invitationId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-CSRF-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Convidado removido."
+          },
+          "401": {
+            "description": "Sessão de gestão ou de conta ausente, expirada ou de outro evento.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "host_session_invalid",
+                    "message": "Sessão inválida ou expirada.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Falta ou não coincide o token CSRF.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "csrf_invalid",
+                    "message": "Token CSRF inválido ou ausente.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Token inválido, convite revogado ou reclamado por outro navegador.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "invitation_not_found",
+                    "message": "Convite não encontrado.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Limite de pedidos excedido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "rate_limited",
+                    "message": "Demasiados pedidos. Tente novamente mais tarde.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/host/events/{eventId}/invitations/{invitationId}/resend": {
+      "post": {
+        "tags": [
+          "Convidados"
+        ],
+        "summary": "Reenvia o convite individual",
+        "security": [
+          {
+            "hostSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "eventId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "in": "path",
+            "name": "invitationId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-CSRF-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Convite enfileirado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvitationResendEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sessão de gestão ou de conta ausente, expirada ou de outro evento.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "host_session_invalid",
+                    "message": "Sessão inválida ou expirada.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Falta ou não coincide o token CSRF.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "csrf_invalid",
+                    "message": "Token CSRF inválido ou ausente.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Token inválido, convite revogado ou reclamado por outro navegador.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "invitation_not_found",
+                    "message": "Convite não encontrado.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Convite revogado ou sem link reutilizável.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "invitation_not_resendable",
+                    "message": "Este convite não pode ser reenviado.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Limite de pedidos excedido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "rate_limited",
+                    "message": "Demasiados pedidos. Tente novamente mais tarde.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/host/events/{eventId}/invitations/{invitationId}/revoke": {
+      "post": {
+        "tags": [
+          "Convidados"
+        ],
+        "summary": "Revoga o acesso do navegador ao convite",
+        "security": [
+          {
+            "hostSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "eventId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "in": "path",
+            "name": "invitationId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-CSRF-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Convite revogado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvitationEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sessão de gestão ou de conta ausente, expirada ou de outro evento.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "host_session_invalid",
+                    "message": "Sessão inválida ou expirada.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Falta ou não coincide o token CSRF.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "csrf_invalid",
+                    "message": "Token CSRF inválido ou ausente.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Token inválido, convite revogado ou reclamado por outro navegador.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "invitation_not_found",
+                    "message": "Convite não encontrado.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Limite de pedidos excedido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "rate_limited",
+                    "message": "Demasiados pedidos. Tente novamente mais tarde.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/events": {
+      "post": {
+        "tags": [
+          "Eventos"
+        ],
+        "summary": "Cria um evento, convidados e entregas de email",
+        "description": "Não requer conta. O segredo de gestão nunca é devolvido: é enviado uma única vez para o email do anfitrião. A resposta indica o estado de enfileiramento dos convites por destinatário.\n",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateEvent"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Evento criado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventCreateEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dados inválidos.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "validation_failed",
+                    "message": "Verifique os campos indicados.",
+                    "fields": {
+                      "email": [
+                        "Email inválido."
+                      ]
+                    },
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Limite de pedidos excedido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "rate_limited",
+                    "message": "Demasiados pedidos. Tente novamente mais tarde.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/register/request-code": {
+      "post": {
+        "tags": [
+          "Conta"
+        ],
+        "summary": "Valida o email e envia um código OTP",
+        "description": "Primeiro passo do registo. Confirma que o email ainda não está registado e envia um código de 6 dígitos, válido por `REGISTRATION_OTP_TTL_MINUTES` minutos. Pedidos repetidos antes de `REGISTRATION_OTP_RESEND_SECONDS` devolvem `429` `otp_resend_too_soon`. A conta só é criada depois de o código ser verificado em `/auth/register/verify-code`.\n",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "email"
+                ],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Código enfileirado para envio.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegistrationCodeEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Email já registado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "email_already_registered",
+                    "message": "Este email já está registado.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Email inválido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "validation_failed",
+                    "message": "Verifique os campos indicados.",
+                    "fields": {
+                      "email": [
+                        "Email inválido."
+                      ]
+                    },
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Demasiados pedidos ou reenvio demasiado cedo.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "rate_limited",
+                    "message": "Demasiados pedidos. Tente novamente mais tarde.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/register/verify-code": {
+      "post": {
+        "tags": [
+          "Conta"
+        ],
+        "summary": "Troca o código OTP por um token de criação de conta",
+        "description": "Verifica o código de 6 dígitos. Em caso de sucesso devolve um `verification_token` de uso único, válido por `REGISTRATION_VERIFICATION_TTL_MINUTES` minutos, que deve ser enviado em `/auth/register`. Após `REGISTRATION_OTP_MAX_ATTEMPTS` falhas o código é invalidado.\n",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "email",
+                  "code"
+                ],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "code": {
+                    "type": "string",
+                    "pattern": "^[0-9]{6}$"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Código válido; token de criação emitido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegistrationVerificationEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Código inválido, expirado ou tentativas excedidas.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "otp_invalid",
+                    "message": "Código inválido ou expirado.",
+                    "fields": {
+                      "email": [
+                        "Email inválido."
+                      ]
+                    },
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Demasiados pedidos.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "rate_limited",
+                    "message": "Demasiados pedidos. Tente novamente mais tarde.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/register": {
+      "post": {
+        "tags": [
+          "Conta"
+        ],
+        "summary": "Cria uma conta de anfitrião já com o email verificado",
+        "description": "Terceiro e último passo do registo. Exige o `verification_token` devolvido por `/auth/register/verify-code`; sem ele devolve `422` `verification_required`. A conta é criada com `email_verified=true`, os eventos legados com o mesmo email são ligados à conta e o email de boas-vindas é enfileirado. Não inicia sessão.\n",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "email",
+                  "password",
+                  "verification_token"
+                ],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 8,
+                    "maxLength": 128
+                  },
+                  "display_name": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "verification_token": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Conta criada e email verificado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HostEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Email já registado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "email_already_registered",
+                    "message": "Este email já está registado.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dados inválidos ou token de verificação inválido/expirado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "verification_required",
+                    "message": "Verifica o teu email antes de criar a conta.",
+                    "fields": {
+                      "email": [
+                        "Email inválido."
+                      ]
+                    },
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Demasiados pedidos.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "rate_limited",
+                    "message": "Demasiados pedidos. Tente novamente mais tarde.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/email/verify": {
+      "post": {
+        "tags": [
+          "Conta"
+        ],
+        "summary": "Consome o token de verificação de email",
+        "description": "Só depois da verificação os eventos legados com o mesmo `host_email` são ligados à conta, de forma idempotente.\n",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "token"
+                ],
+                "properties": {
+                  "token": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Email verificado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HostEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Token inválido ou expirado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "verification_invalid",
+                    "message": "Link de verificação inválido ou expirado.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Limite de pedidos excedido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "rate_limited",
+                    "message": "Demasiados pedidos. Tente novamente mais tarde.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/email/verify/resend": {
+      "post": {
+        "tags": [
+          "Conta"
+        ],
+        "summary": "Reenvia o email de verificação",
+        "description": "Responde sempre 202, exista ou não a conta.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "email"
+                ],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Pedido aceite.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AcceptedEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dados inválidos; `fields` lista os campos e mensagens.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "validation_failed",
+                    "message": "Verifique os campos indicados.",
+                    "fields": {
+                      "email": [
+                        "Email inválido."
+                      ]
+                    },
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Demasiados pedidos.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "rate_limited",
+                    "message": "Demasiados pedidos. Tente novamente mais tarde.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/login": {
+      "post": {
+        "tags": [
+          "Conta"
+        ],
+        "summary": "Inicia sessão de conta",
+        "description": "Define os cookies `apupu_auth` (HttpOnly) e `apupu_csrf_auth` e devolve o `csrf_token` para o cabeçalho `X-CSRF-Token`.\n",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "email",
+                  "password"
+                ],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "password": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Sessão criada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Credenciais inválidas.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "invalid_credentials",
+                    "message": "Email ou senha inválidos.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dados inválidos; `fields` lista os campos e mensagens.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "validation_failed",
+                    "message": "Verifique os campos indicados.",
+                    "fields": {
+                      "email": [
+                        "Email inválido."
+                      ]
+                    },
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "423": {
+            "description": "Conta temporariamente bloqueada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "account_locked",
+                    "message": "Conta temporariamente bloqueada. Tente novamente mais tarde.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Demasiados pedidos.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "rate_limited",
+                    "message": "Demasiados pedidos. Tente novamente mais tarde.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/logout": {
+      "post": {
+        "tags": [
+          "Conta"
+        ],
+        "summary": "Revoga a sessão atual e limpa os cookies",
+        "security": [
+          {
+            "accountSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-CSRF-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Sessão revogada."
+          },
+          "401": {
+            "description": "Sessão ausente ou expirada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "host_session_invalid",
+                    "message": "Sessão inválida ou expirada.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Token CSRF inválido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "csrf_invalid",
+                    "message": "Token CSRF inválido ou ausente.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/session": {
+      "get": {
+        "tags": [
+          "Conta"
+        ],
+        "summary": "Devolve a conta autenticada, perfil e estado de completude",
+        "security": [
+          {
+            "accountSession": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Conta e perfil.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sessão ausente ou expirada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "host_session_invalid",
+                    "message": "Sessão inválida ou expirada.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/password/forgot": {
+      "post": {
+        "tags": [
+          "Conta"
+        ],
+        "summary": "Enfileira o email de reposição de senha",
+        "description": "Responde sempre 202, exista ou não a conta.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "email"
+                ],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Pedido aceite.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AcceptedEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dados inválidos; `fields` lista os campos e mensagens.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "validation_failed",
+                    "message": "Verifique os campos indicados.",
+                    "fields": {
+                      "email": [
+                        "Email inválido."
+                      ]
+                    },
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Demasiados pedidos.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "rate_limited",
+                    "message": "Demasiados pedidos. Tente novamente mais tarde.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/password/reset": {
+      "post": {
+        "tags": [
+          "Conta"
+        ],
+        "summary": "Consome o token e define a nova senha",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "token",
+                  "password"
+                ],
+                "properties": {
+                  "token": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 8,
+                    "maxLength": 128
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Senha alterada; todas as sessões revogadas."
+          },
+          "422": {
+            "description": "Token inválido ou senha fora da política.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "reset_invalid",
+                    "message": "Link de reposição inválido ou expirado.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Limite de pedidos excedido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "rate_limited",
+                    "message": "Demasiados pedidos. Tente novamente mais tarde.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/password/change": {
+      "post": {
+        "tags": [
+          "Conta"
+        ],
+        "summary": "Altera a senha da conta autenticada",
+        "security": [
+          {
+            "accountSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-CSRF-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "current_password",
+                  "new_password"
+                ],
+                "properties": {
+                  "current_password": {
+                    "type": "string"
+                  },
+                  "new_password": {
+                    "type": "string",
+                    "minLength": 8,
+                    "maxLength": 128
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Senha alterada; as outras sessões foram revogadas."
+          },
+          "401": {
+            "description": "Sessão de gestão ou de conta ausente, expirada ou de outro evento.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "host_session_invalid",
+                    "message": "Sessão inválida ou expirada.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Falta ou não coincide o token CSRF.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "csrf_invalid",
+                    "message": "Token CSRF inválido ou ausente.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Senha atual incorreta ou nova senha fora da política.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "validation_failed",
+                    "message": "Verifique os campos indicados.",
+                    "fields": {
+                      "email": [
+                        "Email inválido."
+                      ]
+                    },
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "tags": []
+}

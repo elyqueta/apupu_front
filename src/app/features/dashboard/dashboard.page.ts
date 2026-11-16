@@ -3,6 +3,7 @@ import { Router, RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { I18nService } from '../../core/i18n/i18n.service';
+import { toApiError } from '../../core/api/api-error';
 import { TranslationKey } from '../../core/i18n/translations';
 import { EventActivity, Guest, HostEvent } from '../../core/models/models';
 import { ToastService } from '../../core/services/toast.service';
@@ -60,7 +61,7 @@ export class DashboardPage {
     return this.store.pendingGuests().slice(0, 6);
   });
 
-  protected readonly firstName = computed(() => this.store.profile.name.split(' ')[0]);
+  protected readonly firstName = computed(() => this.store.profile().name.split(' ')[0]);
   protected readonly guestNames = computed(() =>
     this.store
       .guests()
@@ -122,7 +123,7 @@ export class DashboardPage {
 
   protected readonly typeIcon = computed<IconDefinition>(() => {
     const event = this.nextEvent();
-    return event ? (EVENT_TYPE_ICONS[event.type] ?? ICONS['star']) : ICONS['star'];
+    return event && event.type ? (EVENT_TYPE_ICONS[event.type] ?? ICONS['star']) : ICONS['star'];
   });
 
   protected readonly typeLabel = computed(() => {
@@ -130,8 +131,8 @@ export class DashboardPage {
     return event ? this.i18n.t(`type.${event.type}` as TranslationKey) : '';
   });
 
-  protected taskLabel(key: string): string {
-    return this.i18n.t(key as TranslationKey);
+  protected taskLabel(label: string): string {
+    return label;
   }
 
   protected activityText(item: EventActivity, event: HostEvent): string {
@@ -146,33 +147,25 @@ export class DashboardPage {
     return this.activityPresenter.tone(kind);
   }
 
-  protected resendEmail(guest: Guest): void {
-    if (!this.store.sendReminder(guest.id)) {
-      return;
+  protected async resendEmail(guest: Guest): Promise<void> {
+    try {
+      if (await this.store.sendReminder(guest.id)) {
+        this.toasts.success(this.i18n.t('guests.resent', { name: guest.name }));
+      }
+    } catch (error: unknown) {
+      this.toasts.error(toApiError(error).message);
     }
-    this.toasts.success(this.i18n.t('guests.resent', { name: guest.name }));
-  }
-
-  protected whatsappLink(guest: Guest, event: HostEvent): string | null {
-    const phone = guest.phone?.replace(/[^\d+]/g, '');
-    if (!phone) {
-      return null;
-    }
-    const origin = typeof window !== 'undefined' ? window.location.origin : '';
-    const url = `${origin}/i/${event.invitationToken}`;
-    const text = encodeURIComponent(
-      `Olá ${guest.name}, tens um convite para "${event.title}". Podes responder aqui: ${url}`,
-    );
-    const digits = phone.replace(/^\+/, '');
-    return `https://wa.me/${digits}?text=${text}`;
   }
 
   protected openManagement(eventId: string): void {
-    this.store.setActiveManagement(eventId);
-    void this.router.navigate(['/gestao/evento']);
+    void this.router.navigate(['/eventos', eventId]);
   }
 
-  protected toggleTask(taskId: string): void {
-    this.store.toggleTask(taskId);
+  protected async toggleTask(taskId: string): Promise<void> {
+    try {
+      await this.store.toggleTask(taskId);
+    } catch (error: unknown) {
+      this.toasts.error(toApiError(error).message);
+    }
   }
 }

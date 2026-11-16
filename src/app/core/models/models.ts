@@ -1,10 +1,10 @@
 export type EventType = 'wedding' | 'birthday' | 'corporate' | 'baby' | 'other';
 
-export type EventStatus = 'draft' | 'published' | 'completed' | 'cancelled';
+export type EventStatus = 'draft' | 'published' | 'scheduled' | 'completed' | 'cancelled';
 
 export type RsvpStatus = 'pending' | 'confirmed' | 'declined';
 
-export type TemplateId = 'aurora' | 'constellation' | 'waves' | 'silk';
+export type TemplateId = string;
 
 export type Locale = 'pt-AO' | 'en';
 
@@ -14,14 +14,14 @@ export type IconTone = 'brand' | 'iris' | 'aqua' | 'mint' | 'amber' | 'coral';
 
 export interface BankDetails {
   bankName: string;
-  accountName: string;
-  iban: string;
+  accountHolder: string;
+  accountReference: string;
 }
 
 export interface HostEvent {
   id: string;
   title: string;
-  type: EventType;
+  type: EventType | null;
   hostName: string;
   hostEmail: string;
   startsAt: string;
@@ -33,14 +33,12 @@ export interface HostEvent {
   rules: string;
   dressCode: string;
   rsvpDeadline: string | null;
-  templateId: TemplateId;
+  templateId: TemplateId | null;
   status: EventStatus;
-  managementToken: string;
-  invitationToken: string;
-  invitationGuestId: string | null;
   contributionEnabled: boolean;
   bankDetails: BankDetails | null;
   createdAt: string;
+  stats?: EventStats;
 }
 
 export interface Guest {
@@ -56,15 +54,19 @@ export interface Guest {
 }
 
 export interface EventTemplate {
-  id: TemplateId;
-  tag: string;
-  status: 'preview';
+  id: string;
+  slug: string;
+  name: string;
+  description: string | null;
+  previewImageUrl: string | null;
+  supportedFields: string[];
+  themes: Array<{ mode: 'light' | 'dark'; palette: string }>;
 }
 
 export interface EventActivity {
   id: string;
   eventId: string;
-  kind: 'rsvp-confirmed' | 'rsvp-declined' | 'guest-added' | 'reminder-sent' | 'event-created';
+  kind: string;
   guestName: string | null;
   at: string;
 }
@@ -72,7 +74,7 @@ export interface EventActivity {
 export interface WorkspaceTask {
   id: string;
   eventId: string | null;
-  labelKey: string;
+  label: string;
   done: boolean;
 }
 
@@ -104,26 +106,25 @@ export interface CreateEventInput {
   rules: string;
   dressCode: string;
   rsvpDeadline: string | null;
-  templateId: TemplateId;
+  templateId: TemplateId | null;
   contributionEnabled: boolean;
   bankDetails: BankDetails | null;
   guests: GuestInput[];
 }
 
-export interface InvitationView {
-  event: HostEvent;
+export interface AddGuestResult {
+  ok: true;
   guest: Guest;
-  deadlinePassed: boolean;
-  countdownDays: number;
 }
-
-export type AddGuestResult =
-  | { ok: true; guest: Guest }
-  | { ok: false; reason: 'duplicate' | 'missing-event' };
 
 export interface HostProfile {
   name: string;
   email: string;
-  role: string;
-  location: string;
+  phone: string | null;
+  birthDate: string | null;
+  locale: Locale;
+  timezone: string;
+  avatarUrl: string | null;
+  emailVerified: boolean;
+  profileComplete: boolean;
 }

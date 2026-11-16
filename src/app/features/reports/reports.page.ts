@@ -1,4 +1,6 @@
+import { DOCUMENT, isPlatformBrowser } from '@angular/common';
 import { Component, computed, inject } from '@angular/core';
+import { PLATFORM_ID } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { EventStats, HostEvent } from '../../core/models/models';
@@ -28,19 +30,56 @@ interface DistributionSlice {
   templateUrl: './reports.page.html',
 })
 export class ReportsPage {
+  private readonly document = inject(DOCUMENT);
+  private readonly browser = isPlatformBrowser(inject(PLATFORM_ID));
   protected readonly store = inject(WorkspaceStore);
   protected readonly i18n = inject(I18nService);
   protected readonly icons = ICONS;
   private readonly toasts = inject(ToastService);
 
-  protected readonly stats = this.store.globalStats;
+  protected readonly stats = computed(() => {
+    const totals = this.store.reportSummary()?.totals;
+    const workspaceStats = this.store.globalStats();
+    return totals
+      ? {
+          events: this.store.reportSummary()?.events.length ?? 0,
+          drafts: workspaceStats.drafts,
+          completed: workspaceStats.completed,
+          total: totals.total_invitations,
+          confirmed: totals.accepted,
+          pending: totals.pending,
+          declined: totals.declined,
+          responseRate: Math.round(totals.response_rate * 100),
+        }
+      : this.store.globalStats();
+  });
 
-  protected readonly rows = computed<EventReportRow[]>(() =>
-    this.store
-      .events()
-      .map((event) => ({ event, stats: this.store.eventStats(event.id) }))
-      .sort((a, b) => b.stats.responseRate - a.stats.responseRate),
-  );
+  protected readonly rows = computed<EventReportRow[]>(() => {
+    const report = this.store.reportSummary();
+    if (!report) {
+      return [];
+    }
+    return report.events
+      .map((item) => {
+        const event = this.store.eventById(item.event_id);
+        if (!event) {
+          return null;
+        }
+        const total = item.total_invitations;
+        return {
+          event,
+          stats: {
+            total,
+            confirmed: item.accepted,
+            declined: item.declined,
+            pending: item.pending,
+            responseRate: total === 0 ? 0 : Math.round(((item.accepted + item.declined) / total) * 100),
+          },
+        };
+      })
+      .filter((row): row is EventReportRow => row !== null)
+      .sort((a, b) => b.stats.responseRate - a.stats.responseRate);
+  });
 
   protected readonly topRows = computed(() => this.rows().slice(0, 4));
 
@@ -78,17 +117,45 @@ export class ReportsPage {
     });
   });
 
-  protected readonly channels: Array<{
-    key: 'email' | 'sms' | 'whatsapp';
-    icon: string;
-    active: boolean;
-  }> = [
-    { key: 'email', icon: 'envelope', active: true },
-    { key: 'sms', icon: 'mobile', active: false },
-    { key: 'whatsapp', icon: 'whatsapp', active: false },
-  ];
-
   protected exportSummary(): void {
+    const report = this.store.reportSummary();
+    if (!this.browser || !report) {
+      this.toasts.error(this.i18n.t('common.errorGeneric'));
+      return;
+    }
+
+    const rows = [
+      ['Event', 'Status', 'Invitations', 'Accepted', 'Declined', 'Pending', 'Response rate (%)'],
+      ...report.events.map((event) => [
+        safeCsvText(event.title),
+        event.status,
+        event.total_invitations,
+        event.accepted,
+        event.declined,
+        event.pending,
+        event.total_invitations
+          ? Math.round(((event.accepted + event.declined) / event.total_invitations) * 100)
+          : 0,
+      ]),
+    ];
+    const csv = rows.map((row) => row.map(csvCell).join(',')).join('\r\n');
+    const url = URL.createObjectURL(new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8' }));
+    const link = this.document.createElement('a');
+    link.href = url;
+    link.download = `conta-comigo-relatorio-${new Date().toISOString().slice(0, 10)}.csv`;
+    link.hidden = true;
+    this.document.body.append(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
     this.toasts.success(this.i18n.t('reports.exported'));
   }
+}
+
+function safeCsvText(value: string): string {
+  return /^[\t\r ]*[=+\-@]/.test(value) ? `'${value}` : value;
+}
+
+function csvCell(value: string | number): string {
+  return `"${String(value).replaceAll('"', '""')}"`;
 }

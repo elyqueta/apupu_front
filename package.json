@@ -5,6 +5,7 @@
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
+    "build:prototype": "ng build --configuration=prototype",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "serve:ssr:conta_comigo_front": "node dist/conta_comigo_front/server/server.mjs"

@@ -2,6 +2,7 @@ import { Component, effect, inject, input, output, signal } from '@angular/core'
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { I18nService } from '../../core/i18n/i18n.service';
+import { toApiError } from '../../core/api/api-error';
 import { WorkspaceStore } from '../../core/services/workspace.store';
 import { ToastService } from '../../core/services/toast.service';
 import { ICONS } from '../../core/ui/icons';
@@ -178,6 +179,7 @@ export class GuestDialogComponent {
 
   protected readonly icons = ICONS;
   protected readonly error = signal('');
+  protected readonly saving = signal(false);
 
   readonly open = input(false);
   readonly fixedEventId = input<string | null>(null);
@@ -214,32 +216,32 @@ export class GuestDialogComponent {
     this.closed.emit();
   }
 
-  protected submit(): void {
-    if (this.form.invalid) {
+  protected async submit(): Promise<void> {
+    if (this.form.invalid || this.saving()) {
       this.form.markAllAsTouched();
       return;
     }
+    this.saving.set(true);
+    this.error.set('');
     const value = this.form.getRawValue();
-    const result = this.store.addGuest(value.eventId, {
-      name: value.name,
-      email: value.email,
-      phone: value.phone || null,
-    });
-    if (!result.ok) {
-      this.error.set(
-        result.reason === 'duplicate'
-          ? this.i18n.t('guests.duplicate')
-          : this.i18n.t('common.errorGeneric'),
+    try {
+      const result = await this.store.addGuest(value.eventId, {
+        name: value.name,
+        email: value.email,
+        phone: value.phone || null,
+      });
+      const event = this.store.eventById(value.eventId);
+      this.toasts.success(
+        this.i18n.t('guests.addedText', {
+          name: result.guest.name,
+          event: event?.title ?? '',
+        }),
       );
-      return;
+      this.closed.emit();
+    } catch (error: unknown) {
+      this.error.set(toApiError(error).message);
+    } finally {
+      this.saving.set(false);
     }
-    const event = this.store.eventById(value.eventId);
-    this.toasts.success(
-      this.i18n.t('guests.addedText', {
-        name: result.guest.name,
-        event: event?.title ?? '',
-      }),
-    );
-    this.closed.emit();
   }
 }

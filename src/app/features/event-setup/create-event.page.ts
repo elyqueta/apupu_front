@@ -4,6 +4,7 @@ import { AbstractControl, NonNullableFormBuilder, ReactiveFormsModule, Validatio
 import { Router, RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { I18nService } from '../../core/i18n/i18n.service';
+import { toApiError } from '../../core/api/api-error';
 import { TranslationKey } from '../../core/i18n/translations';
 import {
   BankDetails,
@@ -64,9 +65,9 @@ export class CreateEventPage {
   protected readonly form = this.fb.group({
     title: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(120)]],
     type: this.fb.control<EventType>('wedding', Validators.required),
-    hostName: [this.store.profile.name, [Validators.required, Validators.maxLength(120)]],
+    hostName: [this.store.profile().name, [Validators.required, Validators.maxLength(120)]],
     hostEmail: [
-      this.store.profile.email,
+      this.store.profile().email,
       [Validators.required, Validators.email, Validators.maxLength(160)],
     ],
     date: ['', Validators.required],
@@ -79,7 +80,7 @@ export class CreateEventPage {
     rules: ['', Validators.maxLength(800)],
     dressCode: ['', Validators.maxLength(160)],
     rsvpDeadline: [''],
-    templateId: this.fb.control<TemplateId>('aurora', Validators.required),
+    templateId: this.fb.control<TemplateId | null>(this.store.templates()[0]?.id ?? null),
     contributionEnabled: [false],
     bankName: [''],
     accountName: [''],
@@ -175,12 +176,12 @@ export class CreateEventPage {
     this.store.selectedTemplate.set(id);
   }
 
-  protected templateName(id: TemplateId): string {
-    return this.i18n.t(`template.${id}.name` as TranslationKey);
+  protected templateName(id: TemplateId | null): string {
+    return this.store.templates().find((template) => template.id === id)?.name ?? '—';
   }
 
   protected templateTag(id: TemplateId): string {
-    return this.i18n.t(`template.${id}.tag` as TranslationKey);
+    return this.store.templates().find((template) => template.id === id)?.slug ?? '';
   }
 
   protected typeName(type: EventType): string {
@@ -255,7 +256,7 @@ export class CreateEventPage {
     this.step.update((current) => Math.max(0, current - 1));
   }
 
-  protected publish(): void {
+  protected async publish(): Promise<void> {
     if (!this.validateAll()) {
       this.formError.set(this.i18n.t('create.errorStep'));
       this.toasts.error(this.i18n.t('create.errorStep'));
@@ -263,21 +264,14 @@ export class CreateEventPage {
     }
     this.formError.set('');
     this.publishing.set(true);
-    const input = this.buildInput();
-    setTimeout(() => {
-      const event = this.store.createEvent(input);
+    try {
+      const event = await this.store.createEvent(this.buildInput());
       this.created.set(event);
+    } catch (error: unknown) {
+      this.formError.set(toApiError(error).message);
+    } finally {
       this.publishing.set(false);
-    }, 650);
-  }
-
-  protected openCreatedManagement(): void {
-    const event = this.created();
-    if (!event) {
-      return;
     }
-    this.store.setActiveManagement(event.id);
-    void this.router.navigate(['/gestao/evento']);
   }
 
   protected viewCreated(): void {
@@ -295,8 +289,8 @@ export class CreateEventPage {
     this.form.reset({
       title: '',
       type: 'wedding',
-      hostName: this.store.profile.name,
-      hostEmail: this.store.profile.email,
+      hostName: this.store.profile().name,
+      hostEmail: this.store.profile().email,
       date: '',
       time: '18:00',
       timezone: 'Africa/Luanda',
@@ -307,7 +301,7 @@ export class CreateEventPage {
       rules: '',
       dressCode: '',
       rsvpDeadline: '',
-      templateId: 'aurora',
+      templateId: this.store.templates()[0]?.id ?? null,
       contributionEnabled: false,
       bankName: '',
       accountName: '',
@@ -407,8 +401,8 @@ export class CreateEventPage {
     const bankDetails: BankDetails | null = value.contributionEnabled
       ? {
           bankName: value.bankName.trim(),
-          accountName: value.accountName.trim(),
-          iban: value.iban.trim(),
+          accountHolder: value.accountName.trim(),
+          accountReference: value.iban.trim(),
         }
       : null;
 

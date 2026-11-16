@@ -1,27 +1,37 @@
-import { Component, computed, inject, signal } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { Component, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, Router } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ApiClient } from '../../core/api/api-client';
+import { toApiError } from '../../core/api/api-error';
+import { ApiEvent } from '../../core/api/api.models';
 import { I18nService } from '../../core/i18n/i18n.service';
-import { WorkspaceStore } from '../../core/services/workspace.store';
 import { ICONS } from '../../core/ui/icons';
 import { BrandComponent } from '../../shared/components/brand.component';
 import { PreferenceControlsComponent } from '../../shared/components/preference-controls.component';
 
+interface HostSessionResponse {
+  event: ApiEvent;
+  csrf_token: string;
+  expires_at: string;
+}
+
 @Component({
   selector: 'app-management-entry-page',
-  imports: [RouterLink, FaIconComponent, BrandComponent, PreferenceControlsComponent],
+  imports: [FaIconComponent, BrandComponent, PreferenceControlsComponent],
   templateUrl: './management-entry.page.html',
 })
 export class ManagementEntryPage {
+  private readonly api = inject(ApiClient);
+  private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
-  protected readonly store = inject(WorkspaceStore);
   protected readonly i18n = inject(I18nService);
   protected readonly icons = ICONS;
-
   protected readonly link = signal('');
-  protected readonly error = signal(false);
-  protected readonly managementEvent = computed(() => this.store.managementEvent());
+  protected readonly error = signal('');
+  protected readonly invalidLink = signal(false);
+  protected readonly busy = signal(false);
 
   protected readonly security = [
     {
@@ -44,41 +54,64 @@ export class ManagementEntryPage {
     },
   ];
 
+  constructor() {
+    this.route.paramMap.pipe(takeUntilDestroyed()).subscribe((params) => {
+      const token = params.get('token');
+      if (token) {
+        void this.open(token);
+      }
+    });
+  }
+
   protected updateLink(value: string): void {
     this.link.set(value);
-    if (this.error()) {
-      this.error.set(false);
-    }
+    this.error.set('');
+    this.invalidLink.set(false);
   }
 
-  protected submit(): void {
-    const event = this.store.findEventByManagementInput(this.link());
-    if (!event) {
-      this.error.set(true);
+  protected async submit(): Promise<void> {
+    const token = extractManagementToken(this.link());
+    if (!token || this.busy()) {
+      this.invalidLink.set(true);
+      this.error.set(this.i18n.t('management.invalidHint'));
       return;
     }
-    this.error.set(false);
-    this.open(event.id);
+    await this.open(token);
   }
 
-  protected openDemo(): void {
-    const event =
-      this.store.events().find((item) => item.managementToken === 'mgmt-aurora-2027') ??
-      this.store.events()[0];
-    if (!event) {
+  private async open(token: string): Promise<void> {
+    if (this.busy()) {
       return;
     }
-    this.open(event.id);
-  }
-
-  protected continueExisting(): void {
-    if (this.managementEvent()) {
-      void this.router.navigate(['/gestao/evento']);
+    this.busy.set(true);
+    this.error.set('');
+    this.invalidLink.set(false);
+    try {
+      const response = await this.api.post<HostSessionResponse>('/host/session', { token });
+      this.link.set('');
+      await this.router.navigate(['/gestao/evento', response.event.id], { replaceUrl: true });
+    } catch (error: unknown) {
+      this.link.set('');
+      const apiError = toApiError(error);
+      const unavailable = apiError.status === 401 || apiError.status === 404;
+      this.invalidLink.set(unavailable);
+      this.error.set(unavailable ? this.i18n.t('management.invalidHint') : apiError.message);
+    } finally {
+      this.busy.set(false);
     }
   }
+}
 
-  private open(eventId: string): void {
-    this.store.setActiveManagement(eventId);
-    void this.router.navigate(['/gestao/evento']);
+function extractManagementToken(value: string): string {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return '';
+  }
+  try {
+    const url = new URL(trimmed);
+    const segments = url.pathname.split('/').filter(Boolean);
+    return segments.at(-1) ?? '';
+  } catch {
+    return trimmed.split(/[/?#]/).filter(Boolean).at(-1) ?? '';
   }
 }

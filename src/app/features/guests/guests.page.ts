@@ -3,6 +3,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { I18nService } from '../../core/i18n/i18n.service';
+import { toApiError } from '../../core/api/api-error';
 import { Guest, RsvpStatus } from '../../core/models/models';
 import { ToastService } from '../../core/services/toast.service';
 import { WorkspaceStore } from '../../core/services/workspace.store';
@@ -82,19 +83,27 @@ export class GuestsPage {
     });
   }
 
-  protected resend(guest: Guest): void {
-    if (this.store.sendReminder(guest.id)) {
+  protected async resend(guest: Guest): Promise<void> {
+    try {
+      if (await this.store.sendReminder(guest.id)) {
       this.toasts.success(this.i18n.t('guests.resent', { name: guest.name }));
+      }
+    } catch (error: unknown) {
+      this.toasts.error(toApiError(error).message);
     }
   }
 
-  protected confirmRemove(): void {
+  protected async confirmRemove(): Promise<void> {
     const guest = this.removeTarget();
     if (!guest) {
       return;
     }
-    this.store.removeGuest(guest.id);
-    this.removeTarget.set(null);
-    this.toasts.success(this.i18n.t('guests.removed'));
+    try {
+      await this.store.removeGuest(guest.id);
+      this.removeTarget.set(null);
+      this.toasts.success(this.i18n.t('guests.removed'));
+    } catch (error: unknown) {
+      this.toasts.error(toApiError(error).message);
+    }
   }
 }

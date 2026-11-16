@@ -143,9 +143,10 @@ export class EventCardComponent {
       .map((guest) => guest.name),
   );
   protected readonly typeLabel = computed(() =>
-    this.i18n.t(`type.${this.event().type}` as TranslationKey),
+    this.event().type ? this.i18n.t(`type.${this.event().type}` as TranslationKey) : '',
   );
-  protected readonly typeIcon = computed(
-    () => EVENT_TYPE_ICONS[this.event().type] ?? ICONS['star'],
-  );
+  protected readonly typeIcon = computed(() => {
+    const type = this.event().type;
+    return (type ? EVENT_TYPE_ICONS[type] : undefined) ?? ICONS['star'];
+  });
 }

@@ -12,6 +12,7 @@ import { ActivityPresenter } from '../../shared/services/activity.presenter';
 import { AvatarComponent } from '../../shared/components/avatar.component';
 import { BrandComponent } from '../../shared/components/brand.component';
 import { PreferenceControlsComponent } from '../../shared/components/preference-controls.component';
+import { SkeletonComponent, SkeletonVariant } from '../../shared/components/skeleton.component';
 
 interface NavItem {
   path: string;
@@ -30,6 +31,7 @@ interface NavItem {
     BrandComponent,
     AvatarComponent,
     PreferenceControlsComponent,
+    SkeletonComponent,
   ],
   templateUrl: './shell.component.html',
 })
@@ -44,6 +46,7 @@ export class ShellComponent {
   protected readonly notificationsOpen = signal(false);
   protected readonly searchTerm = signal('');
   protected readonly pageTitle = signal<TranslationKey>('nav.dashboard');
+  protected readonly skeletonVariant = signal<SkeletonVariant>('dashboard');
 
   protected readonly navItems: NavItem[] = [
     { path: '/painel', labelKey: 'nav.dashboard', icon: ICONS['dashboard'], exact: true },
@@ -97,24 +100,36 @@ export class ShellComponent {
     this.notificationsOpen.set(false);
   }
 
+  protected async retry(): Promise<void> {
+    await this.store.reload();
+  }
+
   private updatePageTitle(): void {
     const url = this.router.url.split('?')[0].split('#')[0];
     if (url.startsWith('/eventos')) {
       this.pageTitle.set('nav.events');
+      this.skeletonVariant.set(url.split('/').filter(Boolean).length > 1 ? 'detail' : 'cards');
     } else if (url.startsWith('/convidados')) {
       this.pageTitle.set('nav.guests');
+      this.skeletonVariant.set('table');
     } else if (url.startsWith('/templates')) {
       this.pageTitle.set('nav.templates');
+      this.skeletonVariant.set('cards');
     } else if (url.startsWith('/relatorios')) {
       this.pageTitle.set('nav.reports');
+      this.skeletonVariant.set('chart');
     } else if (url.startsWith('/definicoes')) {
       this.pageTitle.set('nav.settings');
+      this.skeletonVariant.set('profile');
     } else if (url.startsWith('/gestao')) {
       this.pageTitle.set('nav.management');
+      this.skeletonVariant.set('detail');
     } else if (url.startsWith('/criar-evento')) {
       this.pageTitle.set('create.eyebrow');
+      this.skeletonVariant.set('detail');
     } else {
       this.pageTitle.set('nav.dashboard');
+      this.skeletonVariant.set('dashboard');
     }
   }
 }

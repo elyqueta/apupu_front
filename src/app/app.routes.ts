@@ -1,10 +1,36 @@
 import { Routes } from '@angular/router';
 import { ShellComponent } from './core/layout/shell.component';
+import { authenticatedGuard } from './core/api/auth.guard';
 
 export const routes: Routes = [
   {
+    path: 'entrar',
+    title: 'Conta Comigo · Entrar',
+    loadComponent: () => import('./features/auth/auth.page').then((m) => m.AuthPage),
+    data: { mode: 'login' },
+  },
+  {
+    path: 'registar',
+    title: 'Conta Comigo · Criar conta',
+    loadComponent: () => import('./features/auth/auth.page').then((m) => m.AuthPage),
+    data: { mode: 'register' },
+  },
+  {
+    path: 'recuperar-senha',
+    title: 'Conta Comigo · Recuperar senha',
+    loadComponent: () => import('./features/auth/password.page').then((m) => m.PasswordPage),
+    data: { mode: 'forgot' },
+  },
+  {
+    path: 'repor-senha',
+    title: 'Conta Comigo · Repor senha',
+    loadComponent: () => import('./features/auth/password.page').then((m) => m.PasswordPage),
+    data: { mode: 'reset' },
+  },
+  {
     path: '',
     component: ShellComponent,
+    canActivate: [authenticatedGuard],
     children: [
       {
         path: '',
@@ -68,10 +94,33 @@ export const routes: Routes = [
       import('./features/host-management/management-entry.page').then((m) => m.ManagementEntryPage),
   },
   {
-    path: 'gestao/evento',
+    path: 'gerir/:token',
+    title: 'Conta Comigo · Gestão',
+    loadComponent: () =>
+      import('./features/host-management/management-entry.page').then((m) => m.ManagementEntryPage),
+  },
+  {
+    path: 'gestao/evento/:eventId',
     title: 'Conta Comigo · Gestão do evento',
     loadComponent: () =>
       import('./features/host-management/management-event.page').then((m) => m.ManagementEventPage),
+  },
+  {
+    path: 'gestao/evento',
+    pathMatch: 'full',
+    redirectTo: 'gestao',
+  },
+  {
+    path: 'gestao/:token',
+    title: 'Conta Comigo · Gestão',
+    loadComponent: () =>
+      import('./features/host-management/management-entry.page').then((m) => m.ManagementEntryPage),
+  },
+  {
+    path: 'convite/:token',
+    title: 'Conta Comigo · Convite',
+    loadComponent: () =>
+      import('./features/invitation/invitation.page').then((m) => m.InvitationPage),
   },
   {
     path: 'i/:token',

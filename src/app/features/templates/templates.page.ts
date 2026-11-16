@@ -1,4 +1,4 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, effect, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { I18nService } from '../../core/i18n/i18n.service';
@@ -37,23 +37,30 @@ export class TemplatesPage {
 
   protected readonly selectedMeta = computed(() => {
     const id = this.selected();
-    return {
-      name: this.name(id),
-      tag: this.tag(id),
-      description: this.description(id),
-    };
+    const template = this.templates().find((item) => item.id === id);
+    return template
+      ? { name: template.name, tag: template.slug, description: template.description ?? '' }
+      : { name: '', tag: '', description: '' };
   });
 
-  protected name(id: TemplateId): string {
-    return this.i18n.t(`template.${id}.name` as TranslationKey);
+  constructor() {
+    effect(() => {
+      if (!this.selected() && this.templates().length > 0) {
+        this.store.selectedTemplate.set(this.templates()[0].id);
+      }
+    });
   }
 
-  protected description(id: TemplateId): string {
-    return this.i18n.t(`template.${id}.description` as TranslationKey);
+  protected name(id: TemplateId): string {
+    return this.templates().find((template) => template.id === id)?.name ?? '';
   }
 
   protected tag(id: TemplateId): string {
-    return this.i18n.t(`template.${id}.tag` as TranslationKey);
+    return this.templates().find((template) => template.id === id)?.slug ?? '';
+  }
+
+  protected description(id: TemplateId): string {
+    return this.templates().find((template) => template.id === id)?.description ?? '';
   }
 
   protected select(id: TemplateId): void {

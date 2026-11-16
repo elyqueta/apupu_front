@@ -1,0 +1,100 @@
+import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
+import { DOCUMENT, isPlatformBrowser } from '@angular/common';
+import { inject, Injectable, PLATFORM_ID } from '@angular/core';
+import { catchError, throwError } from 'rxjs';
+import { ApiError, toApiError } from './api-error';
+
+@Injectable({ providedIn: 'root' })
+export class CsrfTokenStore {
+  private readonly document = inject(DOCUMENT);
+  private readonly browser = isPlatformBrowser(inject(PLATFORM_ID));
+  private readonly values = new Map<string, string>();
+
+  set(token: string | null, apiPath = ''): void {
+    const scope = this.scope(apiPath);
+    if (!scope) {
+      return;
+    }
+    if (token) {
+      this.values.set(scope, token);
+    } else {
+      this.values.delete(scope);
+    }
+  }
+
+  get(url: string): string | null {
+    const path = apiPathFromUrl(url);
+    const scope = this.scope(path);
+    if (!scope) {
+      return null;
+    }
+    const cached = this.values.get(scope);
+    if (cached) {
+      return cached;
+    }
+    if (!this.browser) {
+      return null;
+    }
+    const cookieName = csrfCookieName(scope);
+    const cookie = this.document.cookie
+      .split(';')
+      .map((item) => item.trim())
+      .find((item) => item.startsWith(`${cookieName}=`));
+    if (!cookie) {
+      return null;
+    }
+    const token = cookie.slice(cookieName.length + 1);
+    this.values.set(scope, token);
+    return token;
+  }
+
+  private scope(apiPath: string): string | null {
+    const path = apiPathFromUrl(apiPath);
+    if (path.startsWith('/auth/')) {
+      return 'auth';
+    }
+    if (path.startsWith('/public/invitations/')) {
+      return 'guest';
+    }
+    const eventId = path.match(/^\/host\/(?:events|session)\/([^/]+)/)?.[1];
+    return eventId ? `host:${eventId}` : null;
+  }
+}
+
+export const apiRequestInterceptor: HttpInterceptorFn = (request, next) => {
+  if (!request.url.startsWith('/api/v1/') && !request.url.includes('/api/v1/')) {
+    return next(request);
+  }
+
+  const token = inject(CsrfTokenStore).get(request.url);
+  const mutating = ['POST', 'PATCH', 'PUT', 'DELETE'].includes(request.method);
+  const headers =
+    mutating && token ? request.headers.set('X-CSRF-Token', token) : request.headers;
+
+  return next(request.clone({ withCredentials: true, headers }));
+};
+
+function apiPathFromUrl(url: string): string {
+  const apiIndex = url.indexOf('/api/v1');
+  return apiIndex === -1 ? url : url.slice(apiIndex + '/api/v1'.length);
+}
+
+function csrfCookieName(scope: string): string {
+  if (scope.startsWith('host:')) {
+    return `apupu_csrf_host_${scope.slice('host:'.length)}`;
+  }
+  return `apupu_csrf_${scope}`;
+}
+
+export const apiErrorInterceptor: HttpInterceptorFn = (request, next) =>
+  next(request).pipe(
+    catchError((error: unknown) => {
+      if (error instanceof HttpErrorResponse) {
+        return throwError(() => toApiError(error));
+      }
+      if (error instanceof ApiError) {
+        return throwError(() => error);
+      }
+      return throwError(() => error);
+    }),
+  );

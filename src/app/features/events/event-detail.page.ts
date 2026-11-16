@@ -1,16 +1,16 @@
 import { Component, computed, effect, inject, input, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { TranslationKey } from '../../core/i18n/translations';
 import { EventActivity, Guest, RsvpStatus, WorkspaceTask } from '../../core/models/models';
-import { ShareService } from '../../core/services/share.service';
 import { ToastService } from '../../core/services/toast.service';
 import { WorkspaceStore } from '../../core/services/workspace.store';
 import { EVENT_TYPE_ICONS, ICONS } from '../../core/ui/icons';
 import { ActivityPresenter } from '../../shared/services/activity.presenter';
+import { toApiError } from '../../core/api/api-error';
 import { AvatarComponent } from '../../shared/components/avatar.component';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog.component';
 import { GuestDialogComponent } from '../../shared/components/guest-dialog.component';
@@ -37,8 +37,6 @@ type GuestFilter = 'all' | RsvpStatus;
 export class EventDetailPage {
   private readonly fb = inject(NonNullableFormBuilder);
   private readonly toasts = inject(ToastService);
-  private readonly share = inject(ShareService);
-  private readonly router = inject(Router);
   private readonly activityPresenter = inject(ActivityPresenter);
 
   protected readonly store = inject(WorkspaceStore);
@@ -64,17 +62,19 @@ export class EventDetailPage {
 
   protected readonly typeLabel = computed(() => {
     const event = this.event();
-    return event ? this.i18n.t(`type.${event.type}` as TranslationKey) : '';
+    return event?.type ? this.i18n.t(`type.${event.type}` as TranslationKey) : '';
   });
 
   protected readonly typeIcon = computed<IconDefinition>(() => {
     const event = this.event();
-    return event ? (EVENT_TYPE_ICONS[event.type] ?? ICONS['star']) : ICONS['star'];
+    return event?.type ? (EVENT_TYPE_ICONS[event.type] ?? ICONS['star']) : ICONS['star'];
   });
 
   protected readonly templateName = computed(() => {
     const event = this.event();
-    return event ? this.i18n.t(`template.${event.templateId}.name` as TranslationKey) : '';
+    return event?.templateId
+      ? this.store.templates().find((template) => template.id === event.templateId)?.name ?? ''
+      : '';
   });
 
   protected readonly respondedCount = computed(
@@ -173,10 +173,6 @@ export class EventDetailPage {
       : this.guests().filter((guest) => guest.status === filter).length;
   }
 
-  protected templateLabel(key: string): string {
-    return this.i18n.t(key as TranslationKey);
-  }
-
   protected activityText(item: EventActivity): string {
     return this.activityPresenter.text(item, this.event()?.title ?? '');
   }
@@ -190,70 +186,87 @@ export class EventDetailPage {
   }
 
   protected taskLabel(task: WorkspaceTask): string {
-    return this.i18n.t(task.labelKey as TranslationKey);
+    return task.label;
   }
 
-  protected async copyInvitation(): Promise<void> {
-    const event = this.event();
-    if (!event) {
-      return;
+  protected async resendManagementLink(): Promise<void> {
+    try {
+      const status = await this.store.resendManageLink(this.eventId());
+      if (status === 'sent') {
+        this.toasts.success('O link de gestão foi enviado para o email do anfitrião.');
+      } else {
+        this.toasts.error('O evento mantém-se disponível, mas não foi possível enviar o link.');
+      }
+    } catch (error: unknown) {
+      this.toasts.error(toApiError(error).message);
     }
-    const copied = await this.share.copy(this.share.absoluteUrl(`/i/${event.invitationToken}`));
-    if (copied) {
-      this.toasts.success(this.i18n.t('common.copied'));
-    } else {
-      this.toasts.error(this.i18n.t('common.copyError'));
+  }
+
+  protected async endManagement(): Promise<void> {
+    try {
+      await this.store.endManagement(this.eventId());
+      this.toasts.info(this.i18n.t('settings.managementEnded'));
+    } catch (error: unknown) {
+      this.toasts.error(toApiError(error).message);
     }
   }
 
-  protected openManagement(): void {
-    this.store.setActiveManagement(this.eventId());
-    void this.router.navigate(['/gestao/evento']);
+  protected async publish(): Promise<void> {
+    try {
+      await this.store.updateEvent(this.eventId(), { status: 'published' });
+      this.toasts.success(this.i18n.t('eventDetail.published'));
+    } catch (error: unknown) {
+      this.toasts.error(toApiError(error).message);
+    }
   }
 
-  protected endManagement(): void {
-    this.store.setActiveManagement(null);
-    this.toasts.info(this.i18n.t('settings.managementEnded'));
-  }
-
-  protected publish(): void {
-    this.store.publishEvent(this.eventId());
-    this.toasts.success(this.i18n.t('eventDetail.published'));
-  }
-
-  protected saveSettings(): void {
+  protected async saveSettings(): Promise<void> {
     if (this.settingsForm.invalid) {
       this.settingsForm.markAllAsTouched();
       return;
     }
-    this.store.updateEvent(this.eventId(), this.settingsForm.getRawValue());
-    this.toasts.success(this.i18n.t('eventDetail.changesSaved'));
-  }
-
-  protected cancelEvent(): void {
-    this.store.updateEvent(this.eventId(), { status: 'cancelled' });
-    this.cancelOpen.set(false);
-    this.toasts.success(this.i18n.t('eventDetail.cancelled'));
-  }
-
-  protected setRsvp(guest: Guest, status: RsvpStatus): void {
-    if (this.store.updateRsvp(guest.id, status)) {
-      this.toasts.success(this.i18n.t('invitation.responseRecorded'));
+    try {
+      await this.store.updateEvent(this.eventId(), this.settingsForm.getRawValue());
+      this.toasts.success(this.i18n.t('eventDetail.changesSaved'));
+    } catch (error: unknown) {
+      this.toasts.error(toApiError(error).message);
     }
   }
 
-  protected resend(guest: Guest): void {
-    if (this.store.sendReminder(guest.id)) {
+  protected async cancelEvent(): Promise<void> {
+    try {
+      await this.store.updateEvent(this.eventId(), { status: 'cancelled' });
+      this.cancelOpen.set(false);
+      this.toasts.success(this.i18n.t('eventDetail.cancelled'));
+    } catch (error: unknown) {
+      this.toasts.error(toApiError(error).message);
+    }
+  }
+
+  protected async resend(guest: Guest): Promise<void> {
+    try {
+      if (await this.store.sendReminder(guest.id)) {
       this.toasts.success(this.i18n.t('eventDetail.resendDone', { name: guest.name }));
+      }
+    } catch (error: unknown) {
+      this.toasts.error(toApiError(error).message);
     }
   }
 
-  protected removeGuest(guest: Guest): void {
-    this.store.removeGuest(guest.id);
-    this.toasts.success(this.i18n.t('guests.removed'));
+  protected async removeGuest(guest: Guest): Promise<void> {
+    try {
+      await this.store.removeGuest(guest.id);
+      this.toasts.success(this.i18n.t('guests.removed'));
+    } catch (error: unknown) {
+      this.toasts.error(toApiError(error).message);
+    }
   }
 
-  protected toggleTask(taskId: string): void {
-    this.store.toggleTask(taskId);
+  protected async toggleTask(taskId: string): Promise<void> {
+    try {
+      await this.store.toggleTask(taskId);
+    } catch (error: unknown) {
+      this.toasts.error(toApiError(error).message);
+    }
   }
 }

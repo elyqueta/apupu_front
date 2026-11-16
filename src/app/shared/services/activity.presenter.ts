@@ -28,6 +28,8 @@ export class ActivityPresenter {
         return ICONS['paperPlane'];
       case 'event-created':
         return ICONS['sparkles'];
+      default:
+        return ICONS['info'];
     }
   }
 
@@ -43,6 +45,8 @@ export class ActivityPresenter {
         return 'border-aqua/30 bg-aqua/15 text-aqua';
       case 'event-created':
         return 'border-iris/30 bg-iris/15 text-iris';
+      default:
+        return 'border-line bg-surface-raised text-muted';
     }
   }
 }

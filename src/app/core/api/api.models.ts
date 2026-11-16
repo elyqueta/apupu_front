@@ -18,6 +18,11 @@ export interface Pagination {
   total_pages: number;
 }
 
+export interface ApiPage<T> {
+  data: T[];
+  pagination: Pagination;
+}
+
 export type EventCategory = 'wedding' | 'birthday' | 'corporate' | 'baby' | 'other';
 export type ApiEventStatus = 'draft' | 'scheduled' | 'cancelled' | 'completed';
 export type ApiRsvpStatus = 'pending' | 'accepted' | 'declined';

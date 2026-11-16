@@ -1,7 +1,7 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { firstValueFrom, Observable, tap } from 'rxjs';
-import { ApiEnvelope } from './api.models';
+import { ApiEnvelope, ApiPage } from './api.models';
 import { API_BASE_URL } from './api-config';
 import { CsrfTokenStore } from './api.interceptor';
 
@@ -12,13 +12,16 @@ export class ApiClient {
   private readonly csrf = inject(CsrfTokenStore);
 
   get<T>(path: string, query?: Record<string, string | number | undefined>): Promise<T> {
-    let params = new HttpParams();
-    for (const [key, value] of Object.entries(query ?? {})) {
-      if (value !== undefined) {
-        params = params.set(key, String(value));
-      }
-    }
-    return this.unwrap(this.http.get<ApiEnvelope<T>>(this.url(path), { params }), path);
+    return this.unwrap(
+      this.http.get<ApiEnvelope<T>>(this.url(path), { params: this.params(query) }),
+      path,
+    );
+  }
+
+  getPage<T>(path: string, query?: Record<string, string | number | undefined>): Promise<ApiPage<T>> {
+    return firstValueFrom(
+      this.http.get<ApiPage<T>>(this.url(path), { params: this.params(query) }),
+    );
   }
 
   post<T>(path: string, body?: unknown): Promise<T> {
@@ -73,5 +76,15 @@ export class ApiClient {
 
   private url(path: string): string {
     return `${this.baseUrl}${path.startsWith('/') ? path : `/${path}`}`;
+  }
+
+  private params(query?: Record<string, string | number | undefined>): HttpParams {
+    let params = new HttpParams();
+    for (const [key, value] of Object.entries(query ?? {})) {
+      if (value !== undefined) {
+        params = params.set(key, String(value));
+      }
+    }
+    return params;
   }
 }

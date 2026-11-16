@@ -5,12 +5,12 @@ import {
   ApiActivity,
   ApiEvent,
   ApiInvitation,
+  ApiPage,
   ApiTask,
   ApiTemplate,
   DashboardData,
   EventLocation,
   Host,
-  Pagination,
   ReportSummary,
   CreateEventRequest,
 } from '../api/api.models';
@@ -29,11 +29,6 @@ import {
   TemplateId,
   WorkspaceTask,
 } from '../models/models';
-
-interface ApiPage<T> {
-  data: T[];
-  pagination: Pagination;
-}
 
 interface ApiHostGuest extends ApiInvitation {
   event: Pick<ApiEvent, 'id' | 'title' | 'starts_at' | 'status'>;
@@ -226,17 +221,17 @@ export class WorkspaceStore {
         dashboard,
         reports,
       ] = await Promise.all([
-        this.api.get<ApiPage<ApiEvent>>('/host/events', {
+        this.api.getPage<ApiEvent>('/host/events', {
           page: 1,
           page_size: 100,
           sort: 'starts_at',
           order: 'asc',
         }),
-        this.api.get<ApiPage<ApiHostGuest>>('/host/guests', {
+        this.api.getPage<ApiHostGuest>('/host/guests', {
           page: 1,
           page_size: 100,
         }),
-        this.api.get<ApiPage<ApiActivity>>('/host/activity', {
+        this.api.getPage<ApiActivity>('/host/activity', {
           page: 1,
           page_size: 100,
         }),

@@ -49,7 +49,16 @@ export class DashboardPage {
   protected readonly recentEvents = computed(() => this.store.recentEvents().slice(0, 4));
   protected readonly tasks = computed(() => this.store.tasks().slice(0, 4));
   protected readonly activity = computed(() => this.store.activityFeed().slice(0, 5));
-  protected readonly pending = computed(() => this.store.pendingGuests().slice(0, 4));
+  protected readonly pending = computed(() => {
+    const event = this.nextEvent();
+    if (event) {
+      return this.store
+        .pendingGuests()
+        .filter((entry) => entry.guest.eventId === event.id)
+        .slice(0, 6);
+    }
+    return this.store.pendingGuests().slice(0, 6);
+  });
 
   protected readonly firstName = computed(() => this.store.profile.name.split(' ')[0]);
   protected readonly guestNames = computed(() =>
@@ -76,6 +85,14 @@ export class DashboardPage {
   protected readonly nextEventStats = computed(() => {
     const event = this.nextEvent();
     return event ? this.store.eventStats(event.id) : null;
+  });
+
+  protected readonly pendingCount = computed(() => {
+    const event = this.nextEvent();
+    if (event && this.nextEventStats()) {
+      return this.nextEventStats()!.pending;
+    }
+    return this.stats().pending;
   });
 
   protected readonly week = computed<ChartDay[]>(() => {
@@ -129,11 +146,25 @@ export class DashboardPage {
     return this.activityPresenter.tone(kind);
   }
 
-  protected reminder(guest: Guest): void {
+  protected resendEmail(guest: Guest): void {
     if (!this.store.sendReminder(guest.id)) {
       return;
     }
-    this.toasts.success(this.i18n.t('dashboard.reminderSent', { name: guest.name }));
+    this.toasts.success(this.i18n.t('guests.resent', { name: guest.name }));
+  }
+
+  protected whatsappLink(guest: Guest, event: HostEvent): string | null {
+    const phone = guest.phone?.replace(/[^\d+]/g, '');
+    if (!phone) {
+      return null;
+    }
+    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    const url = `${origin}/i/${event.invitationToken}`;
+    const text = encodeURIComponent(
+      `Olá ${guest.name}, tens um convite para "${event.title}". Podes responder aqui: ${url}`,
+    );
+    const digits = phone.replace(/^\+/, '');
+    return `https://wa.me/${digits}?text=${text}`;
   }
 
   protected openManagement(eventId: string): void {

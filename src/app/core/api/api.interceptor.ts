@@ -1,8 +1,9 @@
 import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { DOCUMENT, isPlatformBrowser } from '@angular/common';
-import { inject, Injectable, PLATFORM_ID } from '@angular/core';
+import { inject, Injectable, PLATFORM_ID, REQUEST } from '@angular/core';
 import { catchError, throwError } from 'rxjs';
 import { ApiError, toApiError } from './api-error';
+import { API_BASE_URL } from './api-config';
 
 @Injectable({ providedIn: 'root' })
 export class CsrfTokenStore {
@@ -66,10 +67,16 @@ export const apiRequestInterceptor: HttpInterceptorFn = (request, next) => {
     return next(request);
   }
 
+  const apiBaseUrl = inject(API_BASE_URL);
+  const incomingRequest = inject(REQUEST, { optional: true });
   const token = inject(CsrfTokenStore).get(request.url);
   const mutating = ['POST', 'PATCH', 'PUT', 'DELETE'].includes(request.method);
-  const headers =
+  let headers =
     mutating && token ? request.headers.set('X-CSRF-Token', token) : request.headers;
+  const authCookie = incomingAuthCookie(incomingRequest, apiBaseUrl, request.url);
+  if (authCookie) {
+    headers = headers.set('Cookie', authCookie);
+  }
 
   return next(request.clone({ withCredentials: true, headers }));
 };
@@ -84,6 +91,29 @@ function csrfCookieName(scope: string): string {
     return `apupu_csrf_host_${scope.slice('host:'.length)}`;
   }
   return `apupu_csrf_${scope}`;
+}
+
+function incomingAuthCookie(
+  incomingRequest: Request | null,
+  apiBaseUrl: string,
+  requestUrl: string,
+): string | null {
+  if (!incomingRequest) {
+    return null;
+  }
+  const apiHost = new URL(apiBaseUrl).hostname;
+  if (
+    new URL(incomingRequest.url).hostname !== apiHost ||
+    new URL(requestUrl).hostname !== apiHost
+  ) {
+    return null;
+  }
+  const authCookie = incomingRequest.headers
+    .get('cookie')
+    ?.split(';')
+    .map((cookie) => cookie.trim())
+    .find((cookie) => cookie.startsWith('apupu_auth='));
+  return authCookie ?? null;
 }
 
 export const apiErrorInterceptor: HttpInterceptorFn = (request, next) =>

@@ -1,4 +1,4 @@
-import { Component, computed, input } from '@angular/core';
+import { Component, computed, effect, input, signal } from '@angular/core';
 
 const SIZES: Record<string, string> = {
   xs: 'size-7 text-[10px]',
@@ -12,18 +12,34 @@ const SIZES: Record<string, string> = {
   selector: 'app-avatar',
   template: `
     <span
-      class="inline-grid shrink-0 place-items-center rounded-full font-semibold tracking-wide text-on-secondary shadow-card ring-2 ring-canvas/50"
+      class="inline-grid shrink-0 place-items-center overflow-hidden rounded-full font-semibold tracking-wide text-on-secondary shadow-card ring-2 ring-canvas/50"
       [class]="classes()"
       [attr.title]="name()"
       [attr.aria-label]="name()"
     >
-      {{ initials() }}
+      @if (imageUrl() && !failed()) {
+        <img [src]="imageUrl()" alt="" class="size-full object-cover" (error)="failed.set(true)" />
+      } @else {
+        {{ initials() }}
+      }
     </span>
   `,
 })
 export class AvatarComponent {
   readonly name = input.required<string>();
   readonly size = input<'xs' | 'sm' | 'md' | 'lg' | 'xl'>('sm');
+  /** URL da foto de perfil. Quando ausente (ou falha o carregamento) mostra as iniciais. */
+  readonly imageUrl = input<string | null>(null);
+
+  protected readonly failed = signal(false);
+
+  constructor() {
+    // Um URL novo volta a tentar mostrar a imagem (reinicia o estado de falha).
+    effect(() => {
+      this.imageUrl();
+      this.failed.set(false);
+    });
+  }
 
   protected readonly initials = computed(() => {
     const parts = this.name()

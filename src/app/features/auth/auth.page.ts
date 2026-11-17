@@ -12,6 +12,7 @@ import {
   AbstractControl,
   NonNullableFormBuilder,
   ReactiveFormsModule,
+  ValidationErrors,
   Validators,
 } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -28,6 +29,13 @@ type RegisterStep = 'email' | 'sent' | 'code' | 'details';
 
 function secondsUntil(iso: string): number {
   return Math.max(0, Math.ceil((new Date(iso).getTime() - Date.now()) / 1000));
+}
+
+/** Valida que a confirmação coincide com a senha definida. */
+function passwordsMatch(group: AbstractControl): ValidationErrors | null {
+  const password = group.get('password')?.value;
+  const confirm = group.get('confirmPassword')?.value;
+  return password === confirm ? null : { passwordMismatch: true };
 }
 
 @Component({
@@ -365,6 +373,31 @@ function secondsUntil(iso: string): number {
                 <span class="text-[13px] text-muted">Mínimo de 8 caracteres.</span>
               </div>
 
+              <div class="grid gap-1.5">
+                <label for="register-confirm-password" class="text-sm font-semibold text-ink">
+                  Confirmar senha
+                </label>
+                <input
+                  id="register-confirm-password"
+                  formControlName="confirmPassword"
+                  type="password"
+                  autocomplete="new-password"
+                  required
+                  [class]="inputClass"
+                  [attr.aria-invalid]="
+                    isInvalid(detailsForm.controls.confirmPassword) ||
+                    (detailsForm.hasError('passwordMismatch') &&
+                      detailsForm.controls.confirmPassword.touched)
+                  "
+                />
+                @if (
+                  detailsForm.hasError('passwordMismatch') &&
+                  detailsForm.controls.confirmPassword.touched
+                ) {
+                  <span class="text-[13px] text-coral">As senhas não coincidem.</span>
+                }
+              </div>
+
               <button type="submit" [disabled]="busy()" [class]="submitClass">
                 {{ busy() ? 'A criar conta…' : 'Criar conta' }}
               </button>
@@ -466,10 +499,14 @@ export class AuthPage {
    * e o `(ngSubmit)` funcione (sem ele o browser faria um submit nativo).
    */
   readonly otpForm = this.fb.group({});
-  readonly detailsForm = this.fb.group({
-    displayName: ['', [Validators.required, Validators.maxLength(120)]],
-    password: ['', [Validators.required, Validators.minLength(8), Validators.maxLength(128)]],
-  });
+  readonly detailsForm = this.fb.group(
+    {
+      displayName: ['', [Validators.required, Validators.maxLength(120)]],
+      password: ['', [Validators.required, Validators.minLength(8), Validators.maxLength(128)]],
+      confirmPassword: ['', [Validators.required]],
+    },
+    { validators: passwordsMatch },
+  );
 
   constructor() {
     interval(1000)
@@ -603,6 +640,11 @@ export class AuthPage {
     if (password.length < 8) {
       this.detailsForm.controls.password.markAsTouched();
       this.toasts.error('A senha precisa de pelo menos 8 caracteres.');
+      return;
+    }
+    if (this.detailsForm.hasError('passwordMismatch')) {
+      this.detailsForm.controls.confirmPassword.markAsTouched();
+      this.toasts.error('As senhas não coincidem.');
       return;
     }
     this.busy.set(true);

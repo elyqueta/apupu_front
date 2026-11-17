@@ -1,0 +1,234 @@
+<section class="flex flex-col gap-5">
+  <header>
+    <p class="text-[10px] font-semibold uppercase tracking-[0.26em] text-brand-strong">
+      {{ i18n.t('invites.eyebrow') }}
+    </p>
+    <h2 class="mt-1.5 font-display text-2xl font-semibold tracking-tight text-ink sm:text-3xl">
+      {{ i18n.t('invites.title') }}
+    </h2>
+    <p class="mt-1.5 max-w-2xl text-sm leading-6 text-muted">
+      {{ i18n.t('invites.subtitle') }}
+    </p>
+  </header>
+
+  @if (loading()) {
+    <app-skeleton variant="cards" />
+  } @else if (error()) {
+    <div
+      class="flex flex-col items-center justify-center rounded-4xl border border-dashed border-line bg-surface/60 px-6 py-16 text-center backdrop-blur-2xl"
+    >
+      <span
+        class="grid size-14 place-items-center rounded-2xl border border-brand/25 bg-brand/15 text-brand-strong"
+      >
+        <fa-icon [icon]="icons['envelope']" class="text-xl" aria-hidden="true" />
+      </span>
+      <h3 class="mt-4 font-display text-lg font-semibold text-ink">
+        {{ i18n.t('invites.unavailable') }}
+      </h3>
+      <p class="mt-1.5 max-w-md text-sm leading-6 text-muted">
+        {{ i18n.t('invites.unavailableHint') }}
+      </p>
+      <button
+        type="button"
+        class="mt-5 inline-flex h-10 items-center gap-2 rounded-xl border border-line bg-surface-raised px-4 text-sm font-semibold text-ink transition hover:border-brand/40"
+        (click)="retry()"
+      >
+        <fa-icon [icon]="icons['refresh']" class="text-xs" aria-hidden="true" />
+        {{ i18n.t('common.retry') }}
+      </button>
+    </div>
+  } @else if (invitations().length === 0) {
+    <div
+      class="flex flex-col items-center justify-center rounded-4xl border border-dashed border-line bg-surface/60 px-6 py-16 text-center backdrop-blur-2xl"
+    >
+      <span
+        class="grid size-14 place-items-center rounded-2xl border border-brand/25 bg-brand/15 text-brand-strong"
+      >
+        <fa-icon [icon]="icons['envelope']" class="text-xl" aria-hidden="true" />
+      </span>
+      <h3 class="mt-4 font-display text-lg font-semibold text-ink">
+        {{ i18n.t('invites.empty') }}
+      </h3>
+      <p class="mt-1.5 max-w-md text-sm leading-6 text-muted">
+        {{ i18n.t('invites.emptyHint') }}
+      </p>
+    </div>
+  } @else {
+    <div
+      class="flex flex-col gap-3 rounded-3xl border border-line bg-surface/70 p-3 shadow-card backdrop-blur-2xl lg:flex-row lg:items-center lg:justify-between"
+    >
+      <div
+        class="flex flex-wrap items-center gap-1.5"
+        role="tablist"
+        [attr.aria-label]="i18n.t('common.filter')"
+      >
+        @for (option of filters; track option.id) {
+          <button
+            type="button"
+            role="tab"
+            [attr.aria-selected]="filter() === option.id"
+            class="inline-flex h-9 items-center gap-2 rounded-xl px-3 text-xs font-semibold transition"
+            [class]="
+              filter() === option.id
+                ? 'border border-brand/30 bg-brand/15 text-ink'
+                : 'border border-transparent text-muted hover:bg-surface-raised/60 hover:text-ink'
+            "
+            (click)="setFilter(option.id)"
+          >
+            {{ i18n.t(option.labelKey) }}
+            <span
+              class="rounded-full px-1.5 py-0.5 text-[9px]"
+              [class]="
+                filter() === option.id
+                  ? 'bg-brand/20 text-brand-strong'
+                  : 'bg-surface-raised text-muted'
+              "
+            >
+              {{ count(option.id) }}
+            </span>
+          </button>
+        }
+      </div>
+
+      <label class="relative flex items-center lg:w-72">
+        <fa-icon
+          [icon]="icons['search']"
+          class="pointer-events-none absolute left-3 text-xs text-muted"
+          aria-hidden="true"
+        />
+        <input
+          type="search"
+          [value]="search()"
+          (input)="search.set($any($event.target).value)"
+          class="h-10 w-full rounded-xl border border-line bg-surface-raised/70 pl-9 pr-3 text-xs text-ink outline-none transition placeholder:text-muted/60 focus:border-brand/50"
+          [placeholder]="i18n.t('invites.search')"
+          [attr.aria-label]="i18n.t('invites.search')"
+        />
+      </label>
+    </div>
+
+    @if (filtered().length === 0) {
+      <p
+        class="rounded-3xl border border-dashed border-line bg-surface/60 px-6 py-10 text-center text-sm text-muted backdrop-blur-2xl"
+      >
+        {{ i18n.t('invites.noResults') }}
+      </p>
+    } @else {
+      <div class="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-4 md:grid-cols-2 2xl:grid-cols-3">
+        @for (invitation of filtered(); track invitation.id) {
+          <article
+            class="group relative flex h-full flex-col overflow-hidden rounded-4xl border border-line bg-surface shadow-card backdrop-blur-2xl transition duration-300 hover:-translate-y-1 hover:border-brand/40"
+          >
+            <div class="relative p-3 pb-0">
+              <app-template-artwork
+                [templateId]="invitation.templateId"
+                variant="cover"
+                [showIcon]="false"
+                class="block overflow-hidden rounded-3xl"
+              />
+
+              <div class="absolute left-6 top-6">
+                <app-status-badge [value]="invitation.status" />
+              </div>
+
+              @if (invitation.startsAt) {
+                <div
+                  class="absolute right-6 top-6 min-w-14 rounded-2xl border border-line bg-surface px-3 py-1.5 text-center text-ink shadow-card"
+                >
+                  <span class="block font-display text-xl font-semibold leading-none">
+                    {{ i18n.dayNumber(invitation.startsAt, invitation.timezone) }}
+                  </span>
+                  <span class="mt-1 block text-[10px] font-semibold text-muted">
+                    {{ i18n.monthShort(invitation.startsAt, invitation.timezone) }}
+                  </span>
+                </div>
+              }
+            </div>
+
+            <div class="flex flex-1 flex-col gap-4 p-5">
+              <div class="min-w-0">
+                @if (typeLabel(invitation)) {
+                  <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-brand-strong">
+                    {{ typeLabel(invitation) }}
+                  </p>
+                }
+                <h3
+                  class="mt-1 font-display text-lg font-semibold leading-snug tracking-tight text-ink"
+                >
+                  {{ invitation.title }}
+                </h3>
+                <p class="mt-1 text-xs text-muted">
+                  {{ i18n.t('invites.hostedBy', { name: invitation.hostName }) }}
+                </p>
+              </div>
+
+              <div class="flex flex-col gap-2 text-xs text-muted">
+                @if (invitation.startsAt) {
+                  <span class="flex items-center gap-2">
+                    <fa-icon
+                      [icon]="icons['calendar']"
+                      class="text-[11px] text-brand-strong"
+                      aria-hidden="true"
+                    />
+                    {{ i18n.longDate(invitation.startsAt, invitation.timezone) }}
+                    <span class="text-muted/60">·</span>
+                    {{ i18n.time(invitation.startsAt, invitation.timezone) }}
+                  </span>
+                }
+                @if (locationLabel(invitation)) {
+                  <span class="flex items-center gap-2 truncate">
+                    <fa-icon
+                      [icon]="invitation.onlineLink ? icons['globe'] : icons['location']"
+                      class="text-[11px] text-aqua"
+                      aria-hidden="true"
+                    />
+                    <span class="truncate">{{ locationLabel(invitation) }}</span>
+                  </span>
+                }
+                @if (invitation.tableName) {
+                  <span class="flex items-center gap-2">
+                    <fa-icon
+                      [icon]="icons['checklist']"
+                      class="text-[11px] text-brand-strong"
+                      aria-hidden="true"
+                    />
+                    {{ i18n.t('invites.table', { name: invitation.tableName }) }}
+                  </span>
+                }
+              </div>
+
+              <div
+                class="mt-auto flex items-center justify-between gap-3 border-t border-line pt-4"
+              >
+                <span class="text-[11px] text-muted">
+                  {{
+                    i18n.t('invites.invitedAt', {
+                      date: i18n.shortDate(invitation.invitedAt, invitation.timezone),
+                    })
+                  }}
+                </span>
+                @if (invitation.invitationUrl) {
+                  <a
+                    [href]="invitation.invitationUrl"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="inline-flex items-center gap-1.5 text-[11px] font-semibold text-brand-strong transition group-hover:gap-2.5"
+                  >
+                    {{ i18n.t('invites.open') }}
+                    <fa-icon
+                      [icon]="icons['arrowUpRight']"
+                      class="text-[10px]"
+                      aria-hidden="true"
+                    />
+                  </a>
+                } @else {
+                  <span class="text-[11px] text-muted/60">{{ i18n.t('invites.noLink') }}</span>
+                }
+              </div>
+            </div>
+          </article>
+        }
+      </div>
+    }
+  }
+</section>

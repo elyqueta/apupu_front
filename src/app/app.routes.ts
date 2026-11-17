@@ -78,6 +78,12 @@ export const routes: Routes = [
           import('./features/guests/guests.page').then((m) => m.GuestsPage),
       },
       {
+        path: 'convites',
+        title: 'Conto Contigo · Meus convites',
+        loadComponent: () =>
+          import('./features/my-invitations/invitations.page').then((m) => m.InvitationsPage),
+      },
+      {
         path: 'templates',
         title: 'Conto Contigo · Modelos',
         loadComponent: () =>

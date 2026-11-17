@@ -4,8 +4,11 @@ import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } fro
 import { filter } from 'rxjs';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
+import { AuthService } from '../../core/api/auth.service';
+import { toApiError } from '../../core/api/api-error';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { TranslationKey } from '../../core/i18n/translations';
+import { ToastService } from '../../core/services/toast.service';
 import { WorkspaceStore } from '../../core/services/workspace.store';
 import { ICONS } from '../../core/ui/icons';
 import { ActivityPresenter } from '../../shared/services/activity.presenter';
@@ -40,21 +43,24 @@ export class ShellComponent {
   protected readonly i18n = inject(I18nService);
   protected readonly icons = ICONS;
   private readonly router = inject(Router);
+  private readonly auth = inject(AuthService);
+  private readonly toasts = inject(ToastService);
   private readonly activityPresenter = inject(ActivityPresenter);
 
   protected readonly mobileOpen = signal(false);
   protected readonly notificationsOpen = signal(false);
   protected readonly searchTerm = signal('');
+  protected readonly loggingOut = signal(false);
   protected readonly pageTitle = signal<TranslationKey>('nav.dashboard');
   protected readonly skeletonVariant = signal<SkeletonVariant>('dashboard');
 
   protected readonly navItems: NavItem[] = [
     { path: '/painel', labelKey: 'nav.dashboard', icon: ICONS['dashboard'], exact: true },
     { path: '/eventos', labelKey: 'nav.events', icon: ICONS['events'], exact: false },
+    { path: '/convites', labelKey: 'nav.invites', icon: ICONS['envelope'], exact: false },
     { path: '/convidados', labelKey: 'nav.guests', icon: ICONS['guests'], exact: false },
     { path: '/templates', labelKey: 'nav.templates', icon: ICONS['templates'], exact: false },
     { path: '/relatorios', labelKey: 'nav.reports', icon: ICONS['reports'], exact: false },
-    { path: '/definicoes', labelKey: 'nav.settings', icon: ICONS['settings'], exact: false },
   ];
 
   protected readonly notifications = computed(() => this.store.activityFeed().slice(0, 4));
@@ -108,11 +114,29 @@ export class ShellComponent {
     await this.store.retry();
   }
 
+  protected async logout(): Promise<void> {
+    if (this.loggingOut()) {
+      return;
+    }
+    this.loggingOut.set(true);
+    try {
+      await this.auth.logout();
+      await this.router.navigate(['/entrar']);
+    } catch (error: unknown) {
+      this.toasts.error(toApiError(error).message);
+    } finally {
+      this.loggingOut.set(false);
+    }
+  }
+
   private updatePageTitle(): void {
     const url = this.router.url.split('?')[0].split('#')[0];
     if (url.startsWith('/eventos')) {
       this.pageTitle.set('nav.events');
       this.skeletonVariant.set(url.split('/').filter(Boolean).length > 1 ? 'detail' : 'cards');
+    } else if (url.startsWith('/convites')) {
+      this.pageTitle.set('nav.invites');
+      this.skeletonVariant.set('cards');
     } else if (url.startsWith('/convidados')) {
       this.pageTitle.set('nav.guests');
       this.skeletonVariant.set('table');

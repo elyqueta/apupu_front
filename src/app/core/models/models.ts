@@ -55,6 +55,30 @@ export interface Guest {
   respondedAt: string | null;
 }
 
+/**
+ * Perspetiva do convidado: um evento para o qual a conta autenticada foi
+ * convidada (por oposição a `HostEvent`, que é um evento que a conta organiza).
+ */
+export interface GuestInvitation {
+  id: string;
+  eventId: string;
+  title: string;
+  hostName: string;
+  startsAt: string | null;
+  timezone: string;
+  venue: string;
+  city: string;
+  onlineLink: string | null;
+  type: EventType | null;
+  templateId: TemplateId | null;
+  status: RsvpStatus;
+  tableName: string | null;
+  /** Link individual do convite; `null` quando ainda não está disponível. */
+  invitationUrl: string | null;
+  invitedAt: string;
+  respondedAt: string | null;
+}
+
 export interface EventTemplate {
   id: string;
   slug: string;

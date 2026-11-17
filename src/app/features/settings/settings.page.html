@@ -178,7 +178,11 @@
             </p>
             <p class="mt-1 text-xs text-muted">{{ i18n.t('settings.profileHint') }}</p>
           </div>
-          <app-avatar [name]="store.profile().name" size="md" />
+          <app-avatar
+            [name]="store.profile().name"
+            [imageUrl]="store.profile().avatarUrl"
+            size="md"
+          />
         </div>
 
         <form

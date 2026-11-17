@@ -2,6 +2,7 @@ import {
   ApiActivity,
   ApiEvent,
   ApiInvitation,
+  ApiRsvpStatus,
   ApiTask,
   ApiTemplate,
   EventLocation,
@@ -14,6 +15,7 @@ import {
   EventStats,
   EventTemplate,
   Guest,
+  GuestInvitation,
   HostEvent,
   HostProfile,
   WorkspaceTask,
@@ -26,6 +28,32 @@ import {
 
 export interface ApiHostGuest extends ApiInvitation {
   event: Pick<ApiEvent, 'id' | 'title' | 'starts_at' | 'status'>;
+}
+
+/**
+ * Convite visto pelo convidado. Contrato **provisório** — o endpoint ainda não
+ * existe; ver `docs/prompt-backend-eventos-convidado.md`.
+ */
+export interface ApiGuestInvitation {
+  id: string;
+  event_id: string;
+  rsvp_status: ApiRsvpStatus;
+  rsvp_responded_at: string | null;
+  table_name: string | null;
+  invitation_url: string | null;
+  created_at: string;
+  event: Pick<
+    ApiEvent,
+    | 'id'
+    | 'title'
+    | 'host_name'
+    | 'starts_at'
+    | 'timezone'
+    | 'location'
+    | 'status'
+    | 'template_id'
+    | 'category'
+  >;
 }
 
 export interface HostEnvelope {
@@ -104,6 +132,28 @@ export function mapInvitation(invitation: ApiInvitation): Guest {
     name: invitation.guest_name,
     email: invitation.guest_email,
     phone: invitation.guest_phone,
+    status: invitation.rsvp_status === 'accepted' ? 'confirmed' : invitation.rsvp_status,
+    tableName: invitation.table_name,
+    invitationUrl: invitation.invitation_url,
+    invitedAt: invitation.created_at,
+    respondedAt: invitation.rsvp_responded_at,
+  };
+}
+
+export function mapGuestInvitation(invitation: ApiGuestInvitation): GuestInvitation {
+  const location = invitation.event.location;
+  return {
+    id: invitation.id,
+    eventId: invitation.event_id,
+    title: invitation.event.title,
+    hostName: invitation.event.host_name,
+    startsAt: invitation.event.starts_at,
+    timezone: invitation.event.timezone,
+    venue: location.type === 'venue' ? (location.name ?? '') : '',
+    city: location.type === 'venue' ? (location.address ?? '') : '',
+    onlineLink: location.type === 'online' ? (location.online_url ?? null) : null,
+    type: invitation.event.category,
+    templateId: invitation.event.template_id,
     status: invitation.rsvp_status === 'accepted' ? 'confirmed' : invitation.rsvp_status,
     tableName: invitation.table_name,
     invitationUrl: invitation.invitation_url,

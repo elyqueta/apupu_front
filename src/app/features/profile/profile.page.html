@@ -1,0 +1,306 @@
+<section class="flex flex-col gap-5">
+  <header>
+    <p class="text-[10px] font-semibold uppercase tracking-[0.26em] text-brand-strong">
+      {{ i18n.t('profile.eyebrow') }}
+    </p>
+    <h2 class="mt-1.5 font-display text-2xl font-semibold tracking-tight text-ink sm:text-3xl">
+      {{ i18n.t('profile.title') }}
+    </h2>
+    <p class="mt-1.5 max-w-2xl text-sm leading-6 text-muted">
+      {{ i18n.t('profile.subtitle') }}
+    </p>
+  </header>
+
+  <!-- Cabeçalho do perfil -->
+  <article
+    class="overflow-hidden rounded-4xl border border-line bg-surface shadow-card backdrop-blur-2xl"
+  >
+    <!-- Capa -->
+    <!-- TODO(backend): substituir o degradê por uma imagem quando o perfil expuser `cover_url`. -->
+    <div class="relative h-40 bg-gradient-to-r from-brand/50 via-aqua/30 to-secondary/50 sm:h-48">
+      <div
+        class="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.16),transparent_55%)]"
+      ></div>
+      <button
+        type="button"
+        disabled
+        [attr.title]="i18n.t('profile.coverHint')"
+        class="absolute right-4 top-4 inline-flex h-9 items-center gap-2 rounded-xl border border-white/20 bg-canvas/40 px-3 text-[11px] font-semibold text-white/90 backdrop-blur-md disabled:cursor-not-allowed disabled:opacity-70"
+      >
+        <fa-icon [icon]="icons['image']" class="text-[11px]" aria-hidden="true" />
+        {{ i18n.t('profile.changeCover') }}
+      </button>
+    </div>
+
+    <div class="px-5 pb-5">
+      <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div class="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-end">
+          <button
+            type="button"
+            class="relative -mt-14 shrink-0 rounded-full ring-4 ring-surface transition hover:opacity-90 sm:-mt-16"
+            [attr.aria-label]="i18n.t('profile.changePhoto')"
+            [attr.title]="i18n.t('profile.changePhoto')"
+            (click)="openEdit()"
+          >
+            <app-avatar size="2xl" [name]="profile().name" [imageUrl]="profile().avatarUrl" />
+            <span
+              class="absolute -bottom-0.5 -right-0.5 grid size-9 place-items-center rounded-full border-4 border-surface bg-brand text-on-secondary shadow-card"
+            >
+              <fa-icon [icon]="icons['camera']" class="text-xs" aria-hidden="true" />
+            </span>
+          </button>
+
+          <div class="min-w-0 pb-1">
+            <h3
+              class="flex flex-wrap items-center gap-2 font-display text-2xl font-semibold tracking-tight text-ink"
+            >
+              {{ profile().name }}
+              @if (profile().emailVerified) {
+                <span
+                  class="inline-flex items-center gap-1 rounded-full border border-mint/30 bg-mint/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-mint"
+                >
+                  <fa-icon [icon]="icons['success']" class="text-[9px]" aria-hidden="true" />
+                  {{ i18n.t('profile.verified') }}
+                </span>
+              }
+            </h3>
+            <p class="mt-1 text-sm text-muted">{{ i18n.t('profile.role') }}</p>
+            <p class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted">
+              <span class="inline-flex items-center gap-1.5">
+                <fa-icon [icon]="icons['location']" class="text-[11px]" aria-hidden="true" />
+                {{ i18n.t('profile.location') }}
+              </span>
+              <span class="inline-flex min-w-0 items-center gap-1.5">
+                <fa-icon [icon]="icons['envelope']" class="text-[11px]" aria-hidden="true" />
+                <span class="truncate">{{ profile().email }}</span>
+              </span>
+            </p>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          class="inline-flex h-10 shrink-0 items-center gap-2 self-start rounded-xl border border-line bg-surface-raised/70 px-4 text-xs font-semibold text-ink transition hover:border-brand/40 sm:mt-1"
+          (click)="openEdit()"
+        >
+          <fa-icon [icon]="icons['pen']" class="text-[11px] text-muted" aria-hidden="true" />
+          {{ i18n.t('profile.edit') }}
+        </button>
+      </div>
+
+      <!-- Faixa de estatísticas -->
+      <dl class="mt-5 grid grid-cols-2 gap-y-4 border-t border-line pt-4 sm:grid-cols-4">
+        @for (metric of metrics(); track metric.labelKey) {
+          <div
+            class="flex flex-col gap-1 sm:border-l sm:border-line sm:px-4 sm:first:border-l-0 sm:first:pl-0"
+          >
+            <dd class="font-display text-2xl font-semibold tracking-tight text-ink">
+              {{ metric.value }}
+            </dd>
+            <dt class="text-[11px] leading-4 text-muted">{{ i18n.t(metric.labelKey) }}</dt>
+          </div>
+        }
+      </dl>
+    </div>
+  </article>
+
+  <!-- Grelha de duas colunas -->
+  <div class="grid gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(0,0.65fr)]">
+    <!-- Os meus eventos -->
+    <article
+      class="flex flex-col rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl"
+    >
+      <div class="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-brand-strong">
+            {{ i18n.t('profile.events.title') }}
+          </p>
+          <p class="mt-1 text-xs text-muted">{{ i18n.t('profile.events.subtitle') }}</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <label class="relative flex items-center">
+            <fa-icon
+              [icon]="icons['search']"
+              class="pointer-events-none absolute left-3 text-xs text-muted"
+              aria-hidden="true"
+            />
+            <input
+              type="search"
+              [value]="searchTerm()"
+              (input)="searchTerm.set($any($event.target).value)"
+              [placeholder]="i18n.t('profile.events.search')"
+              [attr.aria-label]="i18n.t('profile.events.search')"
+              class="h-10 w-40 rounded-xl border border-line bg-surface-raised/70 pl-9 pr-3 text-xs text-ink outline-none transition placeholder:text-muted/60 focus:border-brand/50 sm:w-52"
+            />
+          </label>
+          <button
+            type="button"
+            (click)="exportEvents()"
+            class="inline-flex h-10 items-center gap-2 rounded-xl border border-line bg-surface-raised/70 px-3 text-xs font-semibold text-ink transition hover:border-brand/40"
+          >
+            <fa-icon [icon]="icons['download']" class="text-[11px] text-muted" aria-hidden="true" />
+            <span class="hidden sm:inline">{{ i18n.t('profile.events.export') }}</span>
+          </button>
+        </div>
+      </div>
+
+      @if (events().length === 0) {
+        <div
+          class="mt-5 flex flex-col items-center rounded-3xl border border-dashed border-line bg-surface-raised/40 px-6 py-10 text-center"
+        >
+          <fa-icon [icon]="icons['events']" class="text-xl text-muted" aria-hidden="true" />
+          <p class="mt-3 text-sm font-semibold text-ink">
+            {{ searchTerm() ? i18n.t('profile.events.noResults') : i18n.t('profile.events.empty') }}
+          </p>
+          @if (!searchTerm()) {
+            <p class="mt-1 text-xs text-muted">{{ i18n.t('profile.events.emptyHint') }}</p>
+            <a
+              routerLink="/criar-evento"
+              class="mt-4 inline-flex h-10 items-center gap-2 rounded-xl bg-brand px-4 text-xs font-semibold text-on-secondary transition hover:bg-secondary-hover"
+            >
+              <fa-icon [icon]="icons['plus']" class="text-[11px]" aria-hidden="true" />
+              {{ i18n.t('dashboard.newEvent') }}
+            </a>
+          }
+        </div>
+      } @else {
+        <div class="-mx-5 mt-4 overflow-x-auto px-5">
+          <table class="w-full min-w-[36rem] border-collapse text-left text-sm">
+            <thead>
+              <tr class="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
+                <th class="pb-3 pr-4 font-semibold">{{ i18n.t('profile.table.name') }}</th>
+                <th class="pb-3 pr-4 font-semibold">{{ i18n.t('profile.table.date') }}</th>
+                <th class="pb-3 pr-4 font-semibold">{{ i18n.t('profile.table.guests') }}</th>
+                <th class="pb-3 font-semibold">{{ i18n.t('profile.table.status') }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (event of events(); track event.id) {
+                <tr class="border-t border-line/70 transition hover:bg-surface-raised/50">
+                  <td class="py-3 pr-4">
+                    <a
+                      [routerLink]="['/eventos', event.id]"
+                      class="font-medium text-ink transition hover:text-brand-strong"
+                      >{{ event.title }}</a
+                    >
+                  </td>
+                  <td class="py-3 pr-4 text-xs text-muted">{{ formatDate(event) }}</td>
+                  <td class="py-3 pr-4 text-xs text-muted">{{ guestCount(event) }}</td>
+                  <td class="py-3">
+                    <app-status-badge [value]="event.status" />
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <div class="mt-4 flex justify-end border-t border-line pt-4">
+          <a
+            routerLink="/eventos"
+            class="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-strong transition hover:gap-2"
+          >
+            {{ i18n.t('common.viewAll') }}
+            <fa-icon [icon]="icons['chevronRight']" class="text-[9px]" aria-hidden="true" />
+          </a>
+        </div>
+      }
+    </article>
+
+    <!-- Coluna direita -->
+    <div class="flex flex-col gap-4">
+      <article class="rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl">
+        <div class="flex items-start justify-between gap-3">
+          <div>
+            <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-brand-strong">
+              {{ i18n.t('profile.personal.title') }}
+            </p>
+            <p class="mt-1 text-xs text-muted">{{ i18n.t('profile.personal.hint') }}</p>
+          </div>
+          <button
+            type="button"
+            (click)="openEdit()"
+            class="inline-flex h-9 shrink-0 items-center gap-2 rounded-xl border border-line bg-surface-raised/70 px-3 text-[11px] font-semibold text-ink transition hover:border-brand/40"
+          >
+            <fa-icon [icon]="icons['pen']" class="text-[10px] text-muted" aria-hidden="true" />
+            {{ i18n.t('common.edit') }}
+          </button>
+        </div>
+
+        <dl class="mt-4 flex flex-col divide-y divide-line/70 text-sm">
+          <div class="flex items-start justify-between gap-3 py-2.5">
+            <dt class="text-[11px] uppercase tracking-[0.14em] text-muted">
+              {{ i18n.t('profile.personal.name') }}
+            </dt>
+            <dd class="min-w-0 text-right font-medium text-ink">{{ profile().name }}</dd>
+          </div>
+          <div class="flex items-start justify-between gap-3 py-2.5">
+            <dt class="text-[11px] uppercase tracking-[0.14em] text-muted">
+              {{ i18n.t('profile.personal.email') }}
+            </dt>
+            <dd class="min-w-0 truncate text-right font-medium text-ink">{{ profile().email }}</dd>
+          </div>
+          <div class="flex items-start justify-between gap-3 py-2.5">
+            <dt class="text-[11px] uppercase tracking-[0.14em] text-muted">
+              {{ i18n.t('profile.personal.phone') }}
+            </dt>
+            <dd class="min-w-0 text-right font-medium text-ink">
+              {{ profile().phone || i18n.t('profile.personal.empty') }}
+            </dd>
+          </div>
+          <div class="flex items-start justify-between gap-3 py-2.5">
+            <dt class="text-[11px] uppercase tracking-[0.14em] text-muted">
+              {{ i18n.t('profile.personal.birthDate') }}
+            </dt>
+            <dd class="min-w-0 text-right font-medium text-ink">
+              {{
+                profile().birthDate
+                  ? i18n.shortDate(profile().birthDate!, profile().timezone)
+                  : i18n.t('profile.personal.empty')
+              }}
+            </dd>
+          </div>
+          <div class="flex items-start justify-between gap-3 py-2.5">
+            <dt class="text-[11px] uppercase tracking-[0.14em] text-muted">
+              {{ i18n.t('profile.personal.timezone') }}
+            </dt>
+            <dd class="min-w-0 text-right font-medium text-ink">{{ profile().timezone }}</dd>
+          </div>
+          <div class="flex items-start justify-between gap-3 py-2.5">
+            <dt class="text-[11px] uppercase tracking-[0.14em] text-muted">
+              {{ i18n.t('profile.personal.avatarUrl') }}
+            </dt>
+            <dd class="min-w-0 truncate text-right text-xs text-muted">
+              {{ profile().avatarUrl || i18n.t('profile.personal.empty') }}
+            </dd>
+          </div>
+        </dl>
+      </article>
+
+      <article class="rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl">
+        <p
+          class="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-brand-strong"
+        >
+          <fa-icon [icon]="icons['shield']" class="text-[10px]" aria-hidden="true" />
+          {{ i18n.t('profile.security.title') }}
+        </p>
+        <p class="mt-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">
+          {{ i18n.t('profile.security.password') }}
+        </p>
+        <p class="mt-1 text-xs leading-5 text-muted">
+          {{ i18n.t('profile.security.passwordHint') }}
+        </p>
+        <a
+          routerLink="/definicoes"
+          fragment="seguranca"
+          class="mt-4 inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-line bg-surface-raised/70 px-3 text-xs font-semibold text-ink transition hover:border-brand/40"
+        >
+          <fa-icon [icon]="icons['key']" class="text-[11px] text-muted" aria-hidden="true" />
+          {{ i18n.t('profile.security.manage') }}
+        </a>
+      </article>
+    </div>
+  </div>
+
+  <app-profile-edit-dialog [open]="editOpen()" (closed)="editOpen.set(false)" />
+</section>

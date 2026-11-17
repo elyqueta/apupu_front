@@ -33,4 +33,28 @@ export class ProfileRepository extends CachedRepository<HostProfile> {
     this.setData(profile);
     return profile;
   }
+
+  /** Define o avatar a partir de um URL já existente no servidor. */
+  async setAvatarUrl(avatarUrl: string): Promise<HostProfile> {
+    const response = await this.api.post<HostEnvelope>('/host/profile/avatar', {
+      avatar_url: avatarUrl,
+    });
+    const profile = mapProfile(response.host);
+    this.setData(profile);
+    return profile;
+  }
+
+  /**
+   * Envia uma imagem e define-a como avatar. Pode responder `503`
+   * (`avatar_upload_unavailable`) quando o Cloudinary não está configurado;
+   * nesse caso o chamador deve oferecer o campo de URL.
+   */
+  async uploadAvatar(file: File): Promise<HostProfile> {
+    const body = new FormData();
+    body.append('avatar', file);
+    const response = await this.api.postForm<HostEnvelope>('/host/profile/avatar/upload', body);
+    const profile = mapProfile(response.host);
+    this.setData(profile);
+    return profile;
+  }
 }

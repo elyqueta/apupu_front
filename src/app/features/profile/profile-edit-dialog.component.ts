@@ -1,0 +1,319 @@
+import { Component, effect, inject, input, output, signal } from '@angular/core';
+import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ApiError, toApiError } from '../../core/api/api-error';
+import { I18nService } from '../../core/i18n/i18n.service';
+import { ToastService } from '../../core/services/toast.service';
+import { WorkspaceStore } from '../../core/services/workspace.store';
+import { ICONS } from '../../core/ui/icons';
+import { AvatarComponent } from '../../shared/components/avatar.component';
+
+/**
+ * Modal de edição dos dados pessoais do perfil.
+ *
+ * Reutiliza `PATCH /host/profile` e, para a foto, os endpoints de avatar
+ * (`POST /host/profile/avatar` e `/avatar/upload`). Quando o upload está
+ * indisponível (`503 avatar_upload_unavailable`) mantém o campo de URL.
+ */
+@Component({
+  selector: 'app-profile-edit-dialog',
+  imports: [ReactiveFormsModule, FaIconComponent, AvatarComponent],
+  template: `
+    @if (open()) {
+      <div class="fixed inset-0 z-[100] grid place-items-center overflow-y-auto p-4">
+        <button
+          type="button"
+          class="fixed inset-0 bg-canvas/70 backdrop-blur-md"
+          [attr.aria-label]="i18n.t('common.close')"
+          (click)="close()"
+        ></button>
+
+        <div
+          role="dialog"
+          aria-modal="true"
+          [attr.aria-label]="i18n.t('profile.editTitle')"
+          class="relative my-8 w-full max-w-2xl rounded-4xl border border-line bg-surface-solid/95 p-6 shadow-card backdrop-blur-2xl animate-rise sm:p-7"
+        >
+          <div class="flex items-start justify-between gap-4">
+            <div class="flex items-start gap-3">
+              <span
+                class="grid size-11 shrink-0 place-items-center rounded-2xl border border-brand/25 bg-brand/15 text-brand-strong"
+              >
+                <fa-icon [icon]="icons['pen']" aria-hidden="true" />
+              </span>
+              <div>
+                <h2 class="font-display text-xl font-semibold tracking-tight text-ink">
+                  {{ i18n.t('profile.editTitle') }}
+                </h2>
+                <p class="mt-1 text-xs leading-5 text-muted">{{ i18n.t('profile.editHint') }}</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              class="grid size-8 place-items-center rounded-lg text-muted transition hover:bg-surface-raised hover:text-ink"
+              [attr.aria-label]="i18n.t('common.close')"
+              (click)="close()"
+            >
+              <fa-icon [icon]="icons['close']" class="text-sm" />
+            </button>
+          </div>
+
+          <form class="mt-6 flex flex-col gap-4" [formGroup]="form" (ngSubmit)="submit()">
+            <div class="flex flex-wrap items-center gap-4">
+              <app-avatar
+                size="lg"
+                [name]="form.controls.displayName.value"
+                [imageUrl]="preview()"
+              />
+              <div class="min-w-0 flex-1">
+                <label
+                  class="inline-flex h-10 cursor-pointer items-center gap-2 rounded-xl border border-line bg-surface-raised px-3 text-xs font-semibold text-ink transition hover:border-brand/40"
+                  [class.pointer-events-none]="uploading()"
+                  [class.opacity-60]="uploading()"
+                >
+                  <fa-icon
+                    [icon]="icons['camera']"
+                    class="text-[11px] text-muted"
+                    aria-hidden="true"
+                  />
+                  {{
+                    uploading() ? i18n.t('profile.photoUploading') : i18n.t('profile.photoUpload')
+                  }}
+                  <input
+                    type="file"
+                    class="sr-only"
+                    accept="image/jpeg,image/png,image/webp"
+                    [disabled]="uploading()"
+                    (change)="onFileSelected($event)"
+                  />
+                </label>
+                <p class="mt-1.5 text-[10px] leading-4 text-muted">
+                  {{ i18n.t('profile.photoHint') }}
+                </p>
+              </div>
+            </div>
+
+            <div class="grid gap-4 sm:grid-cols-2">
+              <label class="block">
+                <span
+                  class="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.16em] text-muted"
+                >
+                  {{ i18n.t('profile.personal.name') }} *
+                </span>
+                <input
+                  type="text"
+                  formControlName="displayName"
+                  autocomplete="name"
+                  class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink outline-none transition focus:border-brand/50"
+                />
+                @if (form.controls.displayName.touched && form.controls.displayName.invalid) {
+                  <span class="mt-1 block text-xs text-coral">{{
+                    i18n.t('create.errors.required')
+                  }}</span>
+                }
+              </label>
+
+              <label class="block">
+                <span
+                  class="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.16em] text-muted"
+                >
+                  {{ i18n.t('profile.personal.phone') }}
+                  <span class="font-normal normal-case tracking-normal text-muted/70">
+                    ({{ i18n.t('common.optional') }})
+                  </span>
+                </span>
+                <input
+                  type="tel"
+                  formControlName="phone"
+                  autocomplete="tel"
+                  class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink outline-none transition focus:border-brand/50"
+                />
+              </label>
+
+              <label class="block">
+                <span
+                  class="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.16em] text-muted"
+                >
+                  {{ i18n.t('profile.personal.birthDate') }}
+                </span>
+                <input
+                  type="date"
+                  formControlName="birthDate"
+                  class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink outline-none transition focus:border-brand/50"
+                />
+              </label>
+
+              <label class="block">
+                <span
+                  class="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.16em] text-muted"
+                >
+                  {{ i18n.t('profile.personal.timezone') }} *
+                </span>
+                <input
+                  type="text"
+                  formControlName="timezone"
+                  class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink outline-none transition focus:border-brand/50"
+                />
+                @if (form.controls.timezone.touched && form.controls.timezone.invalid) {
+                  <span class="mt-1 block text-xs text-coral">{{
+                    i18n.t('create.errors.required')
+                  }}</span>
+                }
+              </label>
+
+              <label class="block sm:col-span-2">
+                <span
+                  class="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.16em] text-muted"
+                >
+                  {{ i18n.t('profile.personal.avatarUrl') }}
+                </span>
+                <input
+                  type="url"
+                  formControlName="avatarUrl"
+                  placeholder="https://"
+                  (input)="preview.set($any($event.target).value)"
+                  class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink outline-none transition placeholder:text-muted/60 focus:border-brand/50"
+                />
+                @if (form.controls.avatarUrl.touched && form.controls.avatarUrl.invalid) {
+                  <span class="mt-1 block text-xs text-coral">{{
+                    i18n.t('create.errors.invalidLink')
+                  }}</span>
+                }
+              </label>
+            </div>
+
+            @if (error()) {
+              <p
+                class="flex items-start gap-2 rounded-xl border border-coral/30 bg-coral/10 p-3 text-xs leading-5 text-coral"
+                role="alert"
+              >
+                <fa-icon [icon]="icons['warning']" class="mt-0.5" aria-hidden="true" />
+                {{ error() }}
+              </p>
+            }
+
+            <div class="mt-2 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                class="inline-flex h-11 items-center justify-center rounded-xl border border-line bg-surface-raised px-4 text-sm font-semibold text-ink transition hover:border-brand/40"
+                (click)="close()"
+              >
+                {{ i18n.t('common.cancel') }}
+              </button>
+              <button
+                type="submit"
+                [disabled]="saving()"
+                class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-brand px-4 text-sm font-semibold text-on-secondary transition hover:bg-secondary-hover disabled:cursor-wait disabled:opacity-60"
+              >
+                <fa-icon [icon]="icons['check']" class="text-xs" aria-hidden="true" />
+                {{ saving() ? i18n.t('common.saving') : i18n.t('common.save') }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    }
+  `,
+})
+export class ProfileEditDialogComponent {
+  private readonly fb = inject(NonNullableFormBuilder);
+  private readonly store = inject(WorkspaceStore);
+  private readonly toasts = inject(ToastService);
+  protected readonly i18n = inject(I18nService);
+
+  protected readonly icons = ICONS;
+  protected readonly error = signal('');
+  protected readonly saving = signal(false);
+  protected readonly uploading = signal(false);
+  protected readonly preview = signal<string | null>(null);
+
+  readonly open = input(false);
+  readonly closed = output<void>();
+  readonly saved = output<void>();
+
+  protected readonly form = this.fb.group({
+    displayName: ['', [Validators.required, Validators.maxLength(120)]],
+    phone: [''],
+    birthDate: [''],
+    timezone: ['Africa/Luanda', Validators.required],
+    avatarUrl: ['', Validators.pattern(/^https:\/\/.+/)],
+  });
+
+  constructor() {
+    effect(() => {
+      if (!this.open()) {
+        return;
+      }
+      const profile = this.store.profile();
+      this.form.reset(
+        {
+          displayName: profile.name,
+          phone: profile.phone ?? '',
+          birthDate: profile.birthDate ?? '',
+          timezone: profile.timezone,
+          avatarUrl: profile.avatarUrl ?? '',
+        },
+        { emitEvent: false },
+      );
+      this.preview.set(profile.avatarUrl);
+      this.error.set('');
+    });
+  }
+
+  protected close(): void {
+    this.closed.emit();
+  }
+
+  protected async onFileSelected(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file || this.uploading()) {
+      return;
+    }
+    this.uploading.set(true);
+    this.error.set('');
+    try {
+      const profile = await this.store.uploadAvatar(file);
+      this.form.controls.avatarUrl.setValue(profile.avatarUrl ?? '');
+      this.preview.set(profile.avatarUrl);
+      this.toasts.success(this.i18n.t('profile.avatarSaved'));
+    } catch (caught: unknown) {
+      const apiError = caught instanceof ApiError ? caught : toApiError(caught);
+      this.error.set(
+        apiError.code === 'avatar_upload_unavailable'
+          ? this.i18n.t('profile.uploadUnavailable')
+          : apiError.message,
+      );
+    } finally {
+      this.uploading.set(false);
+    }
+  }
+
+  protected async submit(): Promise<void> {
+    if (this.form.invalid || this.saving()) {
+      this.form.markAllAsTouched();
+      return;
+    }
+    this.saving.set(true);
+    this.error.set('');
+    const value = this.form.getRawValue();
+    try {
+      await this.store.saveProfile({
+        display_name: value.displayName.trim(),
+        phone: value.phone.trim() || null,
+        birth_date: value.birthDate || null,
+        locale: this.i18n.locale(),
+        timezone: value.timezone,
+        avatar_url: value.avatarUrl || null,
+      });
+      this.toasts.success(this.i18n.t('profile.saved'));
+      this.saved.emit();
+      this.closed.emit();
+    } catch (caught: unknown) {
+      this.error.set(toApiError(caught).message);
+    } finally {
+      this.saving.set(false);
+    }
+  }
+}

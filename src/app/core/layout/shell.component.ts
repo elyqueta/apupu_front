@@ -146,6 +146,9 @@ export class ShellComponent {
     } else if (url.startsWith('/relatorios')) {
       this.pageTitle.set('nav.reports');
       this.skeletonVariant.set('chart');
+    } else if (url.startsWith('/perfil')) {
+      this.pageTitle.set('nav.profile');
+      this.skeletonVariant.set('profile');
     } else if (url.startsWith('/definicoes')) {
       this.pageTitle.set('nav.settings');
       this.skeletonVariant.set('profile');

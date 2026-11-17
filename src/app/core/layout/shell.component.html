@@ -120,7 +120,7 @@
 
         <div class="mt-3 flex items-center gap-2">
           <a
-            routerLink="/definicoes"
+            routerLink="/perfil"
             class="flex min-w-0 flex-1 items-center gap-3 rounded-2xl border border-line bg-surface-raised/60 p-2.5 transition hover:border-brand/35"
             [attr.aria-label]="i18n.t('shell.openProfile')"
           >
@@ -135,7 +135,14 @@
               }}</span>
               <span class="block truncate text-[10px] text-muted">{{ store.profile().email }}</span>
             </span>
-            <fa-icon [icon]="icons['settings']" class="text-xs text-muted" aria-hidden="true" />
+          </a>
+          <a
+            routerLink="/definicoes"
+            class="grid size-11 shrink-0 place-items-center rounded-2xl border border-line bg-surface-raised/60 text-muted transition hover:border-brand/40 hover:text-ink"
+            [attr.aria-label]="i18n.t('nav.settings')"
+            [attr.title]="i18n.t('nav.settings')"
+          >
+            <fa-icon [icon]="icons['settings']" class="text-sm" aria-hidden="true" />
           </a>
           <button
             type="button"
@@ -287,7 +294,7 @@
             </div>
 
             <a
-              routerLink="/definicoes"
+              routerLink="/perfil"
               class="hidden rounded-full transition hover:opacity-80 sm:block"
               [attr.aria-label]="i18n.t('shell.openProfile')"
             >

@@ -31,6 +31,7 @@ export class StatusBadgeComponent {
     switch (this.value()) {
       case 'confirmed':
       case 'published':
+      case 'scheduled':
         return 'border-mint/30 bg-mint/15 text-mint';
       case 'declined':
       case 'cancelled':
@@ -56,6 +57,7 @@ export class StatusBadgeComponent {
       case 'completed':
         return ICONS['completed'];
       case 'published':
+      case 'scheduled':
         return ICONS['paperPlane'];
       default:
         return ICONS['pen'];

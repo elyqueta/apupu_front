@@ -1,4 +1,4 @@
-import { Component, effect, inject, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -22,6 +22,15 @@ interface ThemeOption {
   icon: string;
 }
 
+interface SettingsSection {
+  id: string;
+  labelKey: TranslationKey;
+}
+
+/**
+ * Definições da aplicação (aparência, texto, idioma, segurança, privacidade,
+ * ajuda e sessão de gestão). Os dados pessoais do anfitrião vivem em `/perfil`.
+ */
 @Component({
   selector: 'app-settings-page',
   imports: [RouterLink, ReactiveFormsModule, FaIconComponent, AvatarComponent],
@@ -39,16 +48,40 @@ export class SettingsPage {
 
   protected readonly icons = ICONS;
   protected readonly locales = LOCALES;
-  protected readonly savingProfile = signal(false);
   protected readonly changingPassword = signal(false);
   protected readonly loggingOut = signal(false);
-  protected readonly profileError = signal('');
   protected readonly passwordError = signal('');
 
+  protected readonly sections: SettingsSection[] = [
+    { id: 'perfil', labelKey: 'settings.profile' },
+    { id: 'aparencia', labelKey: 'settings.appearance' },
+    { id: 'texto', labelKey: 'settings.fontSize' },
+    { id: 'idioma', labelKey: 'settings.language' },
+    { id: 'seguranca', labelKey: 'settings.security' },
+    { id: 'privacidade', labelKey: 'settings.privacy' },
+    { id: 'ajuda', labelKey: 'settings.support' },
+    { id: 'sessao', labelKey: 'settings.danger' },
+  ];
+
   protected readonly themeOptions: ThemeOption[] = [
-    { mode: 'dark', labelKey: 'settings.themeDark', hintKey: 'settings.themeDarkHint', icon: 'moon' },
-    { mode: 'light', labelKey: 'settings.themeLight', hintKey: 'settings.themeLightHint', icon: 'sun' },
-    { mode: 'system', labelKey: 'settings.themeSystem', hintKey: 'settings.themeSystemHint', icon: 'display' },
+    {
+      mode: 'dark',
+      labelKey: 'settings.themeDark',
+      hintKey: 'settings.themeDarkHint',
+      icon: 'moon',
+    },
+    {
+      mode: 'light',
+      labelKey: 'settings.themeLight',
+      hintKey: 'settings.themeLightHint',
+      icon: 'sun',
+    },
+    {
+      mode: 'system',
+      labelKey: 'settings.themeSystem',
+      hintKey: 'settings.themeSystemHint',
+      icon: 'display',
+    },
   ];
 
   protected readonly fontSizeOptions: Array<{ size: FontSize; labelKey: TranslationKey }> = [
@@ -57,13 +90,6 @@ export class SettingsPage {
     { size: 'largest', labelKey: 'settings.fontSizeLargest' },
   ];
 
-  protected readonly profileForm = this.fb.group({
-    displayName: ['', [Validators.required, Validators.maxLength(120)]],
-    phone: [''],
-    birthDate: [''],
-    timezone: ['Africa/Luanda', Validators.required],
-    avatarUrl: ['', Validators.pattern(/^https:\/\/.+/)],
-  });
   protected readonly passwordForm = this.fb.group({
     currentPassword: ['', Validators.required],
     newPassword: ['', [Validators.required, Validators.minLength(8), Validators.maxLength(128)]],
@@ -71,19 +97,6 @@ export class SettingsPage {
 
   constructor() {
     this.store.load({ profile: true });
-    effect(() => {
-      const profile = this.store.profile();
-      this.profileForm.reset(
-        {
-          displayName: profile.name,
-          phone: profile.phone ?? '',
-          birthDate: profile.birthDate ?? '',
-          timezone: profile.timezone,
-          avatarUrl: profile.avatarUrl ?? '',
-        },
-        { emitEvent: false },
-      );
-    });
   }
 
   protected setTheme(mode: ThemeMode): void {
@@ -93,31 +106,6 @@ export class SettingsPage {
   protected setFontSize(size: FontSize): void {
     this.fontSize.setSize(size);
     this.toasts.success(this.i18n.t('settings.saved'));
-  }
-
-  protected async saveProfile(): Promise<void> {
-    if (this.profileForm.invalid || this.savingProfile()) {
-      this.profileForm.markAllAsTouched();
-      return;
-    }
-    this.savingProfile.set(true);
-    this.profileError.set('');
-    const value = this.profileForm.getRawValue();
-    try {
-      await this.store.saveProfile({
-        display_name: value.displayName.trim(),
-        phone: value.phone.trim() || null,
-        birth_date: value.birthDate || null,
-        locale: this.i18n.locale(),
-        timezone: value.timezone,
-        avatar_url: value.avatarUrl || null,
-      });
-      this.toasts.success(this.i18n.t('settings.saved'));
-    } catch (error: unknown) {
-      this.profileError.set(toApiError(error).message);
-    } finally {
-      this.savingProfile.set(false);
-    }
   }
 
   protected async endManagement(): Promise<void> {

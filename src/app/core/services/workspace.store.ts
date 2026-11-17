@@ -300,6 +300,14 @@ export class WorkspaceStore {
     return this.profileRepo.save(input);
   }
 
+  async setAvatarUrl(avatarUrl: string): Promise<HostProfile> {
+    return this.profileRepo.setAvatarUrl(avatarUrl);
+  }
+
+  async uploadAvatar(file: File): Promise<HostProfile> {
+    return this.profileRepo.uploadAvatar(file);
+  }
+
   /** Seleciona o modelo ativo (partilhado com o assistente de criação). */
   selectTemplate(id: TemplateId | null): void {
     this.templateSelection.select(id);

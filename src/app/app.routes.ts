@@ -56,8 +56,7 @@ export const routes: Routes = [
       {
         path: 'eventos',
         title: 'Conto Contigo · Eventos',
-        loadComponent: () =>
-          import('./features/events/events.page').then((m) => m.EventsPage),
+        loadComponent: () => import('./features/events/events.page').then((m) => m.EventsPage),
       },
       {
         path: 'eventos/:eventId',
@@ -74,8 +73,7 @@ export const routes: Routes = [
       {
         path: 'convidados',
         title: 'Conto Contigo · Convidados',
-        loadComponent: () =>
-          import('./features/guests/guests.page').then((m) => m.GuestsPage),
+        loadComponent: () => import('./features/guests/guests.page').then((m) => m.GuestsPage),
       },
       {
         path: 'convites',
@@ -92,14 +90,18 @@ export const routes: Routes = [
       {
         path: 'relatorios',
         title: 'Conto Contigo · Relatórios',
-        loadComponent: () =>
-          import('./features/reports/reports.page').then((m) => m.ReportsPage),
+        loadComponent: () => import('./features/reports/reports.page').then((m) => m.ReportsPage),
       },
       {
         path: 'definicoes',
         title: 'Conto Contigo · Definições',
         loadComponent: () =>
           import('./features/settings/settings.page').then((m) => m.SettingsPage),
+      },
+      {
+        path: 'perfil',
+        title: 'Conto Contigo · Perfil',
+        loadComponent: () => import('./features/profile/profile.page').then((m) => m.ProfilePage),
       },
     ],
   },
@@ -147,7 +149,6 @@ export const routes: Routes = [
   {
     path: '**',
     title: 'Conto Contigo · Página não encontrada',
-    loadComponent: () =>
-      import('./features/not-found/not-found.page').then((m) => m.NotFoundPage),
+    loadComponent: () => import('./features/not-found/not-found.page').then((m) => m.NotFoundPage),
   },
 ];

@@ -6,6 +6,7 @@ const SIZES: Record<string, string> = {
   md: 'size-11 text-sm',
   lg: 'size-14 text-base',
   xl: 'size-20 text-xl',
+  '2xl': 'size-28 text-3xl',
 };
 
 @Component({
@@ -27,7 +28,7 @@ const SIZES: Record<string, string> = {
 })
 export class AvatarComponent {
   readonly name = input.required<string>();
-  readonly size = input<'xs' | 'sm' | 'md' | 'lg' | 'xl'>('sm');
+  readonly size = input<'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl'>('sm');
   /** URL da foto de perfil. Quando ausente (ou falha o carregamento) mostra as iniciais. */
   readonly imageUrl = input<string | null>(null);
 

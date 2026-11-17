@@ -18,7 +18,10 @@ export class ApiClient {
     );
   }
 
-  getPage<T>(path: string, query?: Record<string, string | number | undefined>): Promise<ApiPage<T>> {
+  getPage<T>(
+    path: string,
+    query?: Record<string, string | number | undefined>,
+  ): Promise<ApiPage<T>> {
     return firstValueFrom(
       this.http.get<ApiPage<T>>(this.url(path), { params: this.params(query) }),
     );
@@ -26,6 +29,11 @@ export class ApiClient {
 
   post<T>(path: string, body?: unknown): Promise<T> {
     return this.unwrap(this.http.post<ApiEnvelope<T>>(this.url(path), body ?? {}), path);
+  }
+
+  /** `POST` com `multipart/form-data` (o `HttpClient` define o boundary). */
+  postForm<T>(path: string, body: FormData): Promise<T> {
+    return this.unwrap(this.http.post<ApiEnvelope<T>>(this.url(path), body), path);
   }
 
   patch<T>(path: string, body: unknown): Promise<T> {

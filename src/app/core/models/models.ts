@@ -217,6 +217,7 @@ export interface HostProfile {
   locale: Locale;
   timezone: string;
   avatarUrl: string | null;
+  coverUrl: string | null;
   emailVerified: boolean;
   profileComplete: boolean;
 }

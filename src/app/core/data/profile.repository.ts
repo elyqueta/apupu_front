@@ -57,4 +57,36 @@ export class ProfileRepository extends CachedRepository<HostProfile> {
     this.setData(profile);
     return profile;
   }
+
+  /** Define a capa a partir de um URL já existente no servidor. */
+  async setCoverUrl(coverUrl: string): Promise<HostProfile> {
+    const response = await this.api.post<HostEnvelope>('/host/profile/cover', {
+      cover_url: coverUrl,
+    });
+    const profile = mapProfile(response.host);
+    this.setData(profile);
+    return profile;
+  }
+
+  /**
+   * Envia uma imagem e define-a como capa. Pode responder `503`
+   * (`profile_cover_upload_unavailable`) quando o Cloudinary não está
+   * configurado; nesse caso o chamador deve oferecer o campo de URL.
+   */
+  async uploadCover(file: File): Promise<HostProfile> {
+    const body = new FormData();
+    body.append('cover', file);
+    const response = await this.api.postForm<HostEnvelope>('/host/profile/cover/upload', body);
+    const profile = mapProfile(response.host);
+    this.setData(profile);
+    return profile;
+  }
+
+  /** Remove a capa do perfil (operação idempotente). */
+  async removeCover(): Promise<HostProfile> {
+    const response = await this.api.deleteWithData<HostEnvelope>('/host/profile/cover');
+    const profile = mapProfile(response.host);
+    this.setData(profile);
+    return profile;
+  }
 }

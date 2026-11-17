@@ -450,6 +450,18 @@ export class WorkspaceStore implements Resettable {
     return this.profileRepo.uploadAvatar(file);
   }
 
+  async setCoverUrl(coverUrl: string): Promise<HostProfile> {
+    return this.profileRepo.setCoverUrl(coverUrl);
+  }
+
+  async uploadCover(file: File): Promise<HostProfile> {
+    return this.profileRepo.uploadCover(file);
+  }
+
+  async removeCover(): Promise<HostProfile> {
+    return this.profileRepo.removeCover();
+  }
+
   /** Seleciona o modelo ativo (partilhado com o assistente de criação). */
   selectTemplate(id: TemplateId | null): void {
     this.templateSelection.select(id);

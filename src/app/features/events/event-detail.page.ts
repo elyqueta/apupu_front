@@ -422,6 +422,11 @@ export class EventDetailPage {
     }
   }
 
+  /** Leva o anfitrião ao separador onde pode gerir a equipa. */
+  protected openSettings(): void {
+    this.tab.set('settings');
+  }
+
   protected async addManager(): Promise<void> {
     if (this.managerForm.invalid) {
       this.managerForm.markAllAsTouched();

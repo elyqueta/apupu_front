@@ -16,16 +16,22 @@
     class="overflow-hidden rounded-4xl border border-line bg-surface shadow-card backdrop-blur-2xl"
   >
     <!-- Capa -->
-    <!-- TODO(backend): substituir o degradê por uma imagem quando o perfil expuser `cover_url`. -->
     <div class="relative h-40 bg-gradient-to-r from-brand/50 via-aqua/30 to-secondary/50 sm:h-48">
+      @if (profile().coverUrl) {
+        <img
+          [src]="profile().coverUrl!"
+          alt=""
+          class="absolute inset-0 size-full object-cover"
+        />
+      }
       <div
         class="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.16),transparent_55%)]"
       ></div>
       <button
         type="button"
-        disabled
-        [attr.title]="i18n.t('profile.coverHint')"
-        class="absolute right-4 top-4 inline-flex h-9 items-center gap-2 rounded-xl border border-white/20 bg-canvas/40 px-3 text-[11px] font-semibold text-white/90 backdrop-blur-md disabled:cursor-not-allowed disabled:opacity-70"
+        [attr.title]="i18n.t('profile.changeCover')"
+        class="absolute right-4 top-4 inline-flex h-9 items-center gap-2 rounded-xl border border-white/20 bg-canvas/40 px-3 text-[11px] font-semibold text-white/90 backdrop-blur-md transition hover:border-white/40 hover:bg-canvas/60"
+        (click)="openEdit()"
       >
         <fa-icon [icon]="icons['image']" class="text-[11px]" aria-hidden="true" />
         {{ i18n.t('profile.changeCover') }}

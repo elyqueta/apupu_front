@@ -60,6 +60,82 @@ import { PhoneMaskDirective } from '../../shared/directives/phone-mask.directive
           </div>
 
           <form class="mt-6 flex flex-col gap-4" [formGroup]="form" (ngSubmit)="submit()">
+            <div class="overflow-hidden rounded-2xl border border-line bg-surface-raised/40">
+              <div
+                class="relative h-28 bg-gradient-to-r from-brand/50 via-aqua/30 to-secondary/50 sm:h-32"
+              >
+                @if (coverPreview()) {
+                  <img
+                    [src]="coverPreview()!"
+                    alt=""
+                    class="absolute inset-0 size-full object-cover"
+                  />
+                }
+                <div
+                  class="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.16),transparent_55%)]"
+                ></div>
+                <div class="absolute right-3 top-3 flex items-center gap-2">
+                  <label
+                    class="inline-flex h-9 cursor-pointer items-center gap-2 rounded-xl border border-white/20 bg-canvas/40 px-3 text-[11px] font-semibold text-white/90 backdrop-blur-md"
+                    [class.pointer-events-none]="coverUploading()"
+                    [class.opacity-60]="coverUploading()"
+                  >
+                    <fa-icon
+                      [icon]="icons['camera']"
+                      class="text-[11px]"
+                      aria-hidden="true"
+                    />
+                    {{
+                      coverUploading()
+                        ? i18n.t('profile.coverUploading')
+                        : i18n.t('profile.coverUpload')
+                    }}
+                    <input
+                      type="file"
+                      class="sr-only"
+                      accept="image/jpeg,image/png,image/webp"
+                      [disabled]="coverUploading()"
+                      (change)="onCoverSelected($event)"
+                    />
+                  </label>
+                  @if (coverPreview()) {
+                    <button
+                      type="button"
+                      class="grid size-9 place-items-center rounded-xl border border-white/20 bg-canvas/40 text-white/90 backdrop-blur-md transition hover:border-coral/50 hover:text-coral disabled:opacity-50"
+                      [disabled]="coverUploading()"
+                      [attr.title]="i18n.t('profile.coverRemove')"
+                      [attr.aria-label]="i18n.t('profile.coverRemove')"
+                      (click)="removeCover()"
+                    >
+                      <fa-icon [icon]="icons['trash']" class="text-[11px]" aria-hidden="true" />
+                    </button>
+                  }
+                </div>
+              </div>
+              <label class="block p-3">
+                <span
+                  class="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.16em] text-muted"
+                >
+                  {{ i18n.t('profile.coverUrl') }}
+                </span>
+                <input
+                  type="url"
+                  formControlName="coverUrl"
+                  placeholder="https://"
+                  (input)="coverPreview.set($any($event.target).value)"
+                  class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink outline-none transition placeholder:text-muted/60 focus:border-brand/50"
+                />
+                <span class="mt-1 block text-[10px] leading-4 text-muted">
+                  {{ i18n.t('profile.coverHint') }}
+                </span>
+                @if (form.controls.coverUrl.touched && form.controls.coverUrl.invalid) {
+                  <span class="mt-1 block text-xs text-coral">{{
+                    i18n.t('create.errors.invalidLink')
+                  }}</span>
+                }
+              </label>
+            </div>
+
             <div class="flex flex-wrap items-center gap-4">
               <app-avatar
                 size="lg"
@@ -236,7 +312,9 @@ export class ProfileEditDialogComponent {
   protected readonly error = signal('');
   protected readonly saving = signal(false);
   protected readonly uploading = signal(false);
+  protected readonly coverUploading = signal(false);
   protected readonly preview = signal<string | null>(null);
+  protected readonly coverPreview = signal<string | null>(null);
   /** Data máxima permitida: hoje menos 5 anos (idade mínima). */
   protected readonly maxBirthDate = maxBirthDateFor(5);
 
@@ -250,6 +328,7 @@ export class ProfileEditDialogComponent {
     birthDate: ['', [minimumAge(5)]],
     timezone: ['Africa/Luanda', Validators.required],
     avatarUrl: ['', Validators.pattern(/^https:\/\/.+/)],
+    coverUrl: ['', Validators.pattern(/^https:\/\/.+/)],
   });
 
   constructor() {
@@ -265,10 +344,12 @@ export class ProfileEditDialogComponent {
           birthDate: profile.birthDate ?? '',
           timezone: profile.timezone,
           avatarUrl: profile.avatarUrl ?? '',
+          coverUrl: profile.coverUrl ?? '',
         },
         { emitEvent: false },
       );
       this.preview.set(profile.avatarUrl);
+      this.coverPreview.set(profile.coverUrl);
       this.error.set('');
     });
   }
@@ -303,6 +384,50 @@ export class ProfileEditDialogComponent {
     }
   }
 
+  protected async onCoverSelected(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file || this.coverUploading()) {
+      return;
+    }
+    this.coverUploading.set(true);
+    this.error.set('');
+    try {
+      const profile = await this.store.uploadCover(file);
+      this.form.controls.coverUrl.setValue(profile.coverUrl ?? '');
+      this.coverPreview.set(profile.coverUrl);
+      this.toasts.success(this.i18n.t('profile.coverSaved'));
+    } catch (caught: unknown) {
+      const apiError = caught instanceof ApiError ? caught : toApiError(caught);
+      this.error.set(
+        apiError.code === 'profile_cover_upload_unavailable'
+          ? this.i18n.t('profile.coverUploadUnavailable')
+          : apiError.message,
+      );
+    } finally {
+      this.coverUploading.set(false);
+    }
+  }
+
+  protected async removeCover(): Promise<void> {
+    if (this.coverUploading()) {
+      return;
+    }
+    this.coverUploading.set(true);
+    this.error.set('');
+    try {
+      await this.store.removeCover();
+      this.form.controls.coverUrl.setValue('');
+      this.coverPreview.set(null);
+      this.toasts.success(this.i18n.t('profile.coverRemoved'));
+    } catch (caught: unknown) {
+      this.error.set(toApiError(caught).message);
+    } finally {
+      this.coverUploading.set(false);
+    }
+  }
+
   protected async submit(): Promise<void> {
     if (this.form.invalid || this.saving()) {
       this.form.markAllAsTouched();
@@ -320,6 +445,16 @@ export class ProfileEditDialogComponent {
         timezone: value.timezone,
         avatar_url: value.avatarUrl || null,
       });
+
+      const coverUrl = value.coverUrl.trim();
+      if (coverUrl !== (this.store.profile().coverUrl ?? '')) {
+        if (coverUrl) {
+          await this.store.setCoverUrl(coverUrl);
+        } else {
+          await this.store.removeCover();
+        }
+      }
+
       this.toasts.success(this.i18n.t('profile.saved'));
       this.saved.emit();
       this.closed.emit();

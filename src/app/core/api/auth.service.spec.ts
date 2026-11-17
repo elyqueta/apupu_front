@@ -24,6 +24,7 @@ function hostFixture(overrides: Partial<Host> = {}): Host {
       locale: 'pt-PT',
       timezone: 'Africa/Luanda',
       avatar_url: null,
+      cover_url: null,
     },
     profile_complete: true,
     missing_fields: [],

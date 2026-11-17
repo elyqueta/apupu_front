@@ -75,6 +75,7 @@ export function emptyProfile(): HostProfile {
     locale: 'pt-AO',
     timezone: 'Africa/Luanda',
     avatarUrl: null,
+    coverUrl: null,
     emailVerified: false,
     profileComplete: false,
   };
@@ -254,6 +255,7 @@ export function mapProfile(host: Host): HostProfile {
     locale: host.profile.locale === 'en' ? 'en' : 'pt-AO',
     timezone: host.profile.timezone,
     avatarUrl: host.profile.avatar_url,
+    coverUrl: host.profile.cover_url,
     emailVerified: host.email_verified,
     profileComplete: host.profile_complete,
   };

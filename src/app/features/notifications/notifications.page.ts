@@ -159,6 +159,11 @@ export class NotificationsPage {
           item.id === notification.id ? { ...item, read: !notification.read } : item,
         ),
       );
+      this.toasts.success(
+        this.i18n.t(
+          notification.read ? 'notifications.markedUnread' : 'notifications.markedRead',
+        ),
+      );
     } catch (error: unknown) {
       this.toasts.error(toApiError(error).message);
     } finally {
@@ -192,6 +197,7 @@ export class NotificationsPage {
         this.page.update((page) => page - 1);
       }
       await this.load();
+      this.toasts.success(this.i18n.t('notifications.removed'));
     } catch (error: unknown) {
       this.toasts.error(toApiError(error).message);
     } finally {

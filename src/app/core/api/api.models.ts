@@ -36,6 +36,7 @@ export interface HostProfileData {
   locale: string;
   timezone: string;
   avatar_url: string | null;
+  cover_url: string | null;
 }
 
 export interface Host {

@@ -35,6 +35,24 @@ export class GuestsRepository extends CachedRepository<Guest[]> {
     return { ok: true, guest };
   }
 
+  /**
+   * Actualiza os dados de um convidado existente.
+   *
+   * O backend só aceita alterações a `email`/`phone` enquanto o link não
+   * foi aberto; depois disso devolve `409 invitation_already_opened`.
+   */
+  async update(guest: Guest, input: GuestInput): Promise<Guest> {
+    const response = await this.api.patch<ApiInvitation>(
+      `/host/events/${encodeURIComponent(guest.eventId)}/invitations/${encodeURIComponent(guest.id)}`,
+      { name: input.name, email: input.email, phone: input.phone },
+    );
+    const updated = mapInvitation(response);
+    this.mutate((guests) =>
+      (guests ?? []).map((item) => (item.id === updated.id ? updated : item)),
+    );
+    return updated;
+  }
+
   async remove(guestId: string): Promise<void> {
     const guest = this.data()?.find((item) => item.id === guestId);
     if (!guest) {

@@ -1,8 +1,9 @@
-import { Component, effect, inject, input, output, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { toApiError } from '../../core/api/api-error';
+import { Guest } from '../../core/models/models';
 import { WorkspaceStore } from '../../core/services/workspace.store';
 import { ToastService } from '../../core/services/toast.service';
 import { ICONS } from '../../core/ui/icons';
@@ -24,7 +25,7 @@ import { PhoneMaskDirective } from '../directives/phone-mask.directive';
         <div
           role="dialog"
           aria-modal="true"
-          [attr.aria-label]="i18n.t('guests.dialogTitle')"
+          [attr.aria-label]="isEdit() ? i18n.t('guests.editTitle') : i18n.t('guests.dialogTitle')"
           class="relative my-8 w-full max-w-lg rounded-4xl border border-line bg-surface-solid/95 p-6 shadow-card backdrop-blur-2xl animate-rise sm:p-7"
         >
           <div class="flex items-start justify-between gap-4">
@@ -32,13 +33,15 @@ import { PhoneMaskDirective } from '../directives/phone-mask.directive';
               <span
                 class="grid size-11 shrink-0 place-items-center rounded-2xl border border-brand/25 bg-brand/15 text-brand-strong"
               >
-                <fa-icon [icon]="icons['userPlus']" aria-hidden="true" />
+                <fa-icon [icon]="isEdit() ? icons['pen'] : icons['userPlus']" aria-hidden="true" />
               </span>
               <div>
                 <h2 class="font-display text-xl font-semibold tracking-tight text-ink">
-                  {{ i18n.t('guests.dialogTitle') }}
+                  {{ isEdit() ? i18n.t('guests.editTitle') : i18n.t('guests.dialogTitle') }}
                 </h2>
-                <p class="mt-1 text-xs leading-5 text-muted">{{ i18n.t('guests.dialogHint') }}</p>
+                <p class="mt-1 text-xs leading-5 text-muted">
+                  {{ isEdit() ? i18n.t('guests.editHint') : i18n.t('guests.dialogHint') }}
+                </p>
               </div>
             </div>
             <button
@@ -58,7 +61,7 @@ import { PhoneMaskDirective } from '../directives/phone-mask.directive';
               >
                 {{ i18n.t('guests.dialogEvent') }}
               </span>
-              @if (fixedEventId()) {
+              @if (fixedEventId() || isEdit()) {
                 <span
                   class="flex h-11 items-center rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink"
                 >
@@ -112,7 +115,7 @@ import { PhoneMaskDirective } from '../directives/phone-mask.directive';
                 type="email"
                 formControlName="email"
                 autocomplete="email"
-                class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink outline-none transition placeholder:text-muted/60 focus:border-brand/50"
+                class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink outline-none transition placeholder:text-muted/60 focus:border-brand/50 disabled:cursor-not-allowed disabled:opacity-60"
                 [placeholder]="i18n.t('create.placeholder.guestEmail')"
               />
               @if (form.controls.email.touched && form.controls.email.invalid) {
@@ -136,11 +139,20 @@ import { PhoneMaskDirective } from '../directives/phone-mask.directive';
                 formControlName="phone"
                 appPhoneMask
                 autocomplete="tel"
-                class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink outline-none transition placeholder:text-muted/60 focus:border-brand/50"
+                class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink outline-none transition placeholder:text-muted/60 focus:border-brand/50 disabled:cursor-not-allowed disabled:opacity-60"
                 [placeholder]="i18n.t('create.placeholder.guestPhone')"
               />
               <span class="mt-1 block text-[10px] text-muted">{{ i18n.t('common.phoneHint') }}</span>
             </label>
+
+            @if (contactLocked()) {
+              <p
+                class="flex items-start gap-2 rounded-xl border border-amber/30 bg-amber/10 p-3 text-xs leading-5 text-amber"
+              >
+                <fa-icon [icon]="icons['lock']" class="mt-0.5" aria-hidden="true" />
+                {{ i18n.t('guests.contactLocked') }}
+              </p>
+            }
 
             @if (error()) {
               <p
@@ -162,10 +174,15 @@ import { PhoneMaskDirective } from '../directives/phone-mask.directive';
               </button>
               <button
                 type="submit"
-                class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-brand px-4 text-sm font-semibold text-on-secondary transition hover:bg-secondary-hover"
+                class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-brand px-4 text-sm font-semibold text-on-secondary transition hover:bg-secondary-hover disabled:cursor-not-allowed disabled:opacity-60"
+                [disabled]="saving()"
               >
-                <fa-icon [icon]="icons['plus']" class="text-xs" aria-hidden="true" />
-                {{ i18n.t('guests.dialogSubmit') }}
+                <fa-icon
+                  [icon]="isEdit() ? icons['check'] : icons['plus']"
+                  class="text-xs"
+                  aria-hidden="true"
+                />
+                {{ isEdit() ? i18n.t('guests.editSubmit') : i18n.t('guests.dialogSubmit') }}
               </button>
             </div>
           </form>
@@ -186,7 +203,12 @@ export class GuestDialogComponent {
 
   readonly open = input(false);
   readonly fixedEventId = input<string | null>(null);
+  /** Quando definido, o diálogo edita este convidado em vez de criar um novo. */
+  readonly guest = input<Guest | null>(null);
   readonly closed = output<void>();
+
+  protected readonly isEdit = computed(() => this.guest() !== null);
+  protected readonly contactLocked = computed(() => Boolean(this.guest()?.openedAt));
 
   protected readonly form = this.fb.group({
     eventId: ['', Validators.required],
@@ -200,19 +222,29 @@ export class GuestDialogComponent {
       if (!this.open()) {
         return;
       }
+      const guest = this.guest();
       this.form.reset({
-        eventId: this.fixedEventId() ?? this.store.events()[0]?.id ?? '',
-        name: '',
-        email: '',
-        phone: '',
+        eventId: guest?.eventId ?? this.fixedEventId() ?? this.store.events()[0]?.id ?? '',
+        name: guest?.name ?? '',
+        email: guest?.email ?? '',
+        phone: guest?.phone ?? '',
       });
+
+      if (this.contactLocked()) {
+        this.form.controls.email.disable({ emitEvent: false });
+        this.form.controls.phone.disable({ emitEvent: false });
+      } else {
+        this.form.controls.email.enable({ emitEvent: false });
+        this.form.controls.phone.enable({ emitEvent: false });
+      }
+
       this.error.set('');
     });
   }
 
   protected eventTitle(): string {
-    const id = this.fixedEventId();
-    return this.store.eventById(id ?? '')?.title ?? '';
+    const id = this.fixedEventId() ?? this.guest()?.eventId ?? '';
+    return this.store.eventById(id)?.title ?? '';
   }
 
   protected close(): void {
@@ -227,19 +259,27 @@ export class GuestDialogComponent {
     this.saving.set(true);
     this.error.set('');
     const value = this.form.getRawValue();
+    const input = {
+      name: value.name,
+      email: value.email,
+      phone: value.phone || null,
+    };
+
     try {
-      const result = await this.store.addGuest(value.eventId, {
-        name: value.name,
-        email: value.email,
-        phone: value.phone || null,
-      });
-      const event = this.store.eventById(value.eventId);
-      this.toasts.success(
-        this.i18n.t('guests.addedText', {
-          name: result.guest.name,
-          event: event?.title ?? '',
-        }),
-      );
+      const guest = this.guest();
+      if (guest) {
+        const updated = await this.store.updateGuest(guest, input);
+        this.toasts.success(this.i18n.t('guests.updated', { name: updated.name }));
+      } else {
+        const result = await this.store.addGuest(value.eventId, input);
+        const event = this.store.eventById(value.eventId);
+        this.toasts.success(
+          this.i18n.t('guests.addedText', {
+            name: result.guest.name,
+            event: event?.title ?? '',
+          }),
+        );
+      }
       this.closed.emit();
     } catch (error: unknown) {
       this.error.set(toApiError(error).message);

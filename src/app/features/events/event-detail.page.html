@@ -701,7 +701,7 @@
               <button
                 type="button"
                 class="inline-flex h-10 items-center gap-2 rounded-xl bg-brand hover:bg-secondary-hover px-3.5 text-xs font-semibold text-on-secondary transition"
-                (click)="guestDialogOpen.set(true)"
+                (click)="openGuestCreate()"
               >
                 <fa-icon [icon]="icons['userPlus']" class="text-[11px]" aria-hidden="true" />
                 {{ i18n.t('eventDetail.addGuest') }}
@@ -771,6 +771,7 @@
                     <tr class="text-[9px] font-semibold uppercase tracking-[0.16em] text-muted">
                       <th class="px-3 py-2">{{ i18n.t('eventDetail.table.guest') }}</th>
                       <th class="px-3 py-2">{{ i18n.t('eventDetail.table.status') }}</th>
+                      <th class="px-3 py-2">{{ i18n.t('guests.tableOpened') }}</th>
                       <th class="px-3 py-2">{{ i18n.t('eventDetail.table.table') }}</th>
                       <th class="px-3 py-2">{{ i18n.t('eventDetail.table.invited') }}</th>
                       <th class="px-3 py-2">{{ i18n.t('eventDetail.table.responded') }}</th>
@@ -798,6 +799,22 @@
                         <td class="px-3 py-2.5">
                           <app-status-badge [value]="guest.status" />
                         </td>
+                        <td class="px-3 py-2.5">
+                          @if (guest.openedAt) {
+                            <span
+                              class="inline-flex items-center gap-1.5 text-[11px] font-medium text-mint"
+                              [attr.title]="i18n.relative(guest.openedAt)"
+                            >
+                              <span class="size-1.5 rounded-full bg-mint"></span>
+                              {{ i18n.t('guests.opened') }}
+                            </span>
+                          } @else {
+                            <span class="inline-flex items-center gap-1.5 text-[11px] text-muted">
+                              <span class="size-1.5 rounded-full bg-line"></span>
+                              {{ i18n.t('guests.notOpened') }}
+                            </span>
+                          }
+                        </td>
                         <td class="px-3 py-2.5 text-[11px] text-muted">
                           {{ guest.tableName ?? '—' }}
                         </td>
@@ -814,6 +831,15 @@
                         <td class="rounded-r-2xl px-3 py-2.5">
                           @if (isHost()) {
                             <div class="flex items-center justify-end gap-1">
+                              <button
+                                type="button"
+                                class="grid size-8 place-items-center rounded-lg border border-line bg-surface text-muted transition hover:border-brand/40 hover:text-brand-strong"
+                                [attr.aria-label]="i18n.t('guests.editAction')"
+                                [attr.title]="i18n.t('guests.editAction')"
+                                (click)="openGuestEdit(guest)"
+                              >
+                                <fa-icon [icon]="icons['pen']" class="text-[10px]" />
+                              </button>
                               <button
                                 type="button"
                                 class="grid size-8 place-items-center rounded-lg border border-line bg-surface text-muted transition hover:border-brand/40 hover:text-brand-strong"
@@ -1152,25 +1178,50 @@
                 </div>
 
                 <form
-                  class="mt-4 flex flex-col gap-2 sm:flex-row"
+                  class="mt-4 flex flex-col gap-2"
                   [formGroup]="managerForm"
                   (ngSubmit)="addManager()"
                 >
-                  <input
-                    type="email"
-                    formControlName="email"
-                    autocomplete="email"
-                    class="h-10 min-w-0 flex-1 rounded-xl border border-line bg-surface-raised px-3 text-xs text-ink outline-none transition placeholder:text-muted/60 focus:border-brand/50"
-                    [placeholder]="i18n.t('eventDetail.teamEmailPlaceholder')"
-                    [attr.aria-label]="i18n.t('eventDetail.teamEmailPlaceholder')"
-                  />
-                  <button
-                    type="submit"
-                    class="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-brand hover:bg-secondary-hover px-3.5 text-xs font-semibold text-on-secondary transition"
-                  >
-                    <fa-icon [icon]="icons['userPlus']" class="text-[11px]" aria-hidden="true" />
-                    {{ i18n.t('eventDetail.teamAdd') }}
-                  </button>
+                  @if (guestEmails().length > 0) {
+                    <label class="relative block">
+                      <span class="sr-only">{{ i18n.t('eventDetail.teamPickGuest') }}</span>
+                      <select
+                        class="h-10 w-full appearance-none rounded-xl border border-line bg-surface-raised pl-3 pr-9 text-xs text-ink outline-none transition focus:border-brand/50"
+                        [attr.aria-label]="i18n.t('eventDetail.teamPickGuest')"
+                        (change)="pickGuestEmail($event)"
+                      >
+                        <option value="">{{ i18n.t('eventDetail.teamPickGuest') }}</option>
+                        @for (email of guestEmails(); track email) {
+                          <option [value]="email">{{ email }}</option>
+                        }
+                      </select>
+                      <fa-icon
+                        [icon]="icons['chevronDown']"
+                        class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-muted"
+                        aria-hidden="true"
+                      />
+                    </label>
+                  }
+                  <div class="flex flex-col gap-2 sm:flex-row">
+                    <input
+                      type="email"
+                      formControlName="email"
+                      autocomplete="email"
+                      class="h-10 min-w-0 flex-1 rounded-xl border border-line bg-surface-raised px-3 text-xs text-ink outline-none transition placeholder:text-muted/60 focus:border-brand/50"
+                      [placeholder]="i18n.t('eventDetail.teamEmailPlaceholder')"
+                      [attr.aria-label]="i18n.t('eventDetail.teamEmailPlaceholder')"
+                    />
+                    <button
+                      type="submit"
+                      class="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-brand hover:bg-secondary-hover px-3.5 text-xs font-semibold text-on-secondary transition"
+                    >
+                      <fa-icon [icon]="icons['userPlus']" class="text-[11px]" aria-hidden="true" />
+                      {{ i18n.t('eventDetail.teamAdd') }}
+                    </button>
+                  </div>
+                  @if (guestEmails().length > 0) {
+                    <p class="text-[10px] text-muted">{{ i18n.t('eventDetail.teamPickGuestHint') }}</p>
+                  }
                 </form>
                 @if (managerForm.controls.email.touched && managerForm.controls.email.invalid) {
                   <span class="mt-1 block text-[11px] text-coral">
@@ -1269,9 +1320,10 @@
     }
 
     <app-guest-dialog
-      [open]="guestDialogOpen()"
+      [open]="guestDialogOpen() || guestEditTarget() !== null"
       [fixedEventId]="event.id"
-      (closed)="guestDialogOpen.set(false)"
+      [guest]="guestEditTarget()"
+      (closed)="closeGuestDialog()"
     />
 
     <app-confirm-dialog

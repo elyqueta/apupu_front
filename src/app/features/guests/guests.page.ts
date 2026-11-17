@@ -43,6 +43,7 @@ export class GuestsPage {
   protected readonly eventFilter = signal('all');
   protected readonly statusFilter = signal<StatusFilter>('all');
   protected readonly dialogOpen = signal(false);
+  protected readonly editTarget = signal<Guest | null>(null);
   protected readonly removeTarget = signal<Guest | null>(null);
 
   protected readonly stats = this.store.globalStats;
@@ -99,6 +100,20 @@ export class GuestsPage {
   /** Ações de convite (reenviar, WhatsApp, remover) são do anfitrião. */
   protected isHostFor(eventId: string): boolean {
     return this.store.isEventHost(eventId);
+  }
+
+  protected openCreate(): void {
+    this.editTarget.set(null);
+    this.dialogOpen.set(true);
+  }
+
+  protected openEdit(guest: Guest): void {
+    this.editTarget.set(guest);
+  }
+
+  protected closeGuestDialog(): void {
+    this.dialogOpen.set(false);
+    this.editTarget.set(null);
   }
 
   /**

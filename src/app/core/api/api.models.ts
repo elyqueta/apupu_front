@@ -109,6 +109,8 @@ export interface ApiInvitation {
   send_status: 'pending' | 'queued' | 'sent' | 'failed';
   send_count: number;
   last_sent_at: string | null;
+  /** Primeira abertura do link do convite; `null` se nunca foi aberto. */
+  opened_at: string | null;
   invitation_url: string | null;
   invitation_url_expires_at: string | null;
   created_at: string;

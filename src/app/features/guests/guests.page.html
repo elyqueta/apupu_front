@@ -15,7 +15,7 @@
     <button
       type="button"
       class="inline-flex h-11 w-fit items-center gap-2 rounded-xl bg-brand hover:bg-secondary-hover px-4 text-sm font-semibold text-on-secondary transition"
-      (click)="dialogOpen.set(true)"
+      (click)="openCreate()"
     >
       <fa-icon [icon]="icons['userPlus']" class="text-xs" aria-hidden="true" />
       {{ i18n.t('guests.add') }}
@@ -140,6 +140,7 @@
               <th class="px-3 py-2">{{ i18n.t('guests.tableGuest') }}</th>
               <th class="px-3 py-2">{{ i18n.t('guests.tableEvent') }}</th>
               <th class="px-3 py-2">{{ i18n.t('guests.tableStatus') }}</th>
+              <th class="px-3 py-2">{{ i18n.t('guests.tableOpened') }}</th>
               <th class="px-3 py-2">{{ i18n.t('guests.tableInvited') }}</th>
               <th class="px-3 py-2">{{ i18n.t('guests.responded') }}</th>
               <th class="px-3 py-2 text-right">{{ i18n.t('guests.tableActions') }}</th>
@@ -171,6 +172,22 @@
                 <td class="px-3 py-2.5">
                   <app-status-badge [value]="entry.guest.status" />
                 </td>
+                <td class="px-3 py-2.5">
+                  @if (entry.guest.openedAt) {
+                    <span
+                      class="inline-flex items-center gap-1.5 text-[11px] font-medium text-mint"
+                      [attr.title]="i18n.relative(entry.guest.openedAt)"
+                    >
+                      <span class="size-1.5 rounded-full bg-mint"></span>
+                      {{ i18n.t('guests.opened') }}
+                    </span>
+                  } @else {
+                    <span class="inline-flex items-center gap-1.5 text-[11px] text-muted">
+                      <span class="size-1.5 rounded-full bg-line"></span>
+                      {{ i18n.t('guests.notOpened') }}
+                    </span>
+                  }
+                </td>
                 <td class="px-3 py-2.5 text-[11px] text-muted">
                   {{ i18n.shortDate(entry.guest.invitedAt, entry.event.timezone) }}
                 </td>
@@ -192,6 +209,15 @@
                       <fa-icon [icon]="icons['arrowUpRight']" class="text-[10px]" />
                     </a>
                     @if (isHostFor(entry.event.id)) {
+                      <button
+                        type="button"
+                        class="grid size-8 place-items-center rounded-lg border border-line bg-surface text-muted transition hover:border-brand/40 hover:text-brand-strong"
+                        [attr.aria-label]="i18n.t('guests.editAction')"
+                        [attr.title]="i18n.t('guests.editAction')"
+                        (click)="openEdit(entry.guest)"
+                      >
+                        <fa-icon [icon]="icons['pen']" class="text-[10px]" />
+                      </button>
                       <button
                         type="button"
                         class="grid size-8 place-items-center rounded-lg border border-line bg-surface text-muted transition hover:border-brand/40 hover:text-brand-strong"
@@ -242,7 +268,11 @@
     </p>
   </article>
 
-  <app-guest-dialog [open]="dialogOpen()" (closed)="dialogOpen.set(false)" />
+  <app-guest-dialog
+    [open]="dialogOpen() || editTarget() !== null"
+    [guest]="editTarget()"
+    (closed)="closeGuestDialog()"
+  />
 
   <app-confirm-dialog
     [open]="removeTarget() !== null"

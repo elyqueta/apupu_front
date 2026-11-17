@@ -77,6 +77,8 @@ export interface Guest {
   tableName: string | null;
   /** URL absoluto para partilhar; `null` quando o convite foi revogado. */
   invitationUrl: string | null;
+  /** Primeira abertura do link do convite; `null` se nunca foi aberto. */
+  openedAt: string | null;
   invitedAt: string;
   respondedAt: string | null;
 }

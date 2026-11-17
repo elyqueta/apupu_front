@@ -360,6 +360,10 @@ export class WorkspaceStore implements Resettable {
     return this.guestsRepo.add(eventId, input);
   }
 
+  async updateGuest(guest: Guest, input: GuestInput): Promise<Guest> {
+    return this.guestsRepo.update(guest, input);
+  }
+
   async removeGuest(guestId: string): Promise<void> {
     await this.guestsRepo.remove(guestId);
   }

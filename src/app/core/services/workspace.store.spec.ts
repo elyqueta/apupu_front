@@ -70,6 +70,7 @@ function invitationFixture(overrides: Partial<ApiInvitation> = {}): ApiInvitatio
     send_status: 'queued',
     send_count: 0,
     last_sent_at: null,
+    opened_at: null,
     invitation_url: 'https://apupu-front.vercel.app/convite/token-de-teste',
     invitation_url_expires_at: null,
     created_at: '2026-01-01T00:00:00Z',
@@ -146,6 +147,42 @@ describe('WorkspaceStore · guest creation', () => {
     expect(result.ok).toBe(true);
     expect(result.guest.name).toBe('Rui');
     expect(store.guests()[0]?.id).toBe('inv-1');
+  });
+
+  it('updates a guest through PATCH and replaces the cached entry', async () => {
+    const store = await setup('');
+    store.load({ guests: true });
+    http
+      .expectOne((request) => request.url.endsWith('/host/guests'))
+      .flush(page([invitationFixture()]));
+    await new Promise((resolve) => setTimeout(resolve));
+
+    const guest = store.guests()[0]!;
+    const promise = store.updateGuest(guest, {
+      name: 'Rui Silva',
+      email: 'rui@exemplo.pt',
+      phone: '+244900000000',
+    });
+    const request = http.expectOne(`${BASE}/host/events/evt-1/invitations/inv-1`);
+
+    expect(request.request.method).toBe('PATCH');
+    expect(request.request.body).toEqual({
+      name: 'Rui Silva',
+      email: 'rui@exemplo.pt',
+      phone: '+244900000000',
+    });
+    request.flush({
+      data: invitationFixture({
+        guest_name: 'Rui Silva',
+        guest_phone: '+244900000000',
+        opened_at: '2026-02-01T00:00:00Z',
+      }),
+    });
+
+    const updated = await promise;
+    expect(updated.name).toBe('Rui Silva');
+    expect(updated.openedAt).toBe('2026-02-01T00:00:00Z');
+    expect(store.guests().find((item) => item.id === 'inv-1')?.name).toBe('Rui Silva');
   });
 
   it('keeps the legacy manage-link flow working for the same event', async () => {

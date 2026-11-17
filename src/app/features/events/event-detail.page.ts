@@ -58,6 +58,7 @@ export class EventDetailPage {
   protected readonly guestSearch = signal('');
   protected readonly guestFilter = signal<GuestFilter>('all');
   protected readonly guestDialogOpen = signal(false);
+  protected readonly guestEditTarget = signal<Guest | null>(null);
   protected readonly cancelOpen = signal(false);
   protected readonly managersLoading = signal(false);
   protected readonly managerBusyId = signal<string | null>(null);
@@ -73,6 +74,25 @@ export class EventDetailPage {
   protected readonly event = computed(() => this.store.eventById(this.eventId()));
   protected readonly stats = computed(() => this.store.eventStats(this.eventId()));
   protected readonly guests = computed(() => this.store.guestsFor(this.eventId()));
+  /**
+   * Emails dos convidados que ainda podem ser promovidos a gestor:
+   * sem duplicados, sem gestores actuais e sem o email do anfitrião.
+   */
+  protected readonly guestEmails = computed<string[]>(() => {
+    const managerEmails = new Set(this.managers().map((manager) => manager.email.toLowerCase()));
+    const hostEmail = this.event()?.hostEmail.toLowerCase() ?? '';
+    const emails: string[] = [];
+
+    for (const guest of this.guests()) {
+      const email = guest.email.trim().toLowerCase();
+      if (!email || email === hostEmail || managerEmails.has(email) || emails.includes(email)) {
+        continue;
+      }
+      emails.push(email);
+    }
+
+    return emails;
+  });
   protected readonly activity = this.activityItems.asReadonly();
   protected readonly tasks = computed(() => this.store.tasksFor(this.eventId()));
   protected readonly tasksDone = computed(() => this.tasks().filter((task) => task.done).length);
@@ -419,6 +439,30 @@ export class EventDetailPage {
     } catch (error: unknown) {
       this.toasts.error(toApiError(error).message);
     }
+  }
+
+  /** Preenche o email do gestor a partir da lista de convidados. */
+  protected pickGuestEmail(event: Event): void {
+    const select = event.target as HTMLSelectElement;
+    if (select.value) {
+      this.managerForm.controls.email.setValue(select.value);
+      this.managerForm.controls.email.markAsTouched();
+    }
+    select.value = '';
+  }
+
+  protected openGuestCreate(): void {
+    this.guestEditTarget.set(null);
+    this.guestDialogOpen.set(true);
+  }
+
+  protected openGuestEdit(guest: Guest): void {
+    this.guestEditTarget.set(guest);
+  }
+
+  protected closeGuestDialog(): void {
+    this.guestDialogOpen.set(false);
+    this.guestEditTarget.set(null);
   }
 
   protected async removeManager(manager: EventManager): Promise<void> {

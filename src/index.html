@@ -11,6 +11,26 @@
     />
     <meta name="theme-color" content="#0A1211" />
     <meta name="color-scheme" content="dark light" />
+    <script>
+      // Aplica o tema antes do arranque do Angular para evitar um flash.
+      // Segue `prefers-color-scheme` por omissão e respeita a escolha guardada.
+      (function () {
+        try {
+          var stored = localStorage.getItem('contacomigo.theme');
+          var mode =
+            stored === 'light' || stored === 'dark' || stored === 'system' ? stored : 'system';
+          var dark =
+            mode === 'system'
+              ? window.matchMedia('(prefers-color-scheme: dark)').matches
+              : mode === 'dark';
+          var root = document.documentElement;
+          root.classList.toggle('dark', dark);
+          root.classList.toggle('light', !dark);
+        } catch (error) {
+          /* storage indisponível: mantém o tema por omissão */
+        }
+      })();
+    </script>
     <link rel="icon" type="image/svg+xml" href="assets/conta-comigo-icone.svg" />
     <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png" />
     <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png" />

@@ -196,6 +196,11 @@
   }
 }
 
+/* Conto Contigo · telas de autenticação: anel de foco âmbar (protótipo). */
+app-auth-layout :focus-visible {
+  outline-color: #ffb627 !important;
+}
+
 /* Font Awesome SVG sizing (FaConfig.autoAddCss is disabled to keep a single stylesheet). */
 .ng-fa-icon {
   display: inline-flex;

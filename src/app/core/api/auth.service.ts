@@ -1,17 +1,19 @@
-import { Injectable, inject, signal } from '@angular/core';
-import { ApiClient } from './api-client';
+import { Injectable, signal } from '@angular/core';
 import { ApiError } from './api-error';
-import { CsrfTokenStore } from './api.interceptor';
 import { Host } from './api.models';
 
-interface SessionResponse {
-  host: Host;
-  csrf_token: string;
-}
-
-interface LoginResponse extends SessionResponse {
-  expires_at: string;
-}
+/**
+ * Serviço de autenticação do anfitrião.
+ *
+ * IMPORTANTE: o contrato do backend para contas de anfitrião ainda **não está
+ * confirmado**. Este serviço devolve dados simulados (mock) para que as telas
+ * de autenticação funcionem sem inventar campos, URLs ou formatos de resposta.
+ *
+ * Quando o contrato existir, cada método deve passar a chamar o `ApiClient`
+ * (ver histórico em git) mantendo as assinaturas públicas usadas por
+ * `auth.guard.ts` e `settings.page.ts`. Os marcadores `TODO: contrato não
+ * confirmado` assinalam exactamente esses pontos.
+ */
 
 export interface RegistrationCodeResponse {
   status: 'accepted';
@@ -20,110 +22,197 @@ export interface RegistrationCodeResponse {
   resend_available_at: string;
 }
 
+export type SocialProvider = 'google' | 'facebook';
+
+const SOCIAL_LABELS: Record<SocialProvider, string> = {
+  google: 'Google',
+  facebook: 'Facebook',
+};
+
+/** Email que o mock recusa (pedido de código / login), espelhando o protótipo. */
+const REJECTED_EMAIL_SUFFIX = '@invalido.test';
+/** Código OTP que o mock considera inválido, espelhando o protótipo. */
+const REJECTED_OTP = '000000';
+/** Token de reposição que o mock considera expirado, espelhando o protótipo. */
+const EXPIRED_RESET_TOKEN = 'invalido';
+
+function delay(ms = 450): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function isoIn(seconds: number): string {
+  return new Date(Date.now() + seconds * 1000).toISOString();
+}
+
+function buildMockHost(email: string): Host {
+  const displayName = email.split('@')[0] || 'Anfitrião';
+  return {
+    id: 'mock-host',
+    email,
+    email_verified: true,
+    status: 'active',
+    profile: {
+      display_name: displayName,
+      phone: null,
+      // A data de nascimento é pedida depois, nas configurações de perfil.
+      birth_date: null,
+      locale: 'pt-AO',
+      timezone: 'Africa/Luanda',
+      avatar_url: null,
+    },
+    profile_complete: false,
+    missing_fields: ['birth_date'],
+    created_at: new Date().toISOString(),
+  };
+}
+
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  private readonly api = inject(ApiClient);
-  private readonly csrf = inject(CsrfTokenStore);
-  private restorePromise: Promise<Host | null> | null = null;
-
   private readonly hostState = signal<Host | null>(null);
   private readonly readyState = signal(false);
 
   readonly host = this.hostState.asReadonly();
   readonly ready = this.readyState.asReadonly();
+  /** Token devolvido pela verificação do código, usado no passo seguinte do registo. */
   readonly verificationToken = signal<string | null>(null);
 
+  /**
+   * Devolve o anfitrião com sessão, ou `null`.
+   * TODO: contrato não confirmado — trocar por `GET /auth/session`.
+   */
   async restoreSession(): Promise<Host | null> {
-    if (this.readyState()) {
-      return this.hostState();
-    }
-    if (this.restorePromise) {
-      return this.restorePromise;
-    }
-    this.restorePromise = this.api
-      .get<SessionResponse>('/auth/session')
-      .then((session) => {
-        this.setSession(session);
-        return session.host;
-      })
-      .catch((error: unknown) => {
-        if (error instanceof ApiError && error.status === 401) {
-          this.clearSession();
-          return null;
-        }
-        throw error;
-      })
-      .finally(() => {
-        this.readyState.set(true);
-        this.restorePromise = null;
-      });
-    return this.restorePromise;
-  }
-
-  async login(email: string, password: string): Promise<Host> {
-    const session = await this.api.post<LoginResponse>('/auth/login', {
-      email,
-      password,
-    });
-    this.setSession(session);
-    return session.host;
-  }
-
-  requestRegistrationCode(email: string): Promise<RegistrationCodeResponse> {
-    return this.api.post('/auth/register/request-code', { email });
-  }
-
-  async verifyRegistrationCode(email: string, code: string): Promise<void> {
-    const response = await this.api.post<{ verification_token: string }>(
-      '/auth/register/verify-code',
-      { email, code },
-    );
-    this.verificationToken.set(response.verification_token);
-  }
-
-  async register(email: string, password: string, displayName: string): Promise<void> {
-    const verificationToken = this.verificationToken();
-    if (!verificationToken) {
-      throw new ApiError(422, 'verification_required', 'Verifica o email antes de criar a conta.');
-    }
-    await this.api.post('/auth/register', {
-      email,
-      password,
-      display_name: displayName || undefined,
-      verification_token: verificationToken,
-    });
-    this.verificationToken.set(null);
-  }
-
-  async requestPasswordReset(email: string): Promise<void> {
-    await this.api.post('/auth/password/forgot', { email });
-  }
-
-  async resetPassword(token: string, password: string): Promise<void> {
-    await this.api.postNoContent('/auth/password/reset', { token, password });
-  }
-
-  async changePassword(currentPassword: string, newPassword: string): Promise<void> {
-    await this.api.postNoContent('/auth/password/change', {
-      current_password: currentPassword,
-      new_password: newPassword,
-    });
-  }
-
-  async logout(): Promise<void> {
-    await this.api.postNoContent('/auth/logout');
-    this.clearSession();
-  }
-
-  private setSession(session: SessionResponse): void {
-    this.hostState.set(session.host);
-    this.csrf.set(session.csrf_token, '/auth/session');
     this.readyState.set(true);
+    return this.hostState();
   }
 
-  private clearSession(): void {
+  /**
+   * TODO: contrato não confirmado — trocar por `POST /auth/login`.
+   * O mock aceita qualquer credencial; só recusa emails `@invalido.test`.
+   */
+  async login(email: string, password: string, remember = false): Promise<Host> {
+    void remember; // TODO: contrato não confirmado — persistência de sessão.
+    void password;
+    await delay();
+    const normalized = email.trim();
+    if (normalized.toLowerCase().endsWith(REJECTED_EMAIL_SUFFIX)) {
+      throw new ApiError(401, 'invalid_credentials', 'Email ou senha incorretos.');
+    }
+    const host = buildMockHost(normalized);
+    this.hostState.set(host);
+    this.readyState.set(true);
+    return host;
+  }
+
+  /**
+   * Passo 1 do registo: pede o envio do código.
+   * TODO: contrato não confirmado — trocar por `POST /auth/register/request-code`.
+   */
+  async requestRegistrationCode(email: string): Promise<RegistrationCodeResponse> {
+    await delay();
+    const normalized = email.trim();
+    if (normalized.toLowerCase().endsWith(REJECTED_EMAIL_SUFFIX)) {
+      throw new ApiError(
+        400,
+        'email_rejected',
+        'Não conseguimos enviar o código para este email. Usa outro email.',
+      );
+    }
+    return {
+      status: 'accepted',
+      email: normalized,
+      expires_at: isoIn(600),
+      resend_available_at: isoIn(45),
+    };
+  }
+
+  /**
+   * Passo 2 do registo: confirma o código e guarda o token de verificação.
+   * TODO: contrato não confirmado — trocar por `POST /auth/register/verify-code`.
+   */
+  async verifyRegistrationCode(email: string, code: string): Promise<void> {
+    void email;
+    await delay();
+    if (code === REJECTED_OTP) {
+      throw new ApiError(
+        422,
+        'verification_invalid',
+        'Código incorreto ou expirado. Tenta outra vez.',
+      );
+    }
+    this.verificationToken.set('mock-verification-token');
+  }
+
+  /**
+   * Passo 3 do registo: cria a conta.
+   * TODO: contrato não confirmado — trocar por `POST /auth/register`.
+   */
+  async register(email: string, password: string, displayName: string): Promise<void> {
+    void password;
+    void displayName;
+    await delay();
+    if (!this.verificationToken()) {
+      throw new ApiError(
+        422,
+        'verification_required',
+        'Confirma o código antes de criar a conta.',
+      );
+    }
+    this.verificationToken.set(null);
+    void email;
+  }
+
+  /**
+   * Pede o link de reposição. Nunca revela se o email existe.
+   * TODO: contrato não confirmado — trocar por `POST /auth/password/forgot`.
+   */
+  async requestPasswordReset(email: string): Promise<void> {
+    void email;
+    await delay();
+  }
+
+  /**
+   * Define a nova senha a partir do token do link.
+   * TODO: contrato não confirmado — trocar por `POST /auth/password/reset`.
+   * TODO: contrato não confirmado — nome do parâmetro do token no link.
+   */
+  async resetPassword(token: string, password: string): Promise<void> {
+    void password;
+    await delay();
+    if (!token.trim() || token === EXPIRED_RESET_TOKEN) {
+      throw new ApiError(422, 'reset_invalid', 'Este link já não é válido. Pede um novo.');
+    }
+  }
+
+  /**
+   * Altera a senha do anfitrião autenticado.
+   * TODO: contrato não confirmado — trocar por `POST /auth/password/change`.
+   */
+  async changePassword(currentPassword: string, newPassword: string): Promise<void> {
+    void currentPassword;
+    void newPassword;
+    await delay();
+  }
+
+  /**
+   * Inicia a autenticação social.
+   * TODO: contrato não confirmado — iniciar OAuth Google/Facebook.
+   */
+  async loginWithProvider(provider: SocialProvider): Promise<void> {
+    await delay();
+    throw new ApiError(
+      501,
+      'provider_not_configured',
+      `A entrada com ${SOCIAL_LABELS[provider]} ainda não está disponível.`,
+    );
+  }
+
+  /**
+   * Termina a sessão.
+   * TODO: contrato não confirmado — trocar por `POST /auth/logout`.
+   */
+  async logout(): Promise<void> {
+    await delay();
     this.hostState.set(null);
-    this.csrf.set(null, '/auth/session');
     this.verificationToken.set(null);
     this.readyState.set(true);
   }

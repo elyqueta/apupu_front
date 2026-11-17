@@ -36,7 +36,11 @@ export class ThemeService {
   setMode(mode: ThemeMode): void {
     this.modeState.set(mode);
     if (this.browser) {
-      localStorage.setItem(THEME_STORAGE_KEY, mode);
+      try {
+        localStorage.setItem(THEME_STORAGE_KEY, mode);
+      } catch {
+        // Ignorar storage indisponível (modo privado, políticas do navegador).
+      }
     }
     this.apply(mode);
   }
@@ -65,9 +69,13 @@ export class ThemeService {
 
   private readStoredMode(): ThemeMode {
     if (!isPlatformBrowser(this.platformId)) {
-      return 'dark';
+      return 'system';
     }
-    const stored = localStorage.getItem(THEME_STORAGE_KEY);
-    return stored === 'light' || stored === 'system' || stored === 'dark' ? stored : 'dark';
+    try {
+      const stored = localStorage.getItem(THEME_STORAGE_KEY);
+      return stored === 'light' || stored === 'system' || stored === 'dark' ? stored : 'system';
+    } catch {
+      return 'system';
+    }
   }
 }

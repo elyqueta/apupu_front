@@ -1,93 +1,225 @@
 import { Component, inject, signal } from '@angular/core';
-import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import {
+  AbstractControl,
+  NonNullableFormBuilder,
+  ReactiveFormsModule,
+  Validators,
+} from '@angular/forms';
+import { ActivatedRoute, RouterLink } from '@angular/router';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { AuthService } from '../../core/api/auth.service';
 import { toApiError } from '../../core/api/api-error';
-import { BrandComponent } from '../../shared/components/brand.component';
-import { PreferenceControlsComponent } from '../../shared/components/preference-controls.component';
+import { ICONS } from '../../core/ui/icons';
+import { AuthLayoutComponent } from '../../shared/components/auth-layout.component';
 
 type PasswordMode = 'forgot' | 'reset';
+type PasswordStep = 'form' | 'done';
 
 @Component({
   selector: 'app-password-page',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink, BrandComponent, PreferenceControlsComponent],
+  imports: [ReactiveFormsModule, RouterLink, FaIconComponent, AuthLayoutComponent],
   template: `
-    <div class="mx-auto flex min-h-dvh w-full max-w-6xl flex-col px-4 py-5 sm:px-6 lg:py-8">
-      <header class="flex items-center justify-between gap-4">
-        <app-brand />
-        <app-preference-controls />
-      </header>
-      <main class="flex flex-1 items-center justify-center py-10">
-        <section class="w-full max-w-md rounded-4xl border border-line bg-surface p-6 shadow-card sm:p-8">
-          <h1 class="font-display text-3xl font-semibold tracking-tight text-ink">
-            {{ mode() === 'forgot' ? 'Recuperar senha' : 'Definir nova senha' }}
-          </h1>
-          <p class="mt-2 text-sm leading-6 text-muted">
-            {{ success() ? success() : mode() === 'forgot'
-              ? 'Indica o email da conta. Se existir, receberás instruções para repor a senha.'
-              : 'Escolhe uma senha com pelo menos oito caracteres.' }}
+    <app-auth-layout>
+      @if (mode() === 'forgot') {
+        @if (step() === 'form') {
+          <h1 [class]="titleClass">Recuperar senha</h1>
+          <p [class]="leadClass">
+            Indica o teu email e enviamos-te um link para definires uma nova senha.
           </p>
+
+          <form class="space-y-4" [formGroup]="forgotForm" (ngSubmit)="submit()" novalidate>
+            <div class="grid gap-1.5">
+              <label for="forgot-email" class="text-sm font-semibold text-ink">Email</label>
+              <input
+                id="forgot-email"
+                formControlName="email"
+                type="email"
+                autocomplete="email"
+                inputmode="email"
+                required
+                [class]="inputClass"
+                [attr.aria-invalid]="isInvalid(forgotForm.controls.email)"
+              />
+            </div>
+
+            @if (error()) {
+              <p role="alert" class="text-sm text-danger">{{ error() }}</p>
+            }
+
+            <button type="submit" [disabled]="busy()" [class]="submitClass">
+              {{ busy() ? 'A enviar…' : 'Enviar link' }}
+            </button>
+          </form>
+
+          <p class="mt-5 text-center text-[15px] text-muted">
+            <a routerLink="/entrar" class="font-semibold text-ink underline">Voltar a entrar</a>
+          </p>
+        } @else {
+          <div
+            class="mb-4 grid size-14 place-items-center rounded-[18px] bg-[#FFB627] text-[#0F3D3E]"
+            aria-hidden="true"
+          >
+            <fa-icon [icon]="icons['envelope']" class="text-xl" />
+          </div>
+          <h1 [class]="titleClass">Verifica o teu email</h1>
+          <p [class]="leadClass">
+            Se existir uma conta com <b class="font-semibold text-ink">{{ email() }}</b
+            >, enviámos um link para redefinires a senha.
+            <!-- TODO: contrato não confirmado — indicar a validade do link quando o backend a definir. -->
+          </p>
+
           @if (error()) {
-            <p role="alert" class="mt-5 rounded-2xl border border-coral/25 bg-coral/10 p-3 text-sm text-coral">{{ error() }}</p>
+            <p role="alert" class="text-sm text-danger">{{ error() }}</p>
           }
-          @if (!success()) {
-            <form class="mt-6 space-y-4" [formGroup]="form" (ngSubmit)="submit()">
-              @if (mode() === 'forgot') {
-                <label class="block">
-                  <span class="mb-1.5 block text-xs font-medium text-ink">Email</span>
-                  <input formControlName="email" type="email" autocomplete="email" required
-                    class="h-12 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink outline-none focus:border-brand/50" />
-                </label>
-              } @else {
-                <label class="block">
-                  <span class="mb-1.5 block text-xs font-medium text-ink">Token recebido no email</span>
-                  <input formControlName="token" autocomplete="off" required
-                    class="h-12 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink outline-none focus:border-brand/50" />
-                </label>
-                <label class="block">
-                  <span class="mb-1.5 block text-xs font-medium text-ink">Nova senha</span>
-                  <input formControlName="password" type="password" autocomplete="new-password" required minlength="8" maxlength="128"
-                    class="h-12 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink outline-none focus:border-brand/50" />
-                </label>
-              }
-              <button type="submit" [disabled]="busy()"
-                class="inline-flex h-12 w-full items-center justify-center rounded-xl bg-brand px-4 text-sm font-semibold text-on-secondary transition hover:bg-secondary-hover disabled:cursor-wait disabled:opacity-60">
-                {{ busy() ? 'A processar…' : mode() === 'forgot' ? 'Enviar instruções' : 'Guardar nova senha' }}
-              </button>
-            </form>
-          }
-          <p class="mt-6 text-center text-sm text-muted">
-            <a routerLink="/entrar" class="font-semibold text-brand-strong hover:underline">Voltar ao login</a>
+
+          <button type="button" [disabled]="busy()" [class]="submitClass" (click)="resend()">
+            {{ busy() ? 'A enviar…' : 'Reenviar link' }}
+          </button>
+
+          <p class="mt-5 text-center text-[15px] text-muted">
+            <a routerLink="/entrar" class="font-semibold text-ink underline">Voltar a entrar</a>
           </p>
-        </section>
-      </main>
-    </div>
+        }
+      } @else {
+        @if (step() === 'form') {
+          <h1 [class]="titleClass">Define a nova senha</h1>
+          <p [class]="leadClass">Escolhe uma senha que ainda não uses noutros sítios.</p>
+
+          <form class="space-y-4" [formGroup]="resetForm" (ngSubmit)="submit()" novalidate>
+            <div class="grid gap-1.5">
+              <label for="reset-password" class="text-sm font-semibold text-ink">Nova senha</label>
+              <div class="relative">
+                <input
+                  id="reset-password"
+                  formControlName="password"
+                  [type]="showNewPassword() ? 'text' : 'password'"
+                  autocomplete="new-password"
+                  minlength="8"
+                  required
+                  [class]="passwordInputClass"
+                  [attr.aria-invalid]="isInvalid(resetForm.controls.password)"
+                />
+                <button
+                  type="button"
+                  class="absolute right-1 top-1 grid size-11 place-items-center rounded-xl text-muted transition hover:text-ink"
+                  [attr.aria-label]="showNewPassword() ? 'Esconder senha' : 'Mostrar senha'"
+                  [attr.aria-pressed]="showNewPassword()"
+                  (click)="togglePassword('new')"
+                >
+                  <fa-icon
+                    [icon]="showNewPassword() ? icons['eyeSlash'] : icons['eye']"
+                    aria-hidden="true"
+                  />
+                </button>
+              </div>
+              <span class="text-[13px] text-muted">Mínimo de 8 caracteres.</span>
+            </div>
+
+            <div class="grid gap-1.5">
+              <label for="reset-confirm" class="text-sm font-semibold text-ink">
+                Confirmar senha
+              </label>
+              <div class="relative">
+                <input
+                  id="reset-confirm"
+                  formControlName="confirm"
+                  [type]="showConfirmPassword() ? 'text' : 'password'"
+                  autocomplete="new-password"
+                  required
+                  [class]="passwordInputClass"
+                  [attr.aria-invalid]="isInvalid(resetForm.controls.confirm)"
+                />
+                <button
+                  type="button"
+                  class="absolute right-1 top-1 grid size-11 place-items-center rounded-xl text-muted transition hover:text-ink"
+                  [attr.aria-label]="showConfirmPassword() ? 'Esconder senha' : 'Mostrar senha'"
+                  [attr.aria-pressed]="showConfirmPassword()"
+                  (click)="togglePassword('confirm')"
+                >
+                  <fa-icon
+                    [icon]="showConfirmPassword() ? icons['eyeSlash'] : icons['eye']"
+                    aria-hidden="true"
+                  />
+                </button>
+              </div>
+            </div>
+
+            @if (error()) {
+              <p role="alert" class="text-sm text-danger">{{ error() }}</p>
+            }
+
+            <button type="submit" [disabled]="busy()" [class]="submitClass">
+              {{ busy() ? 'A guardar…' : 'Guardar nova senha' }}
+            </button>
+          </form>
+        } @else {
+          <h1 [class]="titleClass">Senha atualizada</h1>
+          <p [class]="leadClass">Já podes entrar com a nova senha.</p>
+
+          <a routerLink="/entrar" class="inline-flex h-[52px] w-full items-center justify-center rounded-[14px] bg-brand text-base font-semibold text-on-secondary no-underline transition hover:bg-secondary-hover">
+            Entrar
+          </a>
+        }
+      }
+    </app-auth-layout>
   `,
 })
 export class PasswordPage {
   private readonly fb = inject(NonNullableFormBuilder);
   private readonly auth = inject(AuthService);
   private readonly route = inject(ActivatedRoute);
-  private readonly router = inject(Router);
+
+  protected readonly icons = ICONS;
+
+  protected readonly titleClass =
+    'mb-2 mt-1.5 font-display text-[30px] font-semibold leading-tight tracking-tight text-ink min-[860px]:text-[34px]';
+  protected readonly leadClass = 'mb-6 text-muted';
+
+  private readonly fieldBase =
+    'h-[52px] w-full rounded-[14px] border border-line bg-surface-raised px-4 text-[15px] text-ink outline-none transition placeholder:text-muted aria-[invalid=true]:border-danger';
+  protected readonly inputClass = this.fieldBase;
+  protected readonly passwordInputClass = `${this.fieldBase} pr-[52px]`;
+  protected readonly submitClass =
+    'inline-flex h-[52px] w-full items-center justify-center rounded-[14px] bg-brand text-base font-semibold text-on-secondary transition hover:bg-secondary-hover disabled:cursor-progress disabled:opacity-60';
 
   readonly mode = signal<PasswordMode>(
     this.route.snapshot.data['mode'] === 'reset' ? 'reset' : 'forgot',
   );
+  readonly step = signal<PasswordStep>('form');
   readonly busy = signal(false);
   readonly error = signal('');
-  readonly success = signal('');
-  readonly form = this.fb.group({
-    email: ['', [Validators.required, Validators.email]],
-    token: ['', Validators.required],
+  readonly email = signal('');
+  readonly showNewPassword = signal(false);
+  readonly showConfirmPassword = signal(false);
+  readonly token = signal('');
+
+  readonly forgotForm = this.fb.group({
+    email: ['', [Validators.required, Validators.email, Validators.maxLength(160)]],
+  });
+  readonly resetForm = this.fb.group({
     password: ['', [Validators.required, Validators.minLength(8), Validators.maxLength(128)]],
+    confirm: ['', Validators.required],
   });
 
   constructor() {
+    // O link do email traz o token como parâmetro do URL.
+    // TODO: contrato não confirmado — confirmar o nome do parâmetro com o backend.
     const token = this.route.snapshot.queryParamMap.get('token');
     if (token) {
-      this.form.controls.token.setValue(token);
-      void this.router.navigate([], { queryParams: { token: null }, replaceUrl: true });
+      this.token.set(token);
+    }
+  }
+
+  protected isInvalid(control: AbstractControl): boolean {
+    return control.invalid && (control.touched || control.dirty);
+  }
+
+  protected togglePassword(field: 'new' | 'confirm'): void {
+    if (field === 'new') {
+      this.showNewPassword.update((value) => !value);
+    } else {
+      this.showConfirmPassword.update((value) => !value);
     }
   }
 
@@ -95,19 +227,67 @@ export class PasswordPage {
     if (this.busy()) {
       return;
     }
+    if (this.mode() === 'forgot') {
+      await this.submitForgot();
+    } else {
+      await this.submitReset();
+    }
+  }
+
+  async resend(): Promise<void> {
+    if (this.busy()) {
+      return;
+    }
     this.busy.set(true);
     this.error.set('');
     try {
-      if (this.mode() === 'forgot') {
-        await this.auth.requestPasswordReset(this.form.controls.email.value.trim());
-        this.success.set('Se a conta existir, serão enviadas instruções para repor a senha.');
-      } else {
-        await this.auth.resetPassword(
-          this.form.controls.token.value,
-          this.form.controls.password.value,
-        );
-        this.success.set('Senha alterada. Já podes entrar com a nova senha.');
-      }
+      await this.auth.requestPasswordReset(this.email());
+    } catch (error: unknown) {
+      this.error.set(toApiError(error).message);
+    } finally {
+      this.busy.set(false);
+    }
+  }
+
+  private async submitForgot(): Promise<void> {
+    const email = this.forgotForm.controls.email.value.trim();
+    if (!this.forgotForm.controls.email.valid || !email) {
+      this.forgotForm.controls.email.markAsTouched();
+      this.error.set('Indica um email válido.');
+      return;
+    }
+    this.busy.set(true);
+    this.error.set('');
+    try {
+      await this.auth.requestPasswordReset(email);
+      // A mensagem de sucesso é sempre a mesma, exista ou não conta.
+      this.email.set(email);
+      this.step.set('done');
+    } catch (error: unknown) {
+      this.error.set(toApiError(error).message);
+    } finally {
+      this.busy.set(false);
+    }
+  }
+
+  private async submitReset(): Promise<void> {
+    const password = this.resetForm.controls.password.value;
+    const confirm = this.resetForm.controls.confirm.value;
+    if (password.length < 8) {
+      this.resetForm.controls.password.markAsTouched();
+      this.error.set('A senha precisa de pelo menos 8 caracteres.');
+      return;
+    }
+    if (password !== confirm) {
+      this.resetForm.controls.confirm.markAsTouched();
+      this.error.set('As senhas não coincidem.');
+      return;
+    }
+    this.busy.set(true);
+    this.error.set('');
+    try {
+      await this.auth.resetPassword(this.token(), password);
+      this.step.set('done');
     } catch (error: unknown) {
       this.error.set(toApiError(error).message);
     } finally {

@@ -1,9 +1,9 @@
 {
   "openapi": "3.0.0",
   "info": {
-    "title": "Conta Comigo API",
+    "title": "Conto Contigo API",
     "version": "0.1.0",
-    "description": "API REST do Conta Comigo — plataforma de convites para eventos. Os anfitriões podem criar conta (email + senha) e gerir eventos no workspace autenticado; o fluxo legado por link secreto continua válido e o aceite público do convite não exige conta. O registo exige verificação do email por código OTP antes da criação da conta. Documentação gerada a partir dos comentários JSDoc das rotas."
+    "description": "API REST do Conto Contigo — plataforma de convites para eventos. Os anfitriões podem criar conta (email + senha) e gerir eventos no workspace autenticado; o fluxo legado por link secreto continua válido e o aceite público do convite não exige conta. O registo exige verificação do email por código OTP antes da criação da conta. Documentação gerada a partir dos comentários JSDoc das rotas."
   },
   "servers": [
     {
@@ -1055,6 +1055,26 @@
           }
         }
       },
+      "RegistrationEnvelope": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "host": {
+                "$ref": "#/components/schemas/Host"
+              },
+              "csrf_token": {
+                "type": "string"
+              },
+              "expires_at": {
+                "type": "string",
+                "format": "date-time"
+              }
+            }
+          }
+        }
+      },
       "EventEnvelope": {
         "type": "object",
         "properties": {
@@ -1452,7 +1472,7 @@
         "type": "apiKey",
         "in": "cookie",
         "name": "apupu_auth",
-        "description": "Cookie HttpOnly emitido por POST /auth/login. Operações mutáveis exigem também o cabeçalho X-CSRF-Token (valor devolvido no login ou em GET /auth/session)."
+        "description": "Cookie HttpOnly emitido por POST /auth/login ou POST /auth/register. Operações mutáveis exigem também o cabeçalho X-CSRF-Token (valor devolvido no login, no registo ou em GET /auth/session)."
       }
     },
     "responses": {
@@ -5437,7 +5457,7 @@
           "Conta"
         ],
         "summary": "Valida o email e envia um código OTP",
-        "description": "Primeiro passo do registo. Confirma que o email ainda não está registado e envia um código de 6 dígitos, válido por `REGISTRATION_OTP_TTL_MINUTES` minutos. Pedidos repetidos antes de `REGISTRATION_OTP_RESEND_SECONDS` devolvem `429` `otp_resend_too_soon`. A conta só é criada depois de o código ser verificado em `/auth/register/verify-code`.\n",
+        "description": "Primeiro passo do registo. Confirma que o email ainda não está registado e envia um código de 6 dígitos, válido por `REGISTRATION_OTP_TTL_MINUTES` minutos. Pedidos repetidos antes de `REGISTRATION_OTP_RESEND_SECONDS` devolvem `429` `otp_resend_too_soon`. A conta só é criada depois de o código ser verificado em `/auth/register/verify-code`. O código não é devolvido na resposta da API.\n",
         "requestBody": {
           "required": true,
           "content": {
@@ -5459,7 +5479,7 @@
         },
         "responses": {
           "202": {
-            "description": "Código enfileirado para envio.",
+            "description": "Código enfileirado para envio por email.",
             "content": {
               "application/json": {
                 "schema": {
@@ -5617,7 +5637,7 @@
           "Conta"
         ],
         "summary": "Cria uma conta de anfitrião já com o email verificado",
-        "description": "Terceiro e último passo do registo. Exige o `verification_token` devolvido por `/auth/register/verify-code`; sem ele devolve `422` `verification_required`. A conta é criada com `email_verified=true`, os eventos legados com o mesmo email são ligados à conta e o email de boas-vindas é enfileirado. Não inicia sessão.\n",
+        "description": "Terceiro e último passo do registo. Exige o `verification_token` devolvido por `/auth/register/verify-code`; sem ele devolve `422` `verification_required`. A conta é criada com `email_verified=true`, os eventos legados com o mesmo email são ligados à conta, o email de boas-vindas é enfileirado e uma sessão é criada automaticamente. O cookie é HttpOnly; o token bruto nunca é devolvido em JSON.\n",
         "requestBody": {
           "required": true,
           "content": {
@@ -5653,11 +5673,11 @@
         },
         "responses": {
           "201": {
-            "description": "Conta criada e email verificado.",
+            "description": "Conta criada, sessão iniciada por cookie HttpOnly e csrf_token devolvido.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HostEnvelope"
+                  "$ref": "#/components/schemas/RegistrationEnvelope"
                 }
               }
             }

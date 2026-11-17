@@ -37,6 +37,7 @@ import {
   faEnvelope,
   faEnvelopeOpenText,
   faEye,
+  faEyeSlash,
   faFileLines,
   faFilter,
   faFlagCheckered,
@@ -83,7 +84,7 @@ import {
   faWineGlass,
   faXmark,
 } from '@fortawesome/free-solid-svg-icons';
-import { faWhatsapp } from '@fortawesome/free-brands-svg-icons';
+import { faFacebook, faGoogle, faWhatsapp } from '@fortawesome/free-brands-svg-icons';
 
 export const ICONS: Record<string, IconDefinition> = {
   dashboard: faGaugeHigh,
@@ -166,6 +167,7 @@ export const ICONS: Record<string, IconDefinition> = {
   trash: faTrash,
   pen: faPen,
   eye: faEye,
+  eyeSlash: faEyeSlash,
   lines: faFileLines,
   checklist: faListCheck,
   history: faClockRotateLeft,
@@ -178,6 +180,8 @@ export const ICONS: Record<string, IconDefinition> = {
   cancelled: faBan,
   completed: faFlagCheckered,
   whatsapp: faWhatsapp,
+  google: faGoogle,
+  facebook: faFacebook,
   mobile: faMobileScreen,
 };
 

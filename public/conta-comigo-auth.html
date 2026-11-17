@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="pt-PT" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Conta Comigo · Entrar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<!--
+  INSTRUÇÕES PARA O AGENTE
+  - Protótipo framework-agnóstico: portar para a stack do projeto (componentes, router, estado) mantendo tokens, layout e textos.
+  - Rotas: /entrar, /criar-conta, /recuperar-senha, /redefinir-senha (aqui simuladas com hash #/rota).
+  - Layout desktop (>=860px): entrar e recuperar/redefinir = formulário à ESQUERDA; criar conta = formulário à DIREITA (classe .rev).
+  - Layout mobile (<860px): imagem como banner no topo, folha branca arredondada sobreposta com o formulário.
+  - Imagem: angola-auth-hero.svg (object-fit: cover). Ícone da marca: conta-comigo-icone.svg.
+  - Ícones por criar (placeholders <!-- SVG_ICON_X -->): GOOGLE, FACEBOOK, EYE, GLOBE, THEME, MAIL.
+  - Tudo o que é backend está em API {} com TODO: contratos NÃO confirmados, não inventar campos.
+-->
+<style>
+:root{--bg:#F3F5F4;--card:#FAFCFB;--ink:#10201F;--mut:#566866;--line:#D5DFDC;--field:#E9EEEC;--pri:#0F3D3E;--on:#fff;--acc:#FFB627;--err:#B3261E;--sh:0 24px 60px rgba(15,61,62,.14)}
+[data-theme=dark]{--bg:#0B1514;--card:#111C1B;--ink:#EAF2F0;--mut:#9DB1AE;--line:#243635;--field:#1A2928;--pri:#217A6B;--err:#FF8A80;--sh:none}
+*{box-sizing:border-box;margin:0}
+body{min-height:100dvh;background:var(--bg);color:var(--ink);font:16px/1.5 Inter,system-ui,sans-serif}
+h1,h2{font-family:'Space Grotesk',Inter,sans-serif;letter-spacing:-.02em}
+a{color:var(--ink);font-weight:600}
+.shell{width:100%;min-height:100dvh;display:grid;grid-template-columns:minmax(440px,32%) 1fr;background:var(--card);overflow:hidden}
+.shell.rev{grid-template-columns:1fr minmax(440px,32%)}
+.shell.rev .panel{order:2}
+.panel{display:flex;flex-direction:column;padding:28px 44px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.brand{display:flex;align-items:center;gap:12px;text-decoration:none}
+.brand img{width:44px;height:44px}
+.brand b{display:block;font:600 18px 'Space Grotesk',sans-serif;line-height:1.1}
+.brand small{font-size:11px;letter-spacing:.18em;color:var(--mut)}
+.tools{display:flex;gap:8px}
+.tool{height:40px;min-width:40px;padding:0 10px;display:inline-flex;align-items:center;justify-content:center;gap:6px;border:1px solid var(--line);border-radius:12px;background:var(--field);color:var(--ink);font:600 13px Inter,sans-serif;cursor:pointer}
+.body{margin:auto 0;padding:28px 0;width:100%}
+.eyebrow{font-size:14px;color:var(--mut)}
+h1{font-size:34px;line-height:1.1;margin:6px 0 8px}
+.lead{color:var(--mut);margin-bottom:24px}
+.fld{display:grid;gap:6px;margin-bottom:16px}
+label{font-weight:600;font-size:14px}
+input{width:100%;height:52px;padding:0 16px;border:1px solid var(--line);border-radius:14px;background:var(--field);color:var(--ink);font:inherit}
+input[aria-invalid=true]{border-color:var(--err)}
+:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+.pw{position:relative}.pw input{padding-right:52px}
+.eye{position:absolute;right:4px;top:4px;width:44px;height:44px;display:grid;place-items:center;border:0;background:none;color:var(--mut);cursor:pointer}
+.hint{font-size:13px;color:var(--mut)}
+.err{color:var(--err);font-size:14px;margin:-4px 0 14px}
+.row{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:-2px 0 20px;font-size:14px}
+.chk{display:flex;align-items:center;gap:8px;font-weight:500}
+.chk input{width:18px;height:18px;accent-color:var(--pri)}
+.btn{width:100%;height:52px;border:0;border-radius:14px;background:var(--pri);color:var(--on);font:600 16px Inter,sans-serif;cursor:pointer}
+.btn:disabled{opacity:.6;cursor:progress}
+.or{display:flex;align-items:center;gap:12px;margin:22px 0 16px;color:var(--mut);font-size:14px}
+.or::before,.or::after{content:"";flex:1;height:1px;background:var(--line)}
+.soc{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.soc button{height:48px;display:flex;align-items:center;justify-content:center;gap:10px;border:1px solid var(--line);border-radius:14px;background:transparent;color:var(--ink);font:600 15px Inter,sans-serif;cursor:pointer}
+.ic{width:20px;height:20px;display:inline-grid;place-items:center}
+.alt{margin-top:22px;text-align:center;color:var(--mut);font-size:15px}
+.link{background:none;border:0;padding:0;font:600 14px Inter,sans-serif;color:var(--ink);text-decoration:underline;cursor:pointer}
+.link:disabled{color:var(--mut);text-decoration:none;cursor:default}
+.steps{display:flex;gap:6px;margin-bottom:20px}
+.steps i{flex:1;height:4px;border-radius:4px;background:var(--line)}.steps i.on{background:var(--acc)}
+.otp{display:flex;gap:10px;margin-bottom:16px}
+.otp input{height:58px;padding:0;text-align:center;font:600 24px 'Space Grotesk',sans-serif}
+.mail{width:56px;height:56px;margin-bottom:16px;display:grid;place-items:center;border-radius:18px;background:var(--acc);color:#0F3D3E}
+.small{font-size:13px;color:var(--mut);text-align:center;margin-top:14px}
+.hero{position:relative;background:#0F3D3E;min-height:260px}
+.hero img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 50%}
+.hero::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(5,25,24,.5),transparent 45%)}
+.cap,.tile{z-index:1}
+.cap{position:absolute;left:48px;top:48px;max-width:380px;color:#fff;text-shadow:0 1px 12px rgba(5,25,24,.35)}
+.cap h2{font-size:30px;line-height:1.15;margin-bottom:10px}
+.cap p{opacity:.92;margin-bottom:14px}
+.cap a{color:#fff}
+.tile{position:absolute;left:12%;top:46%;width:72px;height:72px;display:grid;place-items:center;border-radius:18px;background:rgba(250,252,251,.95);box-shadow:0 10px 30px rgba(0,0,0,.18)}
+.tile img{width:44px;height:44px}
+.foot{margin-top:auto;padding-top:16px;text-align:center;font-size:12px;color:var(--mut)}
+@media(max-width:859px){
+body{display:block;padding:0}
+.shell,.shell.rev{display:flex;flex-direction:column;position:relative;width:100%;min-height:100dvh;border:0;border-radius:0;box-shadow:none;background:var(--bg)}
+.panel{display:contents}
+.hero{order:-1;height:240px;min-height:0}
+.cap,.tile,.foot{display:none}
+.top{position:absolute;z-index:2;top:0;left:0;right:0;padding:16px 20px}
+.brand b,.brand small{display:none}
+.body{position:relative;z-index:1;flex:1;margin:-36px 0 0;padding:28px 22px 32px;background:var(--card);border-radius:32px 32px 0 0}
+h1{font-size:30px}
+}
+@media(prefers-reduced-motion:no-preference){.body>[data-screen]:not([hidden]),[data-step]:not([hidden]){animation:in .25s ease-out}@keyframes in{from{opacity:0;transform:translateY(6px)}}}
+</style>
+</head>
+<body>
+<main class="shell">
+  <section class="panel">
+    <div class="top">
+      <a class="brand" href="#/entrar" aria-label="Conta Comigo"><img src="conta-comigo-icone.svg" alt=""><span><b>Conta Comigo</b><small>EVENTOS &amp; CONVITES</small></span></a>
+      <div class="tools">
+        <button class="tool" type="button" aria-label="Idioma" title="TODO: seletor de idioma"><span class="ic" aria-hidden="true"><!-- SVG_ICON_GLOBE --></span>PT</button>
+        <button class="tool" type="button" id="theme" aria-label="Alternar tema"><span class="ic" aria-hidden="true"><!-- SVG_ICON_THEME --></span></button>
+      </div>
+    </div>
+
+    <div class="body">
+      <!-- ENTRAR -->
+      <section data-screen="login">
+        <p class="eyebrow">Espaço do anfitrião</p>
+        <h1>Bem-vindo de volta</h1>
+        <p class="lead">Entra para gerir os teus eventos e convidados.</p>
+        <form data-form="login" novalidate>
+          <div class="fld"><label for="l-email">Email</label><input id="l-email" name="email" type="email" autocomplete="email" inputmode="email" required></div>
+          <div class="fld"><label for="l-pass">Senha</label><div class="pw"><input id="l-pass" name="password" type="password" autocomplete="current-password" required><button class="eye" type="button" aria-label="Mostrar senha" aria-pressed="false"><span class="ic" aria-hidden="true"><!-- SVG_ICON_EYE --></span></button></div></div>
+          <p class="err" role="alert" hidden></p>
+          <div class="row"><label class="chk"><input type="checkbox" name="remember">Lembrar-me</label><a href="#/recuperar-senha">Esqueceste a senha?</a></div>
+          <button class="btn" type="submit">Entrar</button>
+        </form>
+        <div class="or">ou entra com</div>
+        <div class="soc"><button type="button" data-social="google"><span class="ic" aria-hidden="true"><!-- SVG_ICON_GOOGLE --></span>Google</button><button type="button" data-social="facebook"><span class="ic" aria-hidden="true"><!-- SVG_ICON_FACEBOOK --></span>Facebook</button></div>
+        <p class="alt">Ainda não tens conta? <a href="#/criar-conta">Criar conta</a></p>
+      </section>
+
+      <!-- CRIAR CONTA (formulário à direita no desktop) -->
+      <section data-screen="register" hidden>
+        <div class="steps" aria-hidden="true"><i class="on"></i><i></i><i></i></div>
+        <div data-step="1">
+          <h1>Cria a tua conta</h1>
+          <p class="lead">Começa pelo teu email. Enviamos-te um código para confirmar que é teu.</p>
+          <form data-form="email" novalidate>
+            <div class="fld"><label for="r-email">Email</label><input id="r-email" name="email" type="email" autocomplete="email" inputmode="email" required></div>
+            <p class="err" role="alert" hidden></p>
+            <button class="btn" type="submit">Enviar código</button>
+          </form>
+          <div class="or">ou cria com</div>
+          <div class="soc"><button type="button" data-social="google"><span class="ic" aria-hidden="true"><!-- SVG_ICON_GOOGLE --></span>Google</button><button type="button" data-social="facebook"><span class="ic" aria-hidden="true"><!-- SVG_ICON_FACEBOOK --></span>Facebook</button></div>
+          <p class="alt">Já tens conta? <a href="#/entrar">Entrar</a></p>
+        </div>
+        <div data-step="2" hidden>
+          <h1>Confirma o teu email</h1>
+          <p class="lead">Enviámos um código de 6 dígitos para <b id="r-sent"></b>.</p>
+          <form data-form="otp" novalidate>
+            <div class="otp" role="group" aria-label="Código de 6 dígitos"><input inputmode="numeric" maxlength="1" autocomplete="one-time-code" aria-label="Dígito 1"><input inputmode="numeric" maxlength="1" aria-label="Dígito 2"><input inputmode="numeric" maxlength="1" aria-label="Dígito 3"><input inputmode="numeric" maxlength="1" aria-label="Dígito 4"><input inputmode="numeric" maxlength="1" aria-label="Dígito 5"><input inputmode="numeric" maxlength="1" aria-label="Dígito 6"></div>
+            <p class="err" role="alert" hidden></p>
+            <button class="btn" type="submit">Confirmar código</button>
+          </form>
+          <p class="alt"><button class="link" type="button" id="resend">Reenviar código</button> · <button class="link" type="button" id="change">Mudar email</button></p>
+        </div>
+        <div data-step="3" hidden>
+          <h1>Quase lá</h1>
+          <p class="lead">Diz-nos o teu nome e define a tua senha.</p>
+          <form data-form="profile" novalidate>
+            <div class="fld"><label for="r-name">Nome</label><input id="r-name" name="name" autocomplete="name" required></div>
+            <div class="fld"><label for="r-pass">Senha</label><div class="pw"><input id="r-pass" name="password" type="password" autocomplete="new-password" minlength="8" required><button class="eye" type="button" aria-label="Mostrar senha" aria-pressed="false"><span class="ic" aria-hidden="true"><!-- SVG_ICON_EYE --></span></button></div><span class="hint">Mínimo de 8 caracteres.</span></div>
+            <p class="err" role="alert" hidden></p>
+            <button class="btn" type="submit">Criar conta</button>
+            <p class="small">Ao criar conta aceitas os <a href="#" data-todo="termos">Termos</a> e a <a href="#" data-todo="privacidade">Política de privacidade</a>.</p>
+          </form>
+        </div>
+      </section>
+
+      <!-- RECUPERAR SENHA -->
+      <section data-screen="forgot" hidden>
+        <div data-step="1">
+          <h1>Recuperar senha</h1>
+          <p class="lead">Indica o teu email e enviamos-te um link para definires uma nova senha.</p>
+          <form data-form="forgot" novalidate>
+            <div class="fld"><label for="f-email">Email</label><input id="f-email" name="email" type="email" autocomplete="email" inputmode="email" required></div>
+            <p class="err" role="alert" hidden></p>
+            <button class="btn" type="submit">Enviar link</button>
+          </form>
+          <p class="alt"><a href="#/entrar">Voltar a entrar</a></p>
+        </div>
+        <div data-step="2" hidden>
+          <div class="mail" aria-hidden="true"><!-- SVG_ICON_MAIL --></div>
+          <h1>Verifica o teu email</h1>
+          <p class="lead">Se existir uma conta com <b id="f-sent"></b>, enviámos um link para redefinires a senha. <!-- TODO: indicar validade do link quando o backend a definir --></p>
+          <button class="btn" type="button" id="f-again">Reenviar link</button>
+          <p class="alt"><a href="#/entrar">Voltar a entrar</a></p>
+        </div>
+      </section>
+
+      <!-- REDEFINIR SENHA (abre a partir do link do email; token vem do link) -->
+      <section data-screen="reset" hidden>
+        <div data-step="1">
+          <h1>Define a nova senha</h1>
+          <p class="lead">Escolhe uma senha que ainda não uses noutros sítios.</p>
+          <form data-form="reset" novalidate>
+            <div class="fld"><label for="n-pass">Nova senha</label><div class="pw"><input id="n-pass" name="password" type="password" autocomplete="new-password" minlength="8" required><button class="eye" type="button" aria-label="Mostrar senha" aria-pressed="false"><span class="ic" aria-hidden="true"><!-- SVG_ICON_EYE --></span></button></div><span class="hint">Mínimo de 8 caracteres.</span></div>
+            <div class="fld"><label for="n-pass2">Confirmar senha</label><div class="pw"><input id="n-pass2" name="confirm" type="password" autocomplete="new-password" required><button class="eye" type="button" aria-label="Mostrar senha" aria-pressed="false"><span class="ic" aria-hidden="true"><!-- SVG_ICON_EYE --></span></button></div></div>
+            <p class="err" role="alert" hidden></p>
+            <button class="btn" type="submit">Guardar nova senha</button>
+          </form>
+        </div>
+        <div data-step="2" hidden>
+          <h1>Senha atualizada</h1>
+          <p class="lead">Já podes entrar com a nova senha.</p>
+          <a class="btn" href="#/entrar" style="display:grid;place-items:center;text-decoration:none;color:var(--on)">Entrar</a>
+        </div>
+      </section>
+    </div>
+    <p class="foot">© 2026 Conta Comigo. Todos os direitos reservados.</p>
+  </section>
+
+  <aside class="hero" aria-hidden="false">
+    <img id="hero-img" src="auth-login.webp" alt="Amigos de costas a celebrar ao pôr do sol na baía de Luanda" width="1536" height="1024" fetchpriority="high">
+    <div class="tile"><img src="conta-comigo-icone.svg" alt=""></div>
+    <div class="cap"><h2>Convida. Confirma. Celebra.</h2><p>Eventos e convites para qualquer ocasião, de casamentos a noites de jogos.</p><a href="#/criar-conta">Criar a minha conta</a></div>
+  </aside>
+</main>
+
+<script>
+const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)];
+const wait=()=>new Promise(r=>setTimeout(r,500));
+/* TODO: substituir por chamadas reais. Contratos (URLs, campos, erros) ainda NÃO confirmados. */
+const API={
+  async requestOtp(email){await wait();if(email.endsWith('@invalido.test'))throw 0},
+  async verifyOtp(email,code){await wait();if(code==='000000')throw 0},
+  async register(email,name,password){await wait()},
+  async login(email,password,remember){await wait();location.hash='#/entrar'/* TODO: redirecionar para /painel */},
+  async forgot(email){await wait()},
+  async reset(password){await wait() /* TODO: token vem do link do email */},
+  social(p){alert('TODO: iniciar OAuth '+p)}
+};
+const ROUTES={'/entrar':['login',0],'/criar-conta':['register',1],'/recuperar-senha':['forgot',0],'/redefinir-senha':['reset',0]};
+const TITLES={login:'Entrar',register:'Criar conta',forgot:'Recuperar senha',reset:'Nova senha'};
+let email='',tick;
+const emailOk=v=>/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v);
+function step(sc,n){$$('[data-step]',sc).forEach(e=>e.hidden=+e.dataset.step!==n);$$('.steps i').forEach((d,i)=>d.classList.toggle('on',i<n))}
+function route(){
+  const [name,rev]=ROUTES[location.hash.slice(1)]||ROUTES['/entrar'];
+  $('.shell').classList.toggle('rev',!!rev);
+  $$('[data-screen]').forEach(s=>{s.hidden=s.dataset.screen!==name;if(!s.hidden)step(s,1)});
+  $$('form').forEach(f=>{f.reset();showErr(f)});
+  const hi=$('#hero-img');hi.src=name==='register'?'auth-criar-conta.webp':'auth-login.webp';hi.alt=name==='register'?'Amigos a fazer um brinde numa mesa ao pôr do sol':'Amigos de costas a celebrar ao pôr do sol na baía de Luanda';
+  document.title='Conta Comigo · '+TITLES[name];
+}
+function showErr(f,msg){const e=$('.err',f);e.hidden=!msg;e.textContent=msg||'';$$('input',f).forEach(i=>i.removeAttribute('aria-invalid'));return false}
+async function run(f,fn){const b=$('.btn',f);b.disabled=true;try{await fn()}catch(e){/* tratado em fn */}finally{b.disabled=false}}
+const forms={
+  login(f){const d=new FormData(f);if(!emailOk(d.get('email')))return showErr(f,'Indica um email válido.');if(!d.get('password'))return showErr(f,'Indica a tua senha.');
+    run(f,async()=>{try{await API.login(d.get('email'),d.get('password'),!!d.get('remember'))}catch{showErr(f,'Email ou senha incorretos.')}})},
+  email(f){const v=f.email.value.trim();if(!emailOk(v)){f.email.setAttribute('aria-invalid','true');return showErr(f,'Este email não parece válido. Verifica se está bem escrito.')}
+    run(f,async()=>{try{await API.requestOtp(v);email=v;$('#r-sent').textContent=v;step($('[data-screen=register]'),2);startTimer();$('.otp input').focus()}catch{showErr(f,'Não conseguimos enviar o código para este email. Usa outro email.')}})},
+  otp(f){const code=$$('.otp input',f).map(i=>i.value).join('');if(code.length<6)return showErr(f,'Escreve os 6 dígitos do código.');
+    run(f,async()=>{try{await API.verifyOtp(email,code);step($('[data-screen=register]'),3);$('#r-name').focus()}catch{showErr(f,'Código incorreto ou expirado. Tenta outra vez.')}})},
+  profile(f){const n=f.name.value.trim(),p=f.password.value;if(!n)return showErr(f,'Indica o teu nome.');if(p.length<8)return showErr(f,'A senha precisa de pelo menos 8 caracteres.');
+    run(f,async()=>{try{await API.register(email,n,p);location.hash='#/entrar'/* TODO: entrar automaticamente */}catch{showErr(f,'Não foi possível criar a conta. Tenta outra vez.')}})},
+  forgot(f){const v=f.email.value.trim();if(!emailOk(v)){f.email.setAttribute('aria-invalid','true');return showErr(f,'Indica um email válido.')}
+    run(f,async()=>{await API.forgot(v);email=v;$('#f-sent').textContent=v;step($('[data-screen=forgot]'),2)})},
+  reset(f){const p=f.password.value;if(p.length<8)return showErr(f,'A senha precisa de pelo menos 8 caracteres.');if(p!==f.confirm.value)return showErr(f,'As senhas não coincidem.');
+    run(f,async()=>{try{await API.reset(p);step($('[data-screen=reset]'),2)}catch{showErr(f,'Este link já não é válido. Pede um novo.')}})}
+};
+document.addEventListener('submit',e=>{e.preventDefault();showErr(e.target);forms[e.target.dataset.form](e.target)});
+document.addEventListener('click',e=>{
+  const eye=e.target.closest('.eye');if(eye){const i=$('input',eye.parentNode),s=i.type==='password';i.type=s?'text':'password';eye.setAttribute('aria-pressed',s);eye.setAttribute('aria-label',s?'Esconder senha':'Mostrar senha')}
+  const so=e.target.closest('[data-social]');if(so)API.social(so.dataset.social);
+  if(e.target.closest('[data-todo]'))e.preventDefault();
+});
+/* OTP: avançar, apagar e colar */
+const boxes=()=>$$('.otp input');
+document.addEventListener('input',e=>{const i=boxes().indexOf(e.target);if(i<0)return;e.target.value=e.target.value.replace(/\D/g,'');if(e.target.value&&i<5)boxes()[i+1].focus()});
+document.addEventListener('keydown',e=>{const i=boxes().indexOf(e.target);if(i>0&&e.key==='Backspace'&&!e.target.value)boxes()[i-1].focus()});
+document.addEventListener('paste',e=>{if(boxes().indexOf(e.target)<0)return;e.preventDefault();const t=(e.clipboardData.getData('text')||'').replace(/\D/g,'').slice(0,6);t.split('').forEach((c,i)=>boxes()[i].value=c);boxes()[Math.min(t.length,5)].focus()});
+function startTimer(){let s=45;const b=$('#resend');clearInterval(tick);b.disabled=true;const t=()=>{b.textContent=s>0?`Reenviar código (${s}s)`:'Reenviar código';b.disabled=s>0;if(s--<=0)clearInterval(tick)};t();tick=setInterval(t,1000)}
+$('#resend').onclick=async()=>{await API.requestOtp(email);startTimer()};
+$('#change').onclick=()=>{clearInterval(tick);step($('[data-screen=register]'),1)};
+$('#f-again').onclick=()=>API.forgot(email);
+/* Tema */
+const root=document.documentElement;
+try{root.dataset.theme=localStorage.getItem('cc-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light')}catch{}
+$('#theme').onclick=()=>{const t=root.dataset.theme==='dark'?'light':'dark';root.dataset.theme=t;try{localStorage.setItem('cc-theme',t)}catch{}};
+addEventListener('hashchange',route);route();
+</script>
+</body>
+</html>

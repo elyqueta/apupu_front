@@ -10,10 +10,15 @@ export const routes: Routes = [
     data: { mode: 'login' },
   },
   {
-    path: 'registar',
+    path: 'criar-conta',
     title: 'Conto Contigo · Criar conta',
     loadComponent: () => import('./features/auth/auth.page').then((m) => m.AuthPage),
     data: { mode: 'register' },
+  },
+  {
+    path: 'registar',
+    pathMatch: 'full',
+    redirectTo: 'criar-conta',
   },
   {
     path: 'recuperar-senha',
@@ -22,10 +27,15 @@ export const routes: Routes = [
     data: { mode: 'forgot' },
   },
   {
-    path: 'repor-senha',
-    title: 'Conto Contigo · Repor senha',
+    path: 'redefinir-senha',
+    title: 'Conto Contigo · Redefinir senha',
     loadComponent: () => import('./features/auth/password.page').then((m) => m.PasswordPage),
     data: { mode: 'reset' },
+  },
+  {
+    path: 'repor-senha',
+    pathMatch: 'full',
+    redirectTo: 'redefinir-senha',
   },
   {
     path: '',

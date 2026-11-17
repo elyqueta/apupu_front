@@ -31,8 +31,8 @@ export interface ApiHostGuest extends ApiInvitation {
 }
 
 /**
- * Convite visto pelo convidado. Contrato **provisório** — o endpoint ainda não
- * existe; ver `docs/prompt-backend-eventos-convidado.md`.
+ * Convite visto pelo convidado em "Meus convites"
+ * (`GET /api/v1/host/invitations`).
  */
 export interface ApiGuestInvitation {
   id: string;
@@ -41,6 +41,7 @@ export interface ApiGuestInvitation {
   rsvp_responded_at: string | null;
   table_name: string | null;
   invitation_url: string | null;
+  invitation_url_expires_at: string | null;
   created_at: string;
   event: Pick<
     ApiEvent,

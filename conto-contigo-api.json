@@ -859,6 +859,113 @@
           }
         ]
       },
+      "GuestEventSummary": {
+        "type": "object",
+        "description": "Resumo público do evento visto pela conta convidada. Não inclui email do anfitrião, contribuições/banca, notas privadas nem estatísticas de RSVP de terceiros.",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string",
+            "example": "Casamento da Ana e do João"
+          },
+          "host_name": {
+            "type": "string",
+            "example": "Ana Silva"
+          },
+          "starts_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "timezone": {
+            "type": "string",
+            "example": "Africa/Luanda"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "scheduled",
+              "cancelled",
+              "completed"
+            ]
+          },
+          "category": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "wedding",
+              "birthday",
+              "corporate",
+              "baby",
+              "other"
+            ]
+          },
+          "template_id": {
+            "type": "string",
+            "nullable": true,
+            "example": "aurora"
+          },
+          "location": {
+            "$ref": "#/components/schemas/EventLocation"
+          }
+        }
+      },
+      "GuestInvitation": {
+        "type": "object",
+        "description": "Convite dirigido ao email da conta autenticada (\"Meus convites\"). Inclui apenas os dados do próprio convite e o resumo público do evento. Convites revogados não são listados.",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "event_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "rsvp_status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "accepted",
+              "declined"
+            ]
+          },
+          "rsvp_responded_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "table_name": {
+            "type": "string",
+            "nullable": true,
+            "example": "Mesa 3"
+          },
+          "invitation_url": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true,
+            "description": "URL absoluto do próprio convite. O convidado pode abri-lo. É `null` quando o token não pode ser reconstruído.",
+            "example": "https://apupu-front.vercel.app/convite/3f9c2a7e5b1d4c8fa6e0"
+          },
+          "invitation_url_expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Hoje é sempre `null`: o token do convite não expira e só é invalidado pela revogação (que remove o convite da lista)."
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "event": {
+            "$ref": "#/components/schemas/GuestEventSummary"
+          }
+        }
+      },
       "Activity": {
         "type": "object",
         "properties": {
@@ -1009,6 +1116,20 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/HostGuest"
+            }
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationMeta"
+          }
+        }
+      },
+      "GuestInvitationList": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GuestInvitation"
             }
           },
           "pagination": {
@@ -1583,6 +1704,23 @@
               "error": {
                 "code": "email_not_verified",
                 "message": "Confirma o teu email antes de gerir eventos.",
+                "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+              }
+            }
+          }
+        }
+      },
+      "GuestEmailNotVerified": {
+        "description": "A conta ainda não confirmou o email; \"Meus convites\" fica indisponível.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "error": {
+                "code": "email_not_verified",
+                "message": "Confirme o seu email para ver os seus convites.",
                 "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
               }
             }
@@ -3615,6 +3753,149 @@
         }
       }
     },
+    "/api/v1/host/invitations": {
+      "get": {
+        "tags": [
+          "Convidados"
+        ],
+        "summary": "Lista os convites dirigidos ao email da conta autenticada",
+        "description": "\"Meus convites\": eventos em que a conta autenticada foi convidada. A associação é feita por `invitations.guest_email` = email da conta, comparado sem distinguir maiúsculas/minúsculas (opção A). Exige email verificado; uma conta por verificar recebe `403 email_not_verified`. Convites revogados não aparecem.\nCada item inclui apenas o próprio convite e um resumo público do evento (título, anfitrião, data, fuso, estado, categoria, template e local). Nunca expõe outros convidados, contagens, contribuições/banca ou notas privadas do evento.\n",
+        "security": [
+          {
+            "accountSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sort",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "starts_at"
+              ],
+              "default": "starts_at"
+            }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "default": "asc"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Convites da conta, ordenados por `starts_at` ascendente (eventos sem data ficam no fim). Lista vazia devolve `data: []` e paginação a zeros.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuestInvitationList"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sessão ausente ou expirada (`host_session_invalid`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "host_session_invalid",
+                    "message": "Sessão inválida ou expirada.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Email da conta por verificar (`email_not_verified`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "email_not_verified",
+                    "message": "Confirme o seu email para ver os seus convites.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Parâmetros de paginação/ordenação inválidos.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "validation_failed",
+                    "message": "Verifique os campos indicados.",
+                    "fields": {
+                      "email": [
+                        "Email inválido."
+                      ]
+                    },
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Limite de pedidos excedido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "rate_limited",
+                    "message": "Demasiados pedidos. Tente novamente mais tarde.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/host/activity": {
       "get": {
         "tags": [
@@ -4663,7 +4944,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Lista de convidados.",
+            "description": "Lista de convidados, com o link de partilha por convite.",
             "content": {
               "application/json": {
                 "schema": {

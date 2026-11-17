@@ -7,21 +7,16 @@ import { CachedRepository } from './cached-repository';
 /**
  * Convites recebidos pela conta autenticada (perspetiva do convidado).
  *
- * ⚠️ Contrato **provisório**: o backend ainda não expõe nenhuma rota para os
- * eventos em que a conta foi convidada. Este repositório aponta para
- * `GET /host/invitations` e é usado diretamente pela página `/convites` (e não
- * através do `WorkspaceStore`), para que uma falha aqui não acione o ecrã de
- * erro global da shell.
- *
- * Ver `docs/prompt-backend-eventos-convidado.md` para o pedido ao backend.
+ * O backend expõe `GET /host/invitations` apenas para a sessão de conta e
+ * associa os convites ao email verificado dessa conta. A página `/convites`
+ * injeta este repositório diretamente (e não via `WorkspaceStore`) para que
+ * uma falha aqui não acione o ecrã de erro global da shell.
  */
 @Injectable({ providedIn: 'root' })
 export class GuestInvitationsRepository extends CachedRepository<GuestInvitation[]> {
   private readonly api = inject(ApiClient);
 
   protected async fetch(): Promise<GuestInvitation[]> {
-    // TODO(backend): confirmar a rota e o contrato. Enquanto não existir,
-    // a página mostra o estado "área em preparação".
     const page = await this.api.getPage<ApiGuestInvitation>('/host/invitations', {
       page: 1,
       page_size: 100,

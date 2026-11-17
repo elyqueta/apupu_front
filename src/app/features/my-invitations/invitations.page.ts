@@ -16,8 +16,8 @@ type InviteFilter = 'all' | RsvpStatus;
  * foi convidada, na perspetiva do convidado.
  *
  * A página injeta o `GuestInvitationsRepository` diretamente (e não via
- * `WorkspaceStore`) para que uma falha do endpoint provisório não acione o ecrã
- * de erro global da shell — o estado de indisponibilidade é tratado aqui.
+ * `WorkspaceStore`) para que uma falha do endpoint não acione o ecrã de erro
+ * global da shell — o estado de erro é tratado aqui.
  */
 @Component({
   selector: 'app-invitations-page',

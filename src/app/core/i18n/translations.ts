@@ -496,8 +496,8 @@ const PT_AO = {
   'invites.noResults': 'Nenhum convite corresponde ao filtro.',
   'invites.empty': 'Ainda não tens convites',
   'invites.emptyHint': 'Quando alguém te convidar, o evento aparece aqui.',
-  'invites.unavailable': 'Área em preparação',
-  'invites.unavailableHint': 'Estamos a ligar os convites recebidos à tua conta. Volta em breve.',
+  'invites.unavailable': 'Não foi possível carregar',
+  'invites.unavailableHint': 'Verifica a tua ligação e tenta novamente.',
 
   'reports.eyebrow': 'Inteligência',
   'reports.title': 'Relatórios',
@@ -1320,9 +1320,8 @@ const EN: Record<TranslationKey, string> = {
   'invites.noResults': 'No invitation matches this filter.',
   'invites.empty': 'You have no invitations yet',
   'invites.emptyHint': 'When someone invites you, the event will show up here.',
-  'invites.unavailable': 'Area in preparation',
-  'invites.unavailableHint':
-    'We are connecting received invitations to your account. Check back soon.',
+  'invites.unavailable': 'Could not load invitations',
+  'invites.unavailableHint': 'Check your connection and try again.',
 
   'reports.eyebrow': 'Insights',
   'reports.title': 'Reports',

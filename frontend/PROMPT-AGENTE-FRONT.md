@@ -21,7 +21,7 @@ Lê integralmente, por esta ordem, os ficheiros que já estão no projecto:
 5. `frontend/api-integration.md`
 6. `frontend/API-CONTRACT.md`
 7. `frontend/CONTAS-E-REQUISITOS-FRONTEND.md`
-8. `conta-comigo-api.json`
+8. `conto-contigo-api.json`
 9. `agents.md` (regras de trabalho e revisão)
 10. `README.md` da raiz do frontend
 
@@ -33,7 +33,7 @@ exactamente qual falta antes de assumir o contrato.
 
 Quando os documentos divergirem, usa esta ordem:
 
-1. `conta-comigo-api.json` — contrato OpenAPI vivo gerado pelo backend.
+1. `conto-contigo-api.json` — contrato OpenAPI vivo gerado pelo backend.
 2. `frontend/API-CONTRACT.md` — explicação detalhada do mesmo contrato.
 3. `frontend/CONTAS-E-REQUISITOS-FRONTEND.md` — requisitos de UI para
    contas, OTP, perfil e workspace.
@@ -74,7 +74,7 @@ regra de negócio em silêncio.
 - Angular 22 com componentes standalone, signals para estado local e
   Reactive Forms nos formulários.
 - Centraliza HTTP num cliente/serviço tipado. Modelos de resposta e de
-  erro devem espelhar `conta-comigo-api.json`.
+  erro devem espelhar `conto-contigo-api.json`.
 - `withCredentials: true` em todos os pedidos que dependem de cookies.
 - Interceptor CSRF: guarda o `csrf_token` em memória e envia
   `X-CSRF-Token` em `POST`, `PATCH`, `PUT` e `DELETE` autenticados.
@@ -86,6 +86,10 @@ regra de negócio em silêncio.
 - OTP: código de 6 dígitos, contagem decrescente a partir de
   `resend_available_at`, e `verification_token` mantido **apenas em
   memória** até ao `register`. Nunca em `localStorage`/`sessionStorage`.
+- Depois de pedir o código, mostra um estado “Código enviado” com um
+  botão que abre o ecrã de verificação. Se a resposta trouxer `dev_code`
+  (fora de produção), pré-preenche os 6 dígitos; o campo é opcional e
+  nunca deve ser assumido em produção.
 - Depois do registo, usa a sessão e o `csrf_token` recebidos; não é
   necessário iniciar sessão novamente.
 - Restauro de sessão: `GET /api/v1/auth/session` no arranque; `401`
@@ -161,7 +165,10 @@ Segue os caminhos e payloads do contrato. Como mapa de alto nível:
 - **Autenticação:** pedir código, verificar código, criar conta, login,
   logout, recuperar/repor senha, alterar senha.
 - **Perfil:** ver e editar perfil, data de nascimento opcional, avatar
-  por URL, preferências de tema.
+  por URL e upload de imagem (`multipart/form-data`, campo `avatar`)
+  com pré-visualização e estados de envio; se a API responder
+  `503 avatar_upload_unavailable`, mantém o avatar por URL disponível e
+  mostra uma mensagem clara. Preferências de tema.
 - **Workspace:** dashboard, lista paginada de eventos, criar evento,
   detalhe do evento, reenviar link de gestão, apagar evento.
 - **Convidados:** lista paginada, adicionar, editar, remover, reenviar

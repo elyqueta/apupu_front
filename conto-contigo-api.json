@@ -1185,6 +1185,11 @@
               "resend_available_at": {
                 "type": "string",
                 "format": "date-time"
+              },
+              "dev_code": {
+                "type": "string",
+                "pattern": "^[0-9]{6}$",
+                "description": "Código OTP em claro. Só é devolvido fora de produção (desenvolvimento/teste) para conveniência do protótipo; em produção o código só existe no email."
               }
             }
           }
@@ -3076,6 +3081,9 @@
         "security": [
           {
             "hostSession": []
+          },
+          {
+            "accountSession": []
           }
         ],
         "parameters": [
@@ -3144,6 +3152,9 @@
         "security": [
           {
             "hostSession": []
+          },
+          {
+            "accountSession": []
           }
         ],
         "parameters": [
@@ -4620,6 +4631,9 @@
         "security": [
           {
             "hostSession": []
+          },
+          {
+            "accountSession": []
           }
         ],
         "parameters": [
@@ -4688,8 +4702,12 @@
         "security": [
           {
             "hostSession": []
+          },
+          {
+            "accountSession": []
           }
         ],
+        "description": "Pode usar a sessão de gestão legada do evento ou a sessão de conta do anfitrião autenticado que é proprietário do evento. Com sessão de conta não é necessário enviar/trocar o token secreto de gestão.\n",
         "parameters": [
           {
             "in": "path",
@@ -4849,6 +4867,9 @@
         "security": [
           {
             "hostSession": []
+          },
+          {
+            "accountSession": []
           }
         ],
         "parameters": [
@@ -5017,6 +5038,9 @@
         "security": [
           {
             "hostSession": []
+          },
+          {
+            "accountSession": []
           }
         ],
         "parameters": [
@@ -5131,6 +5155,9 @@
         "security": [
           {
             "hostSession": []
+          },
+          {
+            "accountSession": []
           }
         ],
         "parameters": [
@@ -5269,6 +5296,9 @@
         "security": [
           {
             "hostSession": []
+          },
+          {
+            "accountSession": []
           }
         ],
         "parameters": [

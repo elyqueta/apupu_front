@@ -24,7 +24,7 @@ import { ICONS } from '../../core/ui/icons';
 import { AuthLayoutComponent } from '../../shared/components/auth-layout.component';
 
 type AuthMode = 'login' | 'register';
-type RegisterStep = 'email' | 'code' | 'details';
+type RegisterStep = 'email' | 'sent' | 'code' | 'details';
 
 function secondsUntil(iso: string): number {
   return Math.max(0, Math.ceil((new Date(iso).getTime() - Date.now()) / 1000));
@@ -97,7 +97,10 @@ function secondsUntil(iso: string): number {
                 />
                 Lembrar-me
               </label>
-              <a routerLink="/recuperar-senha" class="font-semibold text-ink underline">
+              <a
+                routerLink="/recuperar-senha"
+                class="inline-flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 font-semibold text-ink transition hover:bg-brand/10 hover:text-brand"
+              >
                 Esqueceste a senha?
               </a>
             </div>
@@ -134,10 +137,13 @@ function secondsUntil(iso: string): number {
             </button>
           </div>
 
-          <p class="mt-5 text-center text-[15px] text-muted">
-            Ainda não tens conta?
-            <a routerLink="/criar-conta" class="font-semibold text-ink underline">Criar conta</a>
-          </p>
+          <div class="mt-6">
+            <a routerLink="/criar-conta" [class]="secondaryButtonClass">
+              Criar conta
+              <fa-icon [icon]="icons['arrowRight']" class="text-sm" aria-hidden="true" />
+            </a>
+            <p class="mt-2 text-center text-[13px] text-muted">Leva menos de um minuto.</p>
+          </div>
         </div>
       } @else {
         <div class="mb-5 flex gap-1.5" aria-hidden="true">
@@ -204,10 +210,64 @@ function secondsUntil(iso: string): number {
               </button>
             </div>
 
-            <p class="mt-5 text-center text-[15px] text-muted">
-              Já tens conta?
-              <a routerLink="/entrar" class="font-semibold text-ink underline">Entrar</a>
+            <div class="mt-6">
+              <a routerLink="/entrar" [class]="secondaryButtonClass"> Já tens conta? Entrar </a>
+            </div>
+          </div>
+        } @else if (step() === 'sent') {
+          <div class="animate-screen">
+            <div
+              class="mb-5 grid size-14 place-items-center rounded-[18px] bg-brand/10 text-brand"
+              aria-hidden="true"
+            >
+              <fa-icon [icon]="icons['envelopeOpen']" class="text-2xl" />
+            </div>
+            <h1 [class]="titleClass">Código enviado</h1>
+            <p [class]="leadClass">
+              Enviámos um código de 6 dígitos para
+              <b class="font-semibold text-ink">{{ email() }}</b>. Abre a caixa de entrada e
+              confirma o teu email.
             </p>
+
+            @if (devCode()) {
+              <div class="mb-5 rounded-[16px] border border-dashed border-brand/40 bg-brand/5 p-4">
+                <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
+                  Código de teste · protótipo
+                </p>
+                <p class="mt-1 font-display text-2xl font-semibold tracking-[0.32em] text-ink">
+                  {{ devCode() }}
+                </p>
+                <p class="mt-1 text-[13px] text-muted">
+                  No próximo passo o código já vem preenchido.
+                </p>
+              </div>
+            }
+
+            <div class="space-y-3">
+              <button type="button" [class]="submitClass" (click)="openCodeStep()">
+                Introduzir código
+                <fa-icon [icon]="icons['arrowRight']" class="ml-1 text-sm" aria-hidden="true" />
+              </button>
+              <button
+                type="button"
+                [class]="secondaryButtonClass"
+                [disabled]="busy() || resendSeconds() > 0"
+                (click)="resendCode()"
+              >
+                {{
+                  resendSeconds() > 0
+                    ? 'Reenviar código (' + resendSeconds() + 's)'
+                    : 'Reenviar código'
+                }}
+              </button>
+            </div>
+
+            <div class="mt-4 flex items-center justify-center gap-2 text-sm text-muted">
+              <span>Email errado?</span>
+              <button type="button" [class]="ghostButtonClass" (click)="changeEmail()">
+                Mudar email
+              </button>
+            </div>
           </div>
         } @else if (step() === 'code') {
           <div class="animate-screen">
@@ -240,10 +300,10 @@ function secondsUntil(iso: string): number {
               </button>
             </form>
 
-            <p class="mt-5 text-center text-sm text-muted">
+            <div class="mt-4 flex flex-wrap items-center justify-center gap-1">
               <button
                 type="button"
-                [class]="linkClass"
+                [class]="ghostButtonClass"
                 [disabled]="busy() || resendSeconds() > 0"
                 (click)="resendCode()"
               >
@@ -253,9 +313,10 @@ function secondsUntil(iso: string): number {
                     : 'Reenviar código'
                 }}
               </button>
-              <span aria-hidden="true"> · </span>
-              <button type="button" [class]="linkClass" (click)="changeEmail()">Mudar email</button>
-            </p>
+              <button type="button" [class]="ghostButtonClass" (click)="changeEmail()">
+                Mudar email
+              </button>
+            </div>
           </div>
         } @else {
           <div class="animate-screen">
@@ -348,10 +409,12 @@ export class AuthPage {
     'h-[58px] w-full rounded-[14px] border border-line bg-surface-raised p-0 text-center font-display text-2xl font-semibold text-ink outline-none';
   protected readonly submitClass =
     'inline-flex h-[52px] w-full items-center justify-center rounded-[14px] bg-brand text-base font-semibold text-on-secondary transition hover:bg-secondary-hover disabled:cursor-progress disabled:opacity-60';
+  protected readonly secondaryButtonClass =
+    'inline-flex h-[52px] w-full items-center justify-center gap-2 rounded-[14px] border border-line bg-surface-raised text-[15px] font-semibold text-ink no-underline transition hover:border-brand/50 hover:bg-brand/5 disabled:cursor-progress disabled:opacity-60';
+  protected readonly ghostButtonClass =
+    'inline-flex h-10 items-center justify-center gap-1.5 rounded-xl bg-transparent px-3 text-sm font-semibold text-ink transition hover:bg-brand/10 disabled:cursor-default disabled:opacity-60';
   protected readonly socialClass =
     'inline-flex h-12 items-center justify-center gap-2.5 rounded-[14px] border border-line bg-transparent text-[15px] font-semibold text-ink transition hover:border-brand/40 disabled:cursor-progress disabled:opacity-60';
-  protected readonly linkClass =
-    'bg-transparent p-0 text-sm font-semibold text-ink underline disabled:cursor-default disabled:text-muted disabled:no-underline';
 
   protected readonly otpIndexes = [0, 1, 2, 3, 4, 5];
 
@@ -360,6 +423,7 @@ export class AuthPage {
   );
   readonly step = signal<RegisterStep>('email');
   readonly email = signal('');
+  readonly devCode = signal<string | null>(null);
   readonly busy = signal(false);
   readonly resendSeconds = signal(0);
   readonly showLoginPassword = signal(false);
@@ -369,6 +433,7 @@ export class AuthPage {
   protected readonly progress = computed(() => {
     switch (this.step()) {
       case 'email':
+      case 'sent':
         return 1;
       case 'code':
         return 2;
@@ -468,11 +533,10 @@ export class AuthPage {
     try {
       const result = await this.auth.requestRegistrationCode(email);
       this.email.set(email);
-      this.step.set('code');
-      this.otp.set(['', '', '', '', '', '']);
+      this.prefillCode(result.dev_code);
       this.resendSeconds.set(secondsUntil(result.resend_available_at));
+      this.step.set('sent');
       this.toasts.success(`Enviámos um código de 6 dígitos para ${email}.`);
-      queueMicrotask(() => this.otpBoxes()[0]?.nativeElement.focus());
     } catch (error: unknown) {
       this.toasts.error(toApiError(error).message);
     } finally {
@@ -487,6 +551,7 @@ export class AuthPage {
     this.busy.set(true);
     try {
       const result = await this.auth.requestRegistrationCode(this.email());
+      this.prefillCode(result.dev_code);
       this.resendSeconds.set(secondsUntil(result.resend_available_at));
       this.toasts.success(`Enviámos um novo código para ${this.email()}.`);
     } catch (error: unknown) {
@@ -494,6 +559,14 @@ export class AuthPage {
     } finally {
       this.busy.set(false);
     }
+  }
+
+  /** Abre o ecrã do OTP, já com o código de desenvolvimento preenchido. */
+  protected openCodeStep(): void {
+    this.step.set('code');
+    const firstEmpty = this.otp().findIndex((digit) => !digit);
+    const focusIndex = firstEmpty === -1 ? 0 : firstEmpty;
+    queueMicrotask(() => this.otpBoxes()[focusIndex]?.nativeElement.focus());
   }
 
   async verifyCode(): Promise<void> {
@@ -561,8 +634,16 @@ export class AuthPage {
 
   protected changeEmail(): void {
     this.resendSeconds.set(0);
+    this.devCode.set(null);
     this.otp.set(['', '', '', '', '', '']);
     this.step.set('email');
+  }
+
+  /** Distribui um código de 6 dígitos pelas caixas do OTP. */
+  private prefillCode(code: string | undefined): void {
+    const digits = (code ?? '').replace(/\D/g, '').slice(0, 6);
+    this.devCode.set(digits.length === 6 ? digits : null);
+    this.otp.set(this.otpIndexes.map((index) => digits[index] ?? ''));
   }
 
   protected onOtpInput(event: Event, index: number): void {

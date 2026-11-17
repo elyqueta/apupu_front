@@ -50,9 +50,12 @@ type PasswordStep = 'form' | 'done';
               </button>
             </form>
 
-            <p class="mt-5 text-center text-[15px] text-muted">
-              <a routerLink="/entrar" class="font-semibold text-ink underline">Voltar a entrar</a>
-            </p>
+            <div class="mt-6">
+              <a routerLink="/entrar" [class]="secondaryButtonClass">
+                <fa-icon [icon]="icons['arrowLeft']" class="text-sm" aria-hidden="true" />
+                Voltar a entrar
+              </a>
+            </div>
           </div>
         } @else {
           <div class="animate-screen">
@@ -73,9 +76,12 @@ type PasswordStep = 'form' | 'done';
               {{ busy() ? 'A enviar…' : 'Reenviar link' }}
             </button>
 
-            <p class="mt-5 text-center text-[15px] text-muted">
-              <a routerLink="/entrar" class="font-semibold text-ink underline">Voltar a entrar</a>
-            </p>
+            <div class="mt-6">
+              <a routerLink="/entrar" [class]="secondaryButtonClass">
+                <fa-icon [icon]="icons['arrowLeft']" class="text-sm" aria-hidden="true" />
+                Voltar a entrar
+              </a>
+            </div>
           </div>
         }
       } @else {
@@ -185,6 +191,8 @@ export class PasswordPage {
   protected readonly passwordInputClass = `${this.fieldBase} pr-[52px]`;
   protected readonly submitClass =
     'inline-flex h-[52px] w-full items-center justify-center rounded-[14px] bg-brand text-base font-semibold text-on-secondary transition hover:bg-secondary-hover disabled:cursor-progress disabled:opacity-60';
+  protected readonly secondaryButtonClass =
+    'inline-flex h-[52px] w-full items-center justify-center gap-2 rounded-[14px] border border-line bg-surface-raised text-[15px] font-semibold text-ink no-underline transition hover:border-brand/50 hover:bg-brand/5 disabled:cursor-progress disabled:opacity-60';
 
   readonly mode = signal<PasswordMode>(
     this.route.snapshot.data['mode'] === 'reset' ? 'reset' : 'forgot',

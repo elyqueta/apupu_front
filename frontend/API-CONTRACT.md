@@ -1,4 +1,4 @@
-# Conta Comigo — Contrato da API v1 (implementação)
+# Conto Contigo — Contrato da API v1 (implementação)
 
 Base: `/api/v1`. Este documento descreve o contrato efectivamente
 implementado. A especificação autoritária do produto está em
@@ -138,10 +138,15 @@ Resposta `202`:
     "status": "accepted",
     "email": "ana@exemplo.ao",
     "expires_at": "2026-11-16T02:30:30.588Z",
-    "resend_available_at": "2026-11-16T02:20:30.586Z"
+    "resend_available_at": "2026-11-16T02:20:30.586Z",
+    "dev_code": "004271"
   }
 }
 ```
+
+> `dev_code` só é devolvido quando `NODE_ENV` não é `production`. Usa-o
+> para pré-preencher o ecrã de verificação no protótipo; em produção o
+> campo não existe e o código só chega por email.
 
 Erros: `409 email_already_registered`, `422 validation_failed`,
 `429 otp_resend_too_soon` ou `429 rate_limited`.
@@ -1132,7 +1137,7 @@ corpo. Todas as rotas podem devolver os erros transversais de
 
 | Método | Rota | Sucesso | Corpo |
 |---|---|---|---|
-| `POST` | `/api/v1/auth/register/request-code` | `202` | `{ "data": { "status": "accepted", "email": string, "expires_at": string, "resend_available_at": string } }` |
+| `POST` | `/api/v1/auth/register/request-code` | `202` | `{ "data": { "status": "accepted", "email": string, "expires_at": string, "resend_available_at": string, "dev_code"?: string } }` |
 | `POST` | `/api/v1/auth/register/verify-code` | `200` | `{ "data": { "email": string, "verification_token": string, "expires_at": string } }` |
 | `POST` | `/api/v1/auth/register` | `201` | `{ "data": { "host": Host, "csrf_token": string, "expires_at": string } }` |
 | `POST` | `/api/v1/auth/email/verify` | `200` | `{ "data": { "host": Host } }` |

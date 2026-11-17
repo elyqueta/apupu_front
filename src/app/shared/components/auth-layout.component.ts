@@ -84,9 +84,7 @@ import { ICONS } from '../../core/ui/icons';
           <ng-content />
         </div>
 
-        <footer
-          class="mt-auto hidden pt-4 text-center text-xs text-muted min-[860px]:block"
-        >
+        <footer class="mt-auto hidden pt-4 text-center text-xs text-muted min-[860px]:block">
           {{ i18n.t('footer.rights', { year: 2026 }) }}
         </footer>
       </section>
@@ -101,33 +99,45 @@ import { ICONS } from '../../core/ui/icons';
           class="absolute inset-0 size-full object-cover object-center"
         />
         <div
-          class="absolute inset-0 bg-[linear-gradient(180deg,rgba(5,25,24,0.5),transparent_45%)]"
+          class="absolute inset-0 bg-[linear-gradient(180deg,rgba(5,25,24,0.62),rgba(5,25,24,0.05)_45%,rgba(5,25,24,0.55))]"
           aria-hidden="true"
         ></div>
 
-        <div
-          class="absolute left-[12%] top-[46%] hidden size-[72px] place-items-center rounded-[18px] bg-[#FAFCFB]/95 shadow-[0_10px_30px_rgba(0,0,0,0.18)] min-[860px]:grid"
-          aria-hidden="true"
-        >
-          <img
-            src="/assets/conta-comigo-icone.svg"
-            alt=""
-            width="44"
-            height="44"
-            class="size-11"
-          />
+        <div class="absolute inset-x-0 top-0 hidden p-8 min-[860px]:block" aria-hidden="true">
+          <span
+            class="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.2em] text-white/90 backdrop-blur-md"
+          >
+            <fa-icon [icon]="icons['checkDouble']" class="text-[11px]" />
+            Eventos sem complicações
+          </span>
         </div>
 
-        <div
-          class="absolute left-12 top-12 hidden max-w-[380px] text-white [text-shadow:0_1px_12px_rgba(5,25,24,0.35)] min-[860px]:block"
-        >
-          <h2 class="font-display text-3xl font-semibold leading-tight">Convida. Confirma. Celebra.</h2>
-          <p class="mb-3.5 mt-2.5 opacity-90">
-            Eventos e convites para qualquer ocasião, de casamentos a noites de jogos.
-          </p>
-          <a routerLink="/criar-conta" class="font-semibold text-white underline">
-            Criar a minha conta
-          </a>
+        <div class="absolute inset-x-0 bottom-0 z-[1] hidden p-8 min-[860px]:block">
+          <div
+            class="max-w-md rounded-[26px] border border-white/20 bg-[#05201f]/45 p-6 text-white shadow-2xl backdrop-blur-md"
+          >
+            <p class="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/70">
+              {{ i18n.t('app.name') }}
+            </p>
+            <p class="mt-2 font-display text-[26px] font-semibold leading-snug">
+              Organiza. Convida. Celebra.
+            </p>
+            <p class="mt-2 text-sm leading-relaxed text-white/80">
+              Convites individuais, confirmações em tempo real e lembretes por email — para que a
+              festa comece antes do primeiro brinde.
+            </p>
+            <div class="mt-4 flex flex-wrap gap-2 text-[12px] font-medium text-white/85">
+              <span class="rounded-full border border-white/20 bg-white/10 px-2.5 py-1">
+                Convites individuais
+              </span>
+              <span class="rounded-full border border-white/20 bg-white/10 px-2.5 py-1">
+                RSVP em tempo real
+              </span>
+              <span class="rounded-full border border-white/20 bg-white/10 px-2.5 py-1">
+                Lembretes por email
+              </span>
+            </div>
+          </div>
         </div>
       </aside>
     </div>

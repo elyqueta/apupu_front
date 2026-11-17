@@ -201,10 +201,10 @@ export class EventDetailPage {
   protected async resendManagementLink(): Promise<void> {
     try {
       const status = await this.store.resendManageLink(this.eventId());
-      if (status === 'sent') {
-        this.toasts.success('O link de gestão foi enviado para o email do anfitrião.');
+      if (status === 'queued') {
+        this.toasts.success('O link de gestão ficou em fila para envio para o email do anfitrião.');
       } else {
-        this.toasts.error('O evento mantém-se disponível, mas não foi possível enviar o link.');
+        this.toasts.error('O evento mantém-se disponível, mas não foi possível enfileirar o link.');
       }
     } catch (error: unknown) {
       this.toasts.error(toApiError(error).message);

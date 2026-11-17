@@ -10,7 +10,7 @@ interface HostSessionEnvelope {
   event: ApiEvent;
   csrf_token: string;
   expires_at: string;
-  manage_email_status: 'sent' | 'failed';
+  manage_email_status: 'queued' | 'failed';
   manage_token_expires_at: string | null;
 }
 
@@ -25,7 +25,7 @@ export class ManagementStore implements Resettable {
   private readonly sessions = inject(SessionCache);
 
   private readonly activeEventIdState = signal<string | null>(null);
-  private readonly manageEmailStatusState = signal<'sent' | 'failed' | null>(null);
+  private readonly manageEmailStatusState = signal<'queued' | 'failed' | null>(null);
 
   readonly activeEventId = this.activeEventIdState.asReadonly();
   readonly manageEmailStatus = this.manageEmailStatusState.asReadonly();
@@ -38,7 +38,7 @@ export class ManagementStore implements Resettable {
     this.activeEventIdState.set(eventId);
   }
 
-  setManageEmailStatus(status: 'sent' | 'failed'): void {
+  setManageEmailStatus(status: 'queued' | 'failed'): void {
     this.manageEmailStatusState.set(status);
   }
 

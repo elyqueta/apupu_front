@@ -229,6 +229,6 @@ export interface CreateEventRequest {
 
 export interface CreateEventResult {
   event: ApiEvent;
-  manage_email_status: 'sent' | 'failed';
+  manage_email_status: 'queued' | 'failed';
   deliveries: Array<{ email: string; status: 'queued' }>;
 }

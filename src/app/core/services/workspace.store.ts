@@ -268,7 +268,7 @@ export class WorkspaceStore {
     this.reportsRepo.invalidate();
   }
 
-  async resendManageLink(eventId: string): Promise<'sent' | 'failed'> {
+  async resendManageLink(eventId: string): Promise<'queued' | 'failed'> {
     return this.eventsRepo.resendManageLink(eventId);
   }
 

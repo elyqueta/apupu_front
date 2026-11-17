@@ -52,17 +52,17 @@
 
         <p
           class="mt-4 flex items-start gap-2 rounded-2xl border p-3 text-left text-[11px] leading-5"
-          [class]="store.manageEmailStatus() === 'sent'
+          [class]="store.manageEmailStatus() === 'queued'
             ? 'border-mint/25 bg-mint/10 text-mint'
             : 'border-coral/25 bg-coral/10 text-coral'"
         >
           <fa-icon
-            [icon]="store.manageEmailStatus() === 'sent' ? icons['success'] : icons['warning']"
+            [icon]="store.manageEmailStatus() === 'queued' ? icons['success'] : icons['warning']"
             class="mt-0.5 text-[10px]"
             aria-hidden="true"
           />
-          @if (store.manageEmailStatus() === 'sent') {
-            O evento foi criado e o link de gestão foi enviado para o email do anfitrião.
+          @if (store.manageEmailStatus() === 'queued') {
+            O evento foi criado e o link de gestão ficou em fila para envio para o email do anfitrião.
           } @else {
             O evento foi criado, mas não foi possível enviar o link de gestão. Podes pedir um novo link mais tarde.
           }

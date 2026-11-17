@@ -939,7 +939,7 @@
           "manage_email_status": {
             "type": "string",
             "enum": [
-              "sent",
+              "queued",
               "failed"
             ]
           },
@@ -1401,7 +1401,7 @@
               "manage_email_status": {
                 "type": "string",
                 "enum": [
-                  "sent",
+                  "queued",
                   "failed"
                 ]
               },
@@ -1433,7 +1433,7 @@
               "manage_email_status": {
                 "type": "string",
                 "enum": [
-                  "sent",
+                  "queued",
                   "failed"
                 ]
               },

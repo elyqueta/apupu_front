@@ -12,7 +12,7 @@ import { CachedRepository } from './cached-repository';
 
 interface EventCreateEnvelope {
   event: ApiEvent;
-  manage_email_status: 'sent' | 'failed';
+  manage_email_status: 'queued' | 'failed';
   deliveries: Array<{ email: string; status: 'queued' }>;
 }
 
@@ -54,7 +54,7 @@ export class EventsRepository extends CachedRepository<HostEvent[]> {
 
   async create(
     input: CreateEventInput,
-  ): Promise<{ event: HostEvent; manageEmailStatus: 'sent' | 'failed' }> {
+  ): Promise<{ event: HostEvent; manageEmailStatus: 'queued' | 'failed' }> {
     const request: CreateEventRequest = {
       event: {
         title: input.title,
@@ -117,8 +117,8 @@ export class EventsRepository extends CachedRepository<HostEvent[]> {
     this.mutate((events) => (events ?? []).filter((event) => event.id !== eventId));
   }
 
-  async resendManageLink(eventId: string): Promise<'sent' | 'failed'> {
-    const response = await this.api.post<{ manage_email_status: 'sent' | 'failed' }>(
+  async resendManageLink(eventId: string): Promise<'queued' | 'failed'> {
+    const response = await this.api.post<{ manage_email_status: 'queued' | 'failed' }>(
       `/host/events/${encodeURIComponent(eventId)}/manage-link/resend`,
     );
     return response.manage_email_status;

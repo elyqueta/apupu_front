@@ -108,19 +108,6 @@ export class SettingsPage {
     this.toasts.success(this.i18n.t('settings.saved'));
   }
 
-  protected async endManagement(): Promise<void> {
-    const eventId = this.store.activeManagementEventId();
-    if (!eventId) {
-      return;
-    }
-    try {
-      await this.store.endManagement(eventId);
-      this.toasts.info(this.i18n.t('settings.managementEnded'));
-    } catch (error: unknown) {
-      this.toasts.error(toApiError(error).message);
-    }
-  }
-
   protected async changePassword(): Promise<void> {
     if (this.passwordForm.invalid || this.changingPassword()) {
       this.passwordForm.markAllAsTouched();

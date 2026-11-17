@@ -84,6 +84,8 @@ export interface ApiEvent {
   rules: string | null;
   dress_code: string | null;
   template_id: string | null;
+  /** Imagem de capa (URL absoluto); `null` quando não tem capa. */
+  cover_url: string | null;
   theme: { mode: 'light' | 'dark'; palette: string };
   contribution: EventContribution;
   rsvp_deadline: string | null;
@@ -159,10 +161,32 @@ export interface ApiActivity {
 export interface ApiTask {
   id: string;
   event_id: string | null;
+  event_title: string | null;
+  manager_id: string | null;
+  manager_email: string | null;
   label: string;
   done: boolean;
+  completed_at: string | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface ApiNotification {
+  id: string;
+  event_id: string | null;
+  event_title: string | null;
+  activity_id: string | null;
+  kind: string;
+  title: string;
+  body: string | null;
+  metadata: Record<string, unknown>;
+  read: boolean;
+  read_at: string | null;
+  created_at: string;
+}
+
+export interface ApiNotificationPage extends ApiPage<ApiNotification> {
+  unread_count: number;
 }
 
 export interface ApiTemplate {
@@ -180,6 +204,9 @@ export interface PublicInvitation {
   event: PublicEvent;
   guest: {
     name: string;
+    email: string;
+    /** `true` quando o email do convite já tem conta registada. */
+    email_has_account: boolean;
     rsvp_status: ApiRsvpStatus;
     rsvp_responded_at: string | null;
   };

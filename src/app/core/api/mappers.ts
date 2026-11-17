@@ -3,6 +3,7 @@ import {
   ApiEvent,
   ApiEventManager,
   ApiInvitation,
+  ApiNotification,
   ApiRsvpStatus,
   ApiTask,
   ApiTemplate,
@@ -19,7 +20,9 @@ import {
   Guest,
   GuestInvitation,
   HostEvent,
+  HostNotification,
   HostProfile,
+  NotificationKind,
   WorkspaceTask,
 } from '../models/models';
 
@@ -96,6 +99,7 @@ export function mapEvent(event: ApiEvent): HostEvent {
     dressCode: event.dress_code ?? '',
     rsvpDeadline: event.rsvp_deadline,
     templateId: event.template_id,
+    coverUrl: event.cover_url ?? null,
     status: event.status === 'scheduled' ? 'published' : event.status,
     contributionEnabled: contribution.enabled,
     bankDetails:
@@ -170,9 +174,35 @@ export function mapActivity(activity: ApiActivity): EventActivity {
   return {
     id: activity.id,
     eventId: activity.event_id,
-    kind: activity.kind,
+    eventTitle: activity.event_title ?? null,
+    kind: normalizeActivityKind(activity.kind),
     guestName: activity.guest_name,
     at: activity.at,
+  };
+}
+
+/**
+ * O backend usa `snake_case` para o tipo de atividade; a interface usa
+ * `kebab-case` (ex.: `rsvp_accepted` → `rsvp-confirmed`).
+ */
+export function normalizeActivityKind(kind: string): string {
+  const normalized = kind.replace(/_/g, '-');
+  return normalized === 'rsvp-accepted' ? 'rsvp-confirmed' : normalized;
+}
+
+export function mapNotification(notification: ApiNotification): HostNotification {
+  return {
+    id: notification.id,
+    eventId: notification.event_id,
+    eventTitle: notification.event_title,
+    activityId: notification.activity_id,
+    kind: notification.kind as NotificationKind,
+    title: notification.title,
+    body: notification.body,
+    metadata: notification.metadata,
+    read: notification.read,
+    readAt: notification.read_at,
+    createdAt: notification.created_at,
   };
 }
 
@@ -191,8 +221,14 @@ export function mapTask(task: ApiTask): WorkspaceTask {
   return {
     id: task.id,
     eventId: task.event_id,
+    eventTitle: task.event_title,
+    managerId: task.manager_id,
+    managerEmail: task.manager_email,
     label: task.label,
     done: task.done,
+    completedAt: task.completed_at,
+    createdAt: task.created_at,
+    updatedAt: task.updated_at,
   };
 }
 

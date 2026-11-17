@@ -163,4 +163,48 @@ export class EventsRepository extends CachedRepository<HostEvent[]> {
       emailStatus: response.invite_email_status,
     };
   }
+
+  /** Define a capa por URL (operação idempotente). */
+  async setCoverUrl(eventId: string, coverUrl: string): Promise<HostEvent> {
+    const response = await this.api.put<ApiEvent>(
+      `/host/events/${encodeURIComponent(eventId)}/cover`,
+      { cover_url: coverUrl },
+    );
+    const updated = mapEvent(response);
+    this.upsert(updated);
+    return updated;
+  }
+
+  /** Carrega a capa por ficheiro, com progresso e cancelamento. */
+  uploadCover(
+    eventId: string,
+    file: File,
+    onProgress?: (percent: number) => void,
+  ): { promise: Promise<HostEvent>; cancel: () => void } {
+    const body = new FormData();
+    body.append('cover', file);
+    const handle = this.api.postFormWithProgress<ApiEvent>(
+      `/host/events/${encodeURIComponent(eventId)}/cover/upload`,
+      body,
+      { onProgress },
+    );
+    return {
+      cancel: handle.cancel,
+      promise: handle.promise.then((response) => {
+        const updated = mapEvent(response);
+        this.upsert(updated);
+        return updated;
+      }),
+    };
+  }
+
+  /** Remove a capa (idempotente). */
+  async removeCover(eventId: string): Promise<HostEvent> {
+    const response = await this.api.deleteWithData<ApiEvent>(
+      `/host/events/${encodeURIComponent(eventId)}/cover`,
+    );
+    const updated = mapEvent(response);
+    this.upsert(updated);
+    return updated;
+  }
 }

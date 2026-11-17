@@ -6,10 +6,11 @@ import { toApiError } from '../../core/api/api-error';
 import { WorkspaceStore } from '../../core/services/workspace.store';
 import { ToastService } from '../../core/services/toast.service';
 import { ICONS } from '../../core/ui/icons';
+import { PhoneMaskDirective } from '../directives/phone-mask.directive';
 
 @Component({
   selector: 'app-guest-dialog',
-  imports: [ReactiveFormsModule, FaIconComponent],
+  imports: [ReactiveFormsModule, FaIconComponent, PhoneMaskDirective],
   template: `
     @if (open()) {
       <div class="fixed inset-0 z-[100] grid place-items-center overflow-y-auto p-4">
@@ -133,10 +134,12 @@ import { ICONS } from '../../core/ui/icons';
               <input
                 type="tel"
                 formControlName="phone"
+                appPhoneMask
                 autocomplete="tel"
                 class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink outline-none transition placeholder:text-muted/60 focus:border-brand/50"
                 [placeholder]="i18n.t('create.placeholder.guestPhone')"
               />
+              <span class="mt-1 block text-[10px] text-muted">{{ i18n.t('common.phoneHint') }}</span>
             </label>
 
             @if (error()) {

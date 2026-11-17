@@ -223,8 +223,12 @@
                 (click)="notificationsOpen.set(!notificationsOpen())"
               >
                 <fa-icon [icon]="icons['bell']" class="text-sm" />
-                @if (notifications().length > 0) {
-                  <span class="absolute right-2.5 top-2.5 size-1.5 rounded-full bg-brand"></span>
+                @if (unreadNotifications() > 0) {
+                  <span
+                    class="absolute -right-1 -top-1 grid min-w-4 place-items-center rounded-full bg-brand px-1 text-[9px] font-semibold text-on-secondary"
+                  >
+                    {{ unreadNotifications() > 9 ? '9+' : unreadNotifications() }}
+                  </span>
                 }
               </button>
 
@@ -236,48 +240,65 @@
                   (click)="notificationsOpen.set(false)"
                 ></button>
                 <div
-                  class="absolute right-0 top-full z-50 mt-2 max-h-[calc(100dvh-6rem)] w-[min(calc(100vw-1.5rem),22rem)] overflow-y-auto rounded-3xl border border-line bg-surface-solid/95 shadow-card backdrop-blur-2xl animate-rise sm:w-[min(92vw,22rem)]"
+                  class="absolute right-0 top-full z-50 mt-2 max-h-[calc(100dvh-6rem)] w-[min(calc(100vw-1.5rem),24rem)] overflow-y-auto rounded-3xl border border-line bg-surface-solid/95 shadow-card backdrop-blur-2xl animate-rise sm:w-[min(92vw,24rem)]"
                 >
                   <div class="flex items-center justify-between gap-3 border-b border-line p-4">
                     <p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted">
                       {{ i18n.t('shell.notificationsTitle') }}
                     </p>
-                    <span class="size-1.5 rounded-full bg-aqua"></span>
+                    @if (unreadNotifications() > 0) {
+                      <span
+                        class="rounded-full bg-brand/15 px-2 py-0.5 text-[9px] font-semibold text-brand-strong"
+                      >
+                        {{ i18n.t('notifications.unreadCount', { count: unreadNotifications() }) }}
+                      </span>
+                    }
                   </div>
 
                   @if (notifications().length === 0) {
                     <p class="p-5 text-xs text-muted">{{ i18n.t('shell.notificationsEmpty') }}</p>
                   } @else {
                     <div class="max-h-80 overflow-y-auto p-2">
-                      @for (entry of notifications(); track entry.item.id) {
+                      @for (notification of notifications(); track notification.id) {
                         <a
-                          [routerLink]="['/eventos', entry.event.id]"
+                          [routerLink]="notificationRoute(notification)"
                           class="flex items-start gap-3 rounded-2xl p-2.5 transition hover:bg-surface-raised/70"
-                          (click)="notificationsOpen.set(false)"
+                          [class.bg-surface-raised/40]="!notification.read"
+                          (click)="openNotification(notification)"
                         >
                           <span
                             class="mt-0.5 grid size-8 shrink-0 place-items-center rounded-xl border"
-                            [class]="activityTone(entry.item.kind)"
+                            [class]="notificationTone(notification.kind)"
                           >
                             <fa-icon
-                              [icon]="activityIcon(entry.item.kind)"
+                              [icon]="notificationIcon(notification.kind)"
                               class="text-[10px]"
                               aria-hidden="true"
                             />
                           </span>
                           <span class="min-w-0 flex-1">
-                            <span class="block text-xs leading-5 text-ink">
-                              {{ activityText(entry.event.id, entry.item) }}
+                            <span class="flex items-center gap-2">
+                              <span class="min-w-0 flex-1 truncate text-xs font-semibold text-ink">
+                                {{ notification.title }}
+                              </span>
+                              @if (!notification.read) {
+                                <span class="size-1.5 shrink-0 rounded-full bg-brand"></span>
+                              }
                             </span>
+                            @if (notification.body) {
+                              <span class="mt-0.5 block line-clamp-2 text-[11px] leading-5 text-muted">
+                                {{ notification.body }}
+                              </span>
+                            }
                             <span class="mt-1 block text-[10px] text-muted">
-                              {{ i18n.relative(entry.item.at) }}
+                              {{ i18n.relative(notification.createdAt) }}
                             </span>
                           </span>
                         </a>
                       }
                     </div>
                     <a
-                      routerLink="/relatorios"
+                      routerLink="/notificacoes"
                       class="flex items-center justify-center gap-2 border-t border-line p-3 text-[11px] font-semibold text-brand-strong transition hover:bg-surface-raised/60"
                       (click)="notificationsOpen.set(false)"
                     >

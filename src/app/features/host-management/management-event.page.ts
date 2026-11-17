@@ -2,17 +2,28 @@ import { CommonModule } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { ApiClient } from '../../core/api/api-client';
 import { toApiError } from '../../core/api/api-error';
-import { ApiEvent, ApiEventAccessRole, ApiInvitation } from '../../core/api/api.models';
+import {
+  ApiActivity,
+  ApiEvent,
+  ApiEventAccessRole,
+  ApiInvitation,
+  Pagination,
+} from '../../core/api/api.models';
+import { normalizeActivityKind } from '../../core/api/mappers';
 import { I18nService } from '../../core/i18n/i18n.service';
+import { EventActivity } from '../../core/models/models';
 import { ICONS } from '../../core/ui/icons';
+import { ActivityPresenter } from '../../shared/services/activity.presenter';
 import { BrandComponent } from '../../shared/components/brand.component';
 import { PreferenceControlsComponent } from '../../shared/components/preference-controls.component';
 import { SkeletonComponent } from '../../shared/components/skeleton.component';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
+import { PhoneMaskDirective } from '../../shared/directives/phone-mask.directive';
 
 interface EventDetailResponse {
   event: ApiEvent;
@@ -30,14 +41,15 @@ interface EventDetailResponse {
     PreferenceControlsComponent,
     SkeletonComponent,
     StatusBadgeComponent,
+    PhoneMaskDirective,
   ],
   templateUrl: './management-event.page.html',
 })
 export class ManagementEventPage {
   private readonly api = inject(ApiClient);
   private readonly route = inject(ActivatedRoute);
-  private readonly router = inject(Router);
   private readonly formBuilder = inject(FormBuilder);
+  private readonly activityPresenter = inject(ActivityPresenter);
 
   protected readonly i18n = inject(I18nService);
   protected readonly icons = ICONS;
@@ -49,6 +61,12 @@ export class ManagementEventPage {
   protected readonly feedback = signal('');
   protected readonly pendingAction = signal<string | null>(null);
   protected readonly role = signal<ApiEventAccessRole>('host');
+  protected readonly activityItems = signal<ApiActivity[]>([]);
+  protected readonly activityPagination = signal<Pagination | null>(null);
+  protected readonly activityLoading = signal(false);
+  protected readonly coverUploading = signal(false);
+  protected readonly coverProgress = signal(0);
+  private coverUploadHandle: { cancel: () => void } | null = null;
 
   protected readonly guestForm = this.formBuilder.nonNullable.group({
     name: ['', [Validators.required, Validators.maxLength(160)]],
@@ -63,6 +81,10 @@ export class ManagementEventPage {
     message: ['', [Validators.maxLength(4000)]],
     rules: ['', [Validators.maxLength(4000)]],
     dressCode: ['', [Validators.maxLength(200)]],
+  });
+
+  protected readonly coverForm = this.formBuilder.nonNullable.group({
+    url: ['', [Validators.pattern(/^https:\/\/.+/), Validators.maxLength(500)]],
   });
 
   constructor() {
@@ -201,18 +223,170 @@ export class ManagementEventPage {
     }
   }
 
-  protected async endSession(): Promise<void> {
+  protected async removeActivity(item: ApiActivity): Promise<void> {
+    if (this.pendingAction() || !window.confirm(this.i18n.t('management.activityRemoveConfirm'))) {
+      return;
+    }
+    this.pendingAction.set(item.id);
+    this.actionError.set('');
+    this.feedback.set('');
+    try {
+      await this.api.delete(
+        `/host/events/${encodeURIComponent(item.event_id)}/activity/${encodeURIComponent(item.id)}`,
+      );
+      this.activityItems.update((items) => items.filter((entry) => entry.id !== item.id));
+      this.feedback.set(this.i18n.t('management.activityRemoved'));
+      await this.loadActivity(1);
+    } catch (error: unknown) {
+      this.actionError.set(toApiError(error).message);
+    } finally {
+      this.pendingAction.set(null);
+    }
+  }
+
+  protected async loadActivity(page = 1): Promise<void> {
+    const event = this.event();
+    if (!event) {
+      return;
+    }
+    this.activityLoading.set(true);
+    try {
+      const result = await this.api.getPage<ApiActivity>(
+        `/host/events/${encodeURIComponent(event.id)}/activity`,
+        { page, page_size: 8 },
+      );
+      this.activityItems.set(result.data);
+      this.activityPagination.set(result.pagination);
+    } catch (error: unknown) {
+      this.activityItems.set([]);
+      this.activityPagination.set(null);
+      this.actionError.set(toApiError(error).message);
+    } finally {
+      this.activityLoading.set(false);
+    }
+  }
+
+  protected goToActivityPage(page: number): void {
+    const pagination = this.activityPagination();
+    if (!pagination || page < 1 || page > pagination.total_pages || page === pagination.page) {
+      return;
+    }
+    void this.loadActivity(page);
+  }
+
+  protected activityText(item: ApiActivity): string {
+    const mapped: EventActivity = {
+      id: item.id,
+      eventId: item.event_id,
+      eventTitle: this.event()?.title ?? null,
+      kind: normalizeActivityKind(item.kind),
+      guestName: item.guest_name,
+      at: item.at,
+    };
+    return this.activityPresenter.text(mapped, this.event()?.title ?? '');
+  }
+
+  protected activityIcon(kind: string): IconDefinition {
+    return this.activityPresenter.icon(normalizeActivityKind(kind));
+  }
+
+  protected activityTone(kind: string): string {
+    return this.activityPresenter.tone(normalizeActivityKind(kind));
+  }
+
+  protected async setCoverUrl(): Promise<void> {
+    const event = this.event();
+    if (!event || this.pendingAction() || this.coverForm.invalid) {
+      this.coverForm.markAllAsTouched();
+      return;
+    }
+    const url = this.coverForm.controls.url.value.trim();
+    if (!url) {
+      return;
+    }
+    this.pendingAction.set('cover');
+    this.actionError.set('');
+    this.feedback.set('');
+    try {
+      const updated = await this.api.put<ApiEvent>(
+        `/host/events/${encodeURIComponent(event.id)}/cover`,
+        { cover_url: url },
+      );
+      this.event.set({ ...updated, stats: updated.stats ?? event.stats });
+      this.feedback.set(this.i18n.t('management.coverSaved'));
+    } catch (error: unknown) {
+      this.actionError.set(toApiError(error).message);
+    } finally {
+      this.pendingAction.set(null);
+    }
+  }
+
+  protected onCoverFile(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (file) {
+      void this.uploadCover(file);
+    }
+  }
+
+  protected async uploadCover(file: File): Promise<void> {
+    const event = this.event();
+    if (!event || this.coverUploading()) {
+      return;
+    }
+    this.coverUploading.set(true);
+    this.coverProgress.set(0);
+    this.actionError.set('');
+    this.feedback.set('');
+    const body = new FormData();
+    body.append('cover', file);
+    const handle = this.api.postFormWithProgress<ApiEvent>(
+      `/host/events/${encodeURIComponent(event.id)}/cover/upload`,
+      body,
+      { onProgress: (percent) => this.coverProgress.set(percent) },
+    );
+    this.coverUploadHandle = handle;
+    try {
+      const updated = await handle.promise;
+      this.event.set({ ...updated, stats: updated.stats ?? event.stats });
+      this.coverProgress.set(100);
+      this.feedback.set(this.i18n.t('management.coverUploaded'));
+    } catch (error: unknown) {
+      if (!(error instanceof DOMException && error.name === 'AbortError')) {
+        this.actionError.set(toApiError(error).message);
+      }
+    } finally {
+      this.coverUploading.set(false);
+      this.coverUploadHandle = null;
+      this.coverProgress.set(0);
+    }
+  }
+
+  protected cancelCoverUpload(): void {
+    this.coverUploadHandle?.cancel();
+    this.coverUploading.set(false);
+    this.coverProgress.set(0);
+  }
+
+  protected async removeCover(): Promise<void> {
     const event = this.event();
     if (!event || this.pendingAction()) {
       return;
     }
-    this.pendingAction.set('end');
+    this.pendingAction.set('cover');
     this.actionError.set('');
+    this.feedback.set('');
     try {
-      await this.api.delete(`/host/session/${encodeURIComponent(event.id)}`);
-      await this.router.navigate(['/gestao'], { replaceUrl: true });
+      const updated = await this.api.deleteWithData<ApiEvent>(
+        `/host/events/${encodeURIComponent(event.id)}/cover`,
+      );
+      this.event.set({ ...updated, stats: updated.stats ?? event.stats });
+      this.coverForm.reset({ url: '' });
+      this.feedback.set(this.i18n.t('management.coverRemoved'));
     } catch (error: unknown) {
       this.actionError.set(toApiError(error).message);
+    } finally {
       this.pendingAction.set(null);
     }
   }
@@ -251,6 +425,8 @@ export class ManagementEventPage {
         rules: result.event.rules ?? '',
         dressCode: result.event.dress_code ?? '',
       });
+      this.coverForm.reset({ url: result.event.cover_url ?? '' });
+      await this.loadActivity(1);
     } catch (error: unknown) {
       const apiError = toApiError(error);
       this.error.set(

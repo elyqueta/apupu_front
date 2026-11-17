@@ -18,6 +18,7 @@ import { ToastService } from '../../core/services/toast.service';
 import { WorkspaceStore } from '../../core/services/workspace.store';
 import { ICONS } from '../../core/ui/icons';
 import { TemplateArtworkComponent } from '../../shared/components/template-artwork.component';
+import { PhoneMaskDirective } from '../../shared/directives/phone-mask.directive';
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
@@ -29,7 +30,7 @@ interface WizardStep {
 
 @Component({
   selector: 'app-create-event-page',
-  imports: [RouterLink, ReactiveFormsModule, FaIconComponent, TemplateArtworkComponent],
+  imports: [RouterLink, ReactiveFormsModule, FaIconComponent, TemplateArtworkComponent, PhoneMaskDirective],
   templateUrl: './create-event.page.html',
 })
 export class CreateEventPage {

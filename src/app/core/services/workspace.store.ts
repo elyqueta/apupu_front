@@ -12,6 +12,7 @@ import {
   Guest,
   GuestInput,
   HostEvent,
+  HostNotification,
   HostProfile,
   ManagerInviteResult,
   TemplateId,
@@ -23,9 +24,15 @@ import { DashboardRepository } from '../data/dashboard.repository';
 import { EventsRepository } from '../data/events.repository';
 import { GuestsRepository } from '../data/guests.repository';
 import { ManagementStore } from '../data/management.store';
+import {
+  NotificationPage,
+  NotificationQuery,
+  NotificationsRepository,
+} from '../data/notifications.repository';
 import { ProfileRepository, ProfileUpdateInput } from '../data/profile.repository';
 import { ReportsRepository } from '../data/reports.repository';
 import { TasksRepository } from '../data/tasks.repository';
+import { TaskPage, TaskQuery } from '../data/tasks.repository';
 import { TemplateSelectionStore } from '../data/template-selection.store';
 import { TemplatesRepository } from '../data/templates.repository';
 import { Resettable, SessionCache } from './session-cache';
@@ -43,9 +50,15 @@ export interface LoadScope {
   dashboard?: boolean;
   reports?: boolean;
   profile?: boolean;
+  notifications?: boolean;
 }
 
-const CHROME_SCOPE: LoadScope = { profile: true, activity: true, events: true };
+const CHROME_SCOPE: LoadScope = {
+  profile: true,
+  activity: true,
+  events: true,
+  notifications: true,
+};
 
 /**
  * Fachada sem estado sobre os repositórios por domínio.
@@ -61,6 +74,7 @@ export class WorkspaceStore implements Resettable {
   private readonly guestsRepo = inject(GuestsRepository);
   private readonly activityRepo = inject(ActivityRepository);
   private readonly tasksRepo = inject(TasksRepository);
+  private readonly notificationsRepo = inject(NotificationsRepository);
   private readonly templatesRepo = inject(TemplatesRepository);
   private readonly dashboardRepo = inject(DashboardRepository);
   private readonly reportsRepo = inject(ReportsRepository);
@@ -83,6 +97,8 @@ export class WorkspaceStore implements Resettable {
   readonly guests = computed<Guest[]>(() => this.guestsRepo.data() ?? []);
   readonly activity = computed<EventActivity[]>(() => this.activityRepo.data() ?? []);
   readonly tasks = computed<WorkspaceTask[]>(() => this.tasksRepo.data() ?? []);
+  readonly notifications = computed<HostNotification[]>(() => this.notificationsRepo.data() ?? []);
+  readonly unreadNotifications = this.notificationsRepo.unreadCount;
   readonly templates = computed<EventTemplate[]>(() => this.templatesRepo.data() ?? []);
   readonly reportSummary = computed(() => this.reportsRepo.data());
   readonly profile = computed<HostProfile>(() => this.profileRepo.data() ?? emptyProfile());
@@ -232,6 +248,11 @@ export class WorkspaceStore implements Resettable {
       .sort((a, b) => b.at.localeCompare(a.at));
   }
 
+  /** Atividade de um evento, paginada no servidor. */
+  listEventActivity(eventId: string, page = 1, pageSize = 10) {
+    return this.activityRepo.listForEvent(eventId, page, pageSize);
+  }
+
   tasksFor(eventId: string): WorkspaceTask[] {
     return this.tasks().filter((task) => task.eventId === eventId);
   }
@@ -347,16 +368,70 @@ export class WorkspaceStore implements Resettable {
     return this.guestsRepo.sendReminder(guestId);
   }
 
-  async toggleTask(taskId: string): Promise<void> {
-    await this.tasksRepo.toggle(taskId);
+  async toggleTask(taskId: string, done?: boolean): Promise<void> {
+    await this.tasksRepo.toggle(taskId, done);
   }
 
-  async createTask(label: string, eventId: string | null = null): Promise<WorkspaceTask> {
-    return this.tasksRepo.create(label, eventId);
+  /** Listagem paginada e filtrada usada pela página global de tarefas. */
+  tasksPage(query: TaskQuery = {}): Promise<TaskPage> {
+    return this.tasksRepo.listPage(query);
+  }
+
+  async createTask(
+    label: string,
+    eventId: string | null = null,
+    managerId: string | null = null,
+  ): Promise<WorkspaceTask> {
+    return this.tasksRepo.create(label, eventId, managerId);
   }
 
   async removeTask(taskId: string): Promise<void> {
     await this.tasksRepo.remove(taskId);
+  }
+
+  async setEventCoverUrl(eventId: string, coverUrl: string): Promise<HostEvent> {
+    return this.eventsRepo.setCoverUrl(eventId, coverUrl);
+  }
+
+  uploadEventCover(
+    eventId: string,
+    file: File,
+    onProgress?: (percent: number) => void,
+  ): { promise: Promise<HostEvent>; cancel: () => void } {
+    return this.eventsRepo.uploadCover(eventId, file, onProgress);
+  }
+
+  async removeEventCover(eventId: string): Promise<HostEvent> {
+    return this.eventsRepo.removeCover(eventId);
+  }
+
+  async removeActivity(eventId: string, activityId: string): Promise<void> {
+    await this.activityRepo.remove(eventId, activityId);
+  }
+
+  /** Listagem paginada e filtrada usada pela página de notificações. */
+  notificationsPage(query: NotificationQuery = {}): Promise<NotificationPage> {
+    return this.notificationsRepo.listPage(query);
+  }
+
+  async markNotificationRead(notificationId: string, read = true): Promise<void> {
+    await this.notificationsRepo.setRead(notificationId, read);
+  }
+
+  async removeNotification(notificationId: string): Promise<void> {
+    await this.notificationsRepo.remove(notificationId);
+  }
+
+  async readAllNotifications(): Promise<void> {
+    await this.notificationsRepo.readAll();
+  }
+
+  async removeAllNotifications(): Promise<void> {
+    await this.notificationsRepo.removeAll();
+  }
+
+  async refreshNotifications(): Promise<void> {
+    await this.notificationsRepo.load({ force: true });
   }
 
   async saveProfile(input: ProfileUpdateInput): Promise<HostProfile> {
@@ -387,6 +462,7 @@ export class WorkspaceStore implements Resettable {
     if (scope.events) requests.push(this.eventsRepo.load(options));
     if (scope.guests) requests.push(this.guestsRepo.load(options));
     if (scope.tasks) requests.push(this.tasksRepo.load(options));
+    if (scope.notifications) requests.push(this.notificationsRepo.load(options));
     if (scope.templates) requests.push(this.templatesRepo.load(options));
     if (scope.dashboard) requests.push(this.dashboardRepo.load(options));
     if (scope.reports) requests.push(this.reportsRepo.load(options));
@@ -401,6 +477,7 @@ export class WorkspaceStore implements Resettable {
     if (scope.events) repositories.push(this.eventsRepo);
     if (scope.guests) repositories.push(this.guestsRepo);
     if (scope.tasks) repositories.push(this.tasksRepo);
+    if (scope.notifications) repositories.push(this.notificationsRepo);
     if (scope.templates) repositories.push(this.templatesRepo);
     if (scope.dashboard) repositories.push(this.dashboardRepo);
     if (scope.reports) repositories.push(this.reportsRepo);

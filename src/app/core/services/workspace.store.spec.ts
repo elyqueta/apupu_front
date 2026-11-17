@@ -46,6 +46,7 @@ function eventFixture(overrides: Partial<ApiEvent> = {}): ApiEvent {
     rules: null,
     dress_code: null,
     template_id: null,
+    cover_url: null,
     theme: { mode: 'dark', palette: 'default' },
     contribution: { enabled: false },
     rsvp_deadline: null,
@@ -97,6 +98,9 @@ describe('WorkspaceStore · guest creation', () => {
       .flush({ data: { host: hostFixture() } });
     http.expectOne((request) => request.url.endsWith('/host/activity')).flush(page());
     http.expectOne((request) => request.url.endsWith('/host/events')).flush(page());
+    http
+      .expectOne((request) => request.url.endsWith('/host/notifications'))
+      .flush({ ...page(), unread_count: 0 });
   }
 
   async function setup(cookie: string): Promise<WorkspaceStore> {

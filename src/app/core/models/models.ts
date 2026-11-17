@@ -37,6 +37,8 @@ export interface HostEvent {
   dressCode: string;
   rsvpDeadline: string | null;
   templateId: TemplateId | null;
+  /** Imagem de capa (URL absoluto); `null` quando não tem capa. */
+  coverUrl: string | null;
   status: EventStatus;
   contributionEnabled: boolean;
   bankDetails: BankDetails | null;
@@ -116,6 +118,8 @@ export interface EventTemplate {
 export interface EventActivity {
   id: string;
   eventId: string;
+  /** Título do evento; presente nas listagens globais. */
+  eventTitle: string | null;
   kind: string;
   guestName: string | null;
   at: string;
@@ -124,9 +128,45 @@ export interface EventActivity {
 export interface WorkspaceTask {
   id: string;
   eventId: string | null;
+  /** Título do evento associado (quando existe). */
+  eventTitle: string | null;
+  /** Gestor a quem a tarefa está atribuída; `null` para tarefas do anfitrião. */
+  managerId: string | null;
+  managerEmail: string | null;
   label: string;
   done: boolean;
+  completedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
+
+/** Tipos de notificação in-app gerados a partir de atividades e lembretes. */
+export type NotificationKind =
+  | 'rsvp_accepted'
+  | 'rsvp_declined'
+  | 'guest_added'
+  | 'reminder_sent'
+  | 'event_created'
+  | 'event_upcoming'
+  | 'rsvp_deadline'
+  | 'task_assigned'
+  | 'task_completed';
+
+export interface HostNotification {
+  id: string;
+  eventId: string | null;
+  eventTitle: string | null;
+  activityId: string | null;
+  kind: NotificationKind;
+  title: string;
+  body: string | null;
+  metadata: Record<string, unknown>;
+  read: boolean;
+  readAt: string | null;
+  createdAt: string;
+}
+
+export type NotificationStatus = 'all' | 'unread' | 'read';
 
 export interface EventStats {
   total: number;

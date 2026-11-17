@@ -12,8 +12,18 @@ import { PreferenceControlsComponent } from '../../shared/components/preference-
 
 interface HostSessionResponse {
   event: ApiEvent;
+  role: 'host' | 'manager';
+  access_role: 'host' | 'manager';
+  email: string | null;
+  email_has_account: boolean;
   csrf_token: string;
   expires_at: string;
+}
+
+interface AccountPrompt {
+  eventId: string;
+  email: string;
+  step: 'options' | 'choose-email';
 }
 
 @Component({
@@ -32,6 +42,7 @@ export class ManagementEntryPage {
   protected readonly error = signal('');
   protected readonly invalidLink = signal(false);
   protected readonly busy = signal(false);
+  protected readonly accountPrompt = signal<AccountPrompt | null>(null);
 
   protected readonly security = [
     {
@@ -89,6 +100,14 @@ export class ManagementEntryPage {
     try {
       const response = await this.api.post<HostSessionResponse>('/host/session', { token });
       this.link.set('');
+      if (!response.email_has_account && response.email) {
+        this.accountPrompt.set({
+          eventId: response.event.id,
+          email: response.email,
+          step: 'options',
+        });
+        return;
+      }
       await this.router.navigate(['/gestao/evento', response.event.id], { replaceUrl: true });
     } catch (error: unknown) {
       this.link.set('');
@@ -99,6 +118,62 @@ export class ManagementEntryPage {
     } finally {
       this.busy.set(false);
     }
+  }
+
+  protected chooseSameEmail(): void {
+    this.accountPrompt.update((prompt) =>
+      prompt ? { ...prompt, step: 'choose-email' } : prompt,
+    );
+  }
+
+  protected backToAccountOptions(): void {
+    this.accountPrompt.update((prompt) => (prompt ? { ...prompt, step: 'options' } : prompt));
+  }
+
+  protected createAccountWithSameEmail(): void {
+    const prompt = this.accountPrompt();
+    if (!prompt) {
+      return;
+    }
+    void this.router.navigate(['/criar-conta'], {
+      queryParams: {
+        email: prompt.email,
+        enviar: 1,
+        returnUrl: this.returnUrl(prompt.eventId),
+      },
+    });
+  }
+
+  protected createAccountWithOtherEmail(): void {
+    const prompt = this.accountPrompt();
+    if (!prompt) {
+      return;
+    }
+    void this.router.navigate(['/criar-conta'], {
+      queryParams: { returnUrl: this.returnUrl(prompt.eventId) },
+    });
+  }
+
+  protected loginInstead(): void {
+    const prompt = this.accountPrompt();
+    if (!prompt) {
+      return;
+    }
+    void this.router.navigate(['/entrar'], {
+      queryParams: { email: prompt.email, returnUrl: this.returnUrl(prompt.eventId) },
+    });
+  }
+
+  protected continueWithoutAccount(): void {
+    const prompt = this.accountPrompt();
+    if (!prompt) {
+      return;
+    }
+    void this.router.navigate(['/gestao/evento', prompt.eventId], { replaceUrl: true });
+  }
+
+  private returnUrl(eventId: string): string {
+    return `/gestao/evento/${eventId}`;
   }
 }
 

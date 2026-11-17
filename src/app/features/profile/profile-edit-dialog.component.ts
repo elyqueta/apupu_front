@@ -1,5 +1,5 @@
 import { Component, effect, inject, input, output, signal } from '@angular/core';
-import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AbstractControl, NonNullableFormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ApiError, toApiError } from '../../core/api/api-error';
 import { I18nService } from '../../core/i18n/i18n.service';
@@ -7,6 +7,7 @@ import { ToastService } from '../../core/services/toast.service';
 import { WorkspaceStore } from '../../core/services/workspace.store';
 import { ICONS } from '../../core/ui/icons';
 import { AvatarComponent } from '../../shared/components/avatar.component';
+import { PhoneMaskDirective } from '../../shared/directives/phone-mask.directive';
 
 /**
  * Modal de edição dos dados pessoais do perfil.
@@ -17,7 +18,7 @@ import { AvatarComponent } from '../../shared/components/avatar.component';
  */
 @Component({
   selector: 'app-profile-edit-dialog',
-  imports: [ReactiveFormsModule, FaIconComponent, AvatarComponent],
+  imports: [ReactiveFormsModule, FaIconComponent, AvatarComponent, PhoneMaskDirective],
   template: `
     @if (open()) {
       <div class="fixed inset-0 z-[100] grid place-items-center overflow-y-auto p-4">
@@ -125,9 +126,13 @@ import { AvatarComponent } from '../../shared/components/avatar.component';
                 <input
                   type="tel"
                   formControlName="phone"
+                  appPhoneMask
                   autocomplete="tel"
                   class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink outline-none transition focus:border-brand/50"
                 />
+                <span class="mt-1 block text-[10px] text-muted">{{
+                  i18n.t('common.phoneHint')
+                }}</span>
               </label>
 
               <label class="block">
@@ -139,8 +144,14 @@ import { AvatarComponent } from '../../shared/components/avatar.component';
                 <input
                   type="date"
                   formControlName="birthDate"
+                  [max]="maxBirthDate"
                   class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink outline-none transition focus:border-brand/50"
                 />
+                @if (form.controls.birthDate.touched && form.controls.birthDate.invalid) {
+                  <span class="mt-1 block text-xs text-coral">{{
+                    i18n.t('profile.personal.birthDateMin')
+                  }}</span>
+                }
               </label>
 
               <label class="block">
@@ -226,6 +237,8 @@ export class ProfileEditDialogComponent {
   protected readonly saving = signal(false);
   protected readonly uploading = signal(false);
   protected readonly preview = signal<string | null>(null);
+  /** Data máxima permitida: hoje menos 5 anos (idade mínima). */
+  protected readonly maxBirthDate = maxBirthDateFor(5);
 
   readonly open = input(false);
   readonly closed = output<void>();
@@ -234,7 +247,7 @@ export class ProfileEditDialogComponent {
   protected readonly form = this.fb.group({
     displayName: ['', [Validators.required, Validators.maxLength(120)]],
     phone: [''],
-    birthDate: [''],
+    birthDate: ['', [minimumAge(5)]],
     timezone: ['Africa/Luanda', Validators.required],
     avatarUrl: ['', Validators.pattern(/^https:\/\/.+/)],
   });
@@ -316,4 +329,27 @@ export class ProfileEditDialogComponent {
       this.saving.set(false);
     }
   }
+}
+
+/** Valida a idade mínima (em anos completos) para a data de nascimento. */
+function minimumAge(years: number) {
+  return (control: AbstractControl): ValidationErrors | null => {
+    const value = control.value as string;
+    if (!value) {
+      return null;
+    }
+    const birth = new Date(`${value}T00:00:00`);
+    if (Number.isNaN(birth.getTime())) {
+      return { invalidDate: true };
+    }
+    const limit = new Date();
+    limit.setFullYear(limit.getFullYear() - years);
+    return birth.getTime() <= limit.getTime() ? null : { minimumAge: { years } };
+  };
+}
+
+function maxBirthDateFor(years: number): string {
+  const limit = new Date();
+  limit.setFullYear(limit.getFullYear() - years);
+  return limit.toISOString().slice(0, 10);
 }

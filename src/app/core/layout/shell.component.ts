@@ -11,7 +11,8 @@ import { TranslationKey } from '../../core/i18n/translations';
 import { ToastService } from '../../core/services/toast.service';
 import { WorkspaceStore } from '../../core/services/workspace.store';
 import { ICONS } from '../../core/ui/icons';
-import { ActivityPresenter } from '../../shared/services/activity.presenter';
+import { NotificationPresenter } from '../../shared/services/notification.presenter';
+import { HostNotification } from '../../core/models/models';
 import { AvatarComponent } from '../../shared/components/avatar.component';
 import { BrandComponent } from '../../shared/components/brand.component';
 import { PreferenceControlsComponent } from '../../shared/components/preference-controls.component';
@@ -45,7 +46,7 @@ export class ShellComponent {
   private readonly router = inject(Router);
   private readonly auth = inject(AuthService);
   private readonly toasts = inject(ToastService);
-  private readonly activityPresenter = inject(ActivityPresenter);
+  private readonly notificationPresenter = inject(NotificationPresenter);
 
   protected readonly mobileOpen = signal(false);
   protected readonly notificationsOpen = signal(false);
@@ -57,13 +58,21 @@ export class ShellComponent {
   protected readonly navItems: NavItem[] = [
     { path: '/painel', labelKey: 'nav.dashboard', icon: ICONS['dashboard'], exact: true },
     { path: '/eventos', labelKey: 'nav.events', icon: ICONS['events'], exact: false },
+    { path: '/tarefas', labelKey: 'nav.tasks', icon: ICONS['checklist'], exact: false },
     { path: '/convites', labelKey: 'nav.invites', icon: ICONS['envelope'], exact: false },
     { path: '/convidados', labelKey: 'nav.guests', icon: ICONS['guests'], exact: false },
     { path: '/templates', labelKey: 'nav.templates', icon: ICONS['templates'], exact: false },
     { path: '/relatorios', labelKey: 'nav.reports', icon: ICONS['reports'], exact: false },
+    {
+      path: '/notificacoes',
+      labelKey: 'nav.notifications',
+      icon: ICONS['bell'],
+      exact: false,
+    },
   ];
 
-  protected readonly notifications = computed(() => this.store.activityFeed().slice(0, 4));
+  protected readonly notifications = computed(() => this.store.notifications());
+  protected readonly unreadNotifications = this.store.unreadNotifications;
 
   constructor() {
     // Carrega o "chrome" (perfil, atividade e eventos) depois de qualquer
@@ -92,17 +101,28 @@ export class ShellComponent {
     this.searchTerm.set('');
   }
 
-  protected activityText(eventId: string, item: Parameters<ActivityPresenter['text']>[0]): string {
-    const event = this.store.eventById(eventId);
-    return this.activityPresenter.text(item, event?.title ?? '');
+  protected notificationIcon(kind: HostNotification['kind']): IconDefinition {
+    return this.notificationPresenter.icon(kind);
   }
 
-  protected activityIcon(kind: Parameters<ActivityPresenter['icon']>[0]): IconDefinition {
-    return this.activityPresenter.icon(kind);
+  protected notificationTone(kind: HostNotification['kind']): string {
+    return this.notificationPresenter.tone(kind);
   }
 
-  protected activityTone(kind: Parameters<ActivityPresenter['tone']>[0]): string {
-    return this.activityPresenter.tone(kind);
+  protected notificationRoute(notification: HostNotification): string[] {
+    return this.notificationPresenter.route(notification);
+  }
+
+  protected async openNotification(notification: HostNotification): Promise<void> {
+    this.notificationsOpen.set(false);
+    if (notification.read) {
+      return;
+    }
+    try {
+      await this.store.markNotificationRead(notification.id);
+    } catch {
+      // A navegação não deve falhar por causa da marcação de leitura.
+    }
   }
 
   protected closeMenus(): void {
@@ -134,6 +154,12 @@ export class ShellComponent {
     if (url.startsWith('/eventos')) {
       this.pageTitle.set('nav.events');
       this.skeletonVariant.set(url.split('/').filter(Boolean).length > 1 ? 'detail' : 'cards');
+    } else if (url.startsWith('/tarefas')) {
+      this.pageTitle.set('nav.tasks');
+      this.skeletonVariant.set('table');
+    } else if (url.startsWith('/notificacoes')) {
+      this.pageTitle.set('nav.notifications');
+      this.skeletonVariant.set('table');
     } else if (url.startsWith('/convites')) {
       this.pageTitle.set('nav.invites');
       this.skeletonVariant.set('cards');

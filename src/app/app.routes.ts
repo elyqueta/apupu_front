@@ -71,6 +71,17 @@ export const routes: Routes = [
           import('./features/event-setup/create-event.page').then((m) => m.CreateEventPage),
       },
       {
+        path: 'tarefas',
+        title: 'Conto Contigo · Tarefas',
+        loadComponent: () => import('./features/tasks/tasks.page').then((m) => m.TasksPage),
+      },
+      {
+        path: 'notificacoes',
+        title: 'Conto Contigo · Notificações',
+        loadComponent: () =>
+          import('./features/notifications/notifications.page').then((m) => m.NotificationsPage),
+      },
+      {
         path: 'convidados',
         title: 'Conto Contigo · Convidados',
         loadComponent: () => import('./features/guests/guests.page').then((m) => m.GuestsPage),

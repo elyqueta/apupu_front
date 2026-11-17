@@ -1,0 +1,216 @@
+import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
+import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { toApiError } from '../../core/api/api-error';
+import { Pagination } from '../../core/api/api.models';
+import {
+  TaskAssigneeFilter,
+  TaskQuery,
+  TaskStatusFilter,
+} from '../../core/data/tasks.repository';
+import { I18nService } from '../../core/i18n/i18n.service';
+import { TranslationKey } from '../../core/i18n/translations';
+import { EventManager, WorkspaceTask } from '../../core/models/models';
+import { ToastService } from '../../core/services/toast.service';
+import { WorkspaceStore } from '../../core/services/workspace.store';
+import { ICONS } from '../../core/ui/icons';
+import { SkeletonComponent } from '../../shared/components/skeleton.component';
+
+const PAGE_SIZE = 12;
+
+@Component({
+  selector: 'app-tasks-page',
+  imports: [ReactiveFormsModule, FaIconComponent, SkeletonComponent],
+  templateUrl: './tasks.page.html',
+})
+export class TasksPage {
+  private readonly store = inject(WorkspaceStore);
+  private readonly toasts = inject(ToastService);
+  private readonly fb = inject(NonNullableFormBuilder);
+  protected readonly i18n = inject(I18nService);
+  protected readonly icons = ICONS;
+
+  protected readonly items = signal<WorkspaceTask[]>([]);
+  protected readonly pagination = signal<Pagination | null>(null);
+  protected readonly loading = signal(true);
+  protected readonly error = signal('');
+  protected readonly busyId = signal<string | null>(null);
+  protected readonly creating = signal(false);
+  protected readonly managersLoading = signal(false);
+
+  protected readonly status = signal<TaskStatusFilter>('all');
+  protected readonly assignee = signal<TaskAssigneeFilter>('all');
+  protected readonly eventId = signal('');
+  protected readonly managerId = signal('');
+  protected readonly q = signal('');
+  protected readonly page = signal(1);
+
+  protected readonly events = this.store.events;
+  protected readonly managers = signal<EventManager[]>([]);
+
+  protected readonly statusOptions: Array<{ id: TaskStatusFilter; labelKey: TranslationKey }> = [
+    { id: 'all', labelKey: 'tasks.status.all' },
+    { id: 'pending', labelKey: 'tasks.status.pending' },
+    { id: 'done', labelKey: 'tasks.status.done' },
+  ];
+
+  protected readonly assigneeOptions: Array<{ id: TaskAssigneeFilter; labelKey: TranslationKey }> =
+    [
+      { id: 'all', labelKey: 'tasks.assignee.all' },
+      { id: 'host', labelKey: 'tasks.assignee.host' },
+      { id: 'manager', labelKey: 'tasks.assignee.manager' },
+    ];
+
+  protected readonly createForm = this.fb.group({
+    label: ['', [Validators.required, Validators.maxLength(200)]],
+    eventId: [''],
+    managerId: [''],
+  });
+
+  protected readonly hasFilters = computed(
+    () =>
+      this.status() !== 'all' ||
+      this.assignee() !== 'all' ||
+      this.eventId() !== '' ||
+      this.managerId() !== '' ||
+      this.q().trim() !== '',
+  );
+
+  protected readonly rangeLabel = computed(() => {
+    const pagination = this.pagination();
+    if (!pagination || pagination.total === 0) {
+      return '';
+    }
+    const start = (pagination.page - 1) * pagination.page_size + 1;
+    const end = Math.min(pagination.page * pagination.page_size, pagination.total);
+    return `${start}–${end} / ${pagination.total}`;
+  });
+
+  constructor() {
+    this.store.load({ tasks: true, events: true });
+    void this.load();
+    effect(() => {
+      const eventId = this.createForm.controls.eventId.value;
+      untracked(() => this.createForm.controls.managerId.setValue(''));
+      if (eventId) {
+        untracked(() => void this.loadManagers(eventId));
+      } else {
+        this.managers.set([]);
+      }
+    });
+  }
+
+  protected async load(): Promise<void> {
+    this.loading.set(true);
+    this.error.set('');
+    try {
+      const query: TaskQuery = {
+        status: this.status(),
+        assignee: this.assignee(),
+        event_id: this.eventId() || undefined,
+        manager_id: this.managerId() || undefined,
+        q: this.q().trim() || undefined,
+        page: this.page(),
+        page_size: PAGE_SIZE,
+      };
+      const result = await this.store.tasksPage(query);
+      this.items.set(result.items);
+      this.pagination.set(result.pagination);
+    } catch (error: unknown) {
+      this.error.set(toApiError(error).message);
+    } finally {
+      this.loading.set(false);
+    }
+  }
+
+  protected applyFilters(): void {
+    this.page.set(1);
+    void this.load();
+  }
+
+  protected clearFilters(): void {
+    this.status.set('all');
+    this.assignee.set('all');
+    this.eventId.set('');
+    this.managerId.set('');
+    this.q.set('');
+    this.page.set(1);
+    void this.load();
+  }
+
+  protected goToPage(page: number): void {
+    const pagination = this.pagination();
+    if (!pagination || page < 1 || page > pagination.total_pages || page === pagination.page) {
+      return;
+    }
+    this.page.set(page);
+    void this.load();
+  }
+
+  protected async create(): Promise<void> {
+    if (this.createForm.invalid) {
+      this.createForm.markAllAsTouched();
+      return;
+    }
+    const value = this.createForm.getRawValue();
+    this.creating.set(true);
+    try {
+      await this.store.createTask(
+        value.label.trim(),
+        value.eventId || null,
+        value.managerId || null,
+      );
+      this.createForm.reset({ label: '', eventId: '', managerId: '' });
+      this.page.set(1);
+      await this.load();
+      this.toasts.success(this.i18n.t('tasks.created'));
+    } catch (error: unknown) {
+      this.toasts.error(toApiError(error).message);
+    } finally {
+      this.creating.set(false);
+    }
+  }
+
+  protected async toggle(task: WorkspaceTask): Promise<void> {
+    if (this.busyId()) {
+      return;
+    }
+    this.busyId.set(task.id);
+    try {
+      await this.store.toggleTask(task.id, !task.done);
+      await this.load();
+    } catch (error: unknown) {
+      this.toasts.error(toApiError(error).message);
+    } finally {
+      this.busyId.set(null);
+    }
+  }
+
+  protected async remove(task: WorkspaceTask): Promise<void> {
+    if (this.busyId()) {
+      return;
+    }
+    this.busyId.set(task.id);
+    try {
+      await this.store.removeTask(task.id);
+      this.items.update((items) => items.filter((item) => item.id !== task.id));
+      await this.load();
+    } catch (error: unknown) {
+      this.toasts.error(toApiError(error).message);
+    } finally {
+      this.busyId.set(null);
+    }
+  }
+
+  private async loadManagers(eventId: string): Promise<void> {
+    this.managersLoading.set(true);
+    try {
+      this.managers.set(await this.store.loadManagers(eventId));
+    } catch (error: unknown) {
+      this.managers.set([]);
+      this.toasts.error(toApiError(error).message);
+    } finally {
+      this.managersLoading.set(false);
+    }
+  }
+}

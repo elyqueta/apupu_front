@@ -1,5 +1,6 @@
 import { Component, computed, effect, inject, input, signal } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { Router } from '@angular/router';
 import { ApiClient } from '../../core/api/api-client';
 import { toApiError } from '../../core/api/api-error';
 import {
@@ -39,7 +40,7 @@ interface InvitationView {
       accountReference: string;
     } | null;
   };
-  guest: { name: string; status: RsvpStatus };
+  guest: { name: string; email: string; emailHasAccount: boolean; status: RsvpStatus };
   deadlinePassed: boolean;
   countdownDays: number;
 }
@@ -61,6 +62,7 @@ export class InvitationPage {
   private readonly api = inject(ApiClient);
   private readonly toasts = inject(ToastService);
   private readonly share = inject(ShareService);
+  private readonly router = inject(Router);
   private loadVersion = 0;
 
   protected readonly i18n = inject(I18nService);
@@ -85,6 +87,7 @@ export class InvitationPage {
   protected readonly saving = signal(false);
   protected readonly declineOpen = signal(false);
   protected readonly acceptOpen = signal(false);
+  protected readonly accountDismissed = signal(false);
 
   constructor() {
     effect(() => {
@@ -123,6 +126,29 @@ export class InvitationPage {
 
   protected retry(): void {
     void this.load(this.token());
+  }
+
+  protected createAccount(useSameEmail: boolean): void {
+    const email = this.invitation()?.guest.email ?? '';
+    const queryParams: Record<string, string | number> = {
+      returnUrl: `/convite/${this.token()}`,
+    };
+    if (useSameEmail && email) {
+      queryParams['email'] = email;
+      queryParams['enviar'] = 1;
+    }
+    void this.router.navigate(['/criar-conta'], { queryParams });
+  }
+
+  protected loginInstead(): void {
+    const email = this.invitation()?.guest.email ?? '';
+    void this.router.navigate(['/entrar'], {
+      queryParams: { email, returnUrl: `/convite/${this.token()}` },
+    });
+  }
+
+  protected dismissAccount(): void {
+    this.accountDismissed.set(true);
   }
 
   protected async copyAccountReference(): Promise<void> {
@@ -168,6 +194,7 @@ export class InvitationPage {
     this.loading.set(true);
     this.loadError.set('');
     this.actionError.set('');
+    this.accountDismissed.set(false);
     this.invitation.set(null);
     const path = `/public/invitations/${encodeURIComponent(token)}`;
     try {
@@ -239,6 +266,8 @@ function mapInvitation(invitation: PublicInvitation): InvitationView {
     },
     guest: {
       name: invitation.guest.name,
+      email: invitation.guest.email,
+      emailHasAccount: invitation.guest.email_has_account,
       status: mapRsvpStatus(invitation.guest.rsvp_status),
     },
     deadlinePassed: invitation.rsvp_deadline_passed,

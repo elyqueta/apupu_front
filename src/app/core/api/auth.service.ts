@@ -22,8 +22,6 @@ export interface RegistrationCodeResponse {
   email: string;
   expires_at: string;
   resend_available_at: string;
-  /** Código em claro apenas fora de produção (protótipo). */
-  dev_code?: string;
 }
 
 interface RegistrationVerificationResponse {

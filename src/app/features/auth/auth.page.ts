@@ -237,20 +237,6 @@ function passwordsMatch(group: AbstractControl): ValidationErrors | null {
               confirma o teu email.
             </p>
 
-            @if (devCode()) {
-              <div class="mb-5 rounded-[16px] border border-dashed border-brand/40 bg-brand/5 p-4">
-                <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
-                  Código de teste · protótipo
-                </p>
-                <p class="mt-1 font-display text-2xl font-semibold tracking-[0.32em] text-ink">
-                  {{ devCode() }}
-                </p>
-                <p class="mt-1 text-[13px] text-muted">
-                  No próximo passo o código já vem preenchido.
-                </p>
-              </div>
-            }
-
             <div class="space-y-3">
               <button type="button" [class]="submitClass" (click)="openCodeStep()">
                 Introduzir código
@@ -284,6 +270,14 @@ function passwordsMatch(group: AbstractControl): ValidationErrors | null {
               Enviámos um código de 6 dígitos para
               <b class="font-semibold text-ink">{{ email() }}</b>.
             </p>
+
+            @if (codeFromEmail()) {
+              <p
+                class="mb-4 rounded-[14px] border border-mint/25 bg-mint/10 p-3 text-[13px] leading-5 text-mint"
+              >
+                Preenchemos o código do email. Confirma os dígitos e continua.
+              </p>
+            }
 
             <form class="space-y-4" [formGroup]="otpForm" (ngSubmit)="verifyCode()" novalidate>
               <div class="flex gap-2.5" role="group" aria-label="Código de 6 dígitos">
@@ -456,7 +450,7 @@ export class AuthPage {
   );
   readonly step = signal<RegisterStep>('email');
   readonly email = signal('');
-  readonly devCode = signal<string | null>(null);
+  readonly codeFromEmail = signal(false);
   readonly busy = signal(false);
   readonly resendSeconds = signal(0);
   readonly showLoginPassword = signal(false);
@@ -509,11 +503,42 @@ export class AuthPage {
   );
 
   constructor() {
+    this.prefillFromLink();
     interval(1000)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
         this.resendSeconds.update((seconds) => Math.max(0, seconds - 1));
       });
+  }
+
+  /**
+   * Abre o passo do código já preenchido quando o utilizador chega pelo link
+   * enviado no email (`/criar-conta?email=…&codigo=…`). O código nunca é
+   * devolvido pela API: só viaja no email.
+   */
+  private prefillFromLink(): void {
+    if (this.mode() !== 'register') {
+      return;
+    }
+    const query = this.route.snapshot.queryParamMap;
+    const email = query.get('email')?.trim() ?? '';
+    const code = (query.get('codigo') ?? query.get('code') ?? '')
+      .replace(/\D/g, '')
+      .slice(0, 6);
+    const autoSend = query.get('enviar') === '1' || query.get('send') === '1';
+    if (email) {
+      this.email.set(email);
+      this.emailForm.controls.email.setValue(email);
+    }
+    if (email && code.length === 6) {
+      this.otp.set(this.otpIndexes.map((index) => code[index] ?? ''));
+      this.codeFromEmail.set(true);
+      this.step.set('code');
+    } else if (email && autoSend) {
+      // Chegou de um convite ou link de gestão sem conta: envia já o OTP
+      // para o email sugerido, mantendo o registo pré-preenchido.
+      queueMicrotask(() => void this.requestCode());
+    }
   }
 
   protected isInvalid(control: AbstractControl): boolean {
@@ -570,7 +595,6 @@ export class AuthPage {
     try {
       const result = await this.auth.requestRegistrationCode(email);
       this.email.set(email);
-      this.prefillCode(result.dev_code);
       this.resendSeconds.set(secondsUntil(result.resend_available_at));
       this.step.set('sent');
       this.toasts.success(`Enviámos um código de 6 dígitos para ${email}.`);
@@ -588,8 +612,9 @@ export class AuthPage {
     this.busy.set(true);
     try {
       const result = await this.auth.requestRegistrationCode(this.email());
-      this.prefillCode(result.dev_code);
       this.resendSeconds.set(secondsUntil(result.resend_available_at));
+      this.otp.set(['', '', '', '', '', '']);
+      this.codeFromEmail.set(false);
       this.toasts.success(`Enviámos um novo código para ${this.email()}.`);
     } catch (error: unknown) {
       this.toasts.error(toApiError(error).message);
@@ -598,9 +623,10 @@ export class AuthPage {
     }
   }
 
-  /** Abre o ecrã do OTP, já com o código de desenvolvimento preenchido. */
+  /** Abre o ecrã do OTP e foca o primeiro dígito em falta. */
   protected openCodeStep(): void {
     this.step.set('code');
+    this.codeFromEmail.set(this.otp().join('').length === 6);
     const firstEmpty = this.otp().findIndex((digit) => !digit);
     const focusIndex = firstEmpty === -1 ? 0 : firstEmpty;
     queueMicrotask(() => this.otpBoxes()[focusIndex]?.nativeElement.focus());
@@ -676,16 +702,9 @@ export class AuthPage {
 
   protected changeEmail(): void {
     this.resendSeconds.set(0);
-    this.devCode.set(null);
+    this.codeFromEmail.set(false);
     this.otp.set(['', '', '', '', '', '']);
     this.step.set('email');
-  }
-
-  /** Distribui um código de 6 dígitos pelas caixas do OTP. */
-  private prefillCode(code: string | undefined): void {
-    const digits = (code ?? '').replace(/\D/g, '').slice(0, 6);
-    this.devCode.set(digits.length === 6 ? digits : null);
-    this.otp.set(this.otpIndexes.map((index) => digits[index] ?? ''));
   }
 
   protected onOtpInput(event: Event, index: number): void {

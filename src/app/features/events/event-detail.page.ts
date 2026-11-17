@@ -5,6 +5,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { TranslationKey } from '../../core/i18n/translations';
+import { Pagination } from '../../core/api/api.models';
 import {
   EventActivity,
   EventManager,
@@ -60,12 +61,21 @@ export class EventDetailPage {
   protected readonly cancelOpen = signal(false);
   protected readonly managersLoading = signal(false);
   protected readonly managerBusyId = signal<string | null>(null);
+  protected readonly taskBusyId = signal<string | null>(null);
+  protected readonly creatingTask = signal(false);
+  protected readonly activityItems = signal<EventActivity[]>([]);
+  protected readonly activityPagination = signal<Pagination | null>(null);
+  protected readonly activityLoading = signal(false);
+  protected readonly coverUploading = signal(false);
+  protected readonly coverProgress = signal(0);
+  private coverUploadHandle: { cancel: () => void } | null = null;
 
   protected readonly event = computed(() => this.store.eventById(this.eventId()));
   protected readonly stats = computed(() => this.store.eventStats(this.eventId()));
   protected readonly guests = computed(() => this.store.guestsFor(this.eventId()));
-  protected readonly activity = computed(() => this.store.activityFor(this.eventId()));
+  protected readonly activity = this.activityItems.asReadonly();
   protected readonly tasks = computed(() => this.store.tasksFor(this.eventId()));
+  protected readonly tasksDone = computed(() => this.tasks().filter((task) => task.done).length);
   protected readonly isManagement = computed(
     () => this.store.activeManagementEventId() === this.eventId(),
   );
@@ -163,6 +173,15 @@ export class EventDetailPage {
     email: ['', [Validators.required, Validators.email, Validators.maxLength(254)]],
   });
 
+  protected readonly taskForm = this.fb.group({
+    label: ['', [Validators.required, Validators.maxLength(200)]],
+    managerId: [''],
+  });
+
+  protected readonly coverForm = this.fb.group({
+    url: ['', [Validators.pattern(/^https:\/\/.+/), Validators.maxLength(500)]],
+  });
+
   constructor() {
     this.store.load({
       events: true,
@@ -190,6 +209,19 @@ export class EventDetailPage {
         untracked(() => void this.refreshManagers());
       }
     });
+    effect(() => {
+      if (!this.isHost() || this.managers().length > 0) {
+        return;
+      }
+      untracked(() => void this.refreshManagers());
+    });
+    effect(() => {
+      const event = this.event();
+      untracked(() => {
+        void this.loadActivity(1);
+        this.coverForm.reset({ url: event?.coverUrl ?? '' });
+      });
+    });
   }
 
   protected setTab(tab: DetailTab): void {
@@ -212,6 +244,131 @@ export class EventDetailPage {
 
   protected activityTone(kind: EventActivity['kind']): string {
     return this.activityPresenter.tone(kind);
+  }
+
+  protected async loadActivity(page = 1): Promise<void> {
+    const eventId = this.eventId();
+    if (!eventId) {
+      return;
+    }
+    this.activityLoading.set(true);
+    try {
+      const result = await this.store.listEventActivity(eventId, page, 8);
+      this.activityItems.set(result.items);
+      this.activityPagination.set(result.pagination);
+    } catch (error: unknown) {
+      this.toasts.error(toApiError(error).message);
+    } finally {
+      this.activityLoading.set(false);
+    }
+  }
+
+  protected goToActivityPage(page: number): void {
+    const pagination = this.activityPagination();
+    if (!pagination || page < 1 || page > pagination.total_pages || page === pagination.page) {
+      return;
+    }
+    void this.loadActivity(page);
+  }
+
+  protected async createTask(): Promise<void> {
+    if (this.taskForm.invalid) {
+      this.taskForm.markAllAsTouched();
+      return;
+    }
+    const value = this.taskForm.getRawValue();
+    this.creatingTask.set(true);
+    try {
+      await this.store.createTask(value.label.trim(), this.eventId(), value.managerId || null);
+      this.taskForm.reset({ label: '', managerId: '' });
+      this.toasts.success(this.i18n.t('eventDetail.taskCreated'));
+    } catch (error: unknown) {
+      this.toasts.error(toApiError(error).message);
+    } finally {
+      this.creatingTask.set(false);
+    }
+  }
+
+  protected async removeTask(task: WorkspaceTask): Promise<void> {
+    if (this.taskBusyId()) {
+      return;
+    }
+    this.taskBusyId.set(task.id);
+    try {
+      await this.store.removeTask(task.id);
+      this.toasts.success(this.i18n.t('eventDetail.taskRemoved'));
+    } catch (error: unknown) {
+      this.toasts.error(toApiError(error).message);
+    } finally {
+      this.taskBusyId.set(null);
+    }
+  }
+
+  protected async setCoverUrl(): Promise<void> {
+    if (this.coverForm.invalid) {
+      this.coverForm.markAllAsTouched();
+      return;
+    }
+    const url = this.coverForm.controls.url.value.trim();
+    if (!url) {
+      return;
+    }
+    try {
+      await this.store.setEventCoverUrl(this.eventId(), url);
+      this.toasts.success(this.i18n.t('eventDetail.coverSaved'));
+    } catch (error: unknown) {
+      this.toasts.error(toApiError(error).message);
+    }
+  }
+
+  protected onCoverFile(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (file) {
+      void this.uploadCover(file);
+    }
+  }
+
+  protected async uploadCover(file: File): Promise<void> {
+    if (this.coverUploading()) {
+      return;
+    }
+    this.coverUploading.set(true);
+    this.coverProgress.set(0);
+    const handle = this.store.uploadEventCover(this.eventId(), file, (percent) =>
+      this.coverProgress.set(percent),
+    );
+    this.coverUploadHandle = handle;
+    try {
+      await handle.promise;
+      this.coverProgress.set(100);
+      this.toasts.success(this.i18n.t('eventDetail.coverUploaded'));
+    } catch (error: unknown) {
+      if (!(error instanceof DOMException && error.name === 'AbortError')) {
+        this.toasts.error(toApiError(error).message);
+      }
+    } finally {
+      this.coverUploading.set(false);
+      this.coverUploadHandle = null;
+      this.coverProgress.set(0);
+    }
+  }
+
+  protected cancelCoverUpload(): void {
+    this.coverUploadHandle?.cancel();
+    this.coverUploading.set(false);
+    this.coverProgress.set(0);
+  }
+
+  protected async removeCover(): Promise<void> {
+    try {
+      await this.store.removeEventCover(this.eventId());
+      this.coverForm.reset({ url: '' });
+      this.toasts.success(this.i18n.t('eventDetail.coverRemoved'));
+    } catch (error: unknown) {
+      this.toasts.error(toApiError(error).message);
+    }
   }
 
   protected taskLabel(task: WorkspaceTask): string {
@@ -289,15 +446,6 @@ export class EventDetailPage {
       this.toasts.error(toApiError(error).message);
     } finally {
       this.managerBusyId.set(null);
-    }
-  }
-
-  protected async endManagement(): Promise<void> {
-    try {
-      await this.store.endManagement(this.eventId());
-      this.toasts.info(this.i18n.t('settings.managementEnded'));
-    } catch (error: unknown) {
-      this.toasts.error(toApiError(error).message);
     }
   }
 

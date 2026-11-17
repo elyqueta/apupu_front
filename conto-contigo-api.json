@@ -3878,7 +3878,7 @@
             }
           },
           "404": {
-            "description": "Evento inexistente ou não pertencente à conta.",
+            "description": "Evento não encontrado ou de outra conta.",
             "content": {
               "application/json": {
                 "schema": {

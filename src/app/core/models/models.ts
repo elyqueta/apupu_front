@@ -49,6 +49,8 @@ export interface Guest {
   phone: string | null;
   status: RsvpStatus;
   tableName: string | null;
+  /** URL absoluto para partilhar; `null` quando o convite foi revogado. */
+  invitationUrl: string | null;
   invitedAt: string;
   respondedAt: string | null;
 }

@@ -265,13 +265,17 @@ export class EventDetailPage {
   /**
    * Abre o WhatsApp (`wa.me`) com a mensagem de reencaminhamento do convite.
    *
-   * TODO(backend): incluir o link individual do convite no texto assim que a API
-   * expuser um token/URL por convidado (o `Invitation` do host não o devolve hoje).
+   * O link individual vem de `invitation_url`; se o convite estiver
+   * revogado a API devolve `null` e a mensagem segue sem link.
    */
   protected forwardWhatsApp(guest: Guest): void {
-    const text = this.i18n.t('guests.whatsappMessage', {
+    const key = guest.invitationUrl
+      ? 'guests.whatsappMessageWithLink'
+      : 'guests.whatsappMessage';
+    const text = this.i18n.t(key, {
       name: guest.name,
       event: this.event()?.title ?? '',
+      url: guest.invitationUrl ?? '',
     });
     const url = this.share.whatsappUrl(guest.phone, text);
     if (url) {

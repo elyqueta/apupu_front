@@ -106,6 +106,7 @@ export function mapInvitation(invitation: ApiInvitation): Guest {
     phone: invitation.guest_phone,
     status: invitation.rsvp_status === 'accepted' ? 'confirmed' : invitation.rsvp_status,
     tableName: invitation.table_name,
+    invitationUrl: invitation.invitation_url,
     invitedAt: invitation.created_at,
     respondedAt: invitation.rsvp_responded_at,
   };

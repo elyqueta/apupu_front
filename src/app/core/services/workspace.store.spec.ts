@@ -69,6 +69,8 @@ function invitationFixture(overrides: Partial<ApiInvitation> = {}): ApiInvitatio
     send_status: 'queued',
     send_count: 0,
     last_sent_at: null,
+    invitation_url: 'https://apupu-front.vercel.app/convite/token-de-teste',
+    invitation_url_expires_at: null,
     created_at: '2026-01-01T00:00:00Z',
     updated_at: '2026-01-01T00:00:00Z',
     ...overrides,

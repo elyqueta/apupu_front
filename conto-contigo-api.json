@@ -373,6 +373,19 @@
             "format": "date-time",
             "nullable": true
           },
+          "invitation_url": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true,
+            "description": "URL absoluto do convite individual, pronto a partilhar (por exemplo, no WhatsApp). Só é devolvido ao anfitrião autenticado ou à sessão de gestão do evento; nunca em respostas públicas. É `null` quando o convite foi revogado ou o token não pode ser reconstruído.",
+            "example": "https://apupu-front.vercel.app/convite/3f9c2a7e5b1d4c8fa6e0"
+          },
+          "invitation_url_expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Expiração do link de partilha. Hoje é sempre `null`: o token do convite não expira e só deixa de ser válido quando o convite é revogado. O campo fica reservado para rotação futura."
+          },
           "created_at": {
             "type": "string",
             "format": "date-time"
@@ -4628,6 +4641,7 @@
           "Convidados"
         ],
         "summary": "Lista os convidados do evento",
+        "description": "Cada convite inclui `invitation_url`, um URL absoluto para o anfitrião partilhar (por exemplo, no WhatsApp). O campo é `null` quando o convite foi revogado e nunca aparece em respostas públicas. O link usa o mesmo token do email e não expira.\n",
         "security": [
           {
             "hostSession": []
@@ -4659,7 +4673,7 @@
             }
           },
           "401": {
-            "description": "Sessão de gestão ou de conta ausente, expirada ou de outro evento.",
+            "description": "Sessão ausente ou expirada (`host_session_invalid`).",
             "content": {
               "application/json": {
                 "schema": {
@@ -4676,7 +4690,7 @@
             }
           },
           "404": {
-            "description": "Evento inexistente ou não pertencente à conta.",
+            "description": "Evento inexistente ou de outra conta (`event_not_found`).",
             "content": {
               "application/json": {
                 "schema": {
@@ -5487,7 +5501,7 @@
           "Conta"
         ],
         "summary": "Valida o email e envia um código OTP",
-        "description": "Primeiro passo do registo. Confirma que o email ainda não está registado e envia um código de 6 dígitos, válido por `REGISTRATION_OTP_TTL_MINUTES` minutos. Pedidos repetidos antes de `REGISTRATION_OTP_RESEND_SECONDS` devolvem `429` `otp_resend_too_soon`. A conta só é criada depois de o código ser verificado em `/auth/register/verify-code`. O código não é devolvido na resposta da API.\n",
+        "description": "Primeiro passo do registo. Confirma que o email ainda não está registado e envia um código de 6 dígitos, válido por `REGISTRATION_OTP_TTL_MINUTES` minutos. Pedidos repetidos antes de `REGISTRATION_OTP_RESEND_SECONDS` devolvem `429` `otp_resend_too_soon`. A conta só é criada depois de o código ser verificado em `/auth/register/verify-code`. Fora de produção a resposta inclui `dev_code` para o protótipo pré-preencher o ecrã de verificação; em produção o código só existe no email.\n",
         "requestBody": {
           "required": true,
           "content": {

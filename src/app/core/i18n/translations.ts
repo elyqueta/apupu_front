@@ -461,6 +461,7 @@ const PT_AO = {
   'guests.whatsapp': 'Reencaminhar por WhatsApp',
   'guests.whatsappUnavailable': 'Este convidado não tem telefone associado.',
   'guests.whatsappMessage': 'Olá {name}! Aqui está o teu convite para {event}.',
+  'guests.whatsappMessageWithLink': 'Olá {name}! Aqui está o teu convite para {event}: {url}',
 
   'reports.eyebrow': 'Inteligência',
   'reports.title': 'Relatórios',
@@ -1172,6 +1173,7 @@ const EN: Record<TranslationKey, string> = {
   'guests.whatsapp': 'Forward via WhatsApp',
   'guests.whatsappUnavailable': 'This guest has no phone number on file.',
   'guests.whatsappMessage': 'Hi {name}! Here is your invitation for {event}.',
+  'guests.whatsappMessageWithLink': 'Hi {name}! Here is your invitation for {event}: {url}',
 
   'reports.eyebrow': 'Insights',
   'reports.title': 'Reports',

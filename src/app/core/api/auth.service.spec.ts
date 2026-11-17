@@ -6,6 +6,7 @@ import { ApiError } from './api-error';
 import { apiErrorInterceptor, apiRequestInterceptor } from './api.interceptor';
 import { Host } from './api.models';
 import { AuthService } from './auth.service';
+import { ApiClient } from './api-client';
 
 const BASE = 'http://localhost:3000/api/v1';
 
@@ -59,6 +60,13 @@ describe('AuthService', () => {
 
     expect((await restore)?.id).toBe('host-1');
     expect(service.ready()).toBe(true);
+
+    const create = TestBed.inject(ApiClient).post('/host/events', { event: {}, guests: [] });
+    const createRequest = http.expectOne(`${BASE}/host/events`);
+    expect(createRequest.request.headers.get('X-CSRF-Token')).toBe('csrf-1');
+    expect(createRequest.request.withCredentials).toBe(true);
+    createRequest.flush({ data: { event: { id: 'event-1' } } });
+    await create;
   });
 
   it('requests a registration code and returns its availability window', async () => {
@@ -119,6 +127,13 @@ describe('AuthService', () => {
     expect(service.ready()).toBe(true);
     // O token de verificação é de uso único e é limpo depois do registo.
     expect(service.verificationToken()).toBeNull();
+
+    const create = TestBed.inject(ApiClient).post('/host/events', { event: {}, guests: [] });
+    const createRequest = http.expectOne(`${BASE}/host/events`);
+    expect(createRequest.request.headers.get('X-CSRF-Token')).toBe('csrf-1');
+    expect(createRequest.request.withCredentials).toBe(true);
+    createRequest.flush({ data: { event: { id: 'event-1' } } });
+    await create;
   });
 
   it('reuses the registered session on later restores without another request', async () => {

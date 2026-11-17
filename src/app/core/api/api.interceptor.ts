@@ -47,7 +47,7 @@ export class CsrfTokenStore {
     if (cached) {
       return cached;
     }
-    if (!this.browser) {
+    if (!this.browser || scope === 'auth') {
       return null;
     }
     const cookieName = csrfCookieName(scope);
@@ -71,8 +71,14 @@ export class CsrfTokenStore {
     if (path.startsWith('/public/invitations/')) {
       return 'guest';
     }
+    if (path === '/host/session') {
+      return null;
+    }
     const eventId = path.match(/^\/host\/(?:events|session)\/([^/]+)/)?.[1];
-    return eventId ? `host:${eventId}` : null;
+    if (eventId) {
+      return `host:${eventId}`;
+    }
+    return path.startsWith('/host/') ? 'auth' : null;
   }
 }
 

@@ -4,7 +4,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 import { PLATFORM_ID } from '@angular/core';
 import { API_BASE_URL } from '../api/api-config';
-import { apiRequestInterceptor } from '../api/api.interceptor';
+import { apiRequestInterceptor, CsrfTokenStore } from '../api/api.interceptor';
 import { ApiEvent, ApiInvitation, Host } from '../api/api.models';
 import { WorkspaceStore } from './workspace.store';
 
@@ -122,7 +122,8 @@ describe('WorkspaceStore · guest creation', () => {
   afterEach(() => http.verify());
 
   it('adds a guest with the account session, sending CSRF and no manage token', async () => {
-    const store = await setup('apupu_csrf_auth=account-token');
+    const store = await setup('apupu_csrf_auth=stale-cookie-token');
+    TestBed.inject(CsrfTokenStore).set('account-token', '/auth/login');
 
     const promise = store.addGuest('evt-1', {
       name: 'Rui',

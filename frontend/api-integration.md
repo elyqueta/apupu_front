@@ -7,6 +7,8 @@ O contrato partilhado é [`../backend/api-contract.md`](../backend/api-contract.
 - Centralizar a configuração do `HttpClient`, URL base, tipagem de respostas e tratamento de erros num cliente/serviço de API.
 - Usar HTTPS em ambientes não locais.
 - Enviar cookies de claim/gestão com `withCredentials` quando a implantação e o contrato exigirem; configurar CORS e cookies no backend para origem exacta, não `*` com credenciais.
+- Usar `withCredentials` nos pedidos da API que dependem de cookies da sessão de conta. Em mutações autenticadas, enviar `X-CSRF-Token` com o `data.csrf_token` da resposta actual de login/registo; ao restaurar ou actualizar uma sessão, usar o valor devolvido por `GET /auth/session`. Não derivar o token nem usar OTP, `verification_token` ou segredo de gestão como CSRF.
+- As rotas de workspace, incluindo `POST /host/events`, usam o token da sessão de conta. Nas rotas legadas de gestão por evento, o token CSRF específico do evento continua a ter prioridade e o fluxo por link secreto permanece independente da sessão de conta.
 - Durante SSR, encaminhar o cookie HttpOnly `apupu_auth` para a API apenas quando o pedido de entrada e a API usam o mesmo hostname; nunca encaminhar cookies para outro host.
 - No Vercel, usar um rewrite same-origin para encaminhar `/api/v1/*` ao Render antes do fallback SPA. O backend deve emitir cookies host-only (sem `Domain=onrender.com`) para que o browser os associe ao domínio Vercel; confirmar esta configuração no ambiente publicado.
 - Não copiar tokens de links para `localStorage`, `sessionStorage`, logs ou query parameters de analytics.

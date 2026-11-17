@@ -29,6 +29,20 @@ export class CsrfTokenStore {
     if (!scope) {
       return null;
     }
+    const token = this.read(scope);
+    if (token) {
+      return token;
+    }
+    // Sessão de conta: o backend autoriza a conta do anfitrião nos eventos de que
+    // é proprietário, pelo que o token CSRF do escopo `auth` também serve para
+    // `host:{eventId}`. O token de gestão legado, quando existe, tem prioridade.
+    if (scope.startsWith('host:')) {
+      return this.read('auth');
+    }
+    return null;
+  }
+
+  private read(scope: string): string | null {
     const cached = this.values.get(scope);
     if (cached) {
       return cached;
@@ -71,8 +85,7 @@ export const apiRequestInterceptor: HttpInterceptorFn = (request, next) => {
   const incomingRequest = inject(REQUEST, { optional: true });
   const token = inject(CsrfTokenStore).get(request.url);
   const mutating = ['POST', 'PATCH', 'PUT', 'DELETE'].includes(request.method);
-  let headers =
-    mutating && token ? request.headers.set('X-CSRF-Token', token) : request.headers;
+  let headers = mutating && token ? request.headers.set('X-CSRF-Token', token) : request.headers;
   const authCookie = incomingAuthCookie(incomingRequest, apiBaseUrl, request.url);
   if (authCookie) {
     headers = headers.set('Cookie', authCookie);

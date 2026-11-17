@@ -19,6 +19,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { interval } from 'rxjs';
 import { AuthService, SocialProvider } from '../../core/api/auth.service';
 import { toApiError } from '../../core/api/api-error';
+import { ToastService } from '../../core/services/toast.service';
 import { ICONS } from '../../core/ui/icons';
 import { AuthLayoutComponent } from '../../shared/components/auth-layout.component';
 
@@ -40,141 +41,75 @@ function secondsUntil(iso: string): number {
       [heroAlt]="heroAlt()"
     >
       @if (mode() === 'login') {
-        <p class="text-sm text-muted">Espaço do anfitrião</p>
-        <h1 [class]="titleClass">Bem-vindo de volta</h1>
-        <p [class]="leadClass">Entra para gerir os teus eventos e convidados.</p>
+        <div class="animate-screen">
+          <p class="text-sm text-muted">Espaço do anfitrião</p>
+          <h1 [class]="titleClass">Bem-vindo de volta</h1>
+          <p [class]="leadClass">Entra para gerir os teus eventos e convidados.</p>
 
-        <form class="space-y-4" [formGroup]="loginForm" (ngSubmit)="login()" novalidate>
-          <div class="grid gap-1.5">
-            <label for="login-email" class="text-sm font-semibold text-ink">Email</label>
-            <input
-              id="login-email"
-              formControlName="email"
-              type="email"
-              autocomplete="email"
-              inputmode="email"
-              required
-              [class]="inputClass"
-              [attr.aria-invalid]="isInvalid(loginForm.controls.email)"
-            />
-          </div>
-
-          <div class="grid gap-1.5">
-            <label for="login-password" class="text-sm font-semibold text-ink">Senha</label>
-            <div class="relative">
-              <input
-                id="login-password"
-                formControlName="password"
-                [type]="showLoginPassword() ? 'text' : 'password'"
-                autocomplete="current-password"
-                required
-                [class]="passwordInputClass"
-                [attr.aria-invalid]="isInvalid(loginForm.controls.password)"
-              />
-              <button
-                type="button"
-                class="absolute right-1 top-1 grid size-11 place-items-center rounded-xl text-muted transition hover:text-ink"
-                [attr.aria-label]="showLoginPassword() ? 'Esconder senha' : 'Mostrar senha'"
-                [attr.aria-pressed]="showLoginPassword()"
-                (click)="togglePassword('login')"
-              >
-                <fa-icon
-                  [icon]="showLoginPassword() ? icons['eyeSlash'] : icons['eye']"
-                  aria-hidden="true"
-                />
-              </button>
-            </div>
-          </div>
-
-          @if (error()) {
-            <p role="alert" class="text-sm text-danger">{{ error() }}</p>
-          }
-
-          <div class="flex items-center justify-between gap-3 text-sm">
-            <label class="flex items-center gap-2 font-medium text-ink">
-              <input type="checkbox" formControlName="remember" class="size-[18px] accent-brand" />
-              Lembrar-me
-            </label>
-            <a routerLink="/recuperar-senha" class="font-semibold text-ink underline">
-              Esqueceste a senha?
-            </a>
-          </div>
-
-          <button type="submit" [disabled]="busy()" [class]="submitClass">
-            {{ busy() ? 'A entrar…' : 'Entrar' }}
-          </button>
-        </form>
-
-        <div class="my-5 flex items-center gap-3 text-sm text-muted">
-          <span class="h-px flex-1 bg-line" aria-hidden="true"></span>
-          <span>ou entra com</span>
-          <span class="h-px flex-1 bg-line" aria-hidden="true"></span>
-        </div>
-
-        <div class="grid grid-cols-2 gap-3">
-          <button type="button" [disabled]="busy()" [class]="socialClass" (click)="social('google')">
-            <fa-icon [icon]="icons['google']" class="text-[20px]" aria-hidden="true" />
-            Google
-          </button>
-          <button
-            type="button"
-            [disabled]="busy()"
-            [class]="socialClass"
-            (click)="social('facebook')"
-          >
-            <fa-icon [icon]="icons['facebook']" class="text-[20px]" aria-hidden="true" />
-            Facebook
-          </button>
-        </div>
-
-        <p class="mt-5 text-center text-[15px] text-muted">
-          Ainda não tens conta?
-          <a routerLink="/criar-conta" class="font-semibold text-ink underline">Criar conta</a>
-        </p>
-      } @else {
-        <div class="mb-5 flex gap-1.5" aria-hidden="true">
-          @for (i of [1, 2, 3]; track i) {
-            <i
-              [class]="
-                i <= progress() ? 'h-1 flex-1 rounded bg-[#FFB627]' : 'h-1 flex-1 rounded bg-line'
-              "
-            ></i>
-          }
-        </div>
-
-        @if (step() === 'email') {
-          <h1 [class]="titleClass">Cria a tua conta</h1>
-          <p [class]="leadClass">
-            Começa pelo teu email. Enviamos-te um código para confirmar que é teu.
-          </p>
-
-          <form class="space-y-4" [formGroup]="emailForm" (ngSubmit)="requestCode()" novalidate>
+          <form class="space-y-4" [formGroup]="loginForm" (ngSubmit)="login()" novalidate>
             <div class="grid gap-1.5">
-              <label for="register-email" class="text-sm font-semibold text-ink">Email</label>
+              <label for="login-email" class="text-sm font-semibold text-ink">Email</label>
               <input
-                id="register-email"
+                id="login-email"
                 formControlName="email"
                 type="email"
                 autocomplete="email"
                 inputmode="email"
                 required
                 [class]="inputClass"
-                [attr.aria-invalid]="isInvalid(emailForm.controls.email)"
+                [attr.aria-invalid]="isInvalid(loginForm.controls.email)"
               />
             </div>
 
-            @if (error()) {
-              <p role="alert" class="text-sm text-danger">{{ error() }}</p>
-            }
+            <div class="grid gap-1.5">
+              <label for="login-password" class="text-sm font-semibold text-ink">Senha</label>
+              <div class="relative">
+                <input
+                  id="login-password"
+                  formControlName="password"
+                  [type]="showLoginPassword() ? 'text' : 'password'"
+                  autocomplete="current-password"
+                  required
+                  [class]="passwordInputClass"
+                  [attr.aria-invalid]="isInvalid(loginForm.controls.password)"
+                />
+                <button
+                  type="button"
+                  class="absolute right-1 top-1 grid size-11 place-items-center rounded-xl text-muted transition hover:text-ink"
+                  [attr.aria-label]="showLoginPassword() ? 'Esconder senha' : 'Mostrar senha'"
+                  [attr.aria-pressed]="showLoginPassword()"
+                  (click)="togglePassword('login')"
+                >
+                  <fa-icon
+                    [icon]="showLoginPassword() ? icons['eyeSlash'] : icons['eye']"
+                    aria-hidden="true"
+                  />
+                </button>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between gap-3 text-sm">
+              <label class="flex items-center gap-2 font-medium text-ink">
+                <input
+                  type="checkbox"
+                  formControlName="remember"
+                  class="size-[18px] accent-brand"
+                />
+                Lembrar-me
+              </label>
+              <a routerLink="/recuperar-senha" class="font-semibold text-ink underline">
+                Esqueceste a senha?
+              </a>
+            </div>
 
             <button type="submit" [disabled]="busy()" [class]="submitClass">
-              {{ busy() ? 'A enviar…' : 'Enviar código' }}
+              {{ busy() ? 'A entrar…' : 'Entrar' }}
             </button>
           </form>
 
           <div class="my-5 flex items-center gap-3 text-sm text-muted">
             <span class="h-px flex-1 bg-line" aria-hidden="true"></span>
-            <span>ou cria com</span>
+            <span>ou entra com</span>
             <span class="h-px flex-1 bg-line" aria-hidden="true"></span>
           </div>
 
@@ -200,121 +135,192 @@ function secondsUntil(iso: string): number {
           </div>
 
           <p class="mt-5 text-center text-[15px] text-muted">
-            Já tens conta?
-            <a routerLink="/entrar" class="font-semibold text-ink underline">Entrar</a>
+            Ainda não tens conta?
+            <a routerLink="/criar-conta" class="font-semibold text-ink underline">Criar conta</a>
           </p>
-        } @else if (step() === 'code') {
-          <h1 [class]="titleClass">Confirma o teu email</h1>
-          <p [class]="leadClass">
-            Enviámos um código de 6 dígitos para <b class="font-semibold text-ink">{{ email() }}</b
-            >.
-          </p>
+        </div>
+      } @else {
+        <div class="mb-5 flex gap-1.5" aria-hidden="true">
+          @for (i of [1, 2, 3]; track i) {
+            <i
+              [class]="
+                i <= progress() ? 'h-1 flex-1 rounded bg-[#FFB627]' : 'h-1 flex-1 rounded bg-line'
+              "
+            ></i>
+          }
+        </div>
 
-          <form class="space-y-4" [formGroup]="otpForm" (ngSubmit)="verifyCode()" novalidate>
-            <div class="flex gap-2.5" role="group" aria-label="Código de 6 dígitos">
-              @for (i of otpIndexes; track i) {
-                <input
-                  #otpBox
-                  [value]="otp()[i]"
-                  (input)="onOtpInput($event, i)"
-                  (keydown)="onOtpKeydown($event, i)"
-                  (paste)="onOtpPaste($event)"
-                  inputmode="numeric"
-                  maxlength="1"
-                  [attr.autocomplete]="i === 0 ? 'one-time-code' : 'off'"
-                  [attr.aria-label]="'Dígito ' + (i + 1)"
-                  [class]="otpClass"
-                />
-              }
-            </div>
-
-            @if (error()) {
-              <p role="alert" class="text-sm text-danger">{{ error() }}</p>
-            }
-
-            <button type="submit" [disabled]="busy()" [class]="submitClass">
-              {{ busy() ? 'A confirmar…' : 'Confirmar código' }}
-            </button>
-          </form>
-
-          <p class="mt-5 text-center text-sm text-muted">
-            <button
-              type="button"
-              [class]="linkClass"
-              [disabled]="busy() || resendSeconds() > 0"
-              (click)="resendCode()"
-            >
-              {{ resendSeconds() > 0 ? 'Reenviar código (' + resendSeconds() + 's)' : 'Reenviar código' }}
-            </button>
-            <span aria-hidden="true"> · </span>
-            <button type="button" [class]="linkClass" (click)="changeEmail()">Mudar email</button>
-          </p>
-        } @else {
-          <h1 [class]="titleClass">Quase lá</h1>
-          <p [class]="leadClass">Diz-nos o teu nome e define a tua senha.</p>
-
-          <form class="space-y-4" [formGroup]="detailsForm" (ngSubmit)="register()" novalidate>
-            <div class="grid gap-1.5">
-              <label for="register-name" class="text-sm font-semibold text-ink">Nome</label>
-              <input
-                id="register-name"
-                formControlName="displayName"
-                autocomplete="name"
-                required
-                [class]="inputClass"
-                [attr.aria-invalid]="isInvalid(detailsForm.controls.displayName)"
-              />
-            </div>
-
-            <div class="grid gap-1.5">
-              <label for="register-password" class="text-sm font-semibold text-ink">Senha</label>
-              <div class="relative">
-                <input
-                  id="register-password"
-                  formControlName="password"
-                  [type]="showRegisterPassword() ? 'text' : 'password'"
-                  autocomplete="new-password"
-                  minlength="8"
-                  required
-                  [class]="passwordInputClass"
-                  [attr.aria-invalid]="isInvalid(detailsForm.controls.password)"
-                />
-                <button
-                  type="button"
-                  class="absolute right-1 top-1 grid size-11 place-items-center rounded-xl text-muted transition hover:text-ink"
-                  [attr.aria-label]="showRegisterPassword() ? 'Esconder senha' : 'Mostrar senha'"
-                  [attr.aria-pressed]="showRegisterPassword()"
-                  (click)="togglePassword('register')"
-                >
-                  <fa-icon
-                    [icon]="showRegisterPassword() ? icons['eyeSlash'] : icons['eye']"
-                    aria-hidden="true"
-                  />
-                </button>
-              </div>
-              <span class="text-[13px] text-muted">Mínimo de 8 caracteres.</span>
-            </div>
-
-            @if (error()) {
-              <p role="alert" class="text-sm text-danger">{{ error() }}</p>
-            }
-
-            <button type="submit" [disabled]="busy()" [class]="submitClass">
-              {{ busy() ? 'A criar conta…' : 'Criar conta' }}
-            </button>
-
-            <p class="text-center text-[13px] text-muted">
-              Ao criar conta aceitas os
-              <!-- TODO: contrato não confirmado — URL dos Termos. -->
-              <a routerLink="/termos" class="font-semibold text-ink underline">Termos</a>
-              e a
-              <!-- TODO: contrato não confirmado — URL da Política de privacidade. -->
-              <a routerLink="/privacidade" class="font-semibold text-ink underline">
-                Política de privacidade
-              </a>
-              .
+        @if (step() === 'email') {
+          <div class="animate-screen">
+            <h1 [class]="titleClass">Cria a tua conta</h1>
+            <p [class]="leadClass">
+              Começa pelo teu email. Enviamos-te um código para confirmar que é teu.
             </p>
-          </form>
+
+            <form class="space-y-4" [formGroup]="emailForm" (ngSubmit)="requestCode()" novalidate>
+              <div class="grid gap-1.5">
+                <label for="register-email" class="text-sm font-semibold text-ink">Email</label>
+                <input
+                  id="register-email"
+                  formControlName="email"
+                  type="email"
+                  autocomplete="email"
+                  inputmode="email"
+                  required
+                  [class]="inputClass"
+                  [attr.aria-invalid]="isInvalid(emailForm.controls.email)"
+                />
+              </div>
+
+              <button type="submit" [disabled]="busy()" [class]="submitClass">
+                {{ busy() ? 'A enviar…' : 'Enviar código' }}
+              </button>
+            </form>
+
+            <div class="my-5 flex items-center gap-3 text-sm text-muted">
+              <span class="h-px flex-1 bg-line" aria-hidden="true"></span>
+              <span>ou cria com</span>
+              <span class="h-px flex-1 bg-line" aria-hidden="true"></span>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                [disabled]="busy()"
+                [class]="socialClass"
+                (click)="social('google')"
+              >
+                <fa-icon [icon]="icons['google']" class="text-[20px]" aria-hidden="true" />
+                Google
+              </button>
+              <button
+                type="button"
+                [disabled]="busy()"
+                [class]="socialClass"
+                (click)="social('facebook')"
+              >
+                <fa-icon [icon]="icons['facebook']" class="text-[20px]" aria-hidden="true" />
+                Facebook
+              </button>
+            </div>
+
+            <p class="mt-5 text-center text-[15px] text-muted">
+              Já tens conta?
+              <a routerLink="/entrar" class="font-semibold text-ink underline">Entrar</a>
+            </p>
+          </div>
+        } @else if (step() === 'code') {
+          <div class="animate-screen">
+            <h1 [class]="titleClass">Confirma o teu email</h1>
+            <p [class]="leadClass">
+              Enviámos um código de 6 dígitos para
+              <b class="font-semibold text-ink">{{ email() }}</b>.
+            </p>
+
+            <form class="space-y-4" [formGroup]="otpForm" (ngSubmit)="verifyCode()" novalidate>
+              <div class="flex gap-2.5" role="group" aria-label="Código de 6 dígitos">
+                @for (i of otpIndexes; track i) {
+                  <input
+                    #otpBox
+                    [value]="otp()[i]"
+                    (input)="onOtpInput($event, i)"
+                    (keydown)="onOtpKeydown($event, i)"
+                    (paste)="onOtpPaste($event)"
+                    inputmode="numeric"
+                    maxlength="1"
+                    [attr.autocomplete]="i === 0 ? 'one-time-code' : 'off'"
+                    [attr.aria-label]="'Dígito ' + (i + 1)"
+                    [class]="otpClass"
+                  />
+                }
+              </div>
+
+              <button type="submit" [disabled]="busy()" [class]="submitClass">
+                {{ busy() ? 'A confirmar…' : 'Confirmar código' }}
+              </button>
+            </form>
+
+            <p class="mt-5 text-center text-sm text-muted">
+              <button
+                type="button"
+                [class]="linkClass"
+                [disabled]="busy() || resendSeconds() > 0"
+                (click)="resendCode()"
+              >
+                {{
+                  resendSeconds() > 0
+                    ? 'Reenviar código (' + resendSeconds() + 's)'
+                    : 'Reenviar código'
+                }}
+              </button>
+              <span aria-hidden="true"> · </span>
+              <button type="button" [class]="linkClass" (click)="changeEmail()">Mudar email</button>
+            </p>
+          </div>
+        } @else {
+          <div class="animate-screen">
+            <h1 [class]="titleClass">Quase lá</h1>
+            <p [class]="leadClass">Diz-nos o teu nome e define a tua senha.</p>
+
+            <form class="space-y-4" [formGroup]="detailsForm" (ngSubmit)="register()" novalidate>
+              <div class="grid gap-1.5">
+                <label for="register-name" class="text-sm font-semibold text-ink">Nome</label>
+                <input
+                  id="register-name"
+                  formControlName="displayName"
+                  autocomplete="name"
+                  required
+                  [class]="inputClass"
+                  [attr.aria-invalid]="isInvalid(detailsForm.controls.displayName)"
+                />
+              </div>
+
+              <div class="grid gap-1.5">
+                <label for="register-password" class="text-sm font-semibold text-ink">Senha</label>
+                <div class="relative">
+                  <input
+                    id="register-password"
+                    formControlName="password"
+                    [type]="showRegisterPassword() ? 'text' : 'password'"
+                    autocomplete="new-password"
+                    minlength="8"
+                    required
+                    [class]="passwordInputClass"
+                    [attr.aria-invalid]="isInvalid(detailsForm.controls.password)"
+                  />
+                  <button
+                    type="button"
+                    class="absolute right-1 top-1 grid size-11 place-items-center rounded-xl text-muted transition hover:text-ink"
+                    [attr.aria-label]="showRegisterPassword() ? 'Esconder senha' : 'Mostrar senha'"
+                    [attr.aria-pressed]="showRegisterPassword()"
+                    (click)="togglePassword('register')"
+                  >
+                    <fa-icon
+                      [icon]="showRegisterPassword() ? icons['eyeSlash'] : icons['eye']"
+                      aria-hidden="true"
+                    />
+                  </button>
+                </div>
+                <span class="text-[13px] text-muted">Mínimo de 8 caracteres.</span>
+              </div>
+
+              <button type="submit" [disabled]="busy()" [class]="submitClass">
+                {{ busy() ? 'A criar conta…' : 'Criar conta' }}
+              </button>
+
+              <p class="text-center text-[13px] text-muted">
+                Ao criar conta aceitas os
+                <!-- TODO: contrato não confirmado — URL dos Termos. -->
+                <a routerLink="/termos" class="font-semibold text-ink underline">Termos</a>
+                e a
+                <!-- TODO: contrato não confirmado — URL da Política de privacidade. -->
+                <a routerLink="/privacidade" class="font-semibold text-ink underline">
+                  Política de privacidade
+                </a>
+                .
+              </p>
+            </form>
+          </div>
         }
       }
     </app-auth-layout>
@@ -326,6 +332,7 @@ export class AuthPage {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly toasts = inject(ToastService);
 
   protected readonly icons = ICONS;
 
@@ -354,7 +361,6 @@ export class AuthPage {
   readonly step = signal<RegisterStep>('email');
   readonly email = signal('');
   readonly busy = signal(false);
-  readonly error = signal('');
   readonly resendSeconds = signal(0);
   readonly showLoginPassword = signal(false);
   readonly showRegisterPassword = signal(false);
@@ -428,21 +434,21 @@ export class AuthPage {
     const password = this.loginForm.controls.password.value;
     if (!this.loginForm.controls.email.valid || !email) {
       this.loginForm.controls.email.markAsTouched();
-      this.error.set('Indica um email válido.');
+      this.toasts.error('Indica um email válido.');
       return;
     }
     if (!password) {
       this.loginForm.controls.password.markAsTouched();
-      this.error.set('Indica a tua senha.');
+      this.toasts.error('Indica a tua senha.');
       return;
     }
     this.busy.set(true);
-    this.error.set('');
     try {
       await this.auth.login(email, password, this.loginForm.controls.remember.value);
+      this.toasts.success('Sessão iniciada. Bem-vindo de volta!');
       await this.router.navigateByUrl(this.resolveDestination());
     } catch (error: unknown) {
-      this.error.set(toApiError(error).message);
+      this.toasts.error(toApiError(error).message);
     } finally {
       this.busy.set(false);
     }
@@ -455,20 +461,20 @@ export class AuthPage {
     const email = this.emailForm.controls.email.value.trim();
     if (!this.emailForm.controls.email.valid || !email) {
       this.emailForm.controls.email.markAsTouched();
-      this.error.set('Este email não parece válido. Verifica se está bem escrito.');
+      this.toasts.error('Este email não parece válido. Verifica se está bem escrito.');
       return;
     }
     this.busy.set(true);
-    this.error.set('');
     try {
       const result = await this.auth.requestRegistrationCode(email);
       this.email.set(email);
       this.step.set('code');
       this.otp.set(['', '', '', '', '', '']);
       this.resendSeconds.set(secondsUntil(result.resend_available_at));
+      this.toasts.success(`Enviámos um código de 6 dígitos para ${email}.`);
       queueMicrotask(() => this.otpBoxes()[0]?.nativeElement.focus());
     } catch (error: unknown) {
-      this.error.set(toApiError(error).message);
+      this.toasts.error(toApiError(error).message);
     } finally {
       this.busy.set(false);
     }
@@ -479,12 +485,12 @@ export class AuthPage {
       return;
     }
     this.busy.set(true);
-    this.error.set('');
     try {
       const result = await this.auth.requestRegistrationCode(this.email());
       this.resendSeconds.set(secondsUntil(result.resend_available_at));
+      this.toasts.success(`Enviámos um novo código para ${this.email()}.`);
     } catch (error: unknown) {
-      this.error.set(toApiError(error).message);
+      this.toasts.error(toApiError(error).message);
     } finally {
       this.busy.set(false);
     }
@@ -496,17 +502,15 @@ export class AuthPage {
     }
     const code = this.otp().join('');
     if (code.length < 6) {
-      this.error.set('Escreve os 6 dígitos do código.');
+      this.toasts.error('Escreve os 6 dígitos do código.');
       return;
     }
     this.busy.set(true);
-    this.error.set('');
     try {
       await this.auth.verifyRegistrationCode(this.email(), code);
       this.step.set('details');
-      this.error.set('');
     } catch (error: unknown) {
-      this.error.set(toApiError(error).message);
+      this.toasts.error(toApiError(error).message);
     } finally {
       this.busy.set(false);
     }
@@ -520,22 +524,22 @@ export class AuthPage {
     const password = this.detailsForm.controls.password.value;
     if (!displayName) {
       this.detailsForm.controls.displayName.markAsTouched();
-      this.error.set('Indica o teu nome.');
+      this.toasts.error('Indica o teu nome.');
       return;
     }
     if (password.length < 8) {
       this.detailsForm.controls.password.markAsTouched();
-      this.error.set('A senha precisa de pelo menos 8 caracteres.');
+      this.toasts.error('A senha precisa de pelo menos 8 caracteres.');
       return;
     }
     this.busy.set(true);
-    this.error.set('');
     try {
+      // O contrato atual inicia a sessão no próprio registo: não há login separado.
       await this.auth.register(this.email(), password, displayName);
-      // TODO: contrato não confirmado — entrar automaticamente após o registo?
-      await this.router.navigate(['/entrar']);
+      this.toasts.success('Conta criada com sucesso. Bem-vindo!');
+      await this.router.navigateByUrl(this.resolveDestination());
     } catch (error: unknown) {
-      this.error.set(toApiError(error).message);
+      this.toasts.error(toApiError(error).message);
     } finally {
       this.busy.set(false);
     }
@@ -546,11 +550,10 @@ export class AuthPage {
       return;
     }
     this.busy.set(true);
-    this.error.set('');
     try {
       await this.auth.loginWithProvider(provider);
     } catch (error: unknown) {
-      this.error.set(toApiError(error).message);
+      this.toasts.error(toApiError(error).message);
     } finally {
       this.busy.set(false);
     }
@@ -559,7 +562,6 @@ export class AuthPage {
   protected changeEmail(): void {
     this.resendSeconds.set(0);
     this.otp.set(['', '', '', '', '', '']);
-    this.error.set('');
     this.step.set('email');
   }
 

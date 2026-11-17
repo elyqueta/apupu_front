@@ -1,22 +1,8 @@
-import { computed, Injectable, signal, inject } from '@angular/core';
-import { ApiClient } from '../api/api-client';
-import { ApiError, toApiError } from '../api/api-error';
-import {
-  ApiActivity,
-  ApiEvent,
-  ApiInvitation,
-  ApiPage,
-  ApiTask,
-  ApiTemplate,
-  DashboardData,
-  EventLocation,
-  Host,
-  ReportSummary,
-  CreateEventRequest,
-} from '../api/api.models';
+import { computed, Injectable, inject, signal } from '@angular/core';
+import { ApiError } from '../api/api-error';
+import { emptyProfile, mapEvent, statsForEvents, statsForGuests } from '../api/mappers';
 import {
   AddGuestResult,
-  BankDetails,
   CreateEventInput,
   EventActivity,
   EventStats,
@@ -25,97 +11,92 @@ import {
   GuestInput,
   HostEvent,
   HostProfile,
-  RsvpStatus,
   TemplateId,
   WorkspaceTask,
 } from '../models/models';
+import { ActivityRepository } from '../data/activity.repository';
+import { CachedRepository, LoadOptions } from '../data/cached-repository';
+import { DashboardRepository } from '../data/dashboard.repository';
+import { EventsRepository } from '../data/events.repository';
+import { GuestsRepository } from '../data/guests.repository';
+import { ManagementStore } from '../data/management.store';
+import { ProfileRepository, ProfileUpdateInput } from '../data/profile.repository';
+import { ReportsRepository } from '../data/reports.repository';
+import { TasksRepository } from '../data/tasks.repository';
+import { TemplateSelectionStore } from '../data/template-selection.store';
+import { TemplatesRepository } from '../data/templates.repository';
 
-interface ApiHostGuest extends ApiInvitation {
-  event: Pick<ApiEvent, 'id' | 'title' | 'starts_at' | 'status'>;
+/**
+ * Domínios que uma página pode pedir. A shell acrescenta sempre o "chrome"
+ * (perfil, atividade e eventos), que alimenta a navegação e as notificações.
+ */
+export interface LoadScope {
+  events?: boolean;
+  guests?: boolean;
+  activity?: boolean;
+  tasks?: boolean;
+  templates?: boolean;
+  dashboard?: boolean;
+  reports?: boolean;
+  profile?: boolean;
 }
 
-interface HostEnvelope {
-  host: Host;
-}
+const CHROME_SCOPE: LoadScope = { profile: true, activity: true, events: true };
 
-interface EventCreateEnvelope {
-  event: ApiEvent;
-  manage_email_status: 'sent' | 'failed';
-  deliveries: Array<{ email: string; status: 'queued' }>;
-}
-
-interface EventDetailEnvelope {
-  event: ApiEvent;
-  invitations: ApiInvitation[];
-}
-
-interface HostSessionEnvelope {
-  event: ApiEvent;
-  csrf_token: string;
-  expires_at: string;
-  manage_email_status: 'sent' | 'failed';
-  manage_token_expires_at: string | null;
-}
-
-interface InvitationEnvelope {
-  status?: 'queued';
-  id?: string;
-  event_id?: string;
-  guest_name?: string;
-  guest_email?: string;
-  guest_phone?: string | null;
-  table_name?: string | null;
-  rsvp_status?: 'pending' | 'accepted' | 'declined';
-  rsvp_responded_at?: string | null;
-  send_status?: 'pending' | 'queued' | 'sent' | 'failed';
-  send_count?: number;
-  last_sent_at?: string | null;
-  created_at?: string;
-  updated_at?: string;
-}
-
+/**
+ * Fachada sem estado sobre os repositórios por domínio.
+ *
+ * Deixa de guardar dados próprios: todos os signals são derivados dos
+ * repositórios (`core/data/*`), que se registam no `SessionCache` e são
+ * limpos no logout/novo login. Cada página declara o que precisa via
+ * `load(scope)` e só esses pedidos são feitos.
+ */
 @Injectable({ providedIn: 'root' })
 export class WorkspaceStore {
-  private readonly api = inject(ApiClient);
+  private readonly eventsRepo = inject(EventsRepository);
+  private readonly guestsRepo = inject(GuestsRepository);
+  private readonly activityRepo = inject(ActivityRepository);
+  private readonly tasksRepo = inject(TasksRepository);
+  private readonly templatesRepo = inject(TemplatesRepository);
+  private readonly dashboardRepo = inject(DashboardRepository);
+  private readonly reportsRepo = inject(ReportsRepository);
+  private readonly profileRepo = inject(ProfileRepository);
+  private readonly management = inject(ManagementStore);
+  private readonly templateSelection = inject(TemplateSelectionStore);
 
-  private readonly eventsState = signal<HostEvent[]>([]);
-  private readonly guestsState = signal<Guest[]>([]);
-  private readonly activityState = signal<EventActivity[]>([]);
-  private readonly tasksState = signal<WorkspaceTask[]>([]);
-  private readonly templatesState = signal<EventTemplate[]>([]);
-  private readonly reportState = signal<ReportSummary | null>(null);
-  private readonly dashboardState = signal<DashboardData | null>(null);
-  private readonly profileState = signal<HostProfile>({
-    name: '',
-    email: '',
-    phone: null,
-    birthDate: null,
-    locale: 'pt-AO',
-    timezone: 'Africa/Luanda',
-    avatarUrl: null,
-    emailVerified: false,
-    profileComplete: false,
+  /** Domínios atualmente "ativos" (chrome + última página). */
+  private readonly activeScope = signal<LoadScope>({ ...CHROME_SCOPE });
+
+  readonly events = computed<HostEvent[]>(() => this.eventsRepo.data() ?? []);
+  readonly guests = computed<Guest[]>(() => this.guestsRepo.data() ?? []);
+  readonly activity = computed<EventActivity[]>(() => this.activityRepo.data() ?? []);
+  readonly tasks = computed<WorkspaceTask[]>(() => this.tasksRepo.data() ?? []);
+  readonly templates = computed<EventTemplate[]>(() => this.templatesRepo.data() ?? []);
+  readonly reportSummary = computed(() => this.reportsRepo.data());
+  readonly profile = computed<HostProfile>(() => this.profileRepo.data() ?? emptyProfile());
+
+  readonly manageEmailStatus = this.management.manageEmailStatus;
+  readonly activeManagementEventId = this.management.activeEventId;
+  readonly selectedTemplate = this.templateSelection.selected;
+
+  /** `true` enquanto qualquer domínio ativo está a carregar. */
+  readonly loading = computed(() =>
+    this.repositoriesFor(this.activeScope()).some((repository) => repository.loading()),
+  );
+
+  /** Primeiro erro entre os domínios ativos, para o ecrã de recuperação da shell. */
+  readonly error = computed<ApiError | null>(() => {
+    for (const repository of this.repositoriesFor(this.activeScope())) {
+      const error = repository.error();
+      if (error) {
+        return error;
+      }
+    }
+    return null;
   });
-  private readonly loadingState = signal(true);
-  private readonly errorState = signal<ApiError | null>(null);
-  private readonly activeManagementEventIdState = signal<string | null>(null);
-  private readonly manageEmailStatusState = signal<'sent' | 'failed' | null>(null);
-
-  readonly events = this.eventsState.asReadonly();
-  readonly guests = this.guestsState.asReadonly();
-  readonly activity = this.activityState.asReadonly();
-  readonly tasks = this.tasksState.asReadonly();
-  readonly templates = this.templatesState.asReadonly();
-  readonly reportSummary = this.reportState.asReadonly();
-  readonly profile = this.profileState.asReadonly();
-  readonly loading = this.loadingState.asReadonly();
-  readonly error = this.errorState.asReadonly();
-  readonly manageEmailStatus = this.manageEmailStatusState.asReadonly();
-  readonly selectedTemplate = signal<TemplateId | null>(null);
-  readonly activeManagementEventId = this.activeManagementEventIdState.asReadonly();
 
   readonly activeEvents = computed(() =>
-    this.eventsState().filter((event) => event.status === 'published'),
+    this.events().filter((event) => event.status === 'published'),
   );
 
   readonly upcomingEvents = computed(() =>
@@ -125,145 +106,103 @@ export class WorkspaceStore {
   );
 
   readonly nextEvent = computed<HostEvent | null>(() => {
-    const next = this.dashboardState()?.next_event;
+    const next = this.dashboardRepo.data()?.next_event;
     return next ? mapEvent(next) : (this.upcomingEvents()[0] ?? null);
   });
 
   readonly recentEvents = computed(() =>
-    [...this.eventsState()]
+    [...this.events()]
       .filter((event) => event.status !== 'cancelled')
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
       .slice(0, 4),
   );
 
-  readonly globalStats = computed<EventStats & { events: number; drafts: number; completed: number }>(
-    () => {
-      const totals = this.dashboardState()?.totals;
-      if (totals) {
-        return {
-          events: totals.scheduled,
-          drafts: totals.drafts,
-          completed: totals.completed,
-          total: totals.total_invitations,
-          confirmed: totals.accepted,
-          pending: totals.pending,
-          declined: totals.declined,
-          responseRate: totals.total_invitations
-            ? Math.round(((totals.accepted + totals.declined) / totals.total_invitations) * 100)
-            : 0,
-        };
-      }
-      return this.statsForEvents(this.eventsState());
-    },
-  );
+  readonly globalStats = computed<
+    EventStats & { events: number; drafts: number; completed: number }
+  >(() => {
+    const totals = this.dashboardRepo.data()?.totals;
+    if (totals) {
+      return {
+        events: totals.scheduled,
+        drafts: totals.drafts,
+        completed: totals.completed,
+        total: totals.total_invitations,
+        confirmed: totals.accepted,
+        pending: totals.pending,
+        declined: totals.declined,
+        responseRate: totals.total_invitations
+          ? Math.round(((totals.accepted + totals.declined) / totals.total_invitations) * 100)
+          : 0,
+      };
+    }
+    return statsForEvents(this.events());
+  });
 
   readonly guestsWithEvent = computed(() => {
-    const events = this.eventsState();
-    return this.guestsState()
+    const events = this.events();
+    return this.guests()
       .map((guest) => ({
         guest,
         event: events.find((event) => event.id === guest.eventId) ?? null,
       }))
-      .filter(
-        (entry): entry is { guest: Guest; event: HostEvent } => entry.event !== null,
-      );
+      .filter((entry): entry is { guest: Guest; event: HostEvent } => entry.event !== null);
   });
 
   readonly pendingGuests = computed(() =>
     this.guestsWithEvent()
       .filter((entry) => entry.guest.status === 'pending')
-      .sort(
-        (a, b) =>
-          new Date(a.event.startsAt).getTime() - new Date(b.event.startsAt).getTime(),
-      ),
+      .sort((a, b) => new Date(a.event.startsAt).getTime() - new Date(b.event.startsAt).getTime()),
   );
 
   readonly activityFeed = computed(() =>
-    this.activityState()
+    [...this.activity()]
       .sort((a, b) => b.at.localeCompare(a.at))
       .map((item) => ({
         item,
-        event: this.eventsState().find((event) => event.id === item.eventId) ?? null,
+        event: this.events().find((event) => event.id === item.eventId) ?? null,
       }))
-      .filter(
-        (entry): entry is { item: EventActivity; event: HostEvent } => entry.event !== null,
-      ),
+      .filter((entry): entry is { item: EventActivity; event: HostEvent } => entry.event !== null),
   );
 
   readonly managementEvent = computed<HostEvent | null>(() => {
-    const id = this.activeManagementEventIdState();
-    return id ? (this.eventsState().find((event) => event.id === id) ?? null) : null;
+    const id = this.activeManagementEventId();
+    return id ? (this.eventsRepo.eventById(id) ?? null) : null;
   });
 
   readonly taskProgress = computed(() => {
-    const tasks = this.tasksState();
+    const tasks = this.tasks();
     return {
       done: tasks.filter((task) => task.done).length,
       total: tasks.length,
     };
   });
 
-  constructor() {
-    void this.reload();
+  /**
+   * Declara os domínios que a página atual precisa e dispara os pedidos em
+   * falta. O "chrome" (perfil, atividade, eventos) é sempre incluído.
+   */
+  load(scope: LoadScope = {}): void {
+    const merged: LoadScope = { ...CHROME_SCOPE, ...scope };
+    this.activeScope.set(merged);
+    void this.runScope(merged);
   }
 
-  async reload(): Promise<void> {
-    this.loadingState.set(true);
-    this.errorState.set(null);
-    try {
-      const [
-        events,
-        guests,
-        activity,
-        tasks,
-        profile,
-        templates,
-        dashboard,
-        reports,
-      ] = await Promise.all([
-        this.api.getPage<ApiEvent>('/host/events', {
-          page: 1,
-          page_size: 100,
-          sort: 'starts_at',
-          order: 'asc',
-        }),
-        this.api.getPage<ApiHostGuest>('/host/guests', {
-          page: 1,
-          page_size: 100,
-        }),
-        this.api.getPage<ApiActivity>('/host/activity', {
-          page: 1,
-          page_size: 100,
-        }),
-        this.api.get<ApiTask[]>('/host/tasks'),
-        this.api.get<HostEnvelope>('/host/profile'),
-        this.api.get<ApiTemplate[]>('/templates'),
-        this.api.get<DashboardData>('/host/dashboard'),
-        this.api.get<ReportSummary>('/host/reports/summary'),
-      ]);
+  /** Compatibilidade com o carregamento inicial da shell. */
+  ensureLoaded(): void {
+    this.load({});
+  }
 
-      const mappedEvents = events.data.map(mapEvent);
-      this.eventsState.set(mappedEvents);
-      this.guestsState.set(guests.data.map(mapInvitation));
-      this.activityState.set(activity.data.map(mapActivity));
-      this.tasksState.set(tasks.map(mapTask));
-      this.templatesState.set(templates.map(mapTemplate));
-      this.profileState.set(mapProfile(profile.host));
-      this.dashboardState.set(dashboard);
-      this.reportState.set(reports);
-    } catch (error: unknown) {
-      this.errorState.set(toApiError(error));
-    } finally {
-      this.loadingState.set(false);
-    }
+  /** Recarrega com `force` os domínios ativos (usado no botão "tentar de novo"). */
+  async retry(): Promise<void> {
+    await this.runScope(this.activeScope(), { force: true });
   }
 
   eventById(id: string): HostEvent | null {
-    return this.eventsState().find((event) => event.id === id) ?? null;
+    return this.eventsRepo.eventById(id);
   }
 
   guestsFor(eventId: string): Guest[] {
-    return this.guestsState().filter((guest) => guest.eventId === eventId);
+    return this.guestsRepo.forEvent(eventId);
   }
 
   eventStats(eventId: string): EventStats {
@@ -271,66 +210,41 @@ export class WorkspaceStore {
     if (event?.stats) {
       return event.stats;
     }
-    return this.statsForGuests(this.guestsFor(eventId));
+    return statsForGuests(this.guestsFor(eventId));
   }
 
   activityFor(eventId: string): EventActivity[] {
-    return this.activityState()
+    return this.activity()
       .filter((item) => item.eventId === eventId)
       .sort((a, b) => b.at.localeCompare(a.at));
   }
 
   tasksFor(eventId: string): WorkspaceTask[] {
-    return this.tasksState().filter((task) => task.eventId === eventId);
+    return this.tasks().filter((task) => task.eventId === eventId);
   }
 
   setActiveManagement(eventId: string | null): void {
-    this.activeManagementEventIdState.set(eventId);
+    this.management.setActive(eventId);
   }
 
   async openManagementLink(token: string): Promise<HostEvent> {
-    const response = await this.api.post<HostSessionEnvelope>('/host/session', { token });
-    const event = mapEvent(response.event);
-    this.upsertEvent(event);
-    this.activeManagementEventIdState.set(event.id);
-    return event;
+    return this.management.open(token);
   }
 
   async endManagement(eventId: string): Promise<void> {
-    await this.api.delete(`/host/session/${encodeURIComponent(eventId)}`);
-    this.activeManagementEventIdState.set(null);
+    await this.management.end(eventId);
   }
 
   async createEvent(input: CreateEventInput): Promise<HostEvent> {
-    const request: CreateEventRequest = {
-      event: {
-        title: input.title,
-        host_name: input.hostName,
-        host_email: input.hostEmail,
-        category: input.type,
-        starts_at: input.startsAt,
-        timezone: input.timezone,
-        location: locationFromInput(input),
-        message: input.message,
-        rules: input.rules || undefined,
-        dress_code: input.dressCode || undefined,
-        template_id: input.templateId,
-        theme: { mode: 'dark', palette: 'default' },
-        contribution: contributionFromInput(input),
-        rsvp_deadline: input.rsvpDeadline,
-      },
-      guests: input.guests.map((guest) => ({
-        name: guest.name,
-        email: guest.email,
-        phone: guest.phone,
-      })),
-    };
-    const response = await this.api.post<EventCreateEnvelope>('/host/events', request);
-    this.manageEmailStatusState.set(response.manage_email_status);
-    const event = mapEvent(response.event);
-    this.upsertEvent(event);
-    await this.reload();
-    return this.eventById(event.id) ?? event;
+    const { event, manageEmailStatus } = await this.eventsRepo.create(input);
+    this.management.setManageEmailStatus(manageEmailStatus);
+    // O servidor passa a listar o evento e os convidados criados. Refresca os
+    // convidados para que as estatísticas do evento recém-criado fiquem certas
+    // e invalida os totais agregados.
+    await Promise.allSettled([this.guestsRepo.load({ force: true })]);
+    this.dashboardRepo.invalidate();
+    this.reportsRepo.invalidate();
+    return this.eventsRepo.eventById(event.id) ?? event;
   }
 
   async updateEvent(
@@ -339,313 +253,82 @@ export class WorkspaceStore {
       Pick<HostEvent, 'title' | 'venue' | 'city' | 'message' | 'rules' | 'dressCode' | 'status'>
     >,
   ): Promise<HostEvent | null> {
-    const current = this.eventById(eventId);
-    if (!current) {
-      return null;
+    const updated = await this.eventsRepo.update(eventId, patch);
+    if (updated) {
+      this.dashboardRepo.invalidate();
+      this.reportsRepo.invalidate();
     }
-    const body: Record<string, unknown> = {};
-    if (patch.title !== undefined) body['title'] = patch.title;
-    if (patch.message !== undefined) body['message'] = patch.message;
-    if (patch.rules !== undefined) body['rules'] = patch.rules;
-    if (patch.dressCode !== undefined) body['dress_code'] = patch.dressCode;
-    if (patch.status !== undefined) {
-      body['status'] = patch.status === 'published' ? 'scheduled' : patch.status;
-    }
-    if (patch.venue !== undefined || patch.city !== undefined) {
-      body['location'] = locationFromView(current, {
-        venue: patch.venue,
-        city: patch.city,
-      });
-    }
-    const response = await this.api.patch<ApiEvent>(`/host/events/${encodeURIComponent(eventId)}`, body);
-    const updated = mapEvent(response);
-    this.upsertEvent(updated);
     return updated;
   }
 
   async deleteEvent(eventId: string): Promise<void> {
-    await this.api.delete(`/host/events/${encodeURIComponent(eventId)}`);
-    this.eventsState.update((events) => events.filter((event) => event.id !== eventId));
-    this.guestsState.update((guests) => guests.filter((guest) => guest.eventId !== eventId));
+    await this.eventsRepo.remove(eventId);
+    this.guestsRepo.removeForEvent(eventId);
+    this.dashboardRepo.invalidate();
+    this.reportsRepo.invalidate();
   }
 
   async resendManageLink(eventId: string): Promise<'sent' | 'failed'> {
-    const response = await this.api.post<{ manage_email_status: 'sent' | 'failed' }>(
-      `/host/events/${encodeURIComponent(eventId)}/manage-link/resend`,
-    );
-    return response.manage_email_status;
+    return this.eventsRepo.resendManageLink(eventId);
   }
 
   async addGuest(eventId: string, input: GuestInput): Promise<AddGuestResult> {
-    const response = await this.api.post<ApiInvitation>(
-      `/host/events/${encodeURIComponent(eventId)}/invitations`,
-      { name: input.name, email: input.email, phone: input.phone },
-    );
-    const guest = mapInvitation(response);
-    this.guestsState.update((guests) => [guest, ...guests]);
-    return { ok: true, guest };
+    return this.guestsRepo.add(eventId, input);
   }
 
   async removeGuest(guestId: string): Promise<void> {
-    const guest = this.guestsState().find((item) => item.id === guestId);
-    if (!guest) {
-      return;
-    }
-    await this.api.delete(
-      `/host/events/${encodeURIComponent(guest.eventId)}/invitations/${encodeURIComponent(guestId)}`,
-    );
-    this.guestsState.update((guests) => guests.filter((item) => item.id !== guestId));
+    await this.guestsRepo.remove(guestId);
   }
 
   async sendReminder(guestId: string): Promise<boolean> {
-    const guest = this.guestsState().find((item) => item.id === guestId);
-    if (!guest) {
-      return false;
-    }
-    await this.api.post(
-      `/host/events/${encodeURIComponent(guest.eventId)}/invitations/${encodeURIComponent(guestId)}/resend`,
-    );
-    return true;
+    return this.guestsRepo.sendReminder(guestId);
   }
 
   async toggleTask(taskId: string): Promise<void> {
-    const current = this.tasksState().find((task) => task.id === taskId);
-    if (!current) {
-      return;
-    }
-    const response = await this.api.patch<ApiTask>(`/host/tasks/${encodeURIComponent(taskId)}`, {
-      done: !current.done,
-    });
-    const updated = mapTask(response);
-    this.tasksState.update((tasks) =>
-      tasks.map((task) => (task.id === taskId ? updated : task)),
-    );
+    await this.tasksRepo.toggle(taskId);
   }
 
   async createTask(label: string, eventId: string | null = null): Promise<WorkspaceTask> {
-    const response = await this.api.post<ApiTask>('/host/tasks', {
-      label,
-      event_id: eventId,
-    });
-    const task = mapTask(response);
-    this.tasksState.update((tasks) => [task, ...tasks]);
-    return task;
+    return this.tasksRepo.create(label, eventId);
   }
 
   async removeTask(taskId: string): Promise<void> {
-    await this.api.delete(`/host/tasks/${encodeURIComponent(taskId)}`);
-    this.tasksState.update((tasks) => tasks.filter((task) => task.id !== taskId));
+    await this.tasksRepo.remove(taskId);
   }
 
-  async saveProfile(input: {
-    display_name: string;
-    phone: string | null;
-    birth_date: string | null;
-    locale: string;
-    timezone: string;
-    avatar_url?: string | null;
-  }): Promise<HostProfile> {
-    const response = await this.api.patch<HostEnvelope>('/host/profile', input);
-    const profile = mapProfile(response.host);
-    this.profileState.set(profile);
-    return profile;
+  async saveProfile(input: ProfileUpdateInput): Promise<HostProfile> {
+    return this.profileRepo.save(input);
   }
 
-  private upsertEvent(event: HostEvent): void {
-    this.eventsState.update((events) => {
-      const exists = events.some((item) => item.id === event.id);
-      return exists
-        ? events.map((item) => (item.id === event.id ? event : item))
-        : [event, ...events];
-    });
+  /** Seleciona o modelo ativo (partilhado com o assistente de criação). */
+  selectTemplate(id: TemplateId | null): void {
+    this.templateSelection.select(id);
   }
 
-  private statsForEvents(events: HostEvent[]): EventStats & {
-    events: number;
-    drafts: number;
-    completed: number;
-  } {
-    const total = events.reduce((sum, event) => sum + (event.stats?.total ?? 0), 0);
-    const confirmed = events.reduce((sum, event) => sum + (event.stats?.confirmed ?? 0), 0);
-    const declined = events.reduce((sum, event) => sum + (event.stats?.declined ?? 0), 0);
-    const pending = events.reduce((sum, event) => sum + (event.stats?.pending ?? 0), 0);
-    return {
-      events: events.filter((event) => event.status === 'published').length,
-      drafts: events.filter((event) => event.status === 'draft').length,
-      completed: events.filter((event) => event.status === 'completed').length,
-      total,
-      confirmed,
-      declined,
-      pending,
-      responseRate: total === 0 ? 0 : Math.round(((confirmed + declined) / total) * 100),
-    };
+  private async runScope(scope: LoadScope, options: LoadOptions = {}): Promise<void> {
+    const requests: Promise<unknown>[] = [];
+    if (scope.profile) requests.push(this.profileRepo.load(options));
+    if (scope.activity) requests.push(this.activityRepo.load(options));
+    if (scope.events) requests.push(this.eventsRepo.load(options));
+    if (scope.guests) requests.push(this.guestsRepo.load(options));
+    if (scope.tasks) requests.push(this.tasksRepo.load(options));
+    if (scope.templates) requests.push(this.templatesRepo.load(options));
+    if (scope.dashboard) requests.push(this.dashboardRepo.load(options));
+    if (scope.reports) requests.push(this.reportsRepo.load(options));
+    // Cada repositório guarda o seu próprio erro; não propagamos rejeições.
+    await Promise.allSettled(requests);
   }
 
-  private statsForGuests(guests: Guest[]): EventStats {
-    const confirmed = guests.filter((guest) => guest.status === 'confirmed').length;
-    const declined = guests.filter((guest) => guest.status === 'declined').length;
-    const pending = guests.filter((guest) => guest.status === 'pending').length;
-    const total = guests.length;
-    return {
-      total,
-      confirmed,
-      declined,
-      pending,
-      responseRate: total === 0 ? 0 : Math.round(((confirmed + declined) / total) * 100),
-    };
+  private repositoriesFor(scope: LoadScope): CachedRepository<unknown>[] {
+    const repositories: CachedRepository<unknown>[] = [];
+    if (scope.profile) repositories.push(this.profileRepo);
+    if (scope.activity) repositories.push(this.activityRepo);
+    if (scope.events) repositories.push(this.eventsRepo);
+    if (scope.guests) repositories.push(this.guestsRepo);
+    if (scope.tasks) repositories.push(this.tasksRepo);
+    if (scope.templates) repositories.push(this.templatesRepo);
+    if (scope.dashboard) repositories.push(this.dashboardRepo);
+    if (scope.reports) repositories.push(this.reportsRepo);
+    return repositories;
   }
-}
-
-function mapEvent(event: ApiEvent): HostEvent {
-  const location = event.location;
-  const contribution = event.contribution;
-  return {
-    id: event.id,
-    title: event.title,
-    type: event.category,
-    hostName: event.host_name,
-    hostEmail: event.host_email,
-    startsAt: event.starts_at ?? '',
-    timezone: event.timezone,
-    venue: location.type === 'venue' ? (location.name ?? '') : '',
-    city: location.type === 'venue' ? (location.address ?? '') : '',
-    onlineLink: location.type === 'online' ? (location.online_url ?? null) : null,
-    message: event.message ?? '',
-    rules: event.rules ?? '',
-    dressCode: event.dress_code ?? '',
-    rsvpDeadline: event.rsvp_deadline,
-    templateId: event.template_id,
-    status: event.status === 'scheduled' ? 'published' : event.status,
-    contributionEnabled: contribution.enabled,
-    bankDetails:
-      contribution.enabled &&
-      contribution.bank_name &&
-      contribution.account_holder &&
-      contribution.account_reference
-        ? {
-            bankName: contribution.bank_name,
-            accountHolder: contribution.account_holder,
-            accountReference: contribution.account_reference,
-          }
-        : null,
-    createdAt: event.created_at,
-    stats: event.stats
-      ? {
-          total: event.stats.total_invitations,
-          confirmed: event.stats.accepted,
-          declined: event.stats.declined,
-          pending: event.stats.pending,
-          responseRate:
-            event.stats.total_invitations === 0
-              ? 0
-              : Math.round(
-                  ((event.stats.accepted + event.stats.declined) /
-                    event.stats.total_invitations) *
-                    100,
-                ),
-        }
-      : undefined,
-  };
-}
-
-function mapInvitation(invitation: ApiInvitation): Guest {
-  return {
-    id: invitation.id,
-    eventId: invitation.event_id,
-    name: invitation.guest_name,
-    email: invitation.guest_email,
-    phone: invitation.guest_phone,
-    status: invitation.rsvp_status === 'accepted' ? 'confirmed' : invitation.rsvp_status,
-    tableName: invitation.table_name,
-    invitedAt: invitation.created_at,
-    respondedAt: invitation.rsvp_responded_at,
-  };
-}
-
-function mapActivity(activity: ApiActivity): EventActivity {
-  return {
-    id: activity.id,
-    eventId: activity.event_id,
-    kind: activity.kind,
-    guestName: activity.guest_name,
-    at: activity.at,
-  };
-}
-
-function mapTask(task: ApiTask): WorkspaceTask {
-  return {
-    id: task.id,
-    eventId: task.event_id,
-    label: task.label,
-    done: task.done,
-  };
-}
-
-function mapTemplate(template: ApiTemplate): EventTemplate {
-  return {
-    id: template.id,
-    slug: template.slug,
-    name: template.name,
-    description: template.description,
-    previewImageUrl: template.preview_image_url,
-    supportedFields: template.supported_fields,
-    themes: template.themes,
-  };
-}
-
-function mapProfile(host: Host): HostProfile {
-  return {
-    name: host.profile.display_name,
-    email: host.email,
-    phone: host.profile.phone,
-    birthDate: host.profile.birth_date,
-    locale: host.profile.locale === 'en' ? 'en' : 'pt-AO',
-    timezone: host.profile.timezone,
-    avatarUrl: host.profile.avatar_url,
-    emailVerified: host.email_verified,
-    profileComplete: host.profile_complete,
-  };
-}
-
-function locationFromInput(input: CreateEventInput): EventLocation {
-  if (input.onlineLink) {
-    return { type: 'online', online_url: input.onlineLink };
-  }
-  return {
-    type: 'venue',
-    name: input.venue,
-    address: input.city || null,
-  };
-}
-
-function locationFromView(
-  current: HostEvent,
-  patch: { venue?: string; city?: string },
-): EventLocation {
-  if (current.onlineLink) {
-    return { type: 'online', online_url: current.onlineLink };
-  }
-  return {
-    type: 'venue',
-    name: patch.venue ?? current.venue,
-    address: patch.city ?? current.city,
-  };
-}
-
-function contributionFromInput(input: CreateEventInput): {
-  enabled: boolean;
-  bank_name?: string;
-  account_holder?: string;
-  account_reference?: string;
-} {
-  if (!input.contributionEnabled || !input.bankDetails) {
-    return { enabled: false };
-  }
-  const details: BankDetails = input.bankDetails;
-  return {
-    enabled: true,
-    bank_name: details.bankName,
-    account_holder: details.accountHolder,
-    account_reference: details.accountReference,
-  };
 }

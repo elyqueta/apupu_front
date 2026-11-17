@@ -691,6 +691,20 @@
                             </button>
                             <button
                               type="button"
+                              class="grid size-8 place-items-center rounded-lg border border-line bg-surface text-muted transition hover:border-mint/50 hover:text-mint disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-line disabled:hover:text-muted"
+                              [attr.aria-label]="i18n.t('guests.whatsapp')"
+                              [attr.title]="
+                                guest.phone
+                                  ? i18n.t('guests.whatsapp')
+                                  : i18n.t('guests.whatsappUnavailable')
+                              "
+                              [disabled]="!guest.phone"
+                              (click)="forwardWhatsApp(guest)"
+                            >
+                              <fa-icon [icon]="icons['whatsapp']" class="text-[10px]" />
+                            </button>
+                            <button
+                              type="button"
                               class="grid size-8 place-items-center rounded-lg border border-line bg-surface text-muted transition hover:border-coral/40 hover:text-coral"
                               [attr.aria-label]="i18n.t('guests.remove')"
                               [attr.title]="i18n.t('guests.remove')"

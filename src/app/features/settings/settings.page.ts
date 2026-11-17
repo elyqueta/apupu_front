@@ -70,6 +70,7 @@ export class SettingsPage {
   });
 
   constructor() {
+    this.store.load({ profile: true });
     effect(() => {
       const profile = this.store.profile();
       this.profileForm.reset(

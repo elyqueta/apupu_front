@@ -7,6 +7,7 @@ import { apiErrorInterceptor, apiRequestInterceptor } from './api.interceptor';
 import { Host } from './api.models';
 import { AuthService } from './auth.service';
 import { ApiClient } from './api-client';
+import { SessionCache } from '../services/session-cache';
 
 const BASE = 'http://localhost:3000/api/v1';
 
@@ -224,6 +225,28 @@ describe('AuthService', () => {
 
     expect(service.host()).toBeNull();
     expect(service.ready()).toBe(true);
+  });
+
+  it('resets the session caches on login and logout', async () => {
+    const sessions = TestBed.inject(SessionCache);
+    let resets = 0;
+    sessions.register({
+      reset: () => {
+        resets += 1;
+      },
+    });
+
+    const login = service.login('ana@exemplo.pt', 'segredo123');
+    http.expectOne(`${BASE}/auth/login`).flush({
+      data: { host: hostFixture(), csrf_token: 'csrf-1', expires_at: '2026-02-01T00:00:00Z' },
+    });
+    await login;
+    expect(resets).toBe(1);
+
+    const logout = service.logout();
+    http.expectOne(`${BASE}/auth/logout`).flush(null, { status: 204, statusText: 'No Content' });
+    await logout;
+    expect(resets).toBe(2);
   });
 
   it('posts the password reset token and new password', async () => {

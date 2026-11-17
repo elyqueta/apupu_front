@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { AbstractControl, NonNullableFormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -150,6 +150,18 @@ export class CreateEventPage {
   });
 
   protected readonly canSubmit = computed(() => this.contributionReady() && this.guestCount() >= 0);
+
+  constructor() {
+    this.store.load({ templates: true, profile: true });
+    // Se os modelos chegarem depois de o formulário ser criado, aplica o
+    // primeiro por omissão (o valor inicial pode ter sido `null`).
+    effect(() => {
+      const templates = this.store.templates();
+      if (!this.form.controls.templateId.value && templates.length > 0) {
+        this.form.controls.templateId.setValue(templates[0].id);
+      }
+    });
+  }
 
   protected guestGroup() {
     return this.fb.group({

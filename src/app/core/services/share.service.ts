@@ -3,6 +3,30 @@ import { inject, Injectable, PLATFORM_ID } from '@angular/core';
 
 export type ShareResult = 'shared' | 'copied' | 'cancelled' | 'failed';
 
+/**
+ * Normaliza um número de telefone para o formato aceite pelo `wa.me`
+ * (apenas dígitos, com indicativo do país e sem `+`).
+ *
+ * Assume Angola (indicativo `244`) para números locais de 9 dígitos, uma vez
+ * que a aplicação é orientada a esse mercado.
+ * TODO: tornar o indicativo configurável quando houver suporte a múltiplos países.
+ */
+export function normalizePhoneForWhatsApp(phone: string | null | undefined): string | null {
+  if (!phone) {
+    return null;
+  }
+  let digits = phone.replace(/\D/g, '');
+  if (digits.startsWith('00')) {
+    digits = digits.slice(2);
+  }
+  if (digits.length === 9) {
+    digits = `244${digits}`;
+  } else if (digits.length === 10 && digits.startsWith('0')) {
+    digits = `244${digits.slice(1)}`;
+  }
+  return digits.length >= 8 ? digits : null;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ShareService {
   private readonly platformId = inject(PLATFORM_ID);
@@ -14,6 +38,27 @@ export class ShareService {
       return path;
     }
     return new URL(path, this.document.baseURI).toString();
+  }
+
+  /**
+   * Constrói o URL de reencaminhamento pelo WhatsApp (`wa.me`) com a mensagem
+   * pré-preenchida. Devolve `null` quando o número não é válido, para que a
+   * interface possa desativar a ação.
+   */
+  whatsappUrl(phone: string | null | undefined, text: string): string | null {
+    const digits = normalizePhoneForWhatsApp(phone);
+    if (!digits) {
+      return null;
+    }
+    return `https://wa.me/${digits}?text=${encodeURIComponent(text)}`;
+  }
+
+  /** Abre um URL externo num novo separador (no-op no servidor). */
+  openExternal(url: string): void {
+    if (!this.browser) {
+      return;
+    }
+    this.document.defaultView?.open(url, '_blank', 'noopener,noreferrer');
   }
 
   async copy(text: string): Promise<boolean> {

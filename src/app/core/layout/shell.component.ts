@@ -60,6 +60,10 @@ export class ShellComponent {
   protected readonly notifications = computed(() => this.store.activityFeed().slice(0, 4));
 
   constructor() {
+    // Carrega o "chrome" (perfil, atividade e eventos) depois de qualquer
+    // `resetAll()` da autenticação. Cada página pede depois os domínios que
+    // precisa via `store.load(...)`.
+    this.store.load({});
     this.router.events
       .pipe(
         filter((event): event is NavigationEnd => event instanceof NavigationEnd),
@@ -101,7 +105,7 @@ export class ShellComponent {
   }
 
   protected async retry(): Promise<void> {
-    await this.store.reload();
+    await this.store.retry();
   }
 
   private updatePageTitle(): void {

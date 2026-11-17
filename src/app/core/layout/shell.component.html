@@ -300,6 +300,14 @@
       </header>
 
       <main class="flex-1 px-3 py-4 pb-8 sm:px-4 lg:px-0 lg:py-5">
+        <!--
+          O outlet é sempre renderizado (mesmo escondido) para que a página
+          ativa corra o construtor e peça os seus dados via `store.load(...)`.
+        -->
+        <div [class.hidden]="store.loading() || store.error()">
+          <router-outlet />
+        </div>
+
         @if (store.loading()) {
           <app-skeleton [variant]="skeletonVariant()" />
         } @else if (store.error(); as error) {
@@ -314,8 +322,6 @@
               {{ i18n.t('common.retry') }}
             </button>
           </section>
-        } @else {
-          <router-outlet />
         }
       </main>
 

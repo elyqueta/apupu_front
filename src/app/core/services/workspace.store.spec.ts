@@ -6,6 +6,7 @@ import { PLATFORM_ID } from '@angular/core';
 import { API_BASE_URL } from '../api/api-config';
 import { apiRequestInterceptor, CsrfTokenStore } from '../api/api.interceptor';
 import { ApiEvent, ApiInvitation, Host } from '../api/api.models';
+import { SessionCache } from './session-cache';
 import { WorkspaceStore } from './workspace.store';
 
 const BASE = 'http://localhost:3000/api/v1';
@@ -87,18 +88,13 @@ describe('WorkspaceStore · guest creation', () => {
     };
   }
 
-  /** O construtor do store carrega o painel inteiro; é preciso responder às 8 chamadas. */
+  /** O carregamento inicial é disparado por `ensureLoaded()`: apenas o "chrome". */
   function flushReload(): void {
-    http.expectOne((request) => request.url.endsWith('/host/events')).flush(page());
-    http.expectOne((request) => request.url.endsWith('/host/guests')).flush(page());
-    http.expectOne((request) => request.url.endsWith('/host/activity')).flush(page());
-    http.expectOne((request) => request.url.endsWith('/host/tasks')).flush({ data: [] });
     http
       .expectOne((request) => request.url.endsWith('/host/profile'))
       .flush({ data: { host: hostFixture() } });
-    http.expectOne((request) => request.url.endsWith('/templates')).flush({ data: [] });
-    http.expectOne((request) => request.url.endsWith('/host/dashboard')).flush({ data: {} });
-    http.expectOne((request) => request.url.endsWith('/host/reports/summary')).flush({ data: {} });
+    http.expectOne((request) => request.url.endsWith('/host/activity')).flush(page());
+    http.expectOne((request) => request.url.endsWith('/host/events')).flush(page());
   }
 
   async function setup(cookie: string): Promise<WorkspaceStore> {
@@ -113,8 +109,9 @@ describe('WorkspaceStore · guest creation', () => {
     });
     http = TestBed.inject(HttpTestingController);
     const store = TestBed.inject(WorkspaceStore);
+    store.ensureLoaded();
     flushReload();
-    // Espera que o `reload()` do construtor termine antes de mexer no estado.
+    // Espera que o `ensureLoaded()` termine antes de mexer no estado.
     await new Promise((resolve) => setTimeout(resolve));
     return store;
   }
@@ -170,5 +167,41 @@ describe('WorkspaceStore · guest creation', () => {
     expect(request.request.headers.get('X-CSRF-Token')).toBe('host-csrf');
     request.flush({ data: invitationFixture() });
     await promise;
+  });
+
+  it('empties cached host data when the session cache resets (logout/relogin)', async () => {
+    const store = await setup('');
+
+    const promise = store.addGuest('evt-1', {
+      name: 'Rui',
+      email: 'rui@exemplo.pt',
+      phone: null,
+    });
+    http.expectOne(`${BASE}/host/events/evt-1/invitations`).flush({ data: invitationFixture() });
+    await promise;
+    expect(store.guests().length).toBe(1);
+
+    TestBed.inject(SessionCache).resetAll();
+
+    expect(store.guests()).toEqual([]);
+    expect(store.events()).toEqual([]);
+    expect(store.loading()).toBe(false);
+    expect(store.error()).toBeNull();
+  });
+
+  it('loads only the requested scope on top of the chrome', async () => {
+    const store = await setup('');
+
+    store.load({ guests: true });
+    http.expectOne((request) => request.url.endsWith('/host/guests')).flush(page());
+
+    // Domínios não pedidos não são contactados.
+    http.expectNone((request) => request.url.endsWith('/host/tasks'));
+    http.expectNone((request) => request.url.endsWith('/host/dashboard'));
+    http.expectNone((request) => request.url.endsWith('/host/reports/summary'));
+    http.expectNone((request) => request.url.endsWith('/templates'));
+    await new Promise((resolve) => setTimeout(resolve));
+
+    expect(store.loading()).toBe(false);
   });
 });

@@ -2,6 +2,7 @@ import { Injectable, inject, signal } from '@angular/core';
 import { ApiClient } from './api-client';
 import { ApiError } from './api-error';
 import { Host } from './api.models';
+import { SessionCache } from '../services/session-cache';
 
 /**
  * Serviço de autenticação do anfitrião, alinhado com o contrato de contas
@@ -49,6 +50,7 @@ const SOCIAL_LABELS: Record<SocialProvider, string> = {
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly api = inject(ApiClient);
+  private readonly sessions = inject(SessionCache);
 
   private readonly hostState = signal<Host | null>(null);
   private readonly readyState = signal(false);
@@ -186,6 +188,9 @@ export class AuthService {
   }
 
   private startSession(response: SessionResponse): Host {
+    // Nova sessão: limpa os caches de dados do anfitrião anterior antes de
+    // expor o novo utilizador, para que nenhuma página veja dados antigos.
+    this.sessions.resetAll();
     this.hostState.set(response.host);
     this.readyState.set(true);
     this.restorePromise = Promise.resolve(response.host);
@@ -193,6 +198,7 @@ export class AuthService {
   }
 
   private clearSession(): void {
+    this.sessions.resetAll();
     this.hostState.set(null);
     this.verificationToken.set(null);
     this.readyState.set(true);

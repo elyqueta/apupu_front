@@ -37,6 +37,10 @@ export class ReportsPage {
   protected readonly icons = ICONS;
   private readonly toasts = inject(ToastService);
 
+  constructor() {
+    this.store.load({ reports: true, events: true, dashboard: true });
+  }
+
   protected readonly stats = computed(() => {
     const totals = this.store.reportSummary()?.totals;
     const workspaceStats = this.store.globalStats();

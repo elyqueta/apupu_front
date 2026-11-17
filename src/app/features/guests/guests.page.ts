@@ -5,6 +5,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { toApiError } from '../../core/api/api-error';
 import { Guest, RsvpStatus } from '../../core/models/models';
+import { ShareService } from '../../core/services/share.service';
 import { ToastService } from '../../core/services/toast.service';
 import { WorkspaceStore } from '../../core/services/workspace.store';
 import { ICONS } from '../../core/ui/icons';
@@ -36,6 +37,7 @@ export class GuestsPage {
   private readonly toasts = inject(ToastService);
   private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly share = inject(ShareService);
 
   protected readonly search = signal('');
   protected readonly eventFilter = signal('all');
@@ -75,6 +77,7 @@ export class GuestsPage {
   ];
 
   constructor() {
+    this.store.load({ guests: true, events: true, dashboard: true });
     this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
       const term = params.get('q');
       if (term) {
@@ -86,10 +89,27 @@ export class GuestsPage {
   protected async resend(guest: Guest): Promise<void> {
     try {
       if (await this.store.sendReminder(guest.id)) {
-      this.toasts.success(this.i18n.t('guests.resent', { name: guest.name }));
+        this.toasts.success(this.i18n.t('guests.resent', { name: guest.name }));
       }
     } catch (error: unknown) {
       this.toasts.error(toApiError(error).message);
+    }
+  }
+
+  /**
+   * Abre o WhatsApp (`wa.me`) com a mensagem de reencaminhamento do convite.
+   *
+   * TODO(backend): incluir o link individual do convite no texto assim que a API
+   * expuser um token/URL por convidado (o `Invitation` do host não o devolve hoje).
+   */
+  protected forwardWhatsApp(guest: Guest, eventTitle: string): void {
+    const text = this.i18n.t('guests.whatsappMessage', {
+      name: guest.name,
+      event: eventTitle,
+    });
+    const url = this.share.whatsappUrl(guest.phone, text);
+    if (url) {
+      this.share.openExternal(url);
     }
   }
 

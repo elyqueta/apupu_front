@@ -69,6 +69,10 @@ export class EventsPage {
       .sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime());
   });
 
+  constructor() {
+    this.store.load({ events: true, dashboard: true });
+  }
+
   protected count(filter: EventFilter): number {
     return this.counts()[filter];
   }

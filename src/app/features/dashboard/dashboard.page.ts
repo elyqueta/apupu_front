@@ -44,6 +44,17 @@ export class DashboardPage {
   private readonly router = inject(Router);
   private readonly activityPresenter = inject(ActivityPresenter);
 
+  constructor() {
+    // O painel agrega praticamente todos os domínios.
+    this.store.load({
+      dashboard: true,
+      events: true,
+      tasks: true,
+      guests: true,
+      activity: true,
+    });
+  }
+
   protected readonly stats = this.store.globalStats;
   protected readonly nextEvent = this.store.nextEvent;
   protected readonly taskProgress = this.store.taskProgress;

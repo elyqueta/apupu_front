@@ -44,6 +44,7 @@ export class TemplatesPage {
   });
 
   constructor() {
+    this.store.load({ templates: true });
     effect(() => {
       if (!this.selected() && this.templates().length > 0) {
         this.store.selectedTemplate.set(this.templates()[0].id);

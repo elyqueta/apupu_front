@@ -458,6 +458,9 @@ const PT_AO = {
   'guests.count': '{count} convidados',
   'guests.shareTitle': 'Partilha individual',
   'guests.shareText': 'Os links de convite são individuais. Não reutilizes o link de outra pessoa.',
+  'guests.whatsapp': 'Reencaminhar por WhatsApp',
+  'guests.whatsappUnavailable': 'Este convidado não tem telefone associado.',
+  'guests.whatsappMessage': 'Olá {name}! Aqui está o teu convite para {event}.',
 
   'reports.eyebrow': 'Inteligência',
   'reports.title': 'Relatórios',
@@ -1166,6 +1169,9 @@ const EN: Record<TranslationKey, string> = {
   'guests.count': '{count} guests',
   'guests.shareTitle': 'Individual sharing',
   'guests.shareText': 'Invitation links are individual. Do not reuse another person link.',
+  'guests.whatsapp': 'Forward via WhatsApp',
+  'guests.whatsappUnavailable': 'This guest has no phone number on file.',
+  'guests.whatsappMessage': 'Hi {name}! Here is your invitation for {event}.',
 
   'reports.eyebrow': 'Insights',
   'reports.title': 'Reports',

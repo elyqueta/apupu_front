@@ -1,11 +1,17 @@
-import { Component, computed, effect, inject, input, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { TranslationKey } from '../../core/i18n/translations';
-import { EventActivity, Guest, RsvpStatus, WorkspaceTask } from '../../core/models/models';
+import {
+  EventActivity,
+  EventManager,
+  Guest,
+  RsvpStatus,
+  WorkspaceTask,
+} from '../../core/models/models';
 import { ShareService } from '../../core/services/share.service';
 import { ToastService } from '../../core/services/toast.service';
 import { WorkspaceStore } from '../../core/services/workspace.store';
@@ -52,6 +58,8 @@ export class EventDetailPage {
   protected readonly guestFilter = signal<GuestFilter>('all');
   protected readonly guestDialogOpen = signal(false);
   protected readonly cancelOpen = signal(false);
+  protected readonly managersLoading = signal(false);
+  protected readonly managerBusyId = signal<string | null>(null);
 
   protected readonly event = computed(() => this.store.eventById(this.eventId()));
   protected readonly stats = computed(() => this.store.eventStats(this.eventId()));
@@ -61,6 +69,9 @@ export class EventDetailPage {
   protected readonly isManagement = computed(
     () => this.store.activeManagementEventId() === this.eventId(),
   );
+  protected readonly accessRole = computed(() => this.store.accessRoleFor(this.eventId()));
+  protected readonly isHost = computed(() => this.accessRole() === 'host');
+  protected readonly managers = computed(() => this.store.managersFor(this.eventId()));
 
   protected readonly typeLabel = computed(() => {
     const event = this.event();
@@ -148,6 +159,10 @@ export class EventDetailPage {
     dressCode: ['', [Validators.maxLength(160)]],
   });
 
+  protected readonly managerForm = this.fb.group({
+    email: ['', [Validators.required, Validators.email, Validators.maxLength(254)]],
+  });
+
   constructor() {
     this.store.load({
       events: true,
@@ -169,6 +184,11 @@ export class EventDetailPage {
         rules: event.rules,
         dressCode: event.dressCode,
       });
+    });
+    effect(() => {
+      if (this.tab() === 'settings' && this.isHost()) {
+        untracked(() => void this.refreshManagers());
+      }
     });
   }
 
@@ -208,6 +228,67 @@ export class EventDetailPage {
       }
     } catch (error: unknown) {
       this.toasts.error(toApiError(error).message);
+    }
+  }
+
+  protected async refreshManagers(): Promise<void> {
+    if (this.managersLoading()) {
+      return;
+    }
+    this.managersLoading.set(true);
+    try {
+      await this.store.loadManagers(this.eventId());
+    } catch (error: unknown) {
+      this.toasts.error(toApiError(error).message);
+    } finally {
+      this.managersLoading.set(false);
+    }
+  }
+
+  protected async addManager(): Promise<void> {
+    if (this.managerForm.invalid) {
+      this.managerForm.markAllAsTouched();
+      return;
+    }
+    const email = this.managerForm.controls.email.value.trim();
+    try {
+      const result = await this.store.addManager(this.eventId(), email);
+      this.managerForm.reset({ email: '' });
+      if (result.emailStatus === 'queued') {
+        this.toasts.success(this.i18n.t('eventDetail.managerAdded', { email }));
+      } else {
+        this.toasts.error(this.i18n.t('eventDetail.managerAddedNoEmail', { email }));
+      }
+    } catch (error: unknown) {
+      this.toasts.error(toApiError(error).message);
+    }
+  }
+
+  protected async removeManager(manager: EventManager): Promise<void> {
+    this.managerBusyId.set(manager.id);
+    try {
+      await this.store.removeManager(this.eventId(), manager.id);
+      this.toasts.success(this.i18n.t('eventDetail.managerRemoved', { email: manager.email }));
+    } catch (error: unknown) {
+      this.toasts.error(toApiError(error).message);
+    } finally {
+      this.managerBusyId.set(null);
+    }
+  }
+
+  protected async resendManagerInvite(manager: EventManager): Promise<void> {
+    this.managerBusyId.set(manager.id);
+    try {
+      const result = await this.store.resendManagerInvite(this.eventId(), manager.id);
+      if (result.emailStatus === 'queued') {
+        this.toasts.success(this.i18n.t('eventDetail.managerResent', { email: manager.email }));
+      } else {
+        this.toasts.error(this.i18n.t('eventDetail.managerResentFailed', { email: manager.email }));
+      }
+    } catch (error: unknown) {
+      this.toasts.error(toApiError(error).message);
+    } finally {
+      this.managerBusyId.set(null);
     }
   }
 

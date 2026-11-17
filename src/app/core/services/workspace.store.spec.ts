@@ -206,4 +206,99 @@ describe('WorkspaceStore · guest creation', () => {
 
     expect(store.loading()).toBe(false);
   });
+
+  it('exposes a manager session as read/write for the event but not as host', async () => {
+    const store = await setup('');
+
+    const open = store.openManagementLink('manager-secret');
+    http.expectOne(`${BASE}/host/session`).flush({
+      data: {
+        event: eventFixture({ access_role: 'manager' }),
+        role: 'manager',
+        access_role: 'manager',
+        csrf_token: 'manager-csrf',
+        expires_at: '2026-02-01T00:00:00Z',
+        manage_email_status: null,
+        manage_token_expires_at: null,
+      },
+    });
+    await open;
+
+    expect(store.managementRole()).toBe('manager');
+    expect(store.accessRoleFor('evt-1')).toBe('manager');
+    expect(store.isEventHost('evt-1')).toBe(false);
+  });
+
+  it('lists and adds managers for the host event', async () => {
+    const store = await setup('');
+
+    const list = store.loadManagers('evt-1');
+    http.expectOne(`${BASE}/host/events/evt-1/managers`).flush({
+      data: [
+        {
+          id: 'mgr-1',
+          event_id: 'evt-1',
+          email: 'paulo@exemplo.pt',
+          has_account: false,
+          last_used_at: null,
+          created_at: '2026-01-01T00:00:00Z',
+          updated_at: '2026-01-01T00:00:00Z',
+        },
+      ],
+    });
+    await list;
+    expect(store.managersFor('evt-1')[0]?.email).toBe('paulo@exemplo.pt');
+    expect(store.managersFor('evt-1')[0]?.hasAccount).toBe(false);
+
+    const add = store.addManager('evt-1', 'rita@exemplo.pt');
+    const request = http.expectOne(`${BASE}/host/events/evt-1/managers`);
+    expect(request.request.method).toBe('POST');
+    expect(request.request.body).toEqual({ email: 'rita@exemplo.pt' });
+    request.flush({
+      data: {
+        manager: {
+          id: 'mgr-2',
+          event_id: 'evt-1',
+          email: 'rita@exemplo.pt',
+          has_account: true,
+          last_used_at: null,
+          created_at: '2026-01-01T00:00:00Z',
+          updated_at: '2026-01-01T00:00:00Z',
+        },
+        invite_email_status: 'queued',
+      },
+    });
+
+    const result = await add;
+    expect(result.emailStatus).toBe('queued');
+    expect(store.managersFor('evt-1').map((manager) => manager.email)).toEqual([
+      'paulo@exemplo.pt',
+      'rita@exemplo.pt',
+    ]);
+  });
+
+  it('clears cached managers when the session cache resets', async () => {
+    const store = await setup('');
+
+    const list = store.loadManagers('evt-1');
+    http.expectOne(`${BASE}/host/events/evt-1/managers`).flush({
+      data: [
+        {
+          id: 'mgr-1',
+          event_id: 'evt-1',
+          email: 'paulo@exemplo.pt',
+          has_account: false,
+          last_used_at: null,
+          created_at: '2026-01-01T00:00:00Z',
+          updated_at: '2026-01-01T00:00:00Z',
+        },
+      ],
+    });
+    await list;
+    expect(store.managersFor('evt-1').length).toBe(1);
+
+    TestBed.inject(SessionCache).resetAll();
+
+    expect(store.managersFor('evt-1')).toEqual([]);
+  });
 });

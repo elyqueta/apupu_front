@@ -266,6 +266,14 @@
               "completed"
             ]
           },
+          "access_role": {
+            "type": "string",
+            "enum": [
+              "host",
+              "manager"
+            ],
+            "description": "Papel de quem consulta o evento. `manager` esconde ações reservadas ao anfitrião."
+          },
           "stats": {
             "type": "object",
             "properties": {
@@ -1557,6 +1565,20 @@
               "event": {
                 "$ref": "#/components/schemas/Event"
               },
+              "role": {
+                "type": "string",
+                "enum": [
+                  "host",
+                  "manager"
+                ]
+              },
+              "access_role": {
+                "type": "string",
+                "enum": [
+                  "host",
+                  "manager"
+                ]
+              },
               "csrf_token": {
                 "type": "string"
               },
@@ -1569,7 +1591,8 @@
                 "enum": [
                   "queued",
                   "failed"
-                ]
+                ],
+                "nullable": true
               },
               "manage_token_expires_at": {
                 "type": "string",
@@ -1594,6 +1617,83 @@
                 "items": {
                   "$ref": "#/components/schemas/Invitation"
                 }
+              }
+            }
+          }
+        }
+      },
+      "EventManager": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "event_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "has_account": {
+            "type": "boolean",
+            "description": "Indica se já existe uma conta verificada com o mesmo email; nesse caso o evento aparece no workspace."
+          },
+          "last_used_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "AddEventManager": {
+        "type": "object",
+        "required": [
+          "email"
+        ],
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email"
+          }
+        }
+      },
+      "EventManagerList": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EventManager"
+            }
+          }
+        }
+      },
+      "EventManagerEnvelope": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "manager": {
+                "$ref": "#/components/schemas/EventManager"
+              },
+              "invite_email_status": {
+                "type": "string",
+                "enum": [
+                  "queued",
+                  "failed"
+                ]
               }
             }
           }
@@ -1755,6 +1855,57 @@
               "error": {
                 "code": "event_not_found",
                 "message": "Evento não encontrado.",
+                "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+              }
+            }
+          }
+        }
+      },
+      "HostActionForbidden": {
+        "description": "A ação está reservada ao anfitrião (proprietário) do evento.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "error": {
+                "code": "host_action_forbidden",
+                "message": "Apenas o anfitrião pode executar esta ação.",
+                "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+              }
+            }
+          }
+        }
+      },
+      "ManagerNotFound": {
+        "description": "Gestor inexistente, removido ou de outro evento.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "error": {
+                "code": "manager_not_found",
+                "message": "Gestor não encontrado.",
+                "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+              }
+            }
+          }
+        }
+      },
+      "ManagerAlreadyExists": {
+        "description": "O email já é gestor activo deste evento.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "error": {
+                "code": "manager_already_exists",
+                "message": "Este email já é gestor do evento.",
                 "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
               }
             }
@@ -3553,6 +3704,474 @@
           },
           "429": {
             "description": "Demasiados pedidos.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "rate_limited",
+                    "message": "Demasiados pedidos. Tente novamente mais tarde.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/host/events/{eventId}/managers": {
+      "get": {
+        "tags": [
+          "Gestores"
+        ],
+        "summary": "Lista os gestores activos do evento",
+        "description": "Apenas o anfitrião (proprietário) pode gerir gestores. Cada gestor é identificado pelo email e pode não ter conta; nesse caso usa o link enviado por email.\n",
+        "security": [
+          {
+            "accountSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "eventId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Gestores activos.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventManagerList"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sessão de gestão ou de conta ausente, expirada ou de outro evento.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "host_session_invalid",
+                    "message": "Sessão inválida ou expirada.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Evento não encontrado ou de outra conta.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "event_not_found",
+                    "message": "Evento não encontrado.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Gestores"
+        ],
+        "summary": "Adiciona um gestor e envia-lhe o link de gestão",
+        "description": "O gestor não precisa de conta. Recebe um link próprio por email; se já tiver uma conta verificada com o mesmo email, passa também a ver o evento no workspace.\n",
+        "security": [
+          {
+            "accountSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "eventId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-CSRF-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddEventManager"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Gestor adicionado e convite enfileirado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventManagerEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sessão de gestão ou de conta ausente, expirada ou de outro evento.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "host_session_invalid",
+                    "message": "Sessão inválida ou expirada.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "A conta ainda não confirmou o email; a escrita de eventos está bloqueada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "email_not_verified",
+                    "message": "Confirma o teu email antes de gerir eventos.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Evento inexistente ou não pertencente à conta.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "event_not_found",
+                    "message": "Evento não encontrado.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "O email já é gestor do evento.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "manager_already_exists",
+                    "message": "Este email já é gestor do evento.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Email inválido ou igual ao do anfitrião.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "validation_failed",
+                    "message": "Verifique os campos indicados.",
+                    "fields": {
+                      "email": [
+                        "Email inválido."
+                      ]
+                    },
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Limite de pedidos excedido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "rate_limited",
+                    "message": "Demasiados pedidos. Tente novamente mais tarde.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/host/events/{eventId}/managers/{managerId}": {
+      "delete": {
+        "tags": [
+          "Gestores"
+        ],
+        "summary": "Remove o acesso de um gestor",
+        "description": "A remoção é lógica: o link deixa de funcionar e as sessões abertas pelo gestor são revogadas. O mesmo email pode voltar a ser adicionado mais tarde.\n",
+        "security": [
+          {
+            "accountSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "eventId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "in": "path",
+            "name": "managerId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-CSRF-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Gestor removido."
+          },
+          "401": {
+            "description": "Sessão de gestão ou de conta ausente, expirada ou de outro evento.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "host_session_invalid",
+                    "message": "Sessão inválida ou expirada.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Falta ou não coincide o token CSRF.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "csrf_invalid",
+                    "message": "Token CSRF inválido ou ausente.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Evento ou gestor não encontrado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "manager_not_found",
+                    "message": "Gestor não encontrado.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Limite de pedidos excedido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "rate_limited",
+                    "message": "Demasiados pedidos. Tente novamente mais tarde.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/host/events/{eventId}/managers/{managerId}/resend": {
+      "post": {
+        "tags": [
+          "Gestores"
+        ],
+        "summary": "Reenvia o link de gestão a um gestor",
+        "description": "Emite um link novo, substitui o anterior e enfileira o email. O token nunca é devolvido em JSON.\n",
+        "security": [
+          {
+            "accountSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "eventId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "in": "path",
+            "name": "managerId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-CSRF-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Link emitido e entrega enfileirada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventManagerEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sessão de gestão ou de conta ausente, expirada ou de outro evento.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "host_session_invalid",
+                    "message": "Sessão inválida ou expirada.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Falta ou não coincide o token CSRF.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "csrf_invalid",
+                    "message": "Token CSRF inválido ou ausente.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Evento ou gestor não encontrado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "manager_not_found",
+                    "message": "Gestor não encontrado.",
+                    "request_id": "6b1f0a1e-8f6d-4a3e-9c2d-1f2a3b4c5d6e"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Limite de pedidos excedido.",
             "content": {
               "application/json": {
                 "schema": {

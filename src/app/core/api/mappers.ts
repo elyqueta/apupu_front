@@ -1,6 +1,7 @@
 import {
   ApiActivity,
   ApiEvent,
+  ApiEventManager,
   ApiInvitation,
   ApiRsvpStatus,
   ApiTask,
@@ -12,6 +13,7 @@ import {
   BankDetails,
   CreateEventInput,
   EventActivity,
+  EventManager,
   EventStats,
   EventTemplate,
   Guest,
@@ -107,6 +109,7 @@ export function mapEvent(event: ApiEvent): HostEvent {
             accountReference: contribution.account_reference,
           }
         : null,
+    accessRole: event.access_role ?? 'host',
     createdAt: event.created_at,
     stats: event.stats
       ? {
@@ -170,6 +173,17 @@ export function mapActivity(activity: ApiActivity): EventActivity {
     kind: activity.kind,
     guestName: activity.guest_name,
     at: activity.at,
+  };
+}
+
+export function mapEventManager(manager: ApiEventManager): EventManager {
+  return {
+    id: manager.id,
+    eventId: manager.event_id,
+    email: manager.email,
+    hasAccount: manager.has_account,
+    lastUsedAt: manager.last_used_at,
+    createdAt: manager.created_at,
   };
 }
 

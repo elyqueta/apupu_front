@@ -4,13 +4,16 @@ import { emptyProfile, mapEvent, statsForEvents, statsForGuests } from '../api/m
 import {
   AddGuestResult,
   CreateEventInput,
+  EventAccessRole,
   EventActivity,
+  EventManager,
   EventStats,
   EventTemplate,
   Guest,
   GuestInput,
   HostEvent,
   HostProfile,
+  ManagerInviteResult,
   TemplateId,
   WorkspaceTask,
 } from '../models/models';
@@ -25,6 +28,7 @@ import { ReportsRepository } from '../data/reports.repository';
 import { TasksRepository } from '../data/tasks.repository';
 import { TemplateSelectionStore } from '../data/template-selection.store';
 import { TemplatesRepository } from '../data/templates.repository';
+import { Resettable, SessionCache } from './session-cache';
 
 /**
  * Domínios que uma página pode pedir. A shell acrescenta sempre o "chrome"
@@ -52,7 +56,7 @@ const CHROME_SCOPE: LoadScope = { profile: true, activity: true, events: true };
  * `load(scope)` e só esses pedidos são feitos.
  */
 @Injectable({ providedIn: 'root' })
-export class WorkspaceStore {
+export class WorkspaceStore implements Resettable {
   private readonly eventsRepo = inject(EventsRepository);
   private readonly guestsRepo = inject(GuestsRepository);
   private readonly activityRepo = inject(ActivityRepository);
@@ -63,9 +67,17 @@ export class WorkspaceStore {
   private readonly profileRepo = inject(ProfileRepository);
   private readonly management = inject(ManagementStore);
   private readonly templateSelection = inject(TemplateSelectionStore);
+  private readonly sessions = inject(SessionCache);
 
   /** Domínios atualmente "ativos" (chrome + última página). */
   private readonly activeScope = signal<LoadScope>({ ...CHROME_SCOPE });
+
+  /** Gestores por evento, carregados a pedido do painel de equipa. */
+  private readonly managersState = signal<Record<string, EventManager[]>>({});
+
+  constructor() {
+    this.sessions.register(this);
+  }
 
   readonly events = computed<HostEvent[]>(() => this.eventsRepo.data() ?? []);
   readonly guests = computed<Guest[]>(() => this.guestsRepo.data() ?? []);
@@ -77,6 +89,7 @@ export class WorkspaceStore {
 
   readonly manageEmailStatus = this.management.manageEmailStatus;
   readonly activeManagementEventId = this.management.activeEventId;
+  readonly managementRole = this.management.role;
   readonly selectedTemplate = this.templateSelection.selected;
 
   /** `true` enquanto qualquer domínio ativo está a carregar. */
@@ -272,6 +285,56 @@ export class WorkspaceStore {
     return this.eventsRepo.resendManageLink(eventId);
   }
 
+  /**
+   * Papel de quem está a gerir o evento: a sessão por link tem prioridade
+   * (pode ser de um gestor sem conta), senão usa o `accessRole` da lista.
+   */
+  accessRoleFor(eventId: string): EventAccessRole {
+    if (this.activeManagementEventId() === eventId) {
+      return this.management.role() ?? 'host';
+    }
+    return this.eventById(eventId)?.accessRole ?? 'host';
+  }
+
+  /** `true` quando a sessão atual pode executar ações reservadas ao anfitrião. */
+  isEventHost(eventId: string): boolean {
+    return this.accessRoleFor(eventId) === 'host';
+  }
+
+  managersFor(eventId: string): EventManager[] {
+    return this.managersState()[eventId] ?? [];
+  }
+
+  async loadManagers(eventId: string): Promise<EventManager[]> {
+    const managers = await this.eventsRepo.listManagers(eventId);
+    this.setManagers(eventId, managers);
+    return managers;
+  }
+
+  async addManager(eventId: string, email: string): Promise<ManagerInviteResult> {
+    const result = await this.eventsRepo.addManager(eventId, email);
+    this.setManagers(eventId, upsertManager(this.managersFor(eventId), result.manager));
+    return result;
+  }
+
+  async removeManager(eventId: string, managerId: string): Promise<void> {
+    await this.eventsRepo.removeManager(eventId, managerId);
+    this.setManagers(
+      eventId,
+      this.managersFor(eventId).filter((manager) => manager.id !== managerId),
+    );
+  }
+
+  async resendManagerInvite(eventId: string, managerId: string): Promise<ManagerInviteResult> {
+    const result = await this.eventsRepo.resendManagerInvite(eventId, managerId);
+    this.setManagers(eventId, upsertManager(this.managersFor(eventId), result.manager));
+    return result;
+  }
+
+  private setManagers(eventId: string, managers: EventManager[]): void {
+    this.managersState.update((state) => ({ ...state, [eventId]: managers }));
+  }
+
   async addGuest(eventId: string, input: GuestInput): Promise<AddGuestResult> {
     return this.guestsRepo.add(eventId, input);
   }
@@ -313,6 +376,10 @@ export class WorkspaceStore {
     this.templateSelection.select(id);
   }
 
+  reset(): void {
+    this.managersState.set({});
+  }
+
   private async runScope(scope: LoadScope, options: LoadOptions = {}): Promise<void> {
     const requests: Promise<unknown>[] = [];
     if (scope.profile) requests.push(this.profileRepo.load(options));
@@ -339,4 +406,11 @@ export class WorkspaceStore {
     if (scope.reports) repositories.push(this.reportsRepo);
     return repositories;
   }
+}
+
+/** Insere ou substitui um gestor mantendo a ordem estável da lista. */
+function upsertManager(managers: EventManager[], manager: EventManager): EventManager[] {
+  return managers.some((item) => item.id === manager.id)
+    ? managers.map((item) => (item.id === manager.id ? manager : item))
+    : [...managers, manager];
 }

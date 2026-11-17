@@ -514,15 +514,17 @@
                 <p class="truncate text-[11px] text-muted">{{ entry.event.title }}</p>
               </div>
               <div class="flex shrink-0 items-center gap-1.5">
-                <button
-                  type="button"
-                  class="grid size-8 place-items-center rounded-lg border border-line bg-surface-raised text-muted transition hover:border-brand/40 hover:text-brand-strong"
-                  [attr.aria-label]="i18n.t('dashboard.resendEmail')"
-                  [attr.title]="i18n.t('dashboard.resendEmail')"
-                  (click)="resendEmail(entry.guest)"
-                >
-                  <fa-icon [icon]="icons['envelope']" class="text-[10px]" aria-hidden="true" />
-                </button>
+                @if (store.isEventHost(entry.event.id)) {
+                  <button
+                    type="button"
+                    class="grid size-8 place-items-center rounded-lg border border-line bg-surface-raised text-muted transition hover:border-brand/40 hover:text-brand-strong"
+                    [attr.aria-label]="i18n.t('dashboard.resendEmail')"
+                    [attr.title]="i18n.t('dashboard.resendEmail')"
+                    (click)="resendEmail(entry.guest)"
+                  >
+                    <fa-icon [icon]="icons['envelope']" class="text-[10px]" aria-hidden="true" />
+                  </button>
+                }
               </div>
             </li>
           }

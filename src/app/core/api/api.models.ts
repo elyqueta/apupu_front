@@ -26,6 +26,8 @@ export interface ApiPage<T> {
 export type EventCategory = 'wedding' | 'birthday' | 'corporate' | 'baby' | 'other';
 export type ApiEventStatus = 'draft' | 'scheduled' | 'cancelled' | 'completed';
 export type ApiRsvpStatus = 'pending' | 'accepted' | 'declined';
+/** Papel de quem consulta o evento: proprietário (`host`) ou gestor. */
+export type ApiEventAccessRole = 'host' | 'manager';
 
 export interface HostProfileData {
   display_name: string;
@@ -86,6 +88,8 @@ export interface ApiEvent {
   contribution: EventContribution;
   rsvp_deadline: string | null;
   status: ApiEventStatus;
+  /** Papel de quem consulta o evento; ausente na vista pública. */
+  access_role?: ApiEventAccessRole;
   created_at: string;
   updated_at: string;
   stats?: EventStats;
@@ -108,6 +112,22 @@ export interface ApiInvitation {
   created_at: string;
   updated_at: string;
   event?: Pick<ApiEvent, 'id' | 'title' | 'starts_at' | 'status'>;
+}
+
+export interface ApiEventManager {
+  id: string;
+  event_id: string;
+  email: string;
+  /** `true` quando já existe uma conta verificada com este email. */
+  has_account: boolean;
+  last_used_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ApiManagerInviteResult {
+  manager: ApiEventManager;
+  invite_email_status: 'queued' | 'failed';
 }
 
 export interface PublicEvent {

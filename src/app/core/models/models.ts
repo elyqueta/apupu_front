@@ -4,6 +4,9 @@ export type EventStatus = 'draft' | 'published' | 'scheduled' | 'completed' | 'c
 
 export type RsvpStatus = 'pending' | 'confirmed' | 'declined';
 
+/** Papel de quem consulta o evento: proprietário (`host`) ou gestor. */
+export type EventAccessRole = 'host' | 'manager';
+
 export type TemplateId = string;
 
 export type Locale = 'pt-AO' | 'en';
@@ -37,8 +40,29 @@ export interface HostEvent {
   status: EventStatus;
   contributionEnabled: boolean;
   bankDetails: BankDetails | null;
+  /** Papel de quem consulta o evento: o anfitrião ou um gestor. */
+  accessRole: EventAccessRole;
   createdAt: string;
   stats?: EventStats;
+}
+
+/**
+ * Gestor de um evento, identificado pelo email. Pode não ter conta: nesse
+ * caso usa o link enviado por email.
+ */
+export interface EventManager {
+  id: string;
+  eventId: string;
+  email: string;
+  /** `true` quando já existe uma conta verificada com este email. */
+  hasAccount: boolean;
+  lastUsedAt: string | null;
+  createdAt: string;
+}
+
+export interface ManagerInviteResult {
+  manager: EventManager;
+  emailStatus: 'queued' | 'failed';
 }
 
 export interface Guest {

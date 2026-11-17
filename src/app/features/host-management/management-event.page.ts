@@ -6,7 +6,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ApiClient } from '../../core/api/api-client';
 import { toApiError } from '../../core/api/api-error';
-import { ApiEvent, ApiInvitation } from '../../core/api/api.models';
+import { ApiEvent, ApiEventAccessRole, ApiInvitation } from '../../core/api/api.models';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { ICONS } from '../../core/ui/icons';
 import { BrandComponent } from '../../shared/components/brand.component';
@@ -48,11 +48,21 @@ export class ManagementEventPage {
   protected readonly actionError = signal('');
   protected readonly feedback = signal('');
   protected readonly pendingAction = signal<string | null>(null);
+  protected readonly role = signal<ApiEventAccessRole>('host');
 
   protected readonly guestForm = this.formBuilder.nonNullable.group({
     name: ['', [Validators.required, Validators.maxLength(160)]],
     email: ['', [Validators.required, Validators.email, Validators.maxLength(254)]],
     phone: ['', [Validators.maxLength(40)]],
+  });
+
+  protected readonly editForm = this.formBuilder.nonNullable.group({
+    title: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(150)]],
+    venue: ['', [Validators.maxLength(200)]],
+    city: ['', [Validators.maxLength(300)]],
+    message: ['', [Validators.maxLength(4000)]],
+    rules: ['', [Validators.maxLength(4000)]],
+    dressCode: ['', [Validators.maxLength(200)]],
   });
 
   constructor() {
@@ -62,6 +72,10 @@ export class ManagementEventPage {
         void this.load(eventId);
       }
     });
+  }
+
+  protected isHost(): boolean {
+    return this.role() === 'host';
   }
 
   protected async retry(): Promise<void> {
@@ -95,6 +109,50 @@ export class ManagementEventPage {
       this.syncEventStats(guests);
       this.guestForm.reset();
       this.feedback.set(this.i18n.t('management.guestAdded'));
+    } catch (error: unknown) {
+      this.actionError.set(toApiError(error).message);
+    } finally {
+      this.pendingAction.set(null);
+    }
+  }
+
+  protected async saveDetails(): Promise<void> {
+    const event = this.event();
+    if (!event || this.pendingAction()) {
+      return;
+    }
+    const value = this.editForm.getRawValue();
+    const online = event.location.type === 'online';
+    const venueMissing = !online && value.venue.trim().length === 0;
+    if (this.editForm.invalid || venueMissing) {
+      this.editForm.markAllAsTouched();
+      return;
+    }
+    this.pendingAction.set('details');
+    this.actionError.set('');
+    this.feedback.set('');
+    const body: Record<string, unknown> = {
+      title: value.title.trim(),
+      message: value.message.trim(),
+      rules: value.rules.trim(),
+      dress_code: value.dressCode.trim(),
+    };
+    if (online) {
+      body['location'] = { type: 'online', online_url: event.location.online_url ?? '' };
+    } else {
+      body['location'] = {
+        type: 'venue',
+        name: value.venue.trim(),
+        address: value.city.trim() || null,
+      };
+    }
+    try {
+      const updated = await this.api.patch<ApiEvent>(
+        `/host/events/${encodeURIComponent(event.id)}`,
+        body,
+      );
+      this.event.set({ ...updated, stats: updated.stats ?? event.stats });
+      this.feedback.set(this.i18n.t('management.detailsSaved'));
     } catch (error: unknown) {
       this.actionError.set(toApiError(error).message);
     } finally {
@@ -184,6 +242,15 @@ export class ManagementEventPage {
       );
       this.event.set(result.event);
       this.invitations.set(result.invitations);
+      this.role.set(result.event.access_role ?? 'host');
+      this.editForm.reset({
+        title: result.event.title,
+        venue: result.event.location.name ?? '',
+        city: result.event.location.address ?? '',
+        message: result.event.message ?? '',
+        rules: result.event.rules ?? '',
+        dressCode: result.event.dress_code ?? '',
+      });
     } catch (error: unknown) {
       const apiError = toApiError(error);
       this.error.set(

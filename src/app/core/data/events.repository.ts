@@ -1,13 +1,19 @@
 import { inject, Injectable } from '@angular/core';
 import { ApiClient } from '../api/api-client';
-import { ApiEvent, CreateEventRequest } from '../api/api.models';
+import {
+  ApiEvent,
+  ApiEventManager,
+  ApiManagerInviteResult,
+  CreateEventRequest,
+} from '../api/api.models';
 import {
   contributionFromInput,
   locationFromInput,
   locationFromView,
   mapEvent,
+  mapEventManager,
 } from '../api/mappers';
-import { CreateEventInput, HostEvent } from '../models/models';
+import { CreateEventInput, EventManager, HostEvent, ManagerInviteResult } from '../models/models';
 import { CachedRepository } from './cached-repository';
 
 interface EventCreateEnvelope {
@@ -122,5 +128,39 @@ export class EventsRepository extends CachedRepository<HostEvent[]> {
       `/host/events/${encodeURIComponent(eventId)}/manage-link/resend`,
     );
     return response.manage_email_status;
+  }
+
+  async listManagers(eventId: string): Promise<EventManager[]> {
+    const managers = await this.api.get<ApiEventManager[]>(
+      `/host/events/${encodeURIComponent(eventId)}/managers`,
+    );
+    return managers.map(mapEventManager);
+  }
+
+  async addManager(eventId: string, email: string): Promise<ManagerInviteResult> {
+    const response = await this.api.post<ApiManagerInviteResult>(
+      `/host/events/${encodeURIComponent(eventId)}/managers`,
+      { email },
+    );
+    return {
+      manager: mapEventManager(response.manager),
+      emailStatus: response.invite_email_status,
+    };
+  }
+
+  async removeManager(eventId: string, managerId: string): Promise<void> {
+    await this.api.delete(
+      `/host/events/${encodeURIComponent(eventId)}/managers/${encodeURIComponent(managerId)}`,
+    );
+  }
+
+  async resendManagerInvite(eventId: string, managerId: string): Promise<ManagerInviteResult> {
+    const response = await this.api.post<ApiManagerInviteResult>(
+      `/host/events/${encodeURIComponent(eventId)}/managers/${encodeURIComponent(managerId)}/resend`,
+    );
+    return {
+      manager: mapEventManager(response.manager),
+      emailStatus: response.invite_email_status,
+    };
   }
 }

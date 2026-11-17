@@ -96,6 +96,11 @@ export class GuestsPage {
     }
   }
 
+  /** Ações de convite (reenviar, WhatsApp, remover) são do anfitrião. */
+  protected isHostFor(eventId: string): boolean {
+    return this.store.isEventHost(eventId);
+  }
+
   /**
    * Abre o WhatsApp (`wa.me`) com a mensagem de reencaminhamento do convite.
    *

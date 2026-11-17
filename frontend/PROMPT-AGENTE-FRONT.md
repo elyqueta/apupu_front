@@ -56,8 +56,8 @@ regra de negócio em silêncio.
 - Registo em três passos: `POST /api/v1/auth/register/request-code` →
   `POST /api/v1/auth/register/verify-code` → `POST /api/v1/auth/register`.
   A conta só é criada no último passo, com `verification_token`.
-- Login com email/senha; sessão em cookie `apupu_auth` (`HttpOnly`) e
-  `csrf_token` devolvido em JSON. O front não lê o cookie de sessão.
+- Login e registo iniciam sessão em cookie `apupu_auth` (`HttpOnly`) e
+  devolvem `csrf_token` em JSON. O front não lê o cookie de sessão.
 - Operações mutáveis autenticadas exigem `X-CSRF-Token`.
 - Perfil, eventos, convidados, actividade, relatórios e tarefas usam a
   sessão de conta. O fluxo legado por link secreto (`/gerir/:token`)
@@ -86,7 +86,8 @@ regra de negócio em silêncio.
 - OTP: código de 6 dígitos, contagem decrescente a partir de
   `resend_available_at`, e `verification_token` mantido **apenas em
   memória** até ao `register`. Nunca em `localStorage`/`sessionStorage`.
-- Depois do registo não há sessão: encaminha para o login.
+- Depois do registo, usa a sessão e o `csrf_token` recebidos; não é
+  necessário iniciar sessão novamente.
 - Restauro de sessão: `GET /api/v1/auth/session` no arranque; `401`
   significa não autenticado. Não redirecciones rotas públicas.
 - Erros públicos de convite (token inválido, expirado ou reclamado por

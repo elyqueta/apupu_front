@@ -5,6 +5,7 @@ import { TestBed } from '@angular/core/testing';
 import { PLATFORM_ID, REQUEST } from '@angular/core';
 import { API_BASE_URL } from './api-config';
 import { apiRequestInterceptor, CsrfTokenStore } from './api.interceptor';
+import { ApiClient } from './api-client';
 
 describe('CsrfTokenStore', () => {
   it('does not read browser cookies during server rendering', () => {
@@ -69,11 +70,17 @@ describe('CsrfTokenStore · account session', () => {
     return TestBed.inject(CsrfTokenStore);
   }
 
-  it('falls back to the account CSRF token for an event scope', () => {
+  it('uses the account token returned by the API for an event scope', () => {
     const store = storeWithCookie('apupu_csrf_auth=account-token');
+    store.set('response-token', '/auth/login');
     expect(store.get('http://localhost:3000/api/v1/host/events/evt-1/invitations')).toBe(
-      'account-token',
+      'response-token',
     );
+  });
+
+  it('does not use the account CSRF cookie without a token from the API', () => {
+    const store = storeWithCookie('apupu_csrf_auth=stale-cookie-token');
+    expect(store.get('http://localhost:3000/api/v1/host/events')).toBeNull();
   });
 
   it('prefers a manage-session token over the account token', () => {
@@ -94,7 +101,7 @@ describe('CsrfTokenStore · account session', () => {
   });
 });
 
-describe('apiRequestInterceptor · guest creation with an account session', () => {
+describe('apiRequestInterceptor · authenticated event creation', () => {
   function configure(cookie: string): void {
     TestBed.configureTestingModule({
       providers: [
@@ -107,26 +114,63 @@ describe('apiRequestInterceptor · guest creation with an account session', () =
     });
   }
 
-  it('sends the account CSRF token and credentials, without a manage token', () => {
-    configure('apupu_csrf_auth=account-token');
-    const http = TestBed.inject(HttpClient);
+  it('sends credentials and the current login CSRF token when creating an event', async () => {
+    configure('apupu_csrf_auth=stale-cookie-token');
+    const api = TestBed.inject(ApiClient);
     const controller = TestBed.inject(HttpTestingController);
-    const subscription = http
-      .post('http://localhost:3000/api/v1/host/events/evt-1/invitations', {
-        name: 'Rui',
-        email: 'rui@exemplo.pt',
-      })
-      .subscribe();
-    const request = controller.expectOne(
-      'http://localhost:3000/api/v1/host/events/evt-1/invitations',
-    );
+    const login = api.post<{ csrf_token: string }>('/auth/login', {});
+    const loginRequest = controller.expectOne('http://localhost:3000/api/v1/auth/login');
+    expect(loginRequest.request.withCredentials).toBe(true);
+    loginRequest.flush({ data: { csrf_token: 'login-token' } });
+    await login;
 
-    expect(request.request.headers.get('X-CSRF-Token')).toBe('account-token');
+    const create = api.post('/host/events', { event: { title: 'Evento' }, guests: [] });
+    const request = controller.expectOne('http://localhost:3000/api/v1/host/events');
+    expect(request.request.method).toBe('POST');
+    expect(request.request.headers.get('X-CSRF-Token')).toBe('login-token');
     expect(request.request.headers.has('Authorization')).toBe(false);
     expect(request.request.withCredentials).toBe(true);
-    expect(request.request.body).toEqual({ name: 'Rui', email: 'rui@exemplo.pt' });
-    request.flush({ data: { id: 'inv-1' } });
-    subscription.unsubscribe();
+    request.flush({ data: { event: { id: 'evt-1' } } });
+    await create;
+    controller.verify();
+  });
+
+  it('refreshes a stale CSRF token from the current auth session before event creation', async () => {
+    configure('');
+    const api = TestBed.inject(ApiClient);
+    const controller = TestBed.inject(HttpTestingController);
+
+    const login = api.post('/auth/login', {});
+    controller.expectOne('http://localhost:3000/api/v1/auth/login').flush({
+      data: { csrf_token: 'old-token' },
+    });
+    await login;
+
+    const restore = api.get('/auth/session');
+    const sessionRequest = controller.expectOne('http://localhost:3000/api/v1/auth/session');
+    expect(sessionRequest.request.withCredentials).toBe(true);
+    sessionRequest.flush({ data: { csrf_token: 'current-token' } });
+    await restore;
+
+    const create = api.post('/host/events', { event: { title: 'Evento' }, guests: [] });
+    const request = controller.expectOne('http://localhost:3000/api/v1/host/events');
+    expect(request.request.headers.get('X-CSRF-Token')).toBe('current-token');
+    request.flush({ data: { event: { id: 'evt-1' } } });
+    await create;
+    controller.verify();
+  });
+
+  it('does not invent a CSRF token when no auth response has supplied one', async () => {
+    configure('apupu_csrf_auth=stale-cookie-token');
+    const api = TestBed.inject(ApiClient);
+    const controller = TestBed.inject(HttpTestingController);
+
+    const create = api.post('/host/events', { event: { title: 'Evento' }, guests: [] });
+    const request = controller.expectOne('http://localhost:3000/api/v1/host/events');
+    expect(request.request.headers.has('X-CSRF-Token')).toBe(false);
+    expect(request.request.withCredentials).toBe(true);
+    request.flush({ data: { event: { id: 'evt-1' } } });
+    await create;
     controller.verify();
   });
 

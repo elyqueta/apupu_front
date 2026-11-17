@@ -112,7 +112,7 @@ import { ICONS } from '../../core/ui/icons';
           </span>
         </div>
 
-        <div class="absolute inset-x-0 bottom-0 z-[1] hidden p-8 min-[860px]:block">
+        <div class="absolute inset-x-0 bottom-0 z-[1] hidden px-8 pb-12 pt-8 min-[860px]:block">
           <div
             class="max-w-md rounded-[26px] border border-white/20 bg-[#05201f]/45 p-6 text-white shadow-2xl backdrop-blur-md"
           >
@@ -123,7 +123,7 @@ import { ICONS } from '../../core/ui/icons';
               Organiza. Convida. Celebra.
             </p>
             <p class="mt-2 text-sm leading-relaxed text-white/80">
-              Convites individuais, confirmações em tempo real e lembretes por email — para que a
+              Convites individuais, confirmações em tempo real e lembretes por email, para que a
               festa comece antes do primeiro brinde.
             </p>
             <div class="mt-4 flex flex-wrap gap-2 text-[12px] font-medium text-white/85">
@@ -155,19 +155,19 @@ export class AuthLayoutComponent {
 
   protected readonly shellClass = computed(() =>
     this.reverse()
-      ? 'relative flex min-h-dvh w-full flex-col bg-canvas text-ink min-[860px]:grid min-[860px]:grid-cols-[1fr_minmax(440px,32%)] min-[860px]:bg-surface'
-      : 'relative flex min-h-dvh w-full flex-col bg-canvas text-ink min-[860px]:grid min-[860px]:grid-cols-[minmax(440px,32%)_1fr] min-[860px]:bg-surface',
+      ? 'relative flex min-h-dvh w-full flex-col bg-canvas text-ink min-[860px]:grid min-[860px]:h-dvh min-[860px]:grid-cols-[1fr_minmax(440px,32%)] min-[860px]:overflow-hidden min-[860px]:bg-surface'
+      : 'relative flex min-h-dvh w-full flex-col bg-canvas text-ink min-[860px]:grid min-[860px]:h-dvh min-[860px]:grid-cols-[minmax(440px,32%)_1fr] min-[860px]:overflow-hidden min-[860px]:bg-surface',
   );
 
   protected readonly panelClass = computed(() =>
     this.reverse()
-      ? 'contents min-[860px]:order-2 min-[860px]:flex min-[860px]:min-h-dvh min-[860px]:flex-col min-[860px]:px-11 min-[860px]:py-7'
-      : 'contents min-[860px]:flex min-[860px]:min-h-dvh min-[860px]:flex-col min-[860px]:px-11 min-[860px]:py-7',
+      ? 'contents min-[860px]:order-2 min-[860px]:flex min-[860px]:h-dvh min-[860px]:flex-col min-[860px]:overflow-y-auto min-[860px]:px-11 min-[860px]:py-7'
+      : 'contents min-[860px]:flex min-[860px]:h-dvh min-[860px]:flex-col min-[860px]:overflow-y-auto min-[860px]:px-11 min-[860px]:py-7',
   );
 
   protected readonly heroClass = computed(() =>
     this.reverse()
-      ? 'relative order-first h-60 min-h-0 shrink-0 overflow-hidden bg-[#0F3D3E] min-[860px]:order-1 min-[860px]:h-auto min-[860px]:min-h-dvh'
-      : 'relative order-first h-60 min-h-0 shrink-0 overflow-hidden bg-[#0F3D3E] min-[860px]:order-none min-[860px]:h-auto min-[860px]:min-h-dvh',
+      ? 'relative order-first h-60 min-h-0 shrink-0 overflow-hidden bg-[#0F3D3E] min-[860px]:order-1 min-[860px]:h-dvh min-[860px]:self-start'
+      : 'relative order-first h-60 min-h-0 shrink-0 overflow-hidden bg-[#0F3D3E] min-[860px]:order-none min-[860px]:h-dvh min-[860px]:self-start',
   );
 }

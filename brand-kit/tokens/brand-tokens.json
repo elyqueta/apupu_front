@@ -1,0 +1,74 @@
+{
+  "brand": {
+    "primary": {
+      "900": "#0A2B2C",
+      "700": "#0F3D3E",
+      "600": "#185556",
+      "500": "#2A7270",
+      "300": "#8FB5B2",
+      "100": "#E3EEEC",
+      "50": "#F1F7F6"
+    },
+    "accent": {
+      "700": "#A87A0C",
+      "600": "#C9951A",
+      "500": "#E8B230",
+      "200": "#F6DC95",
+      "100": "#FBF1D6"
+    }
+  },
+  "neutral": {
+    "bg": "#F6F5EF",
+    "surface": "#FFFFFF",
+    "border": "#E4E2D8",
+    "text": "#14201F",
+    "textMuted": "#5B6B69",
+    "textSubtle": "#8A9694"
+  },
+  "semantic": {
+    "success": "#2E7D4F",
+    "successBg": "#E6F3EB",
+    "danger": "#B3382C",
+    "dangerBg": "#FBEAE8",
+    "warning": "#B7791F",
+    "warningBg": "#FDF3DD",
+    "info": "#2A6F97",
+    "infoBg": "#E5F0F7"
+  },
+  "dark": {
+    "bg": "#0A1E1F",
+    "surface": "#102A2B",
+    "border": "#1E4243",
+    "text": "#F1F5F4",
+    "textMuted": "#A9BAB8",
+    "primary": "#E8B230",
+    "onPrimary": "#0F3D3E"
+  },
+  "font": {
+    "family": "Figtree",
+    "fallback": "Arial, Helvetica, sans-serif",
+    "weights": {
+      "regular": 400,
+      "medium": 500,
+      "semibold": 600,
+      "bold": 700,
+      "extrabold": 800
+    }
+  },
+  "radius": {
+    "sm": 6,
+    "md": 10,
+    "lg": 16,
+    "xl": 24
+  },
+  "spacing": [
+    4,
+    8,
+    12,
+    16,
+    24,
+    32,
+    48,
+    64
+  ]
+}

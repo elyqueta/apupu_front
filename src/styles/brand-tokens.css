@@ -1,0 +1,116 @@
+/*
+ * Conto Contigo — design tokens oficiais.
+ *
+ * Adaptado de `brand-kit/tokens/brand-tokens.css`:
+ * - Figtree é servida localmente (`public/fonts/`) em vez do Google Fonts.
+ * - O tema escuro segue a classe `.dark` usada pelo `ThemeService`, em vez de
+ *   `prefers-color-scheme` / `data-theme`.
+ * - Não define `body`; a base tipográfica vive em `src/styles.css`.
+ */
+
+@font-face {
+  font-family: 'Figtree';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/Figtree-400.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Figtree';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/Figtree-500.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Figtree';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/fonts/Figtree-600.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Figtree';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/Figtree-700.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Figtree';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url('/fonts/Figtree-800.woff2') format('woff2');
+}
+
+:root {
+  /* Marca */
+  --cc-primary-900: #0a2b2c;
+  --cc-primary-700: #0f3d3e; /* verde-petróleo — cor principal */
+  --cc-primary-600: #185556;
+  --cc-primary-500: #2a7270;
+  --cc-primary-300: #8fb5b2;
+  --cc-primary-100: #e3eeec;
+  --cc-primary-50: #f1f7f6;
+  --cc-on-primary: #ffffff;
+  --cc-accent-700: #a87a0c;
+  --cc-accent-600: #c9951a;
+  --cc-accent-500: #e8b230; /* amarelo-mostarda — acento / CTA */
+  --cc-accent-200: #f6dc95;
+  --cc-accent-100: #fbf1d6;
+
+  /* Superfícies e texto (tema claro) */
+  --cc-bg: #f6f5ef;
+  --cc-surface: #ffffff;
+  --cc-surface-alt: #f1f7f6;
+  --cc-border: #e4e2d8;
+  --cc-text: #14201f;
+  --cc-text-muted: #5b6b69;
+  --cc-text-subtle: #8a9694;
+
+  /* Estados */
+  --cc-success: #2e7d4f;
+  --cc-success-bg: #e6f3eb;
+  --cc-danger: #b3382c;
+  --cc-danger-hover: #a93a2d;
+  --cc-danger-bg: #fbeae8;
+  --cc-warning: #b7791f;
+  --cc-warning-bg: #fdf3dd;
+  --cc-info: #2a6f97;
+  --cc-info-bg: #e5f0f7;
+
+  /* Forma e tipografia */
+  --cc-radius-sm: 6px;
+  --cc-radius-md: 10px;
+  --cc-radius-lg: 16px;
+  --cc-radius-xl: 24px;
+  --cc-font: 'Figtree', Arial, Helvetica, sans-serif;
+  --cc-shadow-card: 0 1px 2px rgb(15 61 62 / 0.06), 0 8px 24px rgb(15 61 62 / 0.08);
+}
+
+/* Tema escuro controlado pela classe `.dark` da aplicação. */
+.dark {
+  --cc-bg: #0a1e1f;
+  --cc-surface: #102a2b;
+  --cc-surface-alt: #18302f;
+  --cc-border: #1e4243;
+  --cc-text: #f1f5f4;
+  --cc-text-muted: #a9bab8;
+  --cc-text-subtle: #7c908e;
+
+  /* Estados com contraste suficiente sobre superfícies escuras. */
+  --cc-success: #54b98b;
+  --cc-success-bg: rgb(84 185 139 / 0.14);
+  --cc-danger: #e5604d;
+  --cc-danger-hover: #e97562;
+  --cc-danger-bg: rgb(229 96 77 / 0.16);
+  --cc-warning: #e8b230;
+  --cc-warning-bg: rgb(232 178 48 / 0.16);
+  --cc-info: #8fb5b2;
+  --cc-info-bg: rgb(143 181 178 / 0.16);
+}

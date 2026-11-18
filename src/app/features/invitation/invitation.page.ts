@@ -12,6 +12,7 @@ import { ICONS } from '../../core/ui/icons';
 import { BrandComponent } from '../../shared/components/brand.component';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog.component';
 import { ImageLightboxComponent } from '../../shared/components/image-lightbox.component';
+import { LogoComponent } from '../../shared/components/logo.component';
 import { PreferenceControlsComponent } from '../../shared/components/preference-controls.component';
 import { SkeletonComponent } from '../../shared/components/skeleton.component';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
@@ -51,6 +52,7 @@ interface InvitationView {
     BrandComponent,
     ConfirmDialogComponent,
     ImageLightboxComponent,
+    LogoComponent,
     PreferenceControlsComponent,
     SkeletonComponent,
     StatusBadgeComponent,

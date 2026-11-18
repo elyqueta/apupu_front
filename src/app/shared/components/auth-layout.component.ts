@@ -4,6 +4,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { ThemeService } from '../../core/theme/theme.service';
 import { ICONS } from '../../core/ui/icons';
+import { LogoComponent } from './logo.component';
 
 /**
  * Layout de ecrã inteiro das telas de autenticação (protótipo `conta-comigo-auth.html`).
@@ -18,7 +19,7 @@ import { ICONS } from '../../core/ui/icons';
  */
 @Component({
   selector: 'app-auth-layout',
-  imports: [RouterLink, FaIconComponent],
+  imports: [RouterLink, FaIconComponent, LogoComponent],
   template: `
     <div [class]="shellClass()">
       <section [class]="panelClass()">
@@ -27,26 +28,15 @@ import { ICONS } from '../../core/ui/icons';
         >
           <a
             routerLink="/entrar"
-            class="flex items-center gap-3"
+            class="flex items-center"
             [attr.aria-label]="i18n.t('app.name')"
           >
-            <img
-              src="/assets/conta-comigo-icone.svg"
-              alt=""
-              aria-hidden="true"
-              width="44"
-              height="44"
-              class="size-11 shrink-0 rounded-2xl"
-            />
+            <span class="min-[860px]:hidden">
+              <app-logo variant="stacked" theme="white" [height]="64" />
+            </span>
             <span class="hidden min-[860px]:block">
-              <b
-                class="block font-display text-lg font-semibold leading-tight tracking-tight text-ink"
-              >
-                {{ i18n.t('app.name') }}
-              </b>
-              <small class="block text-[11px] uppercase tracking-[0.18em] text-muted">
-                {{ i18n.t('app.tagline') }}
-              </small>
+              <app-logo variant="stacked" [height]="64" class="dark:hidden" />
+              <app-logo variant="stacked" theme="white" [height]="64" class="hidden dark:block" />
             </span>
           </a>
 
@@ -99,7 +89,7 @@ import { ICONS } from '../../core/ui/icons';
           class="absolute inset-0 size-full object-cover object-center"
         />
         <div
-          class="absolute inset-0 bg-[linear-gradient(180deg,rgba(5,25,24,0.62),rgba(5,25,24,0.05)_45%,rgba(5,25,24,0.55))]"
+          class="absolute inset-0 bg-gradient-to-b from-cc-primary-900/60 via-cc-primary-900/5 to-cc-primary-900/55"
           aria-hidden="true"
         ></div>
 
@@ -114,7 +104,7 @@ import { ICONS } from '../../core/ui/icons';
 
         <div class="absolute inset-x-0 bottom-0 z-[1] hidden px-8 pb-12 pt-8 min-[860px]:block">
           <div
-            class="max-w-md rounded-[26px] border border-white/20 bg-[#05201f]/45 p-6 text-white shadow-2xl backdrop-blur-md"
+            class="max-w-md rounded-[26px] border border-white/20 bg-cc-primary-900/45 p-6 text-white shadow-2xl backdrop-blur-md"
           >
             <p class="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/70">
               {{ i18n.t('app.name') }}
@@ -167,7 +157,7 @@ export class AuthLayoutComponent {
 
   protected readonly heroClass = computed(() =>
     this.reverse()
-      ? 'relative order-first h-60 min-h-0 shrink-0 overflow-hidden bg-[#0F3D3E] min-[860px]:order-1 min-[860px]:h-dvh min-[860px]:self-start'
-      : 'relative order-first h-60 min-h-0 shrink-0 overflow-hidden bg-[#0F3D3E] min-[860px]:order-none min-[860px]:h-dvh min-[860px]:self-start',
+      ? 'relative order-first h-60 min-h-0 shrink-0 overflow-hidden bg-cc-primary min-[860px]:order-1 min-[860px]:h-dvh min-[860px]:self-start'
+      : 'relative order-first h-60 min-h-0 shrink-0 overflow-hidden bg-cc-primary min-[860px]:order-none min-[860px]:h-dvh min-[860px]:self-start',
   );
 }

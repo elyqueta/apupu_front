@@ -8,7 +8,21 @@
     </header>
 
     @if (loading()) {
-      <main class="flex flex-1 items-start py-6">
+      <main class="flex flex-1 flex-col gap-5 py-6">
+        <div class="flex flex-col items-center gap-3 py-6">
+          <app-logo
+            variant="stacked"
+            [height]="80"
+            class="dark:hidden motion-safe:animate-pulse"
+          />
+          <app-logo
+            variant="stacked"
+            theme="white"
+            [height]="80"
+            class="hidden dark:block motion-safe:animate-pulse"
+          />
+          <p class="text-sm font-medium text-muted">{{ i18n.t('common.loading') }}…</p>
+        </div>
         <app-skeleton variant="invitation" />
       </main>
     } @else if (invitation(); as view) {
@@ -611,10 +625,14 @@
       </main>
 
       <footer
-        class="flex flex-wrap items-center justify-between gap-2 py-4 text-[10px] text-muted/70"
+        class="mt-2 flex flex-wrap items-center justify-between gap-4 rounded-3xl bg-cc-primary px-4 py-4 text-[10px] text-white/75"
       >
-        <p>{{ i18n.t('footer.rights', { year: 2026 }) }}</p>
-        <p>{{ i18n.t('footer.made') }}</p>
+        <app-logo variant="horizontal" theme="white" [height]="32" />
+        <div class="flex flex-wrap items-center gap-3">
+          <p>{{ i18n.t('footer.rights', { year: 2026 }) }}</p>
+          <span aria-hidden="true">·</span>
+          <p>{{ i18n.t('footer.made') }}</p>
+        </div>
       </footer>
     }
   </div>

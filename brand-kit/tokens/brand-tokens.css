@@ -1,0 +1,51 @@
+/* Conto Contigo — design tokens. Importar uma única vez, o mais cedo possível. */
+@import url("https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&display=swap");
+
+:root {
+  /* Marca */
+  --cc-primary-900: #0A2B2C;
+  --cc-primary-700: #0F3D3E; /* verde-petróleo — cor principal */
+  --cc-primary-600: #185556;
+  --cc-primary-500: #2A7270;
+  --cc-primary-300: #8FB5B2;
+  --cc-primary-100: #E3EEEC;
+  --cc-primary-50:  #F1F7F6;
+  --cc-accent-700: #A87A0C;
+  --cc-accent-600: #C9951A;
+  --cc-accent-500: #E8B230; /* amarelo-mostarda — acento / CTA */
+  --cc-accent-200: #F6DC95;
+  --cc-accent-100: #FBF1D6;
+
+  /* Superfícies e texto (tema claro) */
+  --cc-bg: #F6F5EF;
+  --cc-surface: #FFFFFF;
+  --cc-border: #E4E2D8;
+  --cc-text: #14201F;
+  --cc-text-muted: #5B6B69;
+  --cc-text-subtle: #8A9694;
+
+  /* Estados */
+  --cc-success: #2E7D4F; --cc-success-bg: #E6F3EB;
+  --cc-danger:  #B3382C; --cc-danger-bg:  #FBEAE8;
+  --cc-warning: #B7791F; --cc-warning-bg: #FDF3DD;
+  --cc-info:    #2A6F97; --cc-info-bg:    #E5F0F7;
+
+  /* Forma e tipografia */
+  --cc-radius-sm: 6px; --cc-radius-md: 10px; --cc-radius-lg: 16px; --cc-radius-xl: 24px;
+  --cc-font: "Figtree", Arial, Helvetica, sans-serif;
+  --cc-shadow-card: 0 1px 2px rgba(15,61,62,.06), 0 8px 24px rgba(15,61,62,.08);
+}
+
+/* Tema escuro: automático pelo sistema, ou forçado com data-theme="dark" */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --cc-bg: #0A1E1F; --cc-surface: #102A2B; --cc-border: #1E4243;
+    --cc-text: #F1F5F4; --cc-text-muted: #A9BAB8; --cc-text-subtle: #7C908E;
+  }
+}
+:root[data-theme="dark"] {
+  --cc-bg: #0A1E1F; --cc-surface: #102A2B; --cc-border: #1E4243;
+  --cc-text: #F1F5F4; --cc-text-muted: #A9BAB8; --cc-text-subtle: #7C908E;
+}
+
+body { font-family: var(--cc-font); background: var(--cc-bg); color: var(--cc-text); }

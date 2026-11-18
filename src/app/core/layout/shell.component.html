@@ -172,7 +172,7 @@
             <fa-icon [icon]="icons['menu']" class="text-base" />
           </button>
 
-          <app-brand [compact]="true" class="lg:hidden" />
+          <app-brand class="lg:hidden" />
 
           <div class="hidden min-w-0 flex-1 lg:block">
             <p class="text-[9px] font-semibold uppercase tracking-[0.22em] text-muted">
@@ -339,6 +339,20 @@
         </div>
 
         @if (store.loading()) {
+          <div class="flex flex-col items-center gap-3 py-8">
+            <app-logo
+              variant="stacked"
+              [height]="72"
+              class="dark:hidden motion-safe:animate-pulse"
+            />
+            <app-logo
+              variant="stacked"
+              theme="white"
+              [height]="72"
+              class="hidden dark:block motion-safe:animate-pulse"
+            />
+            <p class="text-xs font-medium text-muted">{{ i18n.t('common.loading') }}…</p>
+          </div>
           <app-skeleton [variant]="skeletonVariant()" />
         } @else if (store.error(); as error) {
           <section
@@ -362,16 +376,20 @@
       </main>
 
       <footer
-        class="flex flex-wrap items-center justify-between gap-2 px-3 pb-5 text-[10px] text-muted/70 sm:px-4 lg:px-1"
+        class="mx-3 mb-4 mt-2 rounded-3xl bg-cc-primary px-4 py-5 text-[10px] text-white/75 sm:mx-4 sm:px-5 lg:mx-0"
       >
-        <p>{{ i18n.t('footer.rights', { year: 2026 }) }}</p>
-        <div class="flex items-center gap-3">
-          <span class="inline-flex items-center gap-1.5">
-            <span class="size-1 rounded-full bg-mint"></span>
-            {{ i18n.t('settings.development') }}
-          </span>
-          <span>·</span>
-          <span>{{ i18n.t('footer.made') }}</span>
+        <div class="flex flex-wrap items-center justify-between gap-4">
+          <app-logo variant="horizontal" theme="white" [height]="32" />
+          <div class="flex flex-wrap items-center gap-3">
+            <p>{{ i18n.t('footer.rights', { year: 2026 }) }}</p>
+            <span aria-hidden="true">·</span>
+            <span class="inline-flex items-center gap-1.5">
+              <span class="size-1 rounded-full bg-cc-accent"></span>
+              {{ i18n.t('settings.development') }}
+            </span>
+            <span aria-hidden="true">·</span>
+            <span>{{ i18n.t('footer.made') }}</span>
+          </div>
         </div>
       </footer>
     </div>

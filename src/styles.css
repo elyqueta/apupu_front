@@ -1,10 +1,43 @@
 @import 'tailwindcss';
+@import './styles/brand-tokens.css';
 
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme inline {
-  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --font-display: 'Space Grotesk', 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'Figtree', Arial, Helvetica, sans-serif;
+  --font-display: 'Figtree', Arial, Helvetica, sans-serif;
+
+  /* Conto Contigo — tokens da marca expostos ao Tailwind (`bg-cc-*`, `text-cc-*`). */
+  --color-cc-primary: var(--cc-primary-700);
+  --color-cc-primary-900: var(--cc-primary-900);
+  --color-cc-primary-700: var(--cc-primary-700);
+  --color-cc-primary-600: var(--cc-primary-600);
+  --color-cc-primary-500: var(--cc-primary-500);
+  --color-cc-primary-300: var(--cc-primary-300);
+  --color-cc-primary-100: var(--cc-primary-100);
+  --color-cc-primary-50: var(--cc-primary-50);
+  --color-cc-on-primary: var(--cc-on-primary);
+  --color-cc-accent: var(--cc-accent-500);
+  --color-cc-accent-700: var(--cc-accent-700);
+  --color-cc-accent-600: var(--cc-accent-600);
+  --color-cc-accent-500: var(--cc-accent-500);
+  --color-cc-accent-200: var(--cc-accent-200);
+  --color-cc-accent-100: var(--cc-accent-100);
+  --color-cc-bg: var(--cc-bg);
+  --color-cc-surface: var(--cc-surface);
+  --color-cc-surface-alt: var(--cc-surface-alt);
+  --color-cc-border: var(--cc-border);
+  --color-cc-text: var(--cc-text);
+  --color-cc-text-muted: var(--cc-text-muted);
+  --color-cc-text-subtle: var(--cc-text-subtle);
+  --color-cc-success: var(--cc-success);
+  --color-cc-success-bg: var(--cc-success-bg);
+  --color-cc-danger: var(--cc-danger);
+  --color-cc-danger-bg: var(--cc-danger-bg);
+  --color-cc-warning: var(--cc-warning);
+  --color-cc-warning-bg: var(--cc-warning-bg);
+  --color-cc-info: var(--cc-info);
+  --color-cc-info-bg: var(--cc-info-bg);
 
   --text-xs: calc(0.75rem * var(--ap-font-scale));
   --text-sm: calc(0.875rem * var(--ap-font-scale));
@@ -57,25 +90,25 @@
   color-scheme: light;
   --ap-font-scale: 1;
 
-  --ap-bg: #f3f6f5;
-  --ap-surface: #fafcfb;
-  --ap-surface-alt: #eaf0ee;
-  --ap-border: #d3dedb;
-  --ap-text: #10201f;
-  --ap-text-muted: #50635f;
-  --ap-secondary: #0f3d3e;
-  --ap-secondary-hover: #0b2f30;
-  --ap-secondary-soft: #e1edea;
-  --ap-secondary-text: #0f3d3e;
-  --ap-on-secondary: #f3f6f5;
-  --ap-on-danger: #f3f6f5;
-  --ap-focus-ring: #0f3d3e;
-  --ap-success: #176f54;
-  --ap-warning: #855800;
-  --ap-danger: #b74335;
-  --ap-danger-hover: #a93a2d;
-  --ap-info: #0f3d3e;
-  --ap-shadow-card: 0 4px 14px rgb(16 32 31 / 0.08);
+  --ap-bg: var(--cc-bg);
+  --ap-surface: var(--cc-surface);
+  --ap-surface-alt: var(--cc-surface-alt);
+  --ap-border: var(--cc-border);
+  --ap-text: var(--cc-text);
+  --ap-text-muted: var(--cc-text-muted);
+  --ap-secondary: var(--cc-primary-700);
+  --ap-secondary-hover: var(--cc-primary-900);
+  --ap-secondary-soft: var(--cc-primary-100);
+  --ap-secondary-text: var(--cc-primary-700);
+  --ap-on-secondary: var(--cc-on-primary);
+  --ap-on-danger: var(--cc-on-primary);
+  --ap-focus-ring: var(--cc-primary-700);
+  --ap-success: var(--cc-success);
+  --ap-warning: var(--cc-warning);
+  --ap-danger: var(--cc-danger);
+  --ap-danger-hover: var(--cc-danger-hover);
+  --ap-info: var(--cc-info);
+  --ap-shadow-card: var(--cc-shadow-card);
 }
 
 :root[data-font-size='large'] {
@@ -122,24 +155,24 @@
 .dark {
   color-scheme: dark;
 
-  --ap-bg: #0a1211;
-  --ap-surface: #0f1a19;
-  --ap-surface-alt: #152423;
-  --ap-border: #223634;
-  --ap-text: #e7efed;
-  --ap-text-muted: #93a7a3;
-  --ap-secondary: #1f7a6b;
-  --ap-secondary-hover: #1f7264;
-  --ap-secondary-soft: rgb(47 164 138 / 0.14);
-  --ap-secondary-text: #5cc4ae;
-  --ap-on-secondary: #fff;
-  --ap-on-danger: #0a1211;
-  --ap-focus-ring: #5cc4ae;
-  --ap-success: #54b98b;
-  --ap-warning: #ffb627;
-  --ap-danger: #e5604d;
-  --ap-danger-hover: #e97562;
-  --ap-info: #5cc4ae;
+  --ap-bg: var(--cc-bg);
+  --ap-surface: var(--cc-surface);
+  --ap-surface-alt: var(--cc-surface-alt);
+  --ap-border: var(--cc-border);
+  --ap-text: var(--cc-text);
+  --ap-text-muted: var(--cc-text-muted);
+  --ap-secondary: var(--cc-primary-500);
+  --ap-secondary-hover: var(--cc-primary-600);
+  --ap-secondary-soft: color-mix(in oklab, var(--cc-primary-500) 18%, transparent);
+  --ap-secondary-text: var(--cc-primary-300);
+  --ap-on-secondary: var(--cc-on-primary);
+  --ap-on-danger: var(--cc-primary-900);
+  --ap-focus-ring: var(--cc-primary-300);
+  --ap-success: var(--cc-success);
+  --ap-warning: var(--cc-warning);
+  --ap-danger: var(--cc-danger);
+  --ap-danger-hover: var(--cc-danger-hover);
+  --ap-info: var(--cc-info);
   --ap-shadow-card: 0 4px 14px rgb(0 0 0 / 0.22);
 }
 
@@ -197,9 +230,9 @@
   }
 }
 
-/* Conto Contigo · telas de autenticação: anel de foco âmbar (protótipo). */
+/* Conto Contigo · telas de autenticação: anel de foco mostarda (protótipo). */
 app-auth-layout :focus-visible {
-  outline-color: #ffb627 !important;
+  outline-color: var(--cc-accent-700) !important;
 }
 
 /* Font Awesome SVG sizing (FaConfig.autoAddCss is disabled to keep a single stylesheet). */

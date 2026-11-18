@@ -15,6 +15,7 @@ import { NotificationPresenter } from '../../shared/services/notification.presen
 import { HostNotification } from '../../core/models/models';
 import { AvatarComponent } from '../../shared/components/avatar.component';
 import { BrandComponent } from '../../shared/components/brand.component';
+import { LogoComponent } from '../../shared/components/logo.component';
 import { PreferenceControlsComponent } from '../../shared/components/preference-controls.component';
 import { SkeletonComponent, SkeletonVariant } from '../../shared/components/skeleton.component';
 
@@ -33,6 +34,7 @@ interface NavItem {
     RouterLinkActive,
     FaIconComponent,
     BrandComponent,
+    LogoComponent,
     AvatarComponent,
     PreferenceControlsComponent,
     SkeletonComponent,

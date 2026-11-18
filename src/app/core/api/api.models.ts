@@ -156,6 +156,7 @@ export interface PublicEvent {
   message: string | null;
   rules: string | null;
   dress_code: string | null;
+  cover_url: string | null;
   theme: { mode: 'light' | 'dark'; palette: string };
   contribution: EventContribution;
   rsvp_deadline: string | null;

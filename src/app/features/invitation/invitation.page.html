@@ -16,13 +16,48 @@
         <article
           class="overflow-hidden rounded-4xl border border-line bg-surface shadow-card backdrop-blur-2xl"
         >
-          <app-template-artwork
-            [templateId]="view.event.templateId"
-            variant="hero"
-            [title]="view.event.title"
-            [subtitle]="i18n.t('invitation.hostedBy', { name: view.event.hostName })"
-            class="block h-60 sm:h-72"
-          />
+          @if (view.event.coverUrl) {
+            <button
+              type="button"
+              class="group/cover relative block h-60 w-full overflow-hidden text-left sm:h-72"
+              [attr.aria-label]="i18n.t('common.expandImage')"
+              [attr.title]="i18n.t('common.expandImage')"
+              (click)="openCover()"
+            >
+              <img
+                [src]="view.event.coverUrl"
+                [alt]="view.event.title"
+                class="size-full object-cover transition duration-500 group-hover/cover:scale-[1.02]"
+              />
+              <span
+                class="pointer-events-none absolute inset-0 bg-gradient-to-t from-ink/80 via-ink/25 to-transparent"
+              ></span>
+              <span
+                class="pointer-events-none absolute inset-x-0 bottom-0 flex flex-col gap-1 p-5 text-white sm:p-6"
+              >
+                <span class="text-[10px] font-semibold uppercase tracking-[0.24em] text-white/75">
+                  {{ i18n.t('invitation.hostedBy', { name: view.event.hostName }) }}
+                </span>
+                <span class="font-display text-2xl font-semibold tracking-tight sm:text-3xl">
+                  {{ view.event.title }}
+                </span>
+              </span>
+              <span
+                class="pointer-events-none absolute right-4 top-4 inline-flex items-center gap-1.5 rounded-full border border-white/25 bg-canvas/55 px-3 py-1.5 text-[10px] font-semibold text-white/90 backdrop-blur-md"
+              >
+                <fa-icon [icon]="icons['image']" class="text-[10px]" aria-hidden="true" />
+                {{ i18n.t('common.expandImage') }}
+              </span>
+            </button>
+          } @else {
+            <app-template-artwork
+              [templateId]="view.event.templateId"
+              variant="hero"
+              [title]="view.event.title"
+              [subtitle]="i18n.t('invitation.hostedBy', { name: view.event.hostName })"
+              class="block h-60 sm:h-72"
+            />
+          }
 
           <div class="flex flex-wrap items-center justify-between gap-4 p-5 sm:p-6">
             <div class="min-w-0">
@@ -177,7 +212,6 @@
                     </p>
                   </div>
                 </div>
-
               </div>
 
               @if (view.event.dressCode) {
@@ -270,7 +304,9 @@
                       {{ i18n.t('invitation.iban') }}
                     </dt>
                     <dd class="mt-1 flex items-center justify-between gap-2">
-                      <span class="truncate font-mono text-[11px] text-ink">{{ bank.accountReference }}</span>
+                      <span class="truncate font-mono text-[11px] text-ink">{{
+                        bank.accountReference
+                      }}</span>
                       <button
                         type="button"
                         class="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border border-line bg-surface px-2 text-[10px] font-semibold text-ink transition hover:border-brand/40"
@@ -603,5 +639,12 @@
     tone="primary"
     (confirmed)="confirmAccept()"
     (cancelled)="acceptOpen.set(false)"
+  />
+
+  <app-image-lightbox
+    [src]="lightbox()?.src ?? null"
+    [alt]="lightbox()?.alt ?? ''"
+    [closeLabel]="i18n.t('common.close')"
+    (closed)="closeCover()"
   />
 </div>

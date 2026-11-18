@@ -121,17 +121,29 @@
           >
             <div class="relative p-3 pb-0">
               @if (invitation.coverUrl) {
-                <div class="relative aspect-[16/9] overflow-hidden rounded-3xl bg-surface-raised">
+                <button
+                  type="button"
+                  class="group/cover relative block aspect-[16/9] w-full overflow-hidden rounded-3xl bg-surface-raised text-left"
+                  [attr.aria-label]="i18n.t('common.expandImage')"
+                  [attr.title]="i18n.t('common.expandImage')"
+                  (click)="openCover(invitation)"
+                >
                   <img
                     [src]="invitation.coverUrl"
                     [alt]="invitation.title"
-                    class="size-full object-cover"
+                    class="size-full object-cover transition duration-500 group-hover/cover:scale-[1.03]"
                     loading="lazy"
                   />
                   <span
                     class="pointer-events-none absolute inset-0 bg-gradient-to-t from-ink/45 via-transparent to-transparent"
                   ></span>
-                </div>
+                  <span
+                    class="pointer-events-none absolute right-3 top-3 inline-flex items-center gap-1.5 rounded-full border border-white/25 bg-canvas/55 px-2.5 py-1 text-[10px] font-semibold text-white/90 opacity-0 backdrop-blur-md transition group-hover/cover:opacity-100"
+                  >
+                    <fa-icon [icon]="icons['image']" class="text-[10px]" aria-hidden="true" />
+                    {{ i18n.t('common.expandImage') }}
+                  </span>
+                </button>
               } @else {
                 <app-template-artwork
                   [templateId]="invitation.templateId"
@@ -246,3 +258,10 @@
     }
   }
 </section>
+
+<app-image-lightbox
+  [src]="lightbox()?.src ?? null"
+  [alt]="lightbox()?.alt ?? ''"
+  [closeLabel]="i18n.t('common.close')"
+  (closed)="closeCover()"
+/>

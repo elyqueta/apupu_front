@@ -1,6 +1,12 @@
-import { Component, computed, effect, inject, signal } from '@angular/core';
+import { Component, DestroyRef, computed, effect, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { AbstractControl, NonNullableFormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
+import {
+  AbstractControl,
+  NonNullableFormBuilder,
+  ReactiveFormsModule,
+  ValidationErrors,
+  Validators,
+} from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { I18nService } from '../../core/i18n/i18n.service';
@@ -21,6 +27,8 @@ import { TemplateArtworkComponent } from '../../shared/components/template-artwo
 import { PhoneMaskDirective } from '../../shared/directives/phone-mask.directive';
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+const COVER_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
+const COVER_MAX_BYTES = 8 * 1024 * 1024;
 
 interface WizardStep {
   id: number;
@@ -30,13 +38,20 @@ interface WizardStep {
 
 @Component({
   selector: 'app-create-event-page',
-  imports: [RouterLink, ReactiveFormsModule, FaIconComponent, TemplateArtworkComponent, PhoneMaskDirective],
+  imports: [
+    RouterLink,
+    ReactiveFormsModule,
+    FaIconComponent,
+    TemplateArtworkComponent,
+    PhoneMaskDirective,
+  ],
   templateUrl: './create-event.page.html',
 })
 export class CreateEventPage {
   private readonly fb = inject(NonNullableFormBuilder);
   private readonly toasts = inject(ToastService);
   private readonly router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
 
   protected readonly store = inject(WorkspaceStore);
   protected readonly i18n = inject(I18nService);
@@ -46,6 +61,8 @@ export class CreateEventPage {
   protected readonly publishing = signal(false);
   protected readonly formError = signal('');
   protected readonly created = signal<HostEvent | null>(null);
+  protected readonly coverFile = signal<File | null>(null);
+  private readonly coverObjectUrl = signal<string | null>(null);
 
   protected readonly steps: WizardStep[] = [
     { id: 0, labelKey: 'create.step.event', icon: 'calendarPlus' },
@@ -141,6 +158,10 @@ export class CreateEventPage {
   );
 
   protected readonly coverPreview = computed(() => {
+    const objectUrl = this.coverObjectUrl();
+    if (objectUrl) {
+      return objectUrl;
+    }
     const url = this.formValue().coverUrl.trim();
     return /^https:\/\/.+/.test(url) ? url : null;
   });
@@ -151,8 +172,8 @@ export class CreateEventPage {
     }
     return Boolean(
       this.formValue().bankName.trim() &&
-        this.formValue().accountName.trim() &&
-        this.formValue().iban.trim(),
+      this.formValue().accountName.trim() &&
+      this.formValue().iban.trim(),
     );
   });
 
@@ -168,6 +189,7 @@ export class CreateEventPage {
         this.form.controls.templateId.setValue(templates[0].id);
       }
     });
+    this.destroyRef.onDestroy(() => this.revokeCoverObjectUrl());
   }
 
   protected guestGroup() {
@@ -188,6 +210,36 @@ export class CreateEventPage {
       return;
     }
     this.form.controls.guests.removeAt(index);
+  }
+
+  protected onCoverFile(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) {
+      return;
+    }
+    if (!COVER_TYPES.has(file.type)) {
+      this.toasts.error(this.i18n.t('create.coverTypeInvalid'));
+      return;
+    }
+    if (file.size > COVER_MAX_BYTES) {
+      this.toasts.error(this.i18n.t('create.coverTooLarge'));
+      return;
+    }
+    this.form.controls.coverUrl.setValue('');
+    this.setCoverFile(file);
+  }
+
+  protected onCoverUrlInput(): void {
+    if (this.form.controls.coverUrl.value.trim()) {
+      this.setCoverFile(null);
+    }
+  }
+
+  protected clearCover(): void {
+    this.setCoverFile(null);
+    this.form.controls.coverUrl.setValue('');
   }
 
   protected selectTemplate(id: TemplateId): void {
@@ -294,7 +346,16 @@ export class CreateEventPage {
     this.publishing.set(true);
     try {
       const event = await this.store.createEvent(this.buildInput());
-      this.created.set(event);
+      const cover = this.coverFile();
+      if (cover) {
+        try {
+          await this.store.uploadEventCover(event.id, cover).promise;
+        } catch {
+          this.toasts.error(this.i18n.t('create.coverUploadFailed'));
+        }
+        this.setCoverFile(null);
+      }
+      this.created.set(this.store.eventById(event.id) ?? event);
     } catch (error: unknown) {
       this.formError.set(toApiError(error).message);
     } finally {
@@ -312,6 +373,7 @@ export class CreateEventPage {
 
   protected createAnother(): void {
     this.created.set(null);
+    this.setCoverFile(null);
     this.step.set(0);
     this.formError.set('');
     this.form.reset({
@@ -457,11 +519,31 @@ export class CreateEventPage {
         ? this.zonedIso(value.rsvpDeadline, '23:59', value.timezone)
         : null,
       templateId: value.templateId,
-      coverUrl: value.coverUrl.trim() || null,
+      coverUrl: this.coverFile() ? null : value.coverUrl.trim() || null,
       contributionEnabled: value.contributionEnabled,
       bankDetails,
       guests,
     };
+  }
+
+  private setCoverFile(file: File | null): void {
+    this.revokeCoverObjectUrl();
+    if (!file) {
+      this.coverFile.set(null);
+      return;
+    }
+    this.coverFile.set(file);
+    if (typeof URL !== 'undefined' && typeof URL.createObjectURL === 'function') {
+      this.coverObjectUrl.set(URL.createObjectURL(file));
+    }
+  }
+
+  private revokeCoverObjectUrl(): void {
+    const objectUrl = this.coverObjectUrl();
+    if (objectUrl && typeof URL !== 'undefined' && typeof URL.revokeObjectURL === 'function') {
+      URL.revokeObjectURL(objectUrl);
+    }
+    this.coverObjectUrl.set(null);
   }
 
   private zonedIso(dateValue: string, timeValue: string, timezone: string): string {

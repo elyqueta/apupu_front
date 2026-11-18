@@ -31,6 +31,7 @@ const PT_AO = {
   'common.cancel': 'Cancelar',
   'common.confirm': 'Confirmar',
   'common.close': 'Fechar',
+  'common.expandImage': 'Ampliar imagem',
   'common.search': 'Pesquisar',
   'common.filter': 'Filtrar',
   'common.all': 'Todos',
@@ -343,7 +344,13 @@ const PT_AO = {
   'create.field.rsvpDeadline': 'Prazo de resposta',
   'create.field.cover': 'Imagem de capa',
   'create.coverHint':
-    'Opcional. Cola o endereço de uma imagem https para aparecer no topo do evento e nos cartões.',
+    'Opcional. Carrega uma imagem ou cola o endereço https para aparecer no topo do evento e nos cartões.',
+  'create.coverUpload': 'Carregar imagem',
+  'create.coverUploadHint': 'JPEG, PNG ou WebP até 8 MiB.',
+  'create.coverFileReady': 'Pronta a enviar: {name}',
+  'create.coverTypeInvalid': 'Escolhe uma imagem JPEG, PNG ou WebP.',
+  'create.coverTooLarge': 'A imagem não pode exceder 8 MiB.',
+  'create.coverUploadFailed': 'O evento foi criado, mas não foi possível carregar a capa.',
   'create.coverRemove': 'Remover',
   'create.field.template': 'Modelo',
   'create.field.contributionEnabled': 'Aceitar contribuições',
@@ -672,8 +679,7 @@ const PT_AO = {
   'profile.coverUpload': 'Carregar capa',
   'profile.coverUploading': 'A carregar capa…',
   'profile.coverRemove': 'Remover capa',
-  'profile.coverUploadUnavailable':
-    'O envio de imagens está indisponível. Usa um URL para a capa.',
+  'profile.coverUploadUnavailable': 'O envio de imagens está indisponível. Usa um URL para a capa.',
   'profile.coverSaved': 'Capa actualizada.',
   'profile.coverRemoved': 'Capa removida.',
   'profile.changePhoto': 'Alterar foto de perfil',
@@ -1005,8 +1011,7 @@ const PT_AO = {
   'team.statAccounts': 'Com conta',
   'team.statAccountsHint': 'entram sem precisar do link',
   'team.addTitle': 'Adicionar gestor',
-  'team.addHint':
-    'O gestor recebe um email com um link de acesso ao evento escolhido.',
+  'team.addHint': 'O gestor recebe um email com um link de acesso ao evento escolhido.',
   'team.noEvents':
     'Ainda não tens eventos para partilhar. Cria o primeiro evento para começares a construir a equipa.',
   'team.fieldEvent': 'Evento',
@@ -1019,8 +1024,7 @@ const PT_AO = {
     'Só o anfitrião pode gerir a equipa. Se já existir uma conta com este email, o evento aparece automaticamente no workspace da pessoa.',
   'team.searchPlaceholder': 'Pesquisar por email ou evento',
   'team.empty': 'Ainda sem equipas',
-  'team.emptyHint':
-    'Adiciona o primeiro gestor para partilhares a organização dos teus eventos.',
+  'team.emptyHint': 'Adiciona o primeiro gestor para partilhares a organização dos teus eventos.',
   'team.groupCount': '{count} gestores',
   'team.openEvent': 'Abrir evento',
   'team.hasAccount': 'Já tem conta',
@@ -1028,8 +1032,7 @@ const PT_AO = {
   'team.resend': 'Reenviar link',
   'team.remove': 'Remover acesso',
   'team.added': 'Convite de gestor enfileirado para {email}.',
-  'team.addedNoEmail':
-    '{email} já é gestor, mas não foi possível enfileirar o email com o link.',
+  'team.addedNoEmail': '{email} já é gestor, mas não foi possível enfileirar o email com o link.',
   'team.removed': '{email} deixou de gerir o evento.',
   'team.resent': 'Novo link enfileirado para {email}.',
   'team.resentFailed': 'Não foi possível enfileirar o novo link para {email}.',
@@ -1068,6 +1071,7 @@ const EN: Record<TranslationKey, string> = {
   'common.cancel': 'Cancel',
   'common.confirm': 'Confirm',
   'common.close': 'Close',
+  'common.expandImage': 'Expand image',
   'common.search': 'Search',
   'common.filter': 'Filter',
   'common.all': 'All',
@@ -1329,7 +1333,8 @@ const EN: Record<TranslationKey, string> = {
   'eventDetail.teamPermissions':
     'Managers view the event, edit its information and add guests. Cancelling the event and managing existing invitations stay with the host.',
   'eventDetail.managerAdded': 'Manager invite queued for {email}.',
-  'eventDetail.managerAddedNoEmail': '{email} is now a manager, but the link email could not be queued.',
+  'eventDetail.managerAddedNoEmail':
+    '{email} is now a manager, but the link email could not be queued.',
   'eventDetail.managerRemoved': '{email} no longer manages this event.',
   'eventDetail.managerResent': 'New link queued for {email}.',
   'eventDetail.managerResentFailed': 'Could not queue the new link for {email}.',
@@ -1380,7 +1385,13 @@ const EN: Record<TranslationKey, string> = {
   'create.field.rsvpDeadline': 'Response deadline',
   'create.field.cover': 'Cover image',
   'create.coverHint':
-    'Optional. Paste an https image address to show it at the top of the event and on cards.',
+    'Optional. Upload an image or paste an https address to show it at the top of the event and on cards.',
+  'create.coverUpload': 'Upload image',
+  'create.coverUploadHint': 'JPEG, PNG or WebP up to 8 MiB.',
+  'create.coverFileReady': 'Ready to upload: {name}',
+  'create.coverTypeInvalid': 'Choose a JPEG, PNG or WebP image.',
+  'create.coverTooLarge': 'The image cannot exceed 8 MiB.',
+  'create.coverUploadFailed': 'The event was created, but the cover could not be uploaded.',
   'create.coverRemove': 'Remove',
   'create.field.template': 'Template',
   'create.field.contributionEnabled': 'Accept contributions',
@@ -2014,8 +2025,7 @@ const EN: Record<TranslationKey, string> = {
 
   'account.eyebrow': 'Account access',
   'account.title': 'Access from any browser',
-  'account.text':
-    'Create an account with {email} or sign in to open this event from any browser.',
+  'account.text': 'Create an account with {email} or sign in to open this event from any browser.',
   'account.create': 'Create account',
   'account.login': 'I already have an account',
   'account.later': 'Not now',
@@ -2058,8 +2068,7 @@ const EN: Record<TranslationKey, string> = {
   'team.resend': 'Resend link',
   'team.remove': 'Remove access',
   'team.added': 'Manager invite queued for {email}.',
-  'team.addedNoEmail':
-    '{email} is now a manager, but the link email could not be queued.',
+  'team.addedNoEmail': '{email} is now a manager, but the link email could not be queued.',
   'team.removed': '{email} no longer manages the event.',
   'team.resent': 'New link queued for {email}.',
   'team.resentFailed': 'Could not queue the new link for {email}.',

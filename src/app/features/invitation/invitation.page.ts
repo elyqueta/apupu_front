@@ -3,10 +3,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Router } from '@angular/router';
 import { ApiClient } from '../../core/api/api-client';
 import { toApiError } from '../../core/api/api-error';
-import {
-  ApiRsvpStatus,
-  PublicInvitation,
-} from '../../core/api/api.models';
+import { ApiRsvpStatus, PublicInvitation } from '../../core/api/api.models';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { EventStatus, RsvpStatus } from '../../core/models/models';
 import { ShareService } from '../../core/services/share.service';
@@ -14,6 +11,7 @@ import { ToastService } from '../../core/services/toast.service';
 import { ICONS } from '../../core/ui/icons';
 import { BrandComponent } from '../../shared/components/brand.component';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog.component';
+import { ImageLightboxComponent } from '../../shared/components/image-lightbox.component';
 import { PreferenceControlsComponent } from '../../shared/components/preference-controls.component';
 import { SkeletonComponent } from '../../shared/components/skeleton.component';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
@@ -31,6 +29,7 @@ interface InvitationView {
     message: string;
     rules: string;
     dressCode: string;
+    coverUrl: string | null;
     templateId: null;
     status: EventStatus;
     contributionEnabled: boolean;
@@ -51,6 +50,7 @@ interface InvitationView {
     FaIconComponent,
     BrandComponent,
     ConfirmDialogComponent,
+    ImageLightboxComponent,
     PreferenceControlsComponent,
     SkeletonComponent,
     StatusBadgeComponent,
@@ -77,17 +77,14 @@ export class InvitationPage {
   protected readonly status = computed<RsvpStatus | null>(
     () => this.invitation()?.guest.status ?? null,
   );
-  protected readonly deadlinePassed = computed(
-    () => this.invitation()?.deadlinePassed ?? false,
-  );
-  protected readonly countdownDays = computed(
-    () => this.invitation()?.countdownDays ?? 0,
-  );
+  protected readonly deadlinePassed = computed(() => this.invitation()?.deadlinePassed ?? false);
+  protected readonly countdownDays = computed(() => this.invitation()?.countdownDays ?? 0);
 
   protected readonly saving = signal(false);
   protected readonly declineOpen = signal(false);
   protected readonly acceptOpen = signal(false);
   protected readonly accountDismissed = signal(false);
+  protected readonly lightbox = signal<{ src: string; alt: string } | null>(null);
 
   constructor() {
     effect(() => {
@@ -149,6 +146,17 @@ export class InvitationPage {
 
   protected dismissAccount(): void {
     this.accountDismissed.set(true);
+  }
+
+  protected openCover(): void {
+    const event = this.invitation()?.event;
+    if (event?.coverUrl) {
+      this.lightbox.set({ src: event.coverUrl, alt: event.title });
+    }
+  }
+
+  protected closeCover(): void {
+    this.lightbox.set(null);
   }
 
   protected async copyAccountReference(): Promise<void> {
@@ -249,6 +257,7 @@ function mapInvitation(invitation: PublicInvitation): InvitationView {
       message: event.message ?? '',
       rules: event.rules ?? '',
       dressCode: event.dress_code ?? '',
+      coverUrl: event.cover_url ?? null,
       templateId: null,
       status: event.status === 'scheduled' ? 'published' : event.status,
       contributionEnabled: contribution.enabled,

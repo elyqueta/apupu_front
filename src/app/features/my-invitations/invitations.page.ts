@@ -5,6 +5,7 @@ import { I18nService } from '../../core/i18n/i18n.service';
 import { TranslationKey } from '../../core/i18n/translations';
 import { GuestInvitation, RsvpStatus } from '../../core/models/models';
 import { ICONS } from '../../core/ui/icons';
+import { ImageLightboxComponent } from '../../shared/components/image-lightbox.component';
 import { SkeletonComponent } from '../../shared/components/skeleton.component';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
 import { TemplateArtworkComponent } from '../../shared/components/template-artwork.component';
@@ -21,7 +22,13 @@ type InviteFilter = 'all' | RsvpStatus;
  */
 @Component({
   selector: 'app-invitations-page',
-  imports: [FaIconComponent, SkeletonComponent, StatusBadgeComponent, TemplateArtworkComponent],
+  imports: [
+    FaIconComponent,
+    ImageLightboxComponent,
+    SkeletonComponent,
+    StatusBadgeComponent,
+    TemplateArtworkComponent,
+  ],
   templateUrl: './invitations.page.html',
 })
 export class InvitationsPage {
@@ -31,6 +38,7 @@ export class InvitationsPage {
 
   protected readonly search = signal('');
   protected readonly filter = signal<InviteFilter>('all');
+  protected readonly lightbox = signal<{ src: string; alt: string } | null>(null);
 
   protected readonly loading = this.repository.loading;
   protected readonly error = this.repository.error;
@@ -89,6 +97,16 @@ export class InvitationsPage {
 
   protected typeLabel(invitation: GuestInvitation): string {
     return invitation.type ? this.i18n.t(`type.${invitation.type}` as TranslationKey) : '';
+  }
+
+  protected openCover(invitation: GuestInvitation): void {
+    if (invitation.coverUrl) {
+      this.lightbox.set({ src: invitation.coverUrl, alt: invitation.title });
+    }
+  }
+
+  protected closeCover(): void {
+    this.lightbox.set(null);
   }
 
   protected locationLabel(invitation: GuestInvitation): string {

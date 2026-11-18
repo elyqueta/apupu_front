@@ -87,6 +87,11 @@ export const routes: Routes = [
         loadComponent: () => import('./features/guests/guests.page').then((m) => m.GuestsPage),
       },
       {
+        path: 'equipas',
+        title: 'Conto Contigo · Equipas',
+        loadComponent: () => import('./features/team/team.page').then((m) => m.TeamPage),
+      },
+      {
         path: 'convites',
         title: 'Conto Contigo · Meus convites',
         loadComponent: () =>

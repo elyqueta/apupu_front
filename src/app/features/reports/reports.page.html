@@ -19,14 +19,79 @@
         <fa-icon [icon]="icons['calendar']" class="text-[11px]" aria-hidden="true" />
         {{ i18n.t('reports.period') }}
       </span>
-      <button
-        type="button"
-        class="inline-flex h-10 items-center gap-2 rounded-xl bg-brand hover:bg-secondary-hover px-3.5 text-xs font-semibold text-on-secondary transition"
-        (click)="exportSummary()"
-      >
-        <fa-icon [icon]="icons['download']" class="text-[11px]" aria-hidden="true" />
-        {{ i18n.t('reports.export') }}
-      </button>
+      <div class="relative">
+        <button
+          type="button"
+          class="inline-flex h-10 items-center gap-2 rounded-xl bg-brand hover:bg-secondary-hover px-3.5 text-xs font-semibold text-on-secondary transition disabled:opacity-60"
+          [attr.aria-expanded]="exportOpen()"
+          aria-haspopup="menu"
+          [disabled]="exporting() !== null"
+          (click)="toggleExport()"
+        >
+          <fa-icon
+            [icon]="exporting() ? icons['spinner'] : icons['download']"
+            class="text-[11px]"
+            [class.animate-spin]="exporting() !== null"
+            aria-hidden="true"
+          />
+          {{ exporting() ? i18n.t('reports.exporting') : i18n.t('reports.export') }}
+          <fa-icon [icon]="icons['chevronDown']" class="text-[9px]" aria-hidden="true" />
+        </button>
+
+        @if (exportOpen()) {
+          <button
+            type="button"
+            class="fixed inset-0 z-20 cursor-default"
+            aria-label="{{ i18n.t('common.close') }}"
+            (click)="toggleExport()"
+          ></button>
+          <div
+            class="absolute right-0 z-30 mt-2 w-60 overflow-hidden rounded-2xl border border-line bg-surface p-1.5 shadow-card backdrop-blur-2xl"
+            role="menu"
+          >
+            <button
+              type="button"
+              role="menuitem"
+              class="flex w-full items-start gap-3 rounded-xl px-3 py-2.5 text-left transition hover:bg-surface-raised/70"
+              (click)="exportReport('pdf')"
+            >
+              <span
+                class="mt-0.5 grid size-8 shrink-0 place-items-center rounded-lg border border-line bg-surface-raised text-brand-strong"
+              >
+                <fa-icon [icon]="icons['lines']" class="text-[11px]" aria-hidden="true" />
+              </span>
+              <span class="min-w-0">
+                <span class="block text-xs font-semibold text-ink">{{
+                  i18n.t('reports.exportPdf')
+                }}</span>
+                <span class="mt-0.5 block text-[10px] leading-4 text-muted">{{
+                  i18n.t('reports.exportPdfHint')
+                }}</span>
+              </span>
+            </button>
+            <button
+              type="button"
+              role="menuitem"
+              class="flex w-full items-start gap-3 rounded-xl px-3 py-2.5 text-left transition hover:bg-surface-raised/70"
+              (click)="exportReport('csv')"
+            >
+              <span
+                class="mt-0.5 grid size-8 shrink-0 place-items-center rounded-lg border border-line bg-surface-raised text-brand-strong"
+              >
+                <fa-icon [icon]="icons['chartSimple']" class="text-[11px]" aria-hidden="true" />
+              </span>
+              <span class="min-w-0">
+                <span class="block text-xs font-semibold text-ink">{{
+                  i18n.t('reports.exportCsv')
+                }}</span>
+                <span class="mt-0.5 block text-[10px] leading-4 text-muted">{{
+                  i18n.t('reports.exportCsvHint')
+                }}</span>
+              </span>
+            </button>
+          </div>
+        }
+      </div>
     </div>
   </header>
 

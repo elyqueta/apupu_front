@@ -16,6 +16,24 @@ export interface UploadHandle<T> {
   cancel: () => void;
 }
 
+export interface DownloadFile {
+  blob: Blob;
+  /** Nome sugerido pelo servidor em `Content-Disposition`, se existir. */
+  filename: string | null;
+}
+
+/** Lê o nome do ficheiro de um cabeçalho `Content-Disposition`. */
+function filenameFromDisposition(header: string | null): string | null {
+  if (!header) return null;
+  const match = /filename\*?=(?:UTF-8'')?"?([^";]+)"?/i.exec(header);
+  if (!match?.[1]) return null;
+  try {
+    return decodeURIComponent(match[1]);
+  } catch {
+    return match[1];
+  }
+}
+
 @Injectable({ providedIn: 'root' })
 export class ApiClient {
   private readonly http = inject(HttpClient);
@@ -99,6 +117,30 @@ export class ApiClient {
 
   async delete(path: string): Promise<void> {
     await firstValueFrom(this.http.delete<void>(this.url(path)));
+  }
+
+  /**
+   * Descarrega um ficheiro binário (PDF, CSV, …).
+   *
+   * O nome vem de `Content-Disposition`; o chamador decide como o
+   * guardar. Não passa pelo envelope `{ data }`.
+   */
+  async download(
+    path: string,
+    query?: Record<string, string | number | undefined>,
+  ): Promise<DownloadFile> {
+    const response = await firstValueFrom(
+      this.http.get(this.url(path), {
+        params: this.params(query),
+        observe: 'response',
+        responseType: 'blob',
+      }),
+    );
+
+    return {
+      blob: response.body ?? new Blob(),
+      filename: filenameFromDisposition(response.headers.get('content-disposition')),
+    };
   }
 
   /** `DELETE` que devolve um recurso no envelope `{ data }`. */

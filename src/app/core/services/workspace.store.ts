@@ -15,6 +15,7 @@ import {
   HostNotification,
   HostProfile,
   ManagerInviteResult,
+  TeamManager,
   TemplateId,
   WorkspaceTask,
 } from '../models/models';
@@ -33,6 +34,7 @@ import { ProfileRepository, ProfileUpdateInput } from '../data/profile.repositor
 import { ReportsRepository } from '../data/reports.repository';
 import { TasksRepository } from '../data/tasks.repository';
 import { TaskPage, TaskQuery } from '../data/tasks.repository';
+import { TeamRepository } from '../data/team.repository';
 import { TemplateSelectionStore } from '../data/template-selection.store';
 import { TemplatesRepository } from '../data/templates.repository';
 import { Resettable, SessionCache } from './session-cache';
@@ -51,6 +53,7 @@ export interface LoadScope {
   reports?: boolean;
   profile?: boolean;
   notifications?: boolean;
+  team?: boolean;
 }
 
 const CHROME_SCOPE: LoadScope = {
@@ -78,6 +81,7 @@ export class WorkspaceStore implements Resettable {
   private readonly templatesRepo = inject(TemplatesRepository);
   private readonly dashboardRepo = inject(DashboardRepository);
   private readonly reportsRepo = inject(ReportsRepository);
+  private readonly teamRepo = inject(TeamRepository);
   private readonly profileRepo = inject(ProfileRepository);
   private readonly management = inject(ManagementStore);
   private readonly templateSelection = inject(TemplateSelectionStore);
@@ -101,6 +105,9 @@ export class WorkspaceStore implements Resettable {
   readonly unreadNotifications = this.notificationsRepo.unreadCount;
   readonly templates = computed<EventTemplate[]>(() => this.templatesRepo.data() ?? []);
   readonly reportSummary = computed(() => this.reportsRepo.data());
+  readonly teamMembers = computed<TeamManager[]>(() => this.teamRepo.data() ?? []);
+  readonly teamLoading = this.teamRepo.loading;
+  readonly teamError = this.teamRepo.error;
   readonly profile = computed<HostProfile>(() => this.profileRepo.data() ?? emptyProfile());
 
   readonly manageEmailStatus = this.management.manageEmailStatus;
@@ -352,6 +359,34 @@ export class WorkspaceStore implements Resettable {
     return result;
   }
 
+  /** Adiciona um gestor a partir da página global de equipas. */
+  async addTeamManager(eventId: string, email: string): Promise<ManagerInviteResult> {
+    const result = await this.addManager(eventId, email);
+    this.teamRepo.invalidate();
+    return result;
+  }
+
+  /** Remove o acesso de um gestor a partir da página global de equipas. */
+  async removeTeamManager(eventId: string, managerId: string): Promise<void> {
+    await this.removeManager(eventId, managerId);
+    this.teamRepo.invalidate();
+  }
+
+  /** Reenvia o convite de gestão a partir da página global de equipas. */
+  async resendTeamManagerInvite(
+    eventId: string,
+    managerId: string,
+  ): Promise<ManagerInviteResult> {
+    const result = await this.resendManagerInvite(eventId, managerId);
+    this.teamRepo.invalidate();
+    return result;
+  }
+
+  /** Recarrega a equipa global, ignorando o cache. */
+  async reloadTeam(): Promise<TeamManager[]> {
+    return this.teamRepo.load({ force: true });
+  }
+
   private setManagers(eventId: string, managers: EventManager[]): void {
     this.managersState.update((state) => ({ ...state, [eventId]: managers }));
   }
@@ -482,6 +517,7 @@ export class WorkspaceStore implements Resettable {
     if (scope.templates) requests.push(this.templatesRepo.load(options));
     if (scope.dashboard) requests.push(this.dashboardRepo.load(options));
     if (scope.reports) requests.push(this.reportsRepo.load(options));
+    if (scope.team) requests.push(this.teamRepo.load(options));
     // Cada repositório guarda o seu próprio erro; não propagamos rejeições.
     await Promise.allSettled(requests);
   }
@@ -497,6 +533,7 @@ export class WorkspaceStore implements Resettable {
     if (scope.templates) repositories.push(this.templatesRepo);
     if (scope.dashboard) repositories.push(this.dashboardRepo);
     if (scope.reports) repositories.push(this.reportsRepo);
+    if (scope.team) repositories.push(this.teamRepo);
     return repositories;
   }
 }

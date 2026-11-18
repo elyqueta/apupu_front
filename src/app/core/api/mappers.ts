@@ -2,6 +2,7 @@ import {
   ApiActivity,
   ApiEvent,
   ApiEventManager,
+  ApiHostEventManager,
   ApiInvitation,
   ApiNotification,
   ApiRsvpStatus,
@@ -23,6 +24,7 @@ import {
   HostNotification,
   HostProfile,
   NotificationKind,
+  TeamManager,
   WorkspaceTask,
 } from '../models/models';
 
@@ -59,6 +61,7 @@ export interface ApiGuestInvitation {
     | 'status'
     | 'template_id'
     | 'category'
+    | 'cover_url'
   >;
 }
 
@@ -164,6 +167,7 @@ export function mapGuestInvitation(invitation: ApiGuestInvitation): GuestInvitat
     onlineLink: location.type === 'online' ? (location.online_url ?? null) : null,
     type: invitation.event.category,
     templateId: invitation.event.template_id,
+    coverUrl: invitation.event.cover_url,
     status: invitation.rsvp_status === 'accepted' ? 'confirmed' : invitation.rsvp_status,
     tableName: invitation.table_name,
     invitationUrl: invitation.invitation_url,
@@ -216,6 +220,19 @@ export function mapEventManager(manager: ApiEventManager): EventManager {
     hasAccount: manager.has_account,
     lastUsedAt: manager.last_used_at,
     createdAt: manager.created_at,
+  };
+}
+
+/** Gestor com o resumo do evento, para a página global de equipas. */
+export function mapHostEventManager(manager: ApiHostEventManager): TeamManager {
+  return {
+    ...mapEventManager(manager),
+    event: {
+      id: manager.event.id,
+      title: manager.event.title,
+      startsAt: manager.event.starts_at,
+      status: manager.event.status,
+    },
   };
 }
 

@@ -67,6 +67,19 @@ export interface ManagerInviteResult {
   emailStatus: 'queued' | 'failed';
 }
 
+/** Evento a que um gestor pertence, na página global de equipas. */
+export interface TeamEventSummary {
+  id: string;
+  title: string;
+  startsAt: string | null;
+  status: EventStatus;
+}
+
+/** Gestor de um dos eventos da conta (`GET /host/managers`). */
+export interface TeamManager extends EventManager {
+  event: TeamEventSummary;
+}
+
 export interface Guest {
   id: string;
   eventId: string;
@@ -99,6 +112,8 @@ export interface GuestInvitation {
   onlineLink: string | null;
   type: EventType | null;
   templateId: TemplateId | null;
+  /** Imagem de capa do evento, quando o anfitrião definiu uma. */
+  coverUrl: string | null;
   status: RsvpStatus;
   tableName: string | null;
   /** Link individual do convite; `null` quando ainda não está disponível. */
@@ -199,6 +214,8 @@ export interface CreateEventInput {
   dressCode: string;
   rsvpDeadline: string | null;
   templateId: TemplateId | null;
+  /** URL da capa definida na criação; `null` usa a arte do modelo. */
+  coverUrl: string | null;
   contributionEnabled: boolean;
   bankDetails: BankDetails | null;
   guests: GuestInput[];

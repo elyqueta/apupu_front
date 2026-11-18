@@ -77,6 +77,7 @@ export class EventsRepository extends CachedRepository<HostEvent[]> {
         theme: { mode: 'dark', palette: 'default' },
         contribution: contributionFromInput(input),
         rsvp_deadline: input.rsvpDeadline,
+        cover_url: input.coverUrl,
       },
       guests: input.guests.map((guest) => ({
         name: guest.name,

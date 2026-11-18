@@ -135,6 +135,16 @@ export interface ApiManagerInviteResult {
   invite_email_status: 'queued' | 'failed';
 }
 
+/** Gestor na listagem global de equipas (`GET /host/managers`). */
+export interface ApiHostEventManager extends ApiEventManager {
+  event: {
+    id: string;
+    title: string;
+    starts_at: string | null;
+    status: ApiEventStatus;
+  };
+}
+
 export interface PublicEvent {
   id: string;
   title: string;
@@ -270,6 +280,7 @@ export interface CreateEventRequest {
     theme: { mode: 'light' | 'dark'; palette: string };
     contribution: EventContribution;
     rsvp_deadline?: string | null;
+    cover_url?: string | null;
   };
   guests: Array<{
     name: string;

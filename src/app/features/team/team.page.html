@@ -1,0 +1,272 @@
+<section class="flex flex-col gap-5">
+  <header class="flex flex-wrap items-end justify-between gap-4">
+    <div class="min-w-0">
+      <p class="text-[10px] font-semibold uppercase tracking-[0.26em] text-brand-strong">
+        {{ i18n.t('team.eyebrow') }}
+      </p>
+      <h2 class="mt-1.5 font-display text-2xl font-semibold tracking-tight text-ink sm:text-3xl">
+        {{ i18n.t('team.title') }}
+      </h2>
+      <p class="mt-1.5 max-w-2xl text-sm leading-6 text-muted">
+        {{ i18n.t('team.subtitle') }}
+      </p>
+    </div>
+    <a
+      routerLink="/eventos"
+      class="inline-flex h-10 items-center gap-2 rounded-xl border border-line bg-surface px-3.5 text-xs font-semibold text-ink transition hover:border-brand/40"
+    >
+      <fa-icon [icon]="icons['events']" class="text-[11px] text-muted" aria-hidden="true" />
+      {{ i18n.t('team.openEvents') }}
+    </a>
+  </header>
+
+  <div class="grid gap-3 sm:grid-cols-3">
+    <app-stat-card
+      [label]="i18n.t('team.statManagers')"
+      [value]="stats().managers"
+      [hint]="i18n.t('team.statManagersHint')"
+      [icon]="icons['guestGroup']"
+      tone="iris"
+    />
+    <app-stat-card
+      [label]="i18n.t('team.statEvents')"
+      [value]="stats().events"
+      [hint]="i18n.t('team.statEventsHint')"
+      [icon]="icons['events']"
+      tone="brand"
+    />
+    <app-stat-card
+      [label]="i18n.t('team.statAccounts')"
+      [value]="stats().accounts"
+      [hint]="i18n.t('team.statAccountsHint')"
+      [icon]="icons['user']"
+      tone="mint"
+    />
+  </div>
+
+  <div class="grid min-w-0 gap-4 xl:grid-cols-[minmax(0,0.85fr)_minmax(0,1.65fr)]">
+    <article class="h-fit rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl">
+      <div class="flex items-start justify-between gap-3">
+        <div>
+          <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-brand-strong">
+            {{ i18n.t('team.addTitle') }}
+          </p>
+          <p class="mt-1 text-xs leading-5 text-muted">{{ i18n.t('team.addHint') }}</p>
+        </div>
+        <span
+          class="grid size-9 place-items-center rounded-xl border border-line bg-surface-raised text-muted"
+        >
+          <fa-icon [icon]="icons['userPlus']" class="text-xs" aria-hidden="true" />
+        </span>
+      </div>
+
+      @if (hostEvents().length === 0) {
+        <p class="mt-4 rounded-2xl border border-dashed border-line p-4 text-xs leading-5 text-muted">
+          {{ i18n.t('team.noEvents') }}
+        </p>
+      } @else {
+        <form class="mt-4 flex flex-col gap-3" [formGroup]="form" (ngSubmit)="addManager()">
+          <label class="block">
+            <span
+              class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted"
+            >
+              {{ i18n.t('team.fieldEvent') }}
+            </span>
+            <div class="relative">
+              <select
+                formControlName="eventId"
+                class="h-11 w-full appearance-none rounded-xl border border-line bg-surface-raised pl-3 pr-9 text-sm text-ink outline-none transition focus:border-brand/50"
+              >
+                @for (event of hostEvents(); track event.id) {
+                  <option [value]="event.id">{{ event.title }}</option>
+                }
+              </select>
+              <fa-icon
+                [icon]="icons['chevronDown']"
+                class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-muted"
+                aria-hidden="true"
+              />
+            </div>
+          </label>
+
+          <label class="block">
+            <span
+              class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted"
+            >
+              {{ i18n.t('team.fieldEmail') }}
+            </span>
+            <input
+              type="email"
+              formControlName="email"
+              autocomplete="email"
+              class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink outline-none transition placeholder:text-muted/60 focus:border-brand/50"
+              [placeholder]="i18n.t('team.fieldEmailPlaceholder')"
+            />
+            @if (form.controls.email.touched && form.controls.email.invalid) {
+              <span class="mt-1 block text-[10px] text-coral">
+                {{ i18n.t('team.fieldEmailInvalid') }}
+              </span>
+            }
+          </label>
+
+          <button
+            type="submit"
+            class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-brand px-4 text-xs font-semibold text-on-secondary transition hover:bg-secondary-hover disabled:cursor-not-allowed disabled:opacity-60"
+            [disabled]="adding()"
+          >
+            <fa-icon
+              [icon]="adding() ? icons['spinner'] : icons['userPlus']"
+              class="text-[11px]"
+              [class.animate-spin]="adding()"
+              aria-hidden="true"
+            />
+            {{ adding() ? i18n.t('team.adding') : i18n.t('team.addSubmit') }}
+          </button>
+        </form>
+      }
+
+      <p class="mt-4 border-t border-line pt-3 text-[10px] leading-5 text-muted">
+        {{ i18n.t('team.addFootnote') }}
+      </p>
+    </article>
+
+    <div class="flex min-w-0 flex-col gap-3">
+      <label class="relative block">
+        <span class="sr-only">{{ i18n.t('team.searchPlaceholder') }}</span>
+        <fa-icon
+          [icon]="icons['search']"
+          class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[11px] text-muted"
+          aria-hidden="true"
+        />
+        <input
+          type="search"
+          class="h-11 w-full rounded-2xl border border-line bg-surface pl-10 pr-3 text-sm text-ink shadow-card outline-none transition placeholder:text-muted/60 focus:border-brand/50"
+          [placeholder]="i18n.t('team.searchPlaceholder')"
+          [value]="search()"
+          (input)="setSearch($any($event.target).value)"
+        />
+      </label>
+
+      @if (loading() && members().length === 0) {
+        <app-skeleton variant="cards" />
+      } @else if (groups().length === 0) {
+        <div
+          class="flex flex-col items-center justify-center rounded-4xl border border-dashed border-line bg-surface/60 px-6 py-16 text-center backdrop-blur-2xl"
+        >
+          <span
+            class="grid size-14 place-items-center rounded-2xl border border-brand/25 bg-brand/15 text-brand-strong"
+          >
+            <fa-icon [icon]="icons['guestGroup']" class="text-xl" aria-hidden="true" />
+          </span>
+          <h3 class="mt-4 font-display text-lg font-semibold text-ink">
+            {{ i18n.t('team.empty') }}
+          </h3>
+          <p class="mt-1.5 max-w-md text-sm leading-6 text-muted">
+            {{ i18n.t('team.emptyHint') }}
+          </p>
+        </div>
+      } @else {
+        @for (group of groups(); track group.eventId) {
+          <article
+            class="overflow-hidden rounded-4xl border border-line bg-surface shadow-card backdrop-blur-2xl"
+          >
+            <div class="flex flex-wrap items-center gap-3 border-b border-line p-4">
+              <div class="h-14 w-20 shrink-0 overflow-hidden rounded-xl bg-surface-raised">
+                @if (group.coverUrl) {
+                  <img
+                    [src]="group.coverUrl"
+                    [alt]="group.title"
+                    class="size-full object-cover"
+                    loading="lazy"
+                  />
+                } @else {
+                  <app-template-artwork
+                    [templateId]="group.templateId"
+                    variant="cover"
+                    [showIcon]="false"
+                    class="block size-full"
+                  />
+                }
+              </div>
+
+              <div class="min-w-0 flex-1">
+                <div class="flex flex-wrap items-center gap-2">
+                  <p class="truncate text-sm font-semibold text-ink">{{ group.title }}</p>
+                  <app-status-badge [value]="group.status" />
+                </div>
+                <p class="mt-1 text-[11px] text-muted">
+                  {{ i18n.t('team.groupCount', { count: group.members.length }) }}
+                  @if (group.startsAt) {
+                    · {{ i18n.longDate(group.startsAt, group.timezone) }}
+                  }
+                </p>
+              </div>
+
+              <a
+                [routerLink]="['/eventos', group.eventId]"
+                class="inline-flex h-8 items-center gap-1.5 rounded-lg border border-line bg-surface-raised/60 px-2.5 text-[10px] font-semibold text-muted transition hover:border-brand/40 hover:text-brand-strong"
+              >
+                {{ i18n.t('team.openEvent') }}
+                <fa-icon [icon]="icons['chevronRight']" class="text-[9px]" aria-hidden="true" />
+              </a>
+            </div>
+
+            <ul class="divide-y divide-line">
+              @for (member of group.members; track member.id) {
+                <li class="flex flex-wrap items-center gap-3 px-4 py-3">
+                  <span
+                    class="grid size-9 shrink-0 place-items-center rounded-xl border border-iris/30 bg-iris/10 text-iris"
+                  >
+                    <fa-icon [icon]="icons['user']" class="text-[11px]" aria-hidden="true" />
+                  </span>
+
+                  <div class="min-w-0 flex-1">
+                    <p class="truncate text-xs font-semibold text-ink">{{ member.email }}</p>
+                    <p class="mt-0.5 text-[10px] text-muted">
+                      {{
+                        member.hasAccount
+                          ? i18n.t('team.hasAccount')
+                          : i18n.t('team.linkOnly')
+                      }}
+                      @if (member.lastUsedAt) {
+                        · {{ i18n.relative(member.lastUsedAt) }}
+                      }
+                    </p>
+                  </div>
+
+                  <div class="flex items-center gap-1">
+                    <button
+                      type="button"
+                      class="grid size-8 place-items-center rounded-lg border border-line bg-surface text-muted transition hover:border-brand/40 hover:text-brand-strong disabled:cursor-not-allowed disabled:opacity-40"
+                      [disabled]="busyId() !== null"
+                      [attr.aria-label]="i18n.t('team.resend')"
+                      [attr.title]="i18n.t('team.resend')"
+                      (click)="resendInvite(member)"
+                    >
+                      <fa-icon
+                        [icon]="busyId() === member.id ? icons['spinner'] : icons['paperPlane']"
+                        class="text-[10px]"
+                        [class.animate-spin]="busyId() === member.id"
+                        aria-hidden="true"
+                      />
+                    </button>
+                    <button
+                      type="button"
+                      class="grid size-8 place-items-center rounded-lg border border-line bg-surface text-muted transition hover:border-coral/40 hover:text-coral disabled:cursor-not-allowed disabled:opacity-40"
+                      [disabled]="busyId() !== null"
+                      [attr.aria-label]="i18n.t('team.remove')"
+                      [attr.title]="i18n.t('team.remove')"
+                      (click)="removeManager(member)"
+                    >
+                      <fa-icon [icon]="icons['trash']" class="text-[10px]" aria-hidden="true" />
+                    </button>
+                  </div>
+                </li>
+              }
+            </ul>
+          </article>
+        }
+      }
+    </div>
+  </div>
+</section>

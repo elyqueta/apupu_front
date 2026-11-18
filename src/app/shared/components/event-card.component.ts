@@ -26,12 +26,26 @@ import { TemplateArtworkComponent } from './template-artwork.component';
       class="group relative flex h-full flex-col overflow-hidden rounded-4xl border border-line bg-surface shadow-card backdrop-blur-2xl transition duration-300 hover:-translate-y-1 hover:border-brand/40 focus-visible:-translate-y-1"
     >
       <div class="relative p-3 pb-0">
-        <app-template-artwork
-          [templateId]="event().templateId"
-          variant="cover"
-          [showIcon]="false"
-          class="block overflow-hidden rounded-3xl"
-        />
+        @if (event().coverUrl) {
+          <div class="relative aspect-[16/9] overflow-hidden rounded-3xl bg-surface-raised">
+            <img
+              [src]="event().coverUrl"
+              [alt]="event().title"
+              class="size-full object-cover"
+              loading="lazy"
+            />
+            <span
+              class="pointer-events-none absolute inset-0 bg-gradient-to-t from-ink/45 via-transparent to-transparent"
+            ></span>
+          </div>
+        } @else {
+          <app-template-artwork
+            [templateId]="event().templateId"
+            variant="cover"
+            [showIcon]="false"
+            class="block overflow-hidden rounded-3xl"
+          />
+        }
 
         <div class="absolute left-6 top-6">
           <app-status-badge [value]="event().status" />

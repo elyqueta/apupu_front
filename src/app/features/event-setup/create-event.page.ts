@@ -82,6 +82,7 @@ export class CreateEventPage {
     dressCode: ['', Validators.maxLength(160)],
     rsvpDeadline: [''],
     templateId: this.fb.control<TemplateId | null>(this.store.templates()[0]?.id ?? null),
+    coverUrl: ['', [Validators.pattern(/^https:\/\/.+/), Validators.maxLength(2048)]],
     contributionEnabled: [false],
     bankName: [''],
     accountName: [''],
@@ -138,6 +139,11 @@ export class CreateEventPage {
   protected readonly previewTitle = computed(
     () => this.formValue().title.trim() || this.i18n.t('create.preview.notConfigured'),
   );
+
+  protected readonly coverPreview = computed(() => {
+    const url = this.formValue().coverUrl.trim();
+    return /^https:\/\/.+/.test(url) ? url : null;
+  });
 
   protected readonly contributionReady = computed(() => {
     if (!this.formValue().contributionEnabled) {
@@ -220,6 +226,9 @@ export class CreateEventPage {
       return this.i18n.t('create.errors.future');
     }
     if (control.hasError('invalidLink')) {
+      return this.i18n.t('create.errors.invalidLink');
+    }
+    if (control.hasError('pattern')) {
       return this.i18n.t('create.errors.invalidLink');
     }
     if (control.hasError('minlength')) {
@@ -315,6 +324,7 @@ export class CreateEventPage {
       dressCode: '',
       rsvpDeadline: '',
       templateId: this.store.templates()[0]?.id ?? null,
+      coverUrl: '',
       contributionEnabled: false,
       bankName: '',
       accountName: '',
@@ -338,6 +348,7 @@ export class CreateEventPage {
         this.form.controls.time,
         this.form.controls.venue,
         this.form.controls.city,
+        this.form.controls.coverUrl,
       ];
       controls.forEach((control) => control.markAsTouched());
       if (controls.some((control) => control.invalid)) {
@@ -436,6 +447,7 @@ export class CreateEventPage {
         ? this.zonedIso(value.rsvpDeadline, '23:59', value.timezone)
         : null,
       templateId: value.templateId,
+      coverUrl: value.coverUrl.trim() || null,
       contributionEnabled: value.contributionEnabled,
       bankDetails,
       guests,

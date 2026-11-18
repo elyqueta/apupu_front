@@ -1,7 +1,9 @@
 import { DOCUMENT, isPlatformBrowser } from '@angular/common';
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { PLATFORM_ID } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { toApiError } from '../../core/api/api-error';
+import { ReportExportFormat, ReportsRepository } from '../../core/data/reports.repository';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { EventStats, HostEvent } from '../../core/models/models';
 import { ToastService } from '../../core/services/toast.service';
@@ -36,6 +38,9 @@ export class ReportsPage {
   protected readonly i18n = inject(I18nService);
   protected readonly icons = ICONS;
   private readonly toasts = inject(ToastService);
+  private readonly reports = inject(ReportsRepository);
+  protected readonly exportOpen = signal(false);
+  protected readonly exporting = signal<ReportExportFormat | null>(null);
 
   constructor() {
     this.store.load({ reports: true, events: true, dashboard: true });
@@ -121,45 +126,34 @@ export class ReportsPage {
     });
   });
 
-  protected exportSummary(): void {
-    const report = this.store.reportSummary();
-    if (!this.browser || !report) {
-      this.toasts.error(this.i18n.t('common.errorGeneric'));
+  protected toggleExport(): void {
+    this.exportOpen.update((open) => !open);
+  }
+
+  protected async exportReport(format: ReportExportFormat): Promise<void> {
+    if (!this.browser || this.exporting() !== null) {
       return;
     }
 
-    const rows = [
-      ['Event', 'Status', 'Invitations', 'Accepted', 'Declined', 'Pending', 'Response rate (%)'],
-      ...report.events.map((event) => [
-        safeCsvText(event.title),
-        event.status,
-        event.total_invitations,
-        event.accepted,
-        event.declined,
-        event.pending,
-        event.total_invitations
-          ? Math.round(((event.accepted + event.declined) / event.total_invitations) * 100)
-          : 0,
-      ]),
-    ];
-    const csv = rows.map((row) => row.map(csvCell).join(',')).join('\r\n');
-    const url = URL.createObjectURL(new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8' }));
-    const link = this.document.createElement('a');
-    link.href = url;
-    link.download = `conto-contigo-relatorio-${new Date().toISOString().slice(0, 10)}.csv`;
-    link.hidden = true;
-    this.document.body.append(link);
-    link.click();
-    link.remove();
-    URL.revokeObjectURL(url);
-    this.toasts.success(this.i18n.t('reports.exported'));
+    this.exportOpen.set(false);
+    this.exporting.set(format);
+
+    try {
+      const file = await this.reports.export(format);
+      const url = URL.createObjectURL(file.blob);
+      const link = this.document.createElement('a');
+      link.href = url;
+      link.download = file.filename ?? `conto-contigo-relatorio.${format}`;
+      link.hidden = true;
+      this.document.body.append(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+      this.toasts.success(this.i18n.t('reports.exported'));
+    } catch (error: unknown) {
+      this.toasts.error(toApiError(error).message);
+    } finally {
+      this.exporting.set(null);
+    }
   }
-}
-
-function safeCsvText(value: string): string {
-  return /^[\t\r ]*[=+\-@]/.test(value) ? `'${value}` : value;
-}
-
-function csvCell(value: string | number): string {
-  return `"${String(value).replaceAll('"', '""')}"`;
 }

@@ -1,11 +1,10 @@
-import { DOCUMENT, isPlatformBrowser } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
-import { PLATFORM_ID } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { toApiError } from '../../core/api/api-error';
 import { ReportExportFormat, ReportsRepository } from '../../core/data/reports.repository';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { EventStats, HostEvent } from '../../core/models/models';
+import { DownloadService } from '../../core/services/download.service';
 import { ToastService } from '../../core/services/toast.service';
 import { WorkspaceStore } from '../../core/services/workspace.store';
 import { ICONS } from '../../core/ui/icons';
@@ -32,8 +31,7 @@ interface DistributionSlice {
   templateUrl: './reports.page.html',
 })
 export class ReportsPage {
-  private readonly document = inject(DOCUMENT);
-  private readonly browser = isPlatformBrowser(inject(PLATFORM_ID));
+  private readonly downloads = inject(DownloadService);
   protected readonly store = inject(WorkspaceStore);
   protected readonly i18n = inject(I18nService);
   protected readonly icons = ICONS;
@@ -131,7 +129,7 @@ export class ReportsPage {
   }
 
   protected async exportReport(format: ReportExportFormat): Promise<void> {
-    if (!this.browser || this.exporting() !== null) {
+    if (this.exporting() !== null) {
       return;
     }
 
@@ -140,15 +138,7 @@ export class ReportsPage {
 
     try {
       const file = await this.reports.export(format);
-      const url = URL.createObjectURL(file.blob);
-      const link = this.document.createElement('a');
-      link.href = url;
-      link.download = file.filename ?? `conto-contigo-relatorio.${format}`;
-      link.hidden = true;
-      this.document.body.append(link);
-      link.click();
-      link.remove();
-      URL.revokeObjectURL(url);
+      this.downloads.save(file, `conto-contigo-relatorio.${format}`);
       this.toasts.success(this.i18n.t('reports.exported'));
     } catch (error: unknown) {
       this.toasts.error(toApiError(error).message);

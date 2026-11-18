@@ -4,6 +4,7 @@ import { ReportSummary } from '../api/api.models';
 import { CachedRepository } from './cached-repository';
 
 export type ReportExportFormat = 'pdf' | 'csv';
+export type EventExportDocument = 'guests' | 'summary' | 'attendance' | 'ticket';
 
 /** Resumo de relatórios (`GET /host/reports/summary`). */
 @Injectable({ providedIn: 'root' })
@@ -22,5 +23,23 @@ export class ReportsRepository extends CachedRepository<ReportSummary> {
    */
   export(format: ReportExportFormat): Promise<DownloadFile> {
     return this.api.download('/host/reports/export', { format });
+  }
+
+  /**
+   * Exporta um documento de um evento.
+   *
+   * `ticket` exige `invitationId` e só está disponível em PDF; os
+   * restantes documentos aceitam PDF e CSV.
+   */
+  exportEvent(
+    eventId: string,
+    document: EventExportDocument,
+    format: ReportExportFormat,
+    invitationId?: string,
+  ): Promise<DownloadFile> {
+    return this.api.download(`/host/events/${eventId}/exports/${document}`, {
+      format,
+      invitation_id: invitationId,
+    });
   }
 }

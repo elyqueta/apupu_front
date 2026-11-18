@@ -12,14 +12,31 @@
       </p>
     </div>
 
-    <button
-      type="button"
-      class="inline-flex h-11 w-fit items-center gap-2 rounded-xl bg-brand hover:bg-secondary-hover px-4 text-sm font-semibold text-on-secondary transition"
-      (click)="openCreate()"
-    >
-      <fa-icon [icon]="icons['userPlus']" class="text-xs" aria-hidden="true" />
-      {{ i18n.t('guests.add') }}
-    </button>
+    <div class="flex flex-wrap items-center gap-2">
+      <button
+        type="button"
+        class="inline-flex h-11 items-center gap-2 rounded-xl border border-line bg-surface-raised/60 px-4 text-sm font-semibold text-ink transition hover:border-brand/40 disabled:cursor-not-allowed disabled:opacity-50"
+        [attr.title]="eventFilter() === 'all' ? i18n.t('guests.exportNeedsEvent') : null"
+        [disabled]="eventFilter() === 'all' || exporting()"
+        (click)="exportGuests()"
+      >
+        <fa-icon
+          [icon]="exporting() ? icons['spinner'] : icons['download']"
+          class="text-xs text-muted"
+          [class.animate-spin]="exporting()"
+          aria-hidden="true"
+        />
+        {{ exporting() ? i18n.t('guests.exporting') : i18n.t('guests.exportCsv') }}
+      </button>
+      <button
+        type="button"
+        class="inline-flex h-11 w-fit items-center gap-2 rounded-xl bg-brand hover:bg-secondary-hover px-4 text-sm font-semibold text-on-secondary transition"
+        (click)="openCreate()"
+      >
+        <fa-icon [icon]="icons['userPlus']" class="text-xs" aria-hidden="true" />
+        {{ i18n.t('guests.add') }}
+      </button>
+    </div>
   </header>
 
   <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">

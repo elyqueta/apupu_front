@@ -7,6 +7,11 @@ import { I18nService } from '../../core/i18n/i18n.service';
 import { TranslationKey } from '../../core/i18n/translations';
 import { Pagination } from '../../core/api/api.models';
 import {
+  EventExportDocument,
+  ReportExportFormat,
+  ReportsRepository,
+} from '../../core/data/reports.repository';
+import {
   EventActivity,
   EventManager,
   Guest,
@@ -14,6 +19,7 @@ import {
   WorkspaceTask,
 } from '../../core/models/models';
 import { ShareService } from '../../core/services/share.service';
+import { DownloadService } from '../../core/services/download.service';
 import { ToastService } from '../../core/services/toast.service';
 import { WorkspaceStore } from '../../core/services/workspace.store';
 import { EVENT_TYPE_ICONS, ICONS } from '../../core/ui/icons';
@@ -47,6 +53,8 @@ export class EventDetailPage {
   private readonly toasts = inject(ToastService);
   private readonly activityPresenter = inject(ActivityPresenter);
   private readonly share = inject(ShareService);
+  private readonly reports = inject(ReportsRepository);
+  private readonly downloads = inject(DownloadService);
 
   protected readonly store = inject(WorkspaceStore);
   protected readonly i18n = inject(I18nService);
@@ -59,6 +67,8 @@ export class EventDetailPage {
   protected readonly guestFilter = signal<GuestFilter>('all');
   protected readonly guestDialogOpen = signal(false);
   protected readonly guestEditTarget = signal<Guest | null>(null);
+  protected readonly exportOpen = signal(false);
+  protected readonly exporting = signal<string | null>(null);
   protected readonly cancelOpen = signal(false);
   protected readonly managersLoading = signal(false);
   protected readonly managerBusyId = signal<string | null>(null);
@@ -468,6 +478,54 @@ export class EventDetailPage {
   protected closeGuestDialog(): void {
     this.guestDialogOpen.set(false);
     this.guestEditTarget.set(null);
+  }
+
+  protected toggleExport(): void {
+    this.exportOpen.update((open) => !open);
+  }
+
+  /** Descarrega um documento do evento (PDF ou CSV). */
+  protected async exportDocument(
+    document: EventExportDocument,
+    format: ReportExportFormat,
+  ): Promise<void> {
+    const key = `${document}-${format}`;
+    if (this.exporting() !== null) {
+      return;
+    }
+
+    this.exportOpen.set(false);
+    this.exporting.set(key);
+
+    try {
+      const file = await this.reports.exportEvent(this.eventId(), document, format);
+      this.downloads.save(file, `conto-contigo-${document}.${format}`);
+      this.toasts.success(this.i18n.t('eventDetail.exported'));
+    } catch (error: unknown) {
+      this.toasts.error(toApiError(error).message);
+    } finally {
+      this.exporting.set(null);
+    }
+  }
+
+  /** Descarrega o bilhete individual com o QR do convite. */
+  protected async downloadTicket(guest: Guest): Promise<void> {
+    const key = `ticket-${guest.id}`;
+    if (this.exporting() !== null) {
+      return;
+    }
+
+    this.exporting.set(key);
+
+    try {
+      const file = await this.reports.exportEvent(this.eventId(), 'ticket', 'pdf', guest.id);
+      this.downloads.save(file, 'conto-contigo-bilhete.pdf');
+      this.toasts.success(this.i18n.t('eventDetail.ticketDownloaded', { name: guest.name }));
+    } catch (error: unknown) {
+      this.toasts.error(toApiError(error).message);
+    } finally {
+      this.exporting.set(null);
+    }
   }
 
   protected async removeManager(manager: EventManager): Promise<void> {

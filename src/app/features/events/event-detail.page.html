@@ -770,14 +770,146 @@
                 </p>
                 <p class="mt-1 text-xs text-muted">{{ i18n.t('eventDetail.guestListHint') }}</p>
               </div>
-              <button
-                type="button"
-                class="inline-flex h-10 items-center gap-2 rounded-xl bg-brand hover:bg-secondary-hover px-3.5 text-xs font-semibold text-on-secondary transition"
-                (click)="openGuestCreate()"
-              >
-                <fa-icon [icon]="icons['userPlus']" class="text-[11px]" aria-hidden="true" />
-                {{ i18n.t('eventDetail.addGuest') }}
-              </button>
+              <div class="flex flex-wrap items-center gap-2">
+                <div class="relative">
+                  <button
+                    type="button"
+                    class="inline-flex h-10 items-center gap-2 rounded-xl border border-line bg-surface-raised/60 px-3 text-xs font-semibold text-ink transition hover:border-brand/40 disabled:opacity-60"
+                    [attr.aria-expanded]="exportOpen()"
+                    aria-haspopup="menu"
+                    [disabled]="exporting() !== null"
+                    (click)="toggleExport()"
+                  >
+                    <fa-icon
+                      [icon]="exporting() ? icons['spinner'] : icons['download']"
+                      class="text-[11px] text-muted"
+                      [class.animate-spin]="exporting() !== null"
+                      aria-hidden="true"
+                    />
+                    {{
+                      exporting()
+                        ? i18n.t('eventDetail.exporting')
+                        : i18n.t('eventDetail.export')
+                    }}
+                    <fa-icon [icon]="icons['chevronDown']" class="text-[9px]" aria-hidden="true" />
+                  </button>
+
+                  @if (exportOpen()) {
+                    <button
+                      type="button"
+                      class="fixed inset-0 z-20 cursor-default"
+                      aria-label="{{ i18n.t('common.close') }}"
+                      (click)="toggleExport()"
+                    ></button>
+                    <div
+                      class="absolute right-0 z-30 mt-2 w-64 overflow-hidden rounded-2xl border border-line bg-surface p-1.5 shadow-card backdrop-blur-2xl"
+                      role="menu"
+                    >
+                      <button
+                        type="button"
+                        role="menuitem"
+                        class="flex w-full items-start gap-3 rounded-xl px-3 py-2.5 text-left transition hover:bg-surface-raised/70"
+                        (click)="exportDocument('guests', 'pdf')"
+                      >
+                        <span
+                          class="mt-0.5 grid size-8 shrink-0 place-items-center rounded-lg border border-line bg-surface-raised text-brand-strong"
+                        >
+                          <fa-icon [icon]="icons['lines']" class="text-[11px]" aria-hidden="true" />
+                        </span>
+                        <span class="min-w-0">
+                          <span class="block text-xs font-semibold text-ink">{{
+                            i18n.t('eventDetail.exportGuestsPdf')
+                          }}</span>
+                          <span class="mt-0.5 block text-[10px] leading-4 text-muted">{{
+                            i18n.t('eventDetail.exportGuestsPdfHint')
+                          }}</span>
+                        </span>
+                      </button>
+                      <button
+                        type="button"
+                        role="menuitem"
+                        class="flex w-full items-start gap-3 rounded-xl px-3 py-2.5 text-left transition hover:bg-surface-raised/70"
+                        (click)="exportDocument('guests', 'csv')"
+                      >
+                        <span
+                          class="mt-0.5 grid size-8 shrink-0 place-items-center rounded-lg border border-line bg-surface-raised text-brand-strong"
+                        >
+                          <fa-icon
+                            [icon]="icons['chartSimple']"
+                            class="text-[11px]"
+                            aria-hidden="true"
+                          />
+                        </span>
+                        <span class="min-w-0">
+                          <span class="block text-xs font-semibold text-ink">{{
+                            i18n.t('eventDetail.exportGuestsCsv')
+                          }}</span>
+                          <span class="mt-0.5 block text-[10px] leading-4 text-muted">{{
+                            i18n.t('eventDetail.exportGuestsCsvHint')
+                          }}</span>
+                        </span>
+                      </button>
+                      <button
+                        type="button"
+                        role="menuitem"
+                        class="flex w-full items-start gap-3 rounded-xl px-3 py-2.5 text-left transition hover:bg-surface-raised/70"
+                        (click)="exportDocument('summary', 'pdf')"
+                      >
+                        <span
+                          class="mt-0.5 grid size-8 shrink-0 place-items-center rounded-lg border border-line bg-surface-raised text-brand-strong"
+                        >
+                          <fa-icon
+                            [icon]="icons['chartPie']"
+                            class="text-[11px]"
+                            aria-hidden="true"
+                          />
+                        </span>
+                        <span class="min-w-0">
+                          <span class="block text-xs font-semibold text-ink">{{
+                            i18n.t('eventDetail.exportSummaryPdf')
+                          }}</span>
+                          <span class="mt-0.5 block text-[10px] leading-4 text-muted">{{
+                            i18n.t('eventDetail.exportSummaryPdfHint')
+                          }}</span>
+                        </span>
+                      </button>
+                      <button
+                        type="button"
+                        role="menuitem"
+                        class="flex w-full items-start gap-3 rounded-xl px-3 py-2.5 text-left transition hover:bg-surface-raised/70"
+                        (click)="exportDocument('attendance', 'pdf')"
+                      >
+                        <span
+                          class="mt-0.5 grid size-8 shrink-0 place-items-center rounded-lg border border-line bg-surface-raised text-brand-strong"
+                        >
+                          <fa-icon
+                            [icon]="icons['userCheck']"
+                            class="text-[11px]"
+                            aria-hidden="true"
+                          />
+                        </span>
+                        <span class="min-w-0">
+                          <span class="block text-xs font-semibold text-ink">{{
+                            i18n.t('eventDetail.exportAttendancePdf')
+                          }}</span>
+                          <span class="mt-0.5 block text-[10px] leading-4 text-muted">{{
+                            i18n.t('eventDetail.exportAttendancePdfHint')
+                          }}</span>
+                        </span>
+                      </button>
+                    </div>
+                  }
+                </div>
+
+                <button
+                  type="button"
+                  class="inline-flex h-10 items-center gap-2 rounded-xl bg-brand hover:bg-secondary-hover px-3.5 text-xs font-semibold text-on-secondary transition"
+                  (click)="openGuestCreate()"
+                >
+                  <fa-icon [icon]="icons['userPlus']" class="text-[11px]" aria-hidden="true" />
+                  {{ i18n.t('eventDetail.addGuest') }}
+                </button>
+              </div>
             </div>
 
             <div class="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -934,6 +1066,24 @@
                                 (click)="forwardWhatsApp(guest)"
                               >
                                 <fa-icon [icon]="icons['whatsapp']" class="text-[10px]" />
+                              </button>
+                              <button
+                                type="button"
+                                class="grid size-8 place-items-center rounded-lg border border-line bg-surface text-muted transition hover:border-brand/40 hover:text-brand-strong disabled:cursor-not-allowed disabled:opacity-40"
+                                [attr.aria-label]="i18n.t('eventDetail.ticket')"
+                                [attr.title]="i18n.t('eventDetail.ticket')"
+                                [disabled]="exporting() !== null"
+                                (click)="downloadTicket(guest)"
+                              >
+                                <fa-icon
+                                  [icon]="
+                                    exporting() === 'ticket-' + guest.id
+                                      ? icons['spinner']
+                                      : icons['ticket']
+                                  "
+                                  class="text-[10px]"
+                                  [class.animate-spin]="exporting() === 'ticket-' + guest.id"
+                                />
                               </button>
                               <button
                                 type="button"

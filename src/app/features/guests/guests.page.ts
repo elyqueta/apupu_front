@@ -4,7 +4,9 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { toApiError } from '../../core/api/api-error';
+import { ReportsRepository } from '../../core/data/reports.repository';
 import { Guest, RsvpStatus } from '../../core/models/models';
+import { DownloadService } from '../../core/services/download.service';
 import { ShareService } from '../../core/services/share.service';
 import { ToastService } from '../../core/services/toast.service';
 import { WorkspaceStore } from '../../core/services/workspace.store';
@@ -38,6 +40,8 @@ export class GuestsPage {
   private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
   private readonly share = inject(ShareService);
+  private readonly reports = inject(ReportsRepository);
+  private readonly downloads = inject(DownloadService);
 
   protected readonly search = signal('');
   protected readonly eventFilter = signal('all');
@@ -45,6 +49,7 @@ export class GuestsPage {
   protected readonly dialogOpen = signal(false);
   protected readonly editTarget = signal<Guest | null>(null);
   protected readonly removeTarget = signal<Guest | null>(null);
+  protected readonly exporting = signal(false);
 
   protected readonly stats = this.store.globalStats;
   protected readonly entries = this.store.guestsWithEvent;
@@ -94,6 +99,26 @@ export class GuestsPage {
       }
     } catch (error: unknown) {
       this.toasts.error(toApiError(error).message);
+    }
+  }
+
+  /** Exporta em CSV a lista do evento selecionado no filtro. */
+  protected async exportGuests(): Promise<void> {
+    const eventId = this.eventFilter();
+    if (eventId === 'all' || this.exporting()) {
+      return;
+    }
+
+    this.exporting.set(true);
+
+    try {
+      const file = await this.reports.exportEvent(eventId, 'guests', 'csv');
+      this.downloads.save(file, 'conto-contigo-convidados.csv');
+      this.toasts.success(this.i18n.t('guests.exported'));
+    } catch (error: unknown) {
+      this.toasts.error(toApiError(error).message);
+    } finally {
+      this.exporting.set(false);
     }
   }
 

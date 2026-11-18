@@ -20,7 +20,7 @@
             <button
               type="button"
               class="group/cover relative block h-60 w-full overflow-hidden text-left sm:h-72"
-              [attr.aria-label]="i18n.t('common.expandImage')"
+              [attr.aria-label]="i18n.t('common.expandImage') + ': ' + view.event.title"
               [attr.title]="i18n.t('common.expandImage')"
               (click)="openCover()"
             >

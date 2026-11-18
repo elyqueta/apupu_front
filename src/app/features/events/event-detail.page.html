@@ -805,6 +805,72 @@
                       class="absolute right-0 z-30 mt-2 w-64 overflow-hidden rounded-2xl border border-line bg-surface p-1.5 shadow-card backdrop-blur-2xl"
                       role="menu"
                     >
+                      <div class="px-3 pb-2 pt-1.5">
+                        <p
+                          class="text-[10px] font-semibold uppercase tracking-[0.2em] text-brand-strong"
+                        >
+                          {{ i18n.t('eventDetail.exportPeriod') }}
+                        </p>
+                        <p class="mt-1 text-[10px] leading-4 text-muted">
+                          {{ i18n.t('eventDetail.exportPeriodHint') }}
+                        </p>
+                        <div class="mt-2 grid grid-cols-2 gap-2">
+                          <label class="flex flex-col gap-1">
+                            <span class="text-[9px] font-semibold uppercase tracking-wide text-muted">
+                              {{ i18n.t('eventDetail.exportPeriodFrom') }}
+                            </span>
+                            <input
+                              type="date"
+                              class="h-8 w-full rounded-lg border border-line bg-surface-raised/70 px-2 text-[11px] text-ink outline-none transition focus:border-brand/60"
+                              [value]="periodFrom()"
+                              [max]="periodTo()"
+                              (input)="setPeriodFrom($event)"
+                            />
+                          </label>
+                          <label class="flex flex-col gap-1">
+                            <span class="text-[9px] font-semibold uppercase tracking-wide text-muted">
+                              {{ i18n.t('eventDetail.exportPeriodTo') }}
+                            </span>
+                            <input
+                              type="date"
+                              class="h-8 w-full rounded-lg border border-line bg-surface-raised/70 px-2 text-[11px] text-ink outline-none transition focus:border-brand/60"
+                              [value]="periodTo()"
+                              [min]="periodFrom()"
+                              (input)="setPeriodTo($event)"
+                            />
+                          </label>
+                        </div>
+                        @if (periodInvalid()) {
+                          <p class="mt-1.5 text-[10px] leading-4 text-danger">
+                            {{ i18n.t('eventDetail.exportPeriodInvalid') }}
+                          </p>
+                        }
+                        <div class="mt-2 grid grid-cols-2 gap-2">
+                          <button
+                            type="button"
+                            class="inline-flex h-8 items-center justify-center gap-1.5 rounded-lg bg-brand px-2 text-[11px] font-semibold text-on-secondary transition hover:bg-secondary-hover disabled:opacity-50"
+                            [disabled]="periodInvalid() || exporting() !== null"
+                            (click)="exportPeriodReport('pdf')"
+                          >
+                            <fa-icon [icon]="icons['lines']" class="text-[10px]" aria-hidden="true" />
+                            {{ i18n.t('eventDetail.exportPeriodPdf') }}
+                          </button>
+                          <button
+                            type="button"
+                            class="inline-flex h-8 items-center justify-center gap-1.5 rounded-lg border border-line bg-surface-raised/70 px-2 text-[11px] font-semibold text-ink transition hover:border-brand/40 disabled:opacity-50"
+                            [disabled]="periodInvalid() || exporting() !== null"
+                            (click)="exportPeriodReport('csv')"
+                          >
+                            <fa-icon
+                              [icon]="icons['chartSimple']"
+                              class="text-[10px]"
+                              aria-hidden="true"
+                            />
+                            {{ i18n.t('eventDetail.exportPeriodCsv') }}
+                          </button>
+                        </div>
+                      </div>
+                      <div class="my-1 h-px bg-line"></div>
                       <button
                         type="button"
                         role="menuitem"

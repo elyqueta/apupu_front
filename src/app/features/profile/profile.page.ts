@@ -1,10 +1,13 @@
-import { DOCUMENT } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { toApiError } from '../../core/api/api-error';
+import { ReportExportFormat, ReportsRepository } from '../../core/data/reports.repository';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { TranslationKey } from '../../core/i18n/translations';
 import { HostEvent } from '../../core/models/models';
+import { DownloadService } from '../../core/services/download.service';
+import { ToastService } from '../../core/services/toast.service';
 import { WorkspaceStore } from '../../core/services/workspace.store';
 import { ICONS } from '../../core/ui/icons';
 import { AvatarComponent } from '../../shared/components/avatar.component';
@@ -39,9 +42,13 @@ export class ProfilePage {
   protected readonly icons = ICONS;
 
   private readonly router = inject(Router);
-  private readonly document = inject(DOCUMENT);
+  private readonly downloads = inject(DownloadService);
+  private readonly toasts = inject(ToastService);
+  private readonly reports = inject(ReportsRepository);
 
   protected readonly editOpen = signal(false);
+  protected readonly exportOpen = signal(false);
+  protected readonly exporting = signal<ReportExportFormat | null>(null);
   protected readonly searchTerm = signal('');
 
   protected readonly profile = this.store.profile;
@@ -95,30 +102,33 @@ export class ProfilePage {
     void this.router.navigate(['/eventos', eventId]);
   }
 
-  /** Exporta a lista de eventos visível para CSV, sem depender do backend. */
-  protected exportEvents(): void {
-    const header = [
-      this.i18n.t('profile.table.name'),
-      this.i18n.t('profile.table.date'),
-      this.i18n.t('profile.table.guests'),
-      this.i18n.t('profile.table.status'),
-    ];
-    const rows = this.events().map((event) => [
-      event.title,
-      this.formatDate(event),
-      this.guestCount(event),
-      this.i18n.t(`status.${event.status}` as TranslationKey),
-    ]);
-    const csv = [header, ...rows]
-      .map((row) => row.map((cell) => `"${cell.replace(/"/g, '""')}"`).join(','))
-      .join('\n');
+  /** Abre/fecha o menu de exportação do relatório da conta. */
+  protected toggleExport(): void {
+    this.exportOpen.update((open) => !open);
+  }
 
-    const blob = new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const anchor = this.document.createElement('a');
-    anchor.href = url;
-    anchor.download = 'contacomigo-eventos.csv';
-    anchor.click();
-    URL.revokeObjectURL(url);
+  /**
+   * Descarrega o relatório agregado da conta gerado no servidor.
+   *
+   * O ficheiro vem do backend com o mesmo layout do separador
+   * "Relatórios"; a página de perfil só inicia o download.
+   */
+  protected async exportReport(format: ReportExportFormat): Promise<void> {
+    if (this.exporting() !== null) {
+      return;
+    }
+
+    this.exportOpen.set(false);
+    this.exporting.set(format);
+
+    try {
+      const file = await this.reports.export(format);
+      this.downloads.save(file, `conto-contigo-relatorio.${format}`);
+      this.toasts.success(this.i18n.t('reports.exported'));
+    } catch (error: unknown) {
+      this.toasts.error(toApiError(error).message);
+    } finally {
+      this.exporting.set(null);
+    }
   }
 }

@@ -34,6 +34,20 @@ import { TemplateArtworkComponent } from '../../shared/components/template-artwo
 type DetailTab = 'overview' | 'guests' | 'settings';
 type GuestFilter = 'all' | RsvpStatus;
 
+function toIsoDate(date: Date): string {
+  return date.toISOString().slice(0, 10);
+}
+
+function todayIso(): string {
+  return toIsoDate(new Date());
+}
+
+function isoDaysAgo(days: number): string {
+  const date = new Date();
+  date.setUTCDate(date.getUTCDate() - days);
+  return toIsoDate(date);
+}
+
 @Component({
   selector: 'app-event-detail-page',
   imports: [
@@ -69,6 +83,9 @@ export class EventDetailPage {
   protected readonly guestEditTarget = signal<Guest | null>(null);
   protected readonly exportOpen = signal(false);
   protected readonly exporting = signal<string | null>(null);
+  protected readonly periodFrom = signal(isoDaysAgo(29));
+  protected readonly periodTo = signal(todayIso());
+  private periodInitialised = false;
   protected readonly cancelOpen = signal(false);
   protected readonly managersLoading = signal(false);
   protected readonly managerBusyId = signal<string | null>(null);
@@ -140,6 +157,22 @@ export class EventDetailPage {
       return false;
     }
     return Date.now() > new Date(event.rsvpDeadline).getTime();
+  });
+
+  /**
+   * O backend aceita no máximo 366 dias e exige `from <= to`. A
+   * validação local evita um pedido que só falharia no servidor.
+   */
+  protected readonly periodInvalid = computed(() => {
+    const from = this.periodFrom();
+    const to = this.periodTo();
+    if (!from || !to || from > to) {
+      return true;
+    }
+
+    const start = Date.parse(`${from}T00:00:00Z`);
+    const end = Date.parse(`${to}T00:00:00Z`);
+    return !Number.isFinite(start) || !Number.isFinite(end) || (end - start) / 86_400_000 + 1 > 366;
   });
 
   protected readonly filteredGuests = computed<Guest[]>(() => {
@@ -233,6 +266,22 @@ export class EventDetailPage {
         rules: event.rules,
         dressCode: event.dressCode,
       });
+    });
+    effect(() => {
+      const event = this.event();
+      if (!event || this.periodInitialised) {
+        return;
+      }
+
+      // O período começa na criação do projeto, para que o primeiro
+      // relatório mostre todo o movimento acumulado. Projetos com mais
+      // de um ano arrancam nos últimos 366 dias, que é o limite aceite
+      // pelo backend.
+      this.periodInitialised = true;
+      const created = event.createdAt.slice(0, 10);
+      const earliest = isoDaysAgo(365);
+      this.periodFrom.set(created < earliest ? earliest : created);
+      this.periodTo.set(todayIso());
     });
     effect(() => {
       if (this.tab() === 'settings' && this.isHost()) {
@@ -500,6 +549,45 @@ export class EventDetailPage {
     try {
       const file = await this.reports.exportEvent(this.eventId(), document, format);
       this.downloads.save(file, `conto-contigo-${document}.${format}`);
+      this.toasts.success(this.i18n.t('eventDetail.exported'));
+    } catch (error: unknown) {
+      this.toasts.error(toApiError(error).message);
+    } finally {
+      this.exporting.set(null);
+    }
+  }
+
+  protected setPeriodFrom(event: Event): void {
+    this.periodFrom.set((event.target as HTMLInputElement).value);
+  }
+
+  protected setPeriodTo(event: Event): void {
+    this.periodTo.set((event.target as HTMLInputElement).value);
+  }
+
+  /**
+   * Descarrega o relatório do projeto para o período escolhido.
+   *
+   * O backend interpreta `from` e `to` como dias UTC, inclusive, e
+   * devolve o movimento do período com o estado atual em separado.
+   */
+  protected async exportPeriodReport(format: ReportExportFormat): Promise<void> {
+    if (this.exporting() !== null || this.periodInvalid()) {
+      return;
+    }
+
+    const key = `period-${format}`;
+    this.exportOpen.set(false);
+    this.exporting.set(key);
+
+    try {
+      const file = await this.reports.exportEventPeriod(
+        this.eventId(),
+        this.periodFrom(),
+        this.periodTo(),
+        format,
+      );
+      this.downloads.save(file, `conto-contigo-relatorio-periodo.${format}`);
       this.toasts.success(this.i18n.t('eventDetail.exported'));
     } catch (error: unknown) {
       this.toasts.error(toApiError(error).message);

@@ -42,4 +42,23 @@ export class ReportsRepository extends CachedRepository<ReportSummary> {
       invitation_id: invitationId,
     });
   }
+
+  /**
+   * Exporta o relatório de um evento num período.
+   *
+   * `from` e `to` são datas `YYYY-MM-DD` interpretadas em UTC pelo
+   * backend, inclusive.
+   */
+  exportEventPeriod(
+    eventId: string,
+    from: string,
+    to: string,
+    format: ReportExportFormat,
+  ): Promise<DownloadFile> {
+    return this.api.download(`/host/events/${eventId}/reports/export`, {
+      from,
+      to,
+      format,
+    });
+  }
 }

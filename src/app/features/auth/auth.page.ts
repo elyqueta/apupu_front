@@ -22,6 +22,7 @@ import { AuthService, SocialProvider } from '../../core/api/auth.service';
 import { toApiError } from '../../core/api/api-error';
 import { ToastService } from '../../core/services/toast.service';
 import { ICONS } from '../../core/ui/icons';
+import { distributeOtpDigits } from '../../core/utils/otp.util';
 import { AuthLayoutComponent } from '../../shared/components/auth-layout.component';
 
 type AuthMode = 'login' | 'register';
@@ -288,8 +289,9 @@ function passwordsMatch(group: AbstractControl): ValidationErrors | null {
                     (input)="onOtpInput($event, i)"
                     (keydown)="onOtpKeydown($event, i)"
                     (paste)="onOtpPaste($event)"
+                    (beforeinput)="onOtpBeforeInput($event, i)"
                     inputmode="numeric"
-                    maxlength="1"
+                    maxlength="6"
                     [attr.autocomplete]="i === 0 ? 'one-time-code' : 'off'"
                     [attr.aria-label]="'Dígito ' + (i + 1)"
                     [class]="otpClass"
@@ -522,9 +524,7 @@ export class AuthPage {
     }
     const query = this.route.snapshot.queryParamMap;
     const email = query.get('email')?.trim() ?? '';
-    const code = (query.get('codigo') ?? query.get('code') ?? '')
-      .replace(/\D/g, '')
-      .slice(0, 6);
+    const code = (query.get('codigo') ?? query.get('code') ?? '').replace(/\D/g, '').slice(0, 6);
     const autoSend = query.get('enviar') === '1' || query.get('send') === '1';
     if (email) {
       this.email.set(email);
@@ -709,7 +709,18 @@ export class AuthPage {
 
   protected onOtpInput(event: Event, index: number): void {
     const input = event.target as HTMLInputElement;
-    const digit = input.value.replace(/\D/g, '').slice(-1);
+    const digits = input.value.replace(/\D/g, '');
+
+    // Alguns teclados móveis e o preenchimento automático do sistema
+    // inserem o código inteiro sem disparar `paste`. Nesse caso o `input`
+    // recebe vários dígitos e distribuímo-los pelas caixas.
+    if (digits.length > 1) {
+      this.fillOtp(digits, index);
+      input.value = this.otp()[index] ?? '';
+      return;
+    }
+
+    const digit = digits;
     input.value = digit;
     this.otp.update((values) => values.map((value, i) => (i === index ? digit : value)));
     if (digit && index < this.otpIndexes.length - 1) {
@@ -726,13 +737,39 @@ export class AuthPage {
 
   protected onOtpPaste(event: ClipboardEvent): void {
     event.preventDefault();
-    const text = (event.clipboardData?.getData('text') ?? '').replace(/\D/g, '').slice(0, 6);
-    if (!text) {
+    this.fillOtp(event.clipboardData?.getData('text') ?? '');
+  }
+
+  /**
+   * Captura a colagem/preenchimento automático antes de o browser a
+   * truncar pela largura da caixa. Mantém o input segmentado intacto.
+   */
+  protected onOtpBeforeInput(event: Event, index: number): void {
+    const inputEvent = event as InputEvent;
+    if (!(inputEvent.inputType ?? '').startsWith('insert')) {
       return;
     }
-    const digits = this.otp().map((_, i) => text[i] ?? '');
-    this.otp.set(digits);
-    const focusIndex = Math.min(text.length, this.otpIndexes.length - 1);
+
+    const digits = (inputEvent.data ?? '').replace(/\D/g, '');
+    if (digits.length <= 1) {
+      return;
+    }
+
+    event.preventDefault();
+    this.fillOtp(digits, index);
+  }
+
+  /** Distribui os dígitos pelas caixas e foca a próxima por preencher. */
+  private fillOtp(text: string, startIndex = 0): void {
+    const digits = text.replace(/\D/g, '');
+    if (!digits) {
+      return;
+    }
+
+    this.otp.update((values) => distributeOtpDigits(values, digits, startIndex));
+
+    const offset = digits.length >= this.otpIndexes.length ? 0 : startIndex;
+    const focusIndex = Math.min(offset + digits.length, this.otpIndexes.length - 1);
     queueMicrotask(() => this.otpBoxes()[focusIndex]?.nativeElement.focus());
   }
 

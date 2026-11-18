@@ -249,8 +249,14 @@ export class CreateEventPage {
     if (field === 'name' && !control.value.trim()) {
       return this.i18n.t('create.errors.guestName');
     }
-    if (field === 'email' && control.value && control.invalid) {
-      return this.i18n.t('create.errors.email');
+    if (field === 'email' && control.value) {
+      const hostEmail = this.form.controls.hostEmail.value.trim().toLowerCase();
+      if (control.value.trim().toLowerCase() === hostEmail) {
+        return this.i18n.t('create.errors.hostEmailGuest');
+      }
+      if (control.invalid) {
+        return this.i18n.t('create.errors.email');
+      }
     }
     return '';
   }
@@ -385,6 +391,7 @@ export class CreateEventPage {
 
     if (step === 2) {
       const groups = this.form.controls.guests.controls;
+      const hostEmail = this.form.controls.hostEmail.value.trim().toLowerCase();
       const seen = new Set<string>();
       let valid = true;
       groups.forEach((group) => {
@@ -401,6 +408,9 @@ export class CreateEventPage {
           valid = false;
         }
         const normalized = value.email.trim().toLowerCase();
+        if (normalized === hostEmail) {
+          valid = false;
+        }
         if (seen.has(normalized)) {
           valid = false;
         }

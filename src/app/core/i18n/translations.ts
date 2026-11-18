@@ -411,6 +411,7 @@ const PT_AO = {
   'create.errors.bankRequired': 'Preenche os dados bancários ou desativa a contribuição.',
   'create.errors.guestEmail': 'Cada convidado precisa de um email válido.',
   'create.errors.guestName': 'Indica o nome do convidado.',
+  'create.errors.hostEmailGuest': 'O email do anfitrião não pode ser usado como convidado.',
   'create.errorStep': 'Revisa os campos assinalados antes de continuar.',
   'create.savedTitle': 'Evento criado com sucesso',
   'create.savedText':
@@ -1446,6 +1447,7 @@ const EN: Record<TranslationKey, string> = {
   'create.errors.bankRequired': 'Fill in the bank details or disable contributions.',
   'create.errors.guestEmail': 'Each guest needs a valid email.',
   'create.errors.guestName': 'Enter the guest name.',
+  'create.errors.hostEmailGuest': 'The host email cannot be used as a guest.',
   'create.errorStep': 'Review the highlighted fields before continuing.',
   'create.savedTitle': 'Event created successfully',
   'create.savedText':

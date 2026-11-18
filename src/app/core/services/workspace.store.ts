@@ -342,6 +342,11 @@ export class WorkspaceStore implements Resettable {
   async addManager(eventId: string, email: string): Promise<ManagerInviteResult> {
     const result = await this.eventsRepo.addManager(eventId, email);
     this.setManagers(eventId, upsertManager(this.managersFor(eventId), result.manager));
+    // O backend inclui automaticamente o gestor na lista de convidados
+    // quando ainda não existia; os totais deixam de estar atualizados.
+    this.guestsRepo.invalidate();
+    this.dashboardRepo.invalidate();
+    this.reportsRepo.invalidate();
     return result;
   }
 

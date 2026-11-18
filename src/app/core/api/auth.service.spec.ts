@@ -87,7 +87,28 @@ describe('AuthService', () => {
 
     const response = await promise;
     expect(response.status).toBe('accepted');
+    if (response.status !== 'accepted') throw new Error('Fluxo inesperado.');
     expect(response.resend_available_at).toBe('2026-01-01T00:01:00Z');
+  });
+
+  it('guarda o token quando o email já foi inscrito por um anfitrião', async () => {
+    const promise = service.requestRegistrationCode('ana@exemplo.pt');
+    const request = http.expectOne(`${BASE}/auth/register/request-code`);
+    request.flush({
+      data: {
+        status: 'guest_verified',
+        email: 'ana@exemplo.pt',
+        display_name: 'Ana Silva',
+        verification_token: 'guest-token',
+        expires_at: '2026-01-01T00:10:00Z',
+      },
+    });
+
+    const response = await promise;
+    expect(response.status).toBe('guest_verified');
+    if (response.status !== 'guest_verified') throw new Error('Fluxo inesperado.');
+    expect(response.display_name).toBe('Ana Silva');
+    expect(service.verificationToken()).toBe('guest-token');
   });
 
   it('stores the verification token returned by the code step', async () => {

@@ -327,6 +327,15 @@ function passwordsMatch(group: AbstractControl): ValidationErrors | null {
             <h1 [class]="titleClass">Quase lá</h1>
             <p [class]="leadClass">Diz-nos o teu nome e define a tua senha.</p>
 
+            @if (guestFromInvite()) {
+              <p
+                class="mb-4 rounded-[14px] border border-mint/25 bg-mint/10 p-3 text-[13px] leading-5 text-mint"
+              >
+                O teu email já está confirmado pelo convite do anfitrião. Só falta definires a
+                senha.
+              </p>
+            }
+
             <form class="space-y-4" [formGroup]="detailsForm" (ngSubmit)="register()" novalidate>
               <div class="grid gap-1.5">
                 <label for="register-name" class="text-sm font-semibold text-ink">Nome</label>
@@ -452,6 +461,8 @@ export class AuthPage {
   );
   readonly step = signal<RegisterStep>('email');
   readonly email = signal('');
+  /** `true` quando o email veio de um convite e o OTP foi dispensado. */
+  readonly guestFromInvite = signal(false);
   readonly codeFromEmail = signal(false);
   readonly busy = signal(false);
   readonly resendSeconds = signal(0);
@@ -595,6 +606,19 @@ export class AuthPage {
     try {
       const result = await this.auth.requestRegistrationCode(email);
       this.email.set(email);
+
+      // O email já foi inscrito por um anfitrião: não há OTP. O nome do
+      // convite pré-preenche o formulário e só falta a senha.
+      if (result.status === 'guest_verified') {
+        this.guestFromInvite.set(true);
+        this.codeFromEmail.set(false);
+        this.detailsForm.controls.displayName.setValue(result.display_name ?? '');
+        this.step.set('details');
+        this.toasts.success('Encontrámos o teu convite. Define a senha para entrares.');
+        return;
+      }
+
+      this.guestFromInvite.set(false);
       this.resendSeconds.set(secondsUntil(result.resend_available_at));
       this.step.set('sent');
       this.toasts.success(`Enviámos um código de 6 dígitos para ${email}.`);
@@ -612,6 +636,15 @@ export class AuthPage {
     this.busy.set(true);
     try {
       const result = await this.auth.requestRegistrationCode(this.email());
+
+      if (result.status === 'guest_verified') {
+        this.guestFromInvite.set(true);
+        this.detailsForm.controls.displayName.setValue(result.display_name ?? '');
+        this.step.set('details');
+        this.toasts.success('Encontrámos o teu convite. Define a senha para entrares.');
+        return;
+      }
+
       this.resendSeconds.set(secondsUntil(result.resend_available_at));
       this.otp.set(['', '', '', '', '', '']);
       this.codeFromEmail.set(false);
@@ -703,6 +736,7 @@ export class AuthPage {
   protected changeEmail(): void {
     this.resendSeconds.set(0);
     this.codeFromEmail.set(false);
+    this.guestFromInvite.set(false);
     this.otp.set(['', '', '', '', '', '']);
     this.step.set('email');
   }

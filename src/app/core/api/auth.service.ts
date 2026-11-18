@@ -17,12 +17,26 @@ import { SessionCache } from '../services/session-cache';
  * anfitrião e marca o estado como autenticado, tal como o `login()`.
  */
 
-export interface RegistrationCodeResponse {
+export interface RegistrationCodeAccepted {
   status: 'accepted';
   email: string;
   expires_at: string;
   resend_available_at: string;
 }
+
+/**
+ * Email já inscrito por um anfitrião: o convite serve de prova de posse,
+ * o OTP é dispensado e o token de registo vem já na resposta.
+ */
+export interface RegistrationCodeGuest {
+  status: 'guest_verified';
+  email: string;
+  display_name: string | null;
+  verification_token: string;
+  expires_at: string;
+}
+
+export type RegistrationCodeResponse = RegistrationCodeAccepted | RegistrationCodeGuest;
 
 interface RegistrationVerificationResponse {
   email: string;
@@ -90,11 +104,21 @@ export class AuthService {
     return this.startSession(response);
   }
 
-  /** Passo 1 do registo: valida o email e enfileira o código OTP. */
+  /**
+   * Passo 1 do registo: valida o email e prepara a verificação.
+   *
+   * Fluxo normal: enfileira o código OTP. Se o email já foi inscrito por
+   * um anfitrião, o backend dispensa o OTP e devolve o token de registo
+   * com o nome do convite — guardamo-lo já para o passo final.
+   */
   async requestRegistrationCode(email: string): Promise<RegistrationCodeResponse> {
-    return this.api.post<RegistrationCodeResponse>('/auth/register/request-code', {
+    const response = await this.api.post<RegistrationCodeResponse>('/auth/register/request-code', {
       email: email.trim(),
     });
+    if (response.status === 'guest_verified') {
+      this.verificationToken.set(response.verification_token);
+    }
+    return response;
   }
 
   /** Passo 2 do registo: troca o código por um `verification_token` de uso único. */

@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, HostListener, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter } from 'rxjs';
@@ -8,6 +8,7 @@ import { AuthService } from '../../core/api/auth.service';
 import { toApiError } from '../../core/api/api-error';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { TranslationKey } from '../../core/i18n/translations';
+import { SearchGroup, SearchService, SearchSuggestion } from '../../core/services/search.service';
 import { ToastService } from '../../core/services/toast.service';
 import { WorkspaceStore } from '../../core/services/workspace.store';
 import { ICONS } from '../../core/ui/icons';
@@ -17,6 +18,7 @@ import { AvatarComponent } from '../../shared/components/avatar.component';
 import { BrandComponent } from '../../shared/components/brand.component';
 import { LogoComponent } from '../../shared/components/logo.component';
 import { PreferenceControlsComponent } from '../../shared/components/preference-controls.component';
+import { SearchSuggestionsComponent } from '../../shared/components/search-suggestions.component';
 import { SkeletonComponent, SkeletonVariant } from '../../shared/components/skeleton.component';
 
 interface NavItem {
@@ -37,6 +39,7 @@ interface NavItem {
     LogoComponent,
     AvatarComponent,
     PreferenceControlsComponent,
+    SearchSuggestionsComponent,
     SkeletonComponent,
   ],
   templateUrl: './shell.component.html',
@@ -49,10 +52,13 @@ export class ShellComponent {
   private readonly auth = inject(AuthService);
   private readonly toasts = inject(ToastService);
   private readonly notificationPresenter = inject(NotificationPresenter);
+  private readonly searchService = inject(SearchService);
 
   protected readonly mobileOpen = signal(false);
   protected readonly notificationsOpen = signal(false);
   protected readonly searchTerm = signal('');
+  protected readonly searchOpen = signal(false);
+  protected readonly activeSuggestionId = signal<string | null>(null);
   protected readonly mobileSearchOpen = signal(false);
   protected readonly loggingOut = signal(false);
   protected readonly pageTitle = signal<TranslationKey>('nav.dashboard');
@@ -89,6 +95,17 @@ export class ShellComponent {
   protected readonly notifications = computed(() => this.store.notifications());
   protected readonly unreadNotifications = this.store.unreadNotifications;
 
+  /** Grupos de sugestões para o termo atual (vazio sem termo). */
+  protected readonly suggestions = computed<SearchGroup[]>(() => {
+    const term = this.searchTerm().trim();
+    return term ? this.searchService.suggest(term) : [];
+  });
+
+  /** Lista achatada, para navegação por teclado com as setas. */
+  private readonly flatSuggestions = computed<SearchSuggestion[]>(() =>
+    this.suggestions().flatMap((group) => group.items),
+  );
+
   constructor() {
     // Carrega o "chrome" (perfil, atividade e eventos) depois de qualquer
     // `resetAll()` da autenticação. Cada página pede depois os domínios que
@@ -104,8 +121,93 @@ export class ShellComponent {
         this.mobileOpen.set(false);
         this.notificationsOpen.set(false);
         this.mobileSearchOpen.set(false);
+        this.closeSearch();
       });
     this.updatePageTitle();
+  }
+
+  /** Abre a barra de pesquisa (desktop) e aquece convidados/tarefas em fundo. */
+  protected openSearch(): void {
+    this.searchService.warm();
+    this.searchOpen.set(true);
+  }
+
+  /** Abre a pesquisa sobreposta do mobile e aquece os dados das sugestões. */
+  protected openMobileSearch(): void {
+    this.searchService.warm();
+    this.mobileSearchOpen.set(true);
+  }
+
+  protected onSearchInput(value: string): void {
+    this.searchTerm.set(value);
+    this.activeSuggestionId.set(null);
+  }
+
+  /** Setas para navegar, Enter para escolher, Escape para fechar. */
+  protected onSearchKeydown(event: KeyboardEvent): void {
+    const items = this.flatSuggestions();
+    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+      if (!items.length) {
+        return;
+      }
+      event.preventDefault();
+      const current = this.activeSuggestionId();
+      const index = current ? items.findIndex((item) => item.id === current) : -1;
+      const next =
+        event.key === 'ArrowDown'
+          ? (index + 1) % items.length
+          : index <= 0
+            ? items.length - 1
+            : index - 1;
+      this.activeSuggestionId.set(items[next].id);
+      return;
+    }
+    if (event.key === 'Enter') {
+      const active = items.find((item) => item.id === this.activeSuggestionId());
+      if (active) {
+        event.preventDefault();
+        void this.pickSuggestion(active);
+      }
+      return;
+    }
+    if (event.key === 'Escape') {
+      this.closeSearch();
+    }
+  }
+
+  protected hoverSuggestion(id: string): void {
+    this.activeSuggestionId.set(id);
+  }
+
+  /** Navega para o destino da sugestão e marca a notificação como lida. */
+  protected async pickSuggestion(suggestion: SearchSuggestion): Promise<void> {
+    this.closeSearch();
+    if (suggestion.notificationId) {
+      try {
+        await this.store.markNotificationRead(suggestion.notificationId);
+      } catch {
+        // A navegação não deve falhar por causa da marcação de leitura.
+      }
+    }
+    await this.router.navigate(suggestion.route, { queryParams: suggestion.queryParams });
+  }
+
+  protected closeSearch(): void {
+    this.searchOpen.set(false);
+    this.activeSuggestionId.set(null);
+    this.searchTerm.set('');
+  }
+
+  /** Fecha o painel de sugestões ao clicar fora da pesquisa. */
+  @HostListener('document:click', ['$event'])
+  protected onDocumentClick(event: MouseEvent): void {
+    const target = event.target as HTMLElement | null;
+    if (target?.closest('[data-search-root]')) {
+      return;
+    }
+    if (this.searchOpen()) {
+      this.searchOpen.set(false);
+    }
   }
 
   protected search(): void {

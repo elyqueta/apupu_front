@@ -1,13 +1,12 @@
 import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { skip } from 'rxjs';
 import { toApiError } from '../../core/api/api-error';
 import { Pagination } from '../../core/api/api.models';
-import {
-  TaskAssigneeFilter,
-  TaskQuery,
-  TaskStatusFilter,
-} from '../../core/data/tasks.repository';
+import { TaskAssigneeFilter, TaskQuery, TaskStatusFilter } from '../../core/data/tasks.repository';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { TranslationKey } from '../../core/i18n/translations';
 import { EventManager, WorkspaceTask } from '../../core/models/models';
@@ -27,6 +26,7 @@ export class TasksPage {
   private readonly store = inject(WorkspaceStore);
   private readonly toasts = inject(ToastService);
   private readonly fb = inject(NonNullableFormBuilder);
+  private readonly route = inject(ActivatedRoute);
   protected readonly i18n = inject(I18nService);
   protected readonly icons = ICONS;
 
@@ -88,6 +88,22 @@ export class TasksPage {
 
   constructor() {
     this.store.load({ tasks: true, events: true });
+
+    // Abre já filtrado quando se chega de uma sugestão de pesquisa (`?q=`).
+    const initialQuery = this.route.snapshot.queryParamMap.get('q')?.trim() ?? '';
+    if (initialQuery) {
+      this.q.set(initialQuery);
+    }
+    this.route.queryParamMap.pipe(skip(1), takeUntilDestroyed()).subscribe((params) => {
+      const next = params.get('q')?.trim() ?? '';
+      if (next === this.q().trim()) {
+        return;
+      }
+      this.q.set(next);
+      this.page.set(1);
+      void this.load();
+    });
+
     void this.load();
     effect(() => {
       const eventId = this.createForm.controls.eventId.value;

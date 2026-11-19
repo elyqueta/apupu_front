@@ -228,6 +228,15 @@ export class WorkspaceStore implements Resettable {
     this.load({});
   }
 
+  /**
+   * Carrega convidados e tarefas em segundo plano para a pesquisa global,
+   * sem alterar o `activeScope` (não dispara o ecrã de carregamento da shell).
+   * Os repositórios deduplicam e respeitam o TTL, pelo que é seguro repetir.
+   */
+  warmSearch(): void {
+    void Promise.allSettled([this.guestsRepo.load(), this.tasksRepo.load()]);
+  }
+
   /** Recarrega com `force` os domínios ativos (usado no botão "tentar de novo"). */
   async retry(): Promise<void> {
     await this.runScope(this.activeScope(), { force: true });

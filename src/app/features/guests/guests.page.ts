@@ -1,16 +1,17 @@
 import { Component, computed, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { toApiError } from '../../core/api/api-error';
 import { ReportsRepository } from '../../core/data/reports.repository';
-import { Guest, RsvpStatus } from '../../core/models/models';
+import { Guest, HostEvent, RsvpStatus } from '../../core/models/models';
 import { DownloadService } from '../../core/services/download.service';
 import { ShareService } from '../../core/services/share.service';
 import { ToastService } from '../../core/services/toast.service';
 import { WorkspaceStore } from '../../core/services/workspace.store';
 import { ICONS } from '../../core/ui/icons';
+import { ActionMenuComponent, ActionMenuItem } from '../../shared/components/action-menu.component';
 import { AvatarComponent } from '../../shared/components/avatar.component';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog.component';
 import { GuestDialogComponent } from '../../shared/components/guest-dialog.component';
@@ -18,12 +19,14 @@ import { StatCardComponent } from '../../shared/components/stat-card.component';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
 
 type StatusFilter = 'all' | RsvpStatus;
+type GuestEntry = { guest: Guest; event: HostEvent };
 
 @Component({
   selector: 'app-guests-page',
   imports: [
     RouterLink,
     FaIconComponent,
+    ActionMenuComponent,
     AvatarComponent,
     ConfirmDialogComponent,
     GuestDialogComponent,
@@ -38,6 +41,7 @@ export class GuestsPage {
   protected readonly icons = ICONS;
   private readonly toasts = inject(ToastService);
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
   private readonly share = inject(ShareService);
   private readonly reports = inject(ReportsRepository);
@@ -50,9 +54,16 @@ export class GuestsPage {
   protected readonly editTarget = signal<Guest | null>(null);
   protected readonly removeTarget = signal<Guest | null>(null);
   protected readonly exporting = signal(false);
+  /** Em mobile os filtros começam recolhidos; em `md+` estão sempre visíveis. */
+  protected readonly filtersOpen = signal(false);
 
   protected readonly stats = this.store.globalStats;
   protected readonly entries = this.store.guestsWithEvent;
+
+  /** Quantos filtros (evento/estado) estão ativos, para o badge do botão mobile. */
+  protected readonly activeFilterCount = computed(
+    () => (this.eventFilter() !== 'all' ? 1 : 0) + (this.statusFilter() !== 'all' ? 1 : 0),
+  );
 
   protected readonly filtered = computed(() => {
     const term = this.search().trim().toLocaleLowerCase(this.i18n.locale());
@@ -70,12 +81,14 @@ export class GuestsPage {
           .includes(term);
       })
       .sort(
-        (a, b) =>
-          new Date(b.guest.invitedAt).getTime() - new Date(a.guest.invitedAt).getTime(),
+        (a, b) => new Date(b.guest.invitedAt).getTime() - new Date(a.guest.invitedAt).getTime(),
       );
   });
 
-  protected readonly statusOptions: Array<{ id: StatusFilter; labelKey: 'guests.filterAllStatus' | 'status.confirmed' | 'status.pending' | 'status.declined' }> = [
+  protected readonly statusOptions: Array<{
+    id: StatusFilter;
+    labelKey: 'guests.filterAllStatus' | 'status.confirmed' | 'status.pending' | 'status.declined';
+  }> = [
     { id: 'all', labelKey: 'guests.filterAllStatus' },
     { id: 'confirmed', labelKey: 'status.confirmed' },
     { id: 'pending', labelKey: 'status.pending' },
@@ -142,15 +155,51 @@ export class GuestsPage {
   }
 
   /**
+   * Ações secundárias do menu "⋯" no cartão mobile. `Editar` e `Remover` só
+   * existem para o anfitrião; `Ver evento` está sempre disponível.
+   */
+  protected menuItems(entry: GuestEntry): ActionMenuItem[] {
+    const items: ActionMenuItem[] = [
+      { id: 'view', label: this.i18n.t('guests.viewEvent'), icon: ICONS['arrowUpRight'] },
+    ];
+    if (this.isHostFor(entry.event.id)) {
+      items.push(
+        { id: 'edit', label: this.i18n.t('guests.editAction'), icon: ICONS['pen'] },
+        {
+          id: 'remove',
+          label: this.i18n.t('guests.remove'),
+          icon: ICONS['trash'],
+          tone: 'danger',
+        },
+      );
+    }
+    return items;
+  }
+
+  protected onMenuAction(action: string, entry: GuestEntry): void {
+    switch (action) {
+      case 'view':
+        void this.router.navigate(['/eventos', entry.event.id]);
+        break;
+      case 'edit':
+        this.openEdit(entry.guest);
+        break;
+      case 'remove':
+        this.removeTarget.set(entry.guest);
+        break;
+      default:
+        break;
+    }
+  }
+
+  /**
    * Abre o WhatsApp (`wa.me`) com a mensagem de reencaminhamento do convite.
    *
    * O link individual vem de `invitation_url`; se o convite estiver
    * revogado a API devolve `null` e a mensagem segue sem link.
    */
   protected forwardWhatsApp(guest: Guest, eventTitle: string): void {
-    const key = guest.invitationUrl
-      ? 'guests.whatsappMessageWithLink'
-      : 'guests.whatsappMessage';
+    const key = guest.invitationUrl ? 'guests.whatsappMessageWithLink' : 'guests.whatsappMessage';
     const text = this.i18n.t(key, {
       name: guest.name,
       event: eventTitle,

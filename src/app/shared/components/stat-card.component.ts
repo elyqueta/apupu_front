@@ -36,27 +36,31 @@ const TONES: Record<IconTone, { tile: string; line: string }> = {
   imports: [FaIconComponent],
   template: `
     <article
-      class="group relative overflow-hidden rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl transition duration-300 hover:-translate-y-0.5 hover:border-brand/35"
+      class="group relative overflow-hidden rounded-4xl border border-line bg-surface p-3.5 shadow-card backdrop-blur-2xl transition duration-300 hover:-translate-y-0.5 hover:border-brand/35 sm:p-5"
     >
-      <div class="flex items-start justify-between gap-3">
+      <div class="flex items-start justify-between gap-2.5 sm:gap-3">
         <div class="min-w-0">
-          <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
+          <p
+            class="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted sm:text-[11px]"
+          >
             {{ label() }}
           </p>
-          <p class="mt-2 truncate font-display text-3xl font-semibold tracking-tight text-ink">
+          <p
+            class="mt-1.5 truncate font-display text-2xl font-semibold tracking-tight text-ink sm:mt-2 sm:text-3xl"
+          >
             {{ value() }}
           </p>
         </div>
         <span
-          class="grid size-11 shrink-0 place-items-center rounded-2xl border backdrop-blur-md transition duration-300 group-hover:scale-105"
+          class="grid size-9 shrink-0 place-items-center rounded-2xl border backdrop-blur-md transition duration-300 group-hover:scale-105 sm:size-11"
           [class]="toneStyles().tile"
         >
-          <fa-icon [icon]="icon()" class="text-base" aria-hidden="true" />
+          <fa-icon [icon]="icon()" class="text-sm sm:text-base" aria-hidden="true" />
         </span>
       </div>
 
-      <div class="mt-4 flex items-end justify-between gap-3">
-        <p class="text-xs leading-5 text-muted">{{ hint() }}</p>
+      <div class="mt-3 flex items-end justify-between gap-3 sm:mt-4">
+        <p class="text-[11px] leading-5 text-muted sm:text-xs">{{ hint() }}</p>
         @if (trend()) {
           <span
             class="inline-flex shrink-0 items-center gap-1 rounded-full border border-mint/25 bg-mint/10 px-2 py-0.5 text-[10px] font-semibold text-mint"

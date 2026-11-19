@@ -9,37 +9,54 @@
   }
 
   @if (mobileSearchOpen()) {
-    <div class="fixed inset-0 z-[60] md:hidden">
+    <div class="fixed inset-0 z-[60] md:hidden" data-search-root>
       <button
         type="button"
         class="absolute inset-0 bg-canvas/70 backdrop-blur-md"
         [attr.aria-label]="i18n.t('common.close')"
-        (click)="mobileSearchOpen.set(false)"
+        (click)="closeSearch(); mobileSearchOpen.set(false)"
       ></button>
-      <form
-        class="absolute inset-x-0 top-0 flex items-center gap-2 border-b border-line bg-surface-solid/95 p-3 shadow-card backdrop-blur-2xl animate-rise"
-        role="search"
-        (submit)="submitMobileSearch($event)"
+      <div
+        class="absolute inset-x-0 top-0 border-b border-line bg-surface-solid/95 p-3 shadow-card backdrop-blur-2xl animate-rise"
       >
-        <fa-icon [icon]="icons['search']" class="shrink-0 text-sm text-muted" aria-hidden="true" />
-        <input
-          type="search"
-          autofocus
-          [value]="searchTerm()"
-          (input)="searchTerm.set($any($event.target).value)"
-          class="h-11 w-full flex-1 rounded-xl border border-line bg-surface-raised/70 px-3 text-sm text-ink outline-none transition placeholder:text-muted/60 focus:border-brand/50"
-          [placeholder]="i18n.t('shell.searchPlaceholder')"
-          [attr.aria-label]="i18n.t('shell.searchPlaceholder')"
-        />
-        <button
-          type="button"
-          class="grid size-11 shrink-0 place-items-center rounded-xl border border-line bg-surface-raised text-muted transition hover:text-ink"
-          [attr.aria-label]="i18n.t('common.close')"
-          (click)="mobileSearchOpen.set(false)"
-        >
-          <fa-icon [icon]="icons['close']" class="text-sm" />
-        </button>
-      </form>
+        <form class="flex items-center gap-2" role="search" (submit)="submitMobileSearch($event)">
+          <fa-icon
+            [icon]="icons['search']"
+            class="shrink-0 text-sm text-muted"
+            aria-hidden="true"
+          />
+          <input
+            type="search"
+            autofocus
+            [value]="searchTerm()"
+            (input)="onSearchInput($any($event.target).value)"
+            (keydown)="onSearchKeydown($event)"
+            class="h-11 w-full flex-1 rounded-xl border border-line bg-surface-raised/70 px-3 text-sm text-ink outline-none transition placeholder:text-muted/60 focus:border-brand/50"
+            [placeholder]="i18n.t('shell.searchPlaceholder')"
+            [attr.aria-label]="i18n.t('shell.searchPlaceholder')"
+          />
+          <button
+            type="button"
+            class="grid size-11 shrink-0 place-items-center rounded-xl border border-line bg-surface-raised text-muted transition hover:text-ink"
+            [attr.aria-label]="i18n.t('common.close')"
+            (click)="closeSearch(); mobileSearchOpen.set(false)"
+          >
+            <fa-icon [icon]="icons['close']" class="text-sm" />
+          </button>
+        </form>
+
+        @if (searchTerm().trim()) {
+          <div class="mt-3">
+            <app-search-suggestions
+              [groups]="suggestions()"
+              [term]="searchTerm()"
+              [activeId]="activeSuggestionId()"
+              (picked)="pickSuggestion($event)"
+              (hovered)="hoverSuggestion($event)"
+            />
+          </div>
+        }
+      </div>
     </div>
   }
 
@@ -65,7 +82,7 @@
         </div>
 
         <nav class="mt-6 flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto pr-0.5">
-          <p class="mb-2 px-2 text-[9px] font-semibold uppercase tracking-[0.24em] text-muted/80">
+          <p class="mb-2 px-2 text-xs font-semibold uppercase tracking-[0.24em] text-muted/80">
             {{ i18n.t('nav.hostArea') }}
           </p>
 
@@ -191,9 +208,7 @@
           </button>
 
           <div class="min-w-0 flex-1">
-            <p
-              class="hidden text-[9px] font-semibold uppercase tracking-[0.22em] text-muted lg:block"
-            >
+            <p class="hidden text-xs font-semibold uppercase tracking-[0.22em] text-muted lg:block">
               {{ i18n.t('nav.workspace') }} · {{ store.profile().name }}
             </p>
             <h1
@@ -203,32 +218,48 @@
             </h1>
           </div>
 
-          <form
-            class="relative hidden items-center md:flex md:w-56 lg:w-72"
-            role="search"
-            (submit)="$event.preventDefault(); search()"
-          >
-            <fa-icon
-              [icon]="icons['search']"
-              class="pointer-events-none absolute left-3 text-xs text-muted"
-              aria-hidden="true"
-            />
-            <input
-              type="search"
-              [value]="searchTerm()"
-              (input)="searchTerm.set($any($event.target).value)"
-              class="h-10 w-full rounded-xl border border-line bg-surface-raised/70 pl-9 pr-3 text-xs text-ink outline-none transition placeholder:text-muted/60 focus:border-brand/50"
-              [placeholder]="i18n.t('shell.searchPlaceholder')"
-              [attr.aria-label]="i18n.t('shell.searchPlaceholder')"
-            />
-          </form>
+          <div class="relative hidden md:block md:w-56 lg:w-72" data-search-root>
+            <form
+              class="relative flex items-center"
+              role="search"
+              (submit)="$event.preventDefault(); search()"
+            >
+              <fa-icon
+                [icon]="icons['search']"
+                class="pointer-events-none absolute left-3 text-xs text-muted"
+                aria-hidden="true"
+              />
+              <input
+                type="search"
+                [value]="searchTerm()"
+                (input)="onSearchInput($any($event.target).value)"
+                (keydown)="onSearchKeydown($event)"
+                (focus)="openSearch()"
+                class="h-10 w-full rounded-xl border border-line bg-surface-raised/70 pl-9 pr-3 text-xs text-ink outline-none transition placeholder:text-muted/60 focus:border-brand/50"
+                [placeholder]="i18n.t('shell.searchPlaceholder')"
+                [attr.aria-label]="i18n.t('shell.searchPlaceholder')"
+              />
+            </form>
+
+            @if (searchOpen() && searchTerm().trim()) {
+              <div class="absolute right-0 top-full z-50 mt-2 w-[min(calc(100vw-1.5rem),22rem)]">
+                <app-search-suggestions
+                  [groups]="suggestions()"
+                  [term]="searchTerm()"
+                  [activeId]="activeSuggestionId()"
+                  (picked)="pickSuggestion($event)"
+                  (hovered)="hoverSuggestion($event)"
+                />
+              </div>
+            }
+          </div>
 
           <div class="flex items-center gap-2">
             <button
               type="button"
               class="grid size-9 shrink-0 place-items-center rounded-xl border border-line bg-surface-raised/60 text-muted transition hover:border-brand/40 hover:text-ink md:hidden"
               [attr.aria-label]="i18n.t('common.search')"
-              (click)="mobileSearchOpen.set(true)"
+              (click)="openMobileSearch()"
             >
               <fa-icon [icon]="icons['search']" class="text-sm" />
             </button>

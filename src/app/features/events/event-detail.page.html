@@ -1000,7 +1000,7 @@
                         ? 'border border-brand/30 bg-brand/15 text-ink'
                         : 'border border-transparent text-muted hover:bg-surface-raised/60 hover:text-ink'
                     "
-                    (click)="guestFilter.set(filter.id)"
+                    (click)="setGuestFilter(filter.id)"
                   >
                     {{ i18n.t(filter.labelKey) }}
                     <span class="text-[9px] text-muted/70">{{ countFor(filter.id) }}</span>
@@ -1017,7 +1017,7 @@
                 <input
                   type="search"
                   [value]="guestSearch()"
-                  (input)="guestSearch.set($any($event.target).value)"
+                  (input)="onGuestSearch($any($event.target).value)"
                   class="h-9 w-full rounded-lg border border-line bg-surface-raised/70 pl-8 pr-3 text-[11px] text-ink outline-none transition placeholder:text-muted/60 focus:border-brand/50"
                   [placeholder]="i18n.t('eventDetail.searchGuests')"
                   [attr.aria-label]="i18n.t('eventDetail.searchGuests')"
@@ -1025,165 +1025,84 @@
               </label>
             </div>
 
-            @if (guests().length === 0) {
-              <div
-                class="mt-6 flex flex-col items-center rounded-3xl border border-dashed border-line p-6 text-center sm:p-10"
-              >
-                <span
-                  class="grid size-12 place-items-center rounded-2xl border border-brand/25 bg-brand/15 text-brand-strong"
+            <div id="event-guests-list" class="scroll-mt-24">
+              @if (guestListLoading()) {
+                <app-skeleton variant="cards" />
+              } @else if (guestItems().length === 0) {
+                <div
+                  class="mt-6 flex flex-col items-center rounded-3xl border border-dashed border-line p-6 text-center sm:p-10"
                 >
-                  <fa-icon [icon]="icons['userPlus']" class="text-lg" aria-hidden="true" />
-                </span>
-                <p class="mt-3 text-sm font-semibold text-ink">
-                  {{ i18n.t('eventDetail.noGuests') }}
-                </p>
-                <p class="mt-1 text-xs text-muted">{{ i18n.t('eventDetail.noGuestsHint') }}</p>
-              </div>
-            } @else if (filteredGuests().length === 0) {
-              <p
-                class="mt-6 rounded-2xl border border-dashed border-line p-6 text-center text-sm text-muted"
-              >
-                {{ i18n.t('eventDetail.noResults') }}
-              </p>
-            } @else {
-              <div class="mt-4 overflow-x-auto">
-                <table class="w-full min-w-[56rem] border-separate border-spacing-y-1.5 text-left">
-                  <thead>
-                    <tr class="text-[9px] font-semibold uppercase tracking-[0.16em] text-muted">
-                      <th class="px-3 py-2">{{ i18n.t('eventDetail.table.guest') }}</th>
-                      <th class="px-3 py-2">{{ i18n.t('eventDetail.table.status') }}</th>
-                      <th class="px-3 py-2">{{ i18n.t('guests.tableOpened') }}</th>
-                      <th class="px-3 py-2">{{ i18n.t('eventDetail.table.table') }}</th>
-                      <th class="px-3 py-2">{{ i18n.t('eventDetail.table.invited') }}</th>
-                      <th class="px-3 py-2">{{ i18n.t('eventDetail.table.responded') }}</th>
-                      <th class="px-3 py-2 text-right">
-                        {{ i18n.t('eventDetail.table.actions') }}
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    @for (guest of filteredGuests(); track guest.id) {
-                      <tr
-                        class="rounded-2xl bg-surface-raised/45 transition hover:bg-surface-raised/80"
-                      >
-                        <td class="rounded-l-2xl px-3 py-2.5">
-                          <div class="flex items-center gap-3">
-                            <app-avatar [name]="guest.name" size="sm" />
-                            <div class="min-w-0">
-                              <p class="truncate text-xs font-semibold text-ink">
-                                {{ guest.name }}
-                              </p>
-                              <p class="truncate text-[10px] text-muted">{{ guest.email }}</p>
-                            </div>
-                          </div>
-                        </td>
-                        <td class="px-3 py-2.5">
-                          <app-status-badge [value]="guest.status" />
-                        </td>
-                        <td class="px-3 py-2.5">
-                          @if (guest.openedAt) {
-                            <span
-                              class="inline-flex items-center gap-1.5 text-[11px] font-medium text-mint"
-                              [attr.title]="i18n.relative(guest.openedAt)"
-                            >
-                              <span class="size-1.5 rounded-full bg-mint"></span>
-                              {{ i18n.t('guests.opened') }}
-                            </span>
-                          } @else {
-                            <span class="inline-flex items-center gap-1.5 text-[11px] text-muted">
-                              <span class="size-1.5 rounded-full bg-line"></span>
-                              {{ i18n.t('guests.notOpened') }}
-                            </span>
-                          }
-                        </td>
-                        <td class="px-3 py-2.5 text-[11px] text-muted">
-                          {{ guest.tableName ?? '—' }}
-                        </td>
-                        <td class="px-3 py-2.5 text-[11px] text-muted">
-                          {{ i18n.shortDate(guest.invitedAt, event.timezone) }}
-                        </td>
-                        <td class="px-3 py-2.5 text-[11px] text-muted">
-                          @if (guest.respondedAt) {
-                            {{ i18n.relative(guest.respondedAt) }}
-                          } @else {
-                            {{ i18n.t('guests.notResponded') }}
-                          }
-                        </td>
-                        <td class="rounded-r-2xl px-3 py-2.5">
-                          @if (isHost()) {
-                            <div class="flex items-center justify-end gap-1">
-                              <button
-                                type="button"
-                                class="grid size-8 place-items-center rounded-lg border border-line bg-surface text-muted transition hover:border-brand/40 hover:text-brand-strong"
-                                [attr.aria-label]="i18n.t('guests.editAction')"
-                                [attr.title]="i18n.t('guests.editAction')"
-                                (click)="openGuestEdit(guest)"
-                              >
-                                <fa-icon [icon]="icons['pen']" class="text-[10px]" />
-                              </button>
-                              <button
-                                type="button"
-                                class="grid size-8 place-items-center rounded-lg border border-line bg-surface text-muted transition hover:border-brand/40 hover:text-brand-strong"
-                                [attr.aria-label]="i18n.t('eventDetail.resend')"
-                                [attr.title]="i18n.t('eventDetail.resend')"
-                                (click)="resend(guest)"
-                              >
-                                <fa-icon [icon]="icons['paperPlane']" class="text-[10px]" />
-                              </button>
-                              <button
-                                type="button"
-                                class="grid size-8 place-items-center rounded-lg border border-line bg-surface text-muted transition hover:border-mint/50 hover:text-mint disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-line disabled:hover:text-muted"
-                                [attr.aria-label]="i18n.t('guests.whatsapp')"
-                                [attr.title]="
-                                  guest.phone
-                                    ? i18n.t('guests.whatsapp')
-                                    : i18n.t('guests.whatsappUnavailable')
-                                "
-                                [disabled]="!guest.phone"
-                                (click)="forwardWhatsApp(guest)"
-                              >
-                                <fa-icon [icon]="icons['whatsapp']" class="text-[10px]" />
-                              </button>
-                              <button
-                                type="button"
-                                class="grid size-8 place-items-center rounded-lg border border-line bg-surface text-muted transition hover:border-brand/40 hover:text-brand-strong disabled:cursor-not-allowed disabled:opacity-40"
-                                [attr.aria-label]="i18n.t('eventDetail.ticket')"
-                                [attr.title]="i18n.t('eventDetail.ticket')"
-                                [disabled]="exporting() !== null"
-                                (click)="downloadTicket(guest)"
-                              >
-                                <fa-icon
-                                  [icon]="
-                                    exporting() === 'ticket-' + guest.id
-                                      ? icons['spinner']
-                                      : icons['ticket']
-                                  "
-                                  class="text-[10px]"
-                                  [class.animate-spin]="exporting() === 'ticket-' + guest.id"
-                                />
-                              </button>
-                              <button
-                                type="button"
-                                class="grid size-8 place-items-center rounded-lg border border-line bg-surface text-muted transition hover:border-coral/40 hover:text-coral"
-                                [attr.aria-label]="i18n.t('guests.remove')"
-                                [attr.title]="i18n.t('guests.remove')"
-                                (click)="removeGuest(guest)"
-                              >
-                                <fa-icon [icon]="icons['trash']" class="text-[10px]" />
-                              </button>
-                            </div>
-                          } @else {
-                            <p class="text-right text-[10px] text-muted">
-                              {{ i18n.t('eventDetail.actionsHostOnly') }}
-                            </p>
-                          }
-                        </td>
-                      </tr>
-                    }
-                  </tbody>
-                </table>
-              </div>
-            }
+                  <span
+                    class="grid size-12 place-items-center rounded-2xl border border-brand/25 bg-brand/15 text-brand-strong"
+                  >
+                    <fa-icon
+                      [icon]="guestSearch() || guestFilter() !== 'all' ? icons['search'] : icons['userPlus']"
+                      class="text-lg"
+                      aria-hidden="true"
+                    />
+                  </span>
+                  @if (guestSearch() || guestFilter() !== 'all') {
+                    <p class="mt-3 text-sm font-semibold text-ink">
+                      {{ i18n.t('guests.searchEmpty', { term: guestSearch() }) }}
+                    </p>
+                    <p class="mt-1 text-xs text-muted">{{ i18n.t('eventDetail.noResults') }}</p>
+                  } @else {
+                    <p class="mt-3 text-sm font-semibold text-ink">
+                      {{ i18n.t('eventDetail.noGuests') }}
+                    </p>
+                    <p class="mt-1 text-xs text-muted">{{ i18n.t('eventDetail.noGuestsHint') }}</p>
+                  }
+                </div>
+              } @else {
+                <ul class="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                  @for (entry of guestItems(); track entry.guest.id) {
+                    <li class="min-w-0">
+                      <app-person-card
+                        [name]="entry.guest.name"
+                        [subtitle]="entry.guest.email + (entry.guest.phone ? ' · ' + entry.guest.phone : '')"
+                        [status]="entry.guest.status"
+                        [meta]="guestMeta(entry)"
+                        [actions]="guestActions()"
+                        [primaryAction]="guestPrimary(entry)"
+                        [actionsLabel]="i18n.t('eventDetail.table.actions')"
+                        (actionSelected)="onGuestAction($event, entry)"
+                        (primaryTriggered)="onGuestPrimary($event, entry)"
+                      />
+                    </li>
+                  }
+                </ul>
+
+                <nav
+                  class="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4"
+                  [attr.aria-label]="i18n.t('guests.pagination')"
+                >
+                  <span class="text-[11px] text-muted">{{ guestRangeLabel() }}</span>
+                  <div class="flex items-center gap-2">
+                    <button
+                      type="button"
+                      class="inline-flex h-10 items-center gap-1.5 rounded-xl border border-line bg-surface px-3 text-xs font-semibold text-ink transition hover:border-brand/40 disabled:cursor-not-allowed disabled:opacity-40"
+                      [disabled]="!guestPagination() || guestPage() <= 1"
+                      (click)="goToGuestPage(guestPage() - 1)"
+                    >
+                      <fa-icon [icon]="icons['chevronLeft']" aria-hidden="true" />
+                      {{ i18n.t('guests.previous') }}
+                    </button>
+                    <span class="text-[11px] text-muted">
+                      {{ i18n.t('guests.page', { page: guestPage(), total: guestPagination()?.total_pages ?? 1 }) }}
+                    </span>
+                    <button
+                      type="button"
+                      class="inline-flex h-10 items-center gap-1.5 rounded-xl border border-line bg-surface px-3 text-xs font-semibold text-ink transition hover:border-brand/40 disabled:cursor-not-allowed disabled:opacity-40"
+                      [disabled]="!guestPagination() || guestPage() >= (guestPagination()?.total_pages ?? 1)"
+                      (click)="goToGuestPage(guestPage() + 1)"
+                    >
+                      {{ i18n.t('guests.next') }}
+                      <fa-icon [icon]="icons['chevronRight']" aria-hidden="true" />
+                    </button>
+                  </div>
+                </nav>
+              }
+            </div>
 
             <p
               class="mt-4 flex items-start gap-2 rounded-xl border border-line bg-surface-raised/40 p-3 text-[10px] leading-5 text-muted"

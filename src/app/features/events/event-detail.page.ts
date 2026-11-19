@@ -1,11 +1,23 @@
-import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
+import {
+  Component,
+  computed,
+  DestroyRef,
+  effect,
+  inject,
+  input,
+  PLATFORM_ID,
+  signal,
+  untracked,
+} from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { DOCUMENT, isPlatformBrowser } from '@angular/common';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { TranslationKey } from '../../core/i18n/translations';
 import { Pagination } from '../../core/api/api.models';
+import { GuestListEntry, GuestsQuery } from '../../core/data/guests.repository';
 import {
   EventExportDocument,
   ReportExportFormat,
@@ -25,9 +37,14 @@ import { WorkspaceStore } from '../../core/services/workspace.store';
 import { EVENT_TYPE_ICONS, ICONS } from '../../core/ui/icons';
 import { ActivityPresenter } from '../../shared/services/activity.presenter';
 import { toApiError } from '../../core/api/api-error';
-import { AvatarComponent } from '../../shared/components/avatar.component';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog.component';
 import { GuestDialogComponent } from '../../shared/components/guest-dialog.component';
+import {
+  PersonCardComponent,
+  PersonMetaItem,
+  PersonPrimaryAction,
+} from '../../shared/components/person-card.component';
+import { SkeletonComponent } from '../../shared/components/skeleton.component';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
 import { TemplateArtworkComponent } from '../../shared/components/template-artwork.component';
 
@@ -54,9 +71,10 @@ function isoDaysAgo(days: number): string {
     RouterLink,
     ReactiveFormsModule,
     FaIconComponent,
-    AvatarComponent,
     ConfirmDialogComponent,
     GuestDialogComponent,
+    PersonCardComponent,
+    SkeletonComponent,
     StatusBadgeComponent,
     TemplateArtworkComponent,
   ],
@@ -69,6 +87,9 @@ export class EventDetailPage {
   private readonly share = inject(ShareService);
   private readonly reports = inject(ReportsRepository);
   private readonly downloads = inject(DownloadService);
+  private readonly document = inject(DOCUMENT);
+  private readonly platformId = inject(PLATFORM_ID);
+  private readonly destroyRef = inject(DestroyRef);
 
   protected readonly store = inject(WorkspaceStore);
   protected readonly i18n = inject(I18nService);
@@ -79,6 +100,13 @@ export class EventDetailPage {
   protected readonly tab = signal<DetailTab>('overview');
   protected readonly guestSearch = signal('');
   protected readonly guestFilter = signal<GuestFilter>('all');
+  protected readonly guestPage = signal(1);
+  protected readonly guestItems = signal<GuestListEntry[]>([]);
+  protected readonly guestPagination = signal<Pagination | null>(null);
+  protected readonly guestListLoading = signal(false);
+  protected readonly guestListLoaded = signal(false);
+  private guestRequestSeq = 0;
+  private guestDebounce: ReturnType<typeof setTimeout> | null = null;
   protected readonly guestDialogOpen = signal(false);
   protected readonly guestEditTarget = signal<Guest | null>(null);
   protected readonly exportOpen = signal(false);
@@ -175,17 +203,14 @@ export class EventDetailPage {
     return !Number.isFinite(start) || !Number.isFinite(end) || (end - start) / 86_400_000 + 1 > 366;
   });
 
-  protected readonly filteredGuests = computed<Guest[]>(() => {
-    const term = this.guestSearch().trim().toLocaleLowerCase(this.i18n.locale());
-    const filter = this.guestFilter();
-    return this.guests()
-      .filter((guest) => filter === 'all' || guest.status === filter)
-      .filter((guest) => {
-        if (!term) {
-          return true;
-        }
-        return `${guest.name} ${guest.email}`.toLocaleLowerCase(this.i18n.locale()).includes(term);
-      });
+  protected readonly guestRangeLabel = computed(() => {
+    const pagination = this.guestPagination();
+    if (!pagination || pagination.total === 0) {
+      return '';
+    }
+    const start = (pagination.page - 1) * pagination.page_size + 1;
+    const end = Math.min(pagination.page * pagination.page_size, pagination.total);
+    return `${start}–${end} / ${pagination.total}`;
   });
 
   protected readonly guestFilters: Array<{ id: GuestFilter; labelKey: TranslationKey }> = [
@@ -298,13 +323,157 @@ export class EventDetailPage {
       const event = this.event();
       untracked(() => {
         void this.loadActivity(1);
+        void this.loadGuests();
         this.coverForm.reset({ url: event?.coverUrl ?? '' });
       });
+    });
+    this.destroyRef.onDestroy(() => {
+      if (this.guestDebounce) {
+        clearTimeout(this.guestDebounce);
+      }
     });
   }
 
   protected setTab(tab: DetailTab): void {
     this.tab.set(tab);
+    if (tab === 'guests' && !this.guestListLoaded()) {
+      void this.loadGuests();
+    }
+  }
+
+  /** Pesquisa/filtro/paginação de convidados, sempre no servidor. */
+  protected async loadGuests(): Promise<void> {
+    const seq = ++this.guestRequestSeq;
+    this.guestListLoading.set(true);
+    const query: GuestsQuery = {
+      event_id: this.eventId(),
+      status: this.guestFilter(),
+      q: this.guestSearch().trim() || undefined,
+      page: this.guestPage(),
+      page_size: 10,
+    };
+    try {
+      const result = await this.store.guestsPage(query);
+      if (seq !== this.guestRequestSeq) {
+        return;
+      }
+      const event = this.event();
+      this.guestItems.set(
+        result.items.map((entry) => ({
+          guest: entry.guest,
+          event: event ?? entry.event,
+        })),
+      );
+      this.guestPagination.set(result.pagination);
+      this.guestListLoaded.set(true);
+    } catch (error: unknown) {
+      if (seq === this.guestRequestSeq) {
+        this.guestItems.set([]);
+        this.toasts.error(toApiError(error).message);
+      }
+    } finally {
+      if (seq === this.guestRequestSeq) {
+        this.guestListLoading.set(false);
+      }
+    }
+  }
+
+  protected onGuestSearch(value: string): void {
+    this.guestSearch.set(value);
+    this.guestPage.set(1);
+    if (this.guestDebounce) {
+      clearTimeout(this.guestDebounce);
+    }
+    this.guestDebounce = setTimeout(() => void this.loadGuests(), 300);
+  }
+
+  protected setGuestFilter(filter: GuestFilter): void {
+    this.guestFilter.set(filter);
+    this.guestPage.set(1);
+    void this.loadGuests();
+  }
+
+  protected goToGuestPage(page: number): void {
+    const pagination = this.guestPagination();
+    if (!pagination || page < 1 || page > pagination.total_pages || page === this.guestPage()) {
+      return;
+    }
+    this.guestPage.set(page);
+    void this.loadGuests();
+    if (isPlatformBrowser(this.platformId)) {
+      this.document.getElementById('event-guests-list')?.scrollIntoView({ block: 'start' });
+    }
+  }
+
+  protected guestMeta(entry: GuestListEntry): PersonMetaItem[] {
+    return [
+      {
+        icon: 'clock',
+        label: `${this.i18n.t('guests.tableInvited')}: ${this.i18n.shortDate(entry.guest.invitedAt, entry.event.timezone)}`,
+      },
+      {
+        icon: 'envelopeOpen',
+        label: entry.guest.openedAt
+          ? `${this.i18n.t('guests.opened')} · ${this.i18n.relative(entry.guest.openedAt)}`
+          : this.i18n.t('guests.notOpened'),
+      },
+      {
+        icon: 'location',
+        label: `${this.i18n.t('eventDetail.table.table')}: ${entry.guest.tableName ?? '—'}`,
+      },
+    ];
+  }
+
+  protected guestPrimary(entry: GuestListEntry): PersonPrimaryAction | null {
+    if (!this.isHost() || !entry.guest.phone) {
+      return null;
+    }
+    return {
+      id: 'whatsapp',
+      label: this.i18n.t('guests.whatsappShort'),
+      icon: ICONS['whatsapp'],
+      hint: this.i18n.t('guests.whatsapp'),
+    };
+  }
+
+  protected guestActions() {
+    const items = [
+      { id: 'edit', label: this.i18n.t('guests.editAction'), icon: ICONS['pen'] },
+      { id: 'resend', label: this.i18n.t('eventDetail.resend'), icon: ICONS['paperPlane'] },
+      { id: 'ticket', label: this.i18n.t('eventDetail.ticket'), icon: ICONS['ticket'] },
+      {
+        id: 'remove',
+        label: this.i18n.t('guests.remove'),
+        icon: ICONS['trash'],
+        tone: 'danger' as const,
+      },
+    ];
+    return this.isHost() ? items : [];
+  }
+
+  protected onGuestPrimary(action: string, entry: GuestListEntry): void {
+    if (action === 'whatsapp') {
+      this.forwardWhatsApp(entry.guest);
+    }
+  }
+
+  protected onGuestAction(action: string, entry: GuestListEntry): void {
+    switch (action) {
+      case 'edit':
+        this.openGuestEdit(entry.guest);
+        break;
+      case 'resend':
+        void this.resend(entry.guest);
+        break;
+      case 'ticket':
+        void this.downloadTicket(entry.guest);
+        break;
+      case 'remove':
+        void this.removeGuest(entry.guest);
+        break;
+      default:
+        break;
+    }
   }
 
   protected countFor(filter: GuestFilter): number {
@@ -527,6 +696,7 @@ export class EventDetailPage {
   protected closeGuestDialog(): void {
     this.guestDialogOpen.set(false);
     this.guestEditTarget.set(null);
+    void this.loadGuests();
   }
 
   protected toggleExport(): void {
@@ -711,6 +881,7 @@ export class EventDetailPage {
     try {
       await this.store.removeGuest(guest.id);
       this.toasts.success(this.i18n.t('guests.removed'));
+      await this.loadGuests();
     } catch (error: unknown) {
       this.toasts.error(toApiError(error).message);
     }

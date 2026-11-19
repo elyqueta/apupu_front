@@ -194,6 +194,13 @@ export type ApiTeamMemberOrigin = 'convidado' | 'email';
 export type ApiTaskStatus = 'por_fazer' | 'em_curso' | 'concluida';
 export type ApiTaskPriority = 'baixa' | 'normal' | 'alta';
 
+/** Pré-visualização de membros devolvida em todas as respostas de equipa. */
+export interface ApiTeamMemberPreview {
+  id: string;
+  display_name: string | null;
+  avatar_url: string | null;
+}
+
 /** Equipa com o resumo do evento e o papel da conta autenticada. */
 export interface ApiTeam {
   id: string;
@@ -205,6 +212,9 @@ export interface ApiTeam {
   category: ApiTeamCategory;
   description: string | null;
   member_count: number;
+  task_count: number;
+  completed_task_count: number;
+  members_preview: ApiTeamMemberPreview[];
   open_task_count: number;
   created_at: string;
   updated_at: string;

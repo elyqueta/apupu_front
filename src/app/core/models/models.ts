@@ -269,6 +269,13 @@ export type TeamMemberOrigin = 'convidado' | 'email';
 export type TaskStatus = 'por_fazer' | 'em_curso' | 'concluida';
 export type TaskPriority = 'baixa' | 'normal' | 'alta';
 
+/** Membro mostrado no cartão da equipa (sem emails, até 4 entradas). */
+export interface TeamMemberPreview {
+  id: string;
+  displayName: string | null;
+  avatarUrl: string | null;
+}
+
 export interface Team {
   id: string;
   eventId: string;
@@ -279,6 +286,9 @@ export interface Team {
   category: TeamCategory;
   description: string | null;
   memberCount: number;
+  taskCount: number;
+  completedTaskCount: number;
+  membersPreview: TeamMemberPreview[];
   openTaskCount: number;
   createdAt: string;
   updatedAt: string;

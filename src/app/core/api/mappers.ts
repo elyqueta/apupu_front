@@ -252,6 +252,13 @@ export function mapTeam(team: ApiTeam): Team {
     category: team.category,
     description: team.description,
     memberCount: team.member_count,
+    taskCount: team.task_count ?? 0,
+    completedTaskCount: team.completed_task_count ?? 0,
+    membersPreview: (team.members_preview ?? []).map((member) => ({
+      id: member.id,
+      displayName: member.display_name,
+      avatarUrl: member.avatar_url,
+    })),
     openTaskCount: team.open_task_count,
     createdAt: team.created_at,
     updatedAt: team.updated_at,

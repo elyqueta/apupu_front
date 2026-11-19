@@ -56,6 +56,8 @@ export interface ActionMenuItem {
               type="button"
               role="menuitem"
               [disabled]="item.disabled"
+              [attr.aria-disabled]="item.disabled ? 'true' : null"
+              [attr.title]="item.disabled ? disabledHint() || null : null"
               [class]="itemClass(item)"
               (click)="select(item)"
             >
@@ -74,6 +76,8 @@ export class ActionMenuComponent {
   readonly items = input.required<ActionMenuItem[]>();
   /** Rótulo acessível do trigger; por omissão "Mais ações". */
   readonly triggerLabel = input<string>('');
+  /** Explicação mostrada como tooltip quando um item está desativado. */
+  readonly disabledHint = input<string>('');
 
   readonly selected = output<string>();
 

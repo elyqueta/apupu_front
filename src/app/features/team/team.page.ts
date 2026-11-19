@@ -1,10 +1,9 @@
 import { Component, computed, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, ParamMap, Router, RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { teamErrorMessage } from '../../core/i18n/team-errors';
-import { I18nService } from '../../core/i18n/i18n.service';
-import { TranslationKey } from '../../core/i18n/translations';
+import { toApiError } from '../../core/api/api-error';
+import { TeamsRepository } from '../../core/data/teams.repository';
 import {
   DEFAULT_TEAM_FILTERS,
   hasActiveTeamFilters,
@@ -17,17 +16,33 @@ import {
   teamFiltersToParams,
   teamFiltersToQuery,
 } from '../../core/data/teams.query';
-import { Team, TeamCategory, TeamEventStatus, TeamMyRole } from '../../core/models/models';
+import { teamErrorMessage } from '../../core/i18n/team-errors';
+import { I18nService } from '../../core/i18n/i18n.service';
+import { TranslationKey } from '../../core/i18n/translations';
+import {
+  EventStatus,
+  Team,
+  TeamCategory,
+  TeamEventStatus,
+  TeamManager,
+  TeamMyRole,
+} from '../../core/models/models';
 import { TeamsStore } from '../../core/services/teams.store';
+import { ToastService } from '../../core/services/toast.service';
 import { WorkspaceStore } from '../../core/services/workspace.store';
 import { ICONS } from '../../core/ui/icons';
+import { AvatarStackComponent } from '../../shared/components/avatar-stack.component';
 import { SkeletonComponent } from '../../shared/components/skeleton.component';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
+import { StatCardComponent } from '../../shared/components/stat-card.component';
+import { TeamFormDialogComponent, TeamFormValue } from './team-form-dialog.component';
 
 const PAGE_SIZE = 12;
 const SEARCH_DEBOUNCE_MS = 300;
 /** Acima deste número de eventos, o filtro de evento ganha pesquisa. */
 const EVENT_SEARCH_THRESHOLD = 8;
+
+type TeamTab = 'teams' | 'managers';
 
 interface FilterChip {
   id: 'q' | 'role' | 'eventStatus' | 'category' | 'event' | 'mine';
@@ -39,12 +54,21 @@ interface SelectOption<T extends string> {
   labelKey: TranslationKey;
 }
 
+interface ManagerGroup {
+  eventId: string;
+  title: string;
+  startsAt: string | null;
+  status: EventStatus;
+  timezone: string;
+  members: TeamManager[];
+}
+
 /**
  * Lista global de equipas (`/equipas`).
  *
- * Os filtros são aplicados no servidor e sincronizados com o URL, para
- * que uma ligação partilhada reabra exatamente a mesma vista. O estado
- * dos filtros vive em signals; a lista em `TeamsStore` (limpa no logout).
+ * Os filtros são aplicados no servidor e sincronizados com o URL, para que
+ * uma ligação partilhada reabra exatamente a mesma vista. O separador de
+ * gestores é só leitura e carrega `GET /host/managers` sob demanda.
  */
 @Component({
   selector: 'app-team-page',
@@ -53,21 +77,34 @@ interface SelectOption<T extends string> {
     FaIconComponent,
     SkeletonComponent,
     StatusBadgeComponent,
+    AvatarStackComponent,
+    StatCardComponent,
+    TeamFormDialogComponent,
   ],
   templateUrl: './team.page.html',
 })
 export class TeamPage {
   private readonly store = inject(TeamsStore);
+  private readonly repository = inject(TeamsRepository);
   private readonly workspace = inject(WorkspaceStore);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly toasts = inject(ToastService);
   protected readonly i18n = inject(I18nService);
   protected readonly icons = ICONS;
 
   protected readonly filters = signal<TeamFilters>({ ...DEFAULT_TEAM_FILTERS });
   protected readonly searchInput = signal('');
   protected readonly eventSearch = signal('');
+  protected readonly tab = signal<TeamTab>('teams');
+
+  protected readonly formOpen = signal(false);
+  protected readonly formSaving = signal(false);
+  protected readonly formTeam = signal<Team | null>(null);
+
+  protected readonly managerSearch = signal('');
+  protected readonly managersLoading = signal(false);
 
   /** Eventos a que o utilizador tem acesso; a API decide a lista. */
   protected readonly events = this.workspace.events;
@@ -197,28 +234,110 @@ export class TeamPage {
     this.hasFilters() ? 'teams.emptyFilteredHint' : 'teams.emptyHint',
   );
 
+  /* ----------------------- Gestores de eventos (só leitura) ---------------------- */
+
+  protected readonly managers = this.workspace.teamMembers;
+
+  protected readonly managerStats = computed(() => {
+    const managers = this.managers();
+    return {
+      managers: managers.length,
+      events: new Set(managers.map((manager) => manager.eventId)).size,
+      accounts: managers.filter((manager) => manager.hasAccount).length,
+    };
+  });
+
+  protected readonly managerGroups = computed<ManagerGroup[]>(() => {
+    const term = this.managerSearch().trim().toLocaleLowerCase(this.i18n.locale());
+    const byEvent = new Map<string, TeamManager[]>();
+
+    for (const member of this.managers()) {
+      const list = byEvent.get(member.eventId) ?? [];
+      list.push(member);
+      byEvent.set(member.eventId, list);
+    }
+
+    return [...byEvent.entries()]
+      .map(([eventId, members]) => {
+        const event = this.workspace.eventById(eventId);
+        const summary = members[0].event;
+        return {
+          eventId,
+          title: event?.title ?? summary.title,
+          startsAt: event?.startsAt ?? summary.startsAt,
+          status: event?.status ?? summary.status,
+          timezone: event?.timezone ?? 'Africa/Luanda',
+          members: [...members].sort((a, b) => a.email.localeCompare(b.email)),
+        } satisfies ManagerGroup;
+      })
+      .filter(
+        (group) =>
+          !term ||
+          group.title.toLocaleLowerCase(this.i18n.locale()).includes(term) ||
+          group.members.some((member) =>
+            member.email.toLocaleLowerCase(this.i18n.locale()).includes(term),
+          ),
+      )
+      .sort((a, b) => (a.startsAt ?? '').localeCompare(b.startsAt ?? ''));
+  });
+
+  protected readonly managerErrorMessage = computed(() => {
+    const error = this.workspace.teamError();
+    return error ? teamErrorMessage(this.i18n, error) : '';
+  });
+
   constructor() {
     const initial = teamFiltersFromParams(this.route.snapshot.queryParamMap);
     this.filters.set(initial);
     this.searchInput.set(initial.q);
+    this.tab.set(this.tabFromParams(this.route.snapshot.queryParamMap));
 
     this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe((params) => {
       const next = teamFiltersFromParams(params);
-      if (sameTeamFilters(next, this.filters())) {
+      const nextTab = this.tabFromParams(params);
+      const filtersChanged = !sameTeamFilters(next, this.filters());
+      const tabChanged = nextTab !== this.tab();
+      if (!filtersChanged && !tabChanged) {
         return;
       }
       this.filters.set(next);
       this.searchInput.set(next.q);
-      this.load();
+      this.tab.set(nextTab);
+      if (nextTab === 'managers') {
+        void this.loadManagers();
+      } else if (filtersChanged || tabChanged) {
+        this.load();
+      }
     });
 
-    this.load();
+    if (this.tab() === 'managers') {
+      void this.loadManagers();
+    } else {
+      this.load();
+    }
 
     this.destroyRef.onDestroy(() => {
       if (this.debounce !== null) {
         clearTimeout(this.debounce);
       }
     });
+  }
+
+  protected setTab(tab: TeamTab): void {
+    if (this.tab() === tab) {
+      return;
+    }
+    this.tab.set(tab);
+    this.syncUrl(this.filters(), tab);
+    if (tab === 'managers') {
+      void this.loadManagers();
+    } else {
+      this.load();
+    }
+  }
+
+  protected setManagerSearch(value: string): void {
+    this.managerSearch.set(value);
   }
 
   protected setSearch(value: string): void {
@@ -312,6 +431,44 @@ export class TeamPage {
     void this.store.refresh();
   }
 
+  protected openCreate(): void {
+    this.formTeam.set(null);
+    this.formOpen.set(true);
+  }
+
+  protected closeForm(): void {
+    if (!this.formSaving()) {
+      this.formOpen.set(false);
+    }
+  }
+
+  protected async saveTeam(value: TeamFormValue): Promise<void> {
+    if (this.formSaving()) {
+      return;
+    }
+    this.formSaving.set(true);
+    try {
+      const editing = this.formTeam();
+      const team = editing
+        ? await this.repository.update(editing.id, {
+            name: value.name,
+            category: value.category,
+            description: value.description,
+          })
+        : await this.repository.create(value);
+      this.store.upsert(team);
+      this.formOpen.set(false);
+      this.toasts.success(this.i18n.t(editing ? 'teams.form.updated' : 'teams.form.created'));
+      if (!editing) {
+        await this.router.navigate(['/equipas', team.id]);
+      }
+    } catch (error: unknown) {
+      this.toasts.error(teamErrorMessage(this.i18n, toApiError(error)));
+    } finally {
+      this.formSaving.set(false);
+    }
+  }
+
   protected roleLabel(role: TeamMyRole): string {
     return this.i18n.t(this.roleLabelKey(role));
   }
@@ -339,18 +496,72 @@ export class TeamPage {
       : this.i18n.t('teams.openTasks', { count: team.openTaskCount });
   }
 
-  private applyFilters(filters: TeamFilters): void {
-    this.filters.set(filters);
-    void this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: teamFiltersToParams(filters),
+  protected progressLabel(team: Team): string {
+    return this.i18n.t('teams.progress', {
+      completed: team.completedTaskCount,
+      total: team.taskCount,
+    });
+  }
+
+  protected progressPercent(team: Team): number {
+    return team.taskCount > 0
+      ? Math.round((team.completedTaskCount / team.taskCount) * 100)
+      : 0;
+  }
+
+  protected previewNames(team: Team): string[] {
+    return team.membersPreview.map(
+      (member) => member.displayName ?? this.i18n.t('teams.previewFallback'),
+    );
+  }
+
+  protected previewImages(team: Team): Array<string | null> {
+    return team.membersPreview.map((member) => member.avatarUrl);
+  }
+
+  private tabFromParams(params: ParamMap): TeamTab {
+    return params.get('tab') === 'gestores' ? 'managers' : 'teams';
+  }
+
+  private queryFor(filters: TeamFilters, tab: TeamTab): Record<string, unknown> {
+    return {
+      ...this.route.snapshot.queryParams,
+      ...teamFiltersToParams(filters),
+      tab: tab === 'managers' ? 'gestores' : null,
+    };
+  }
+
+  private syncUrl(filters: TeamFilters, tab: TeamTab): void {
+    void this.router.navigate(['/equipas'], {
+      queryParams: this.queryFor(filters, tab),
       replaceUrl: true,
     });
-    this.load();
+  }
+
+  private applyFilters(filters: TeamFilters): void {
+    this.filters.set(filters);
+    this.syncUrl(filters, this.tab());
+    if (this.tab() === 'managers') {
+      void this.loadManagers();
+    } else {
+      this.load();
+    }
   }
 
   private load(): void {
     void this.store.load(teamFiltersToQuery(this.filters(), PAGE_SIZE));
+  }
+
+  private async loadManagers(): Promise<void> {
+    this.managersLoading.set(true);
+    try {
+      await this.workspace.reloadTeam();
+    } catch (error: unknown) {
+      // O erro fica no WorkspaceStore e é mostrado no separador.
+      void error;
+    } finally {
+      this.managersLoading.set(false);
+    }
   }
 
   private roleLabelKey(role: TeamMyRole): TranslationKey {

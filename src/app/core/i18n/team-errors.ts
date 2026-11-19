@@ -8,6 +8,7 @@ import { TranslationKey } from './translations';
  */
 const TEAM_ERROR_KEYS: Record<string, TranslationKey> = {
   task_complete_forbidden: 'errors.taskCompleteForbidden',
+  task_reassign_forbidden: 'errors.taskReassignForbidden',
   task_edit_forbidden: 'errors.taskEditForbidden',
   task_not_found: 'errors.taskNotFound',
   member_has_open_tasks: 'errors.memberHasOpenTasks',

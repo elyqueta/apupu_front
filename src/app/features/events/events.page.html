@@ -25,7 +25,7 @@
     </a>
   </header>
 
-  <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+  <app-stat-grid>
     <app-stat-card
       [label]="i18n.t('events.stat.active')"
       [value]="stats().events"
@@ -54,7 +54,7 @@
       [icon]="icons['chartLine']"
       tone="aqua"
     />
-  </div>
+  </app-stat-grid>
 
   <div
     class="flex flex-col gap-3 rounded-3xl border border-line bg-surface/70 p-3 shadow-card backdrop-blur-2xl lg:flex-row lg:items-center lg:justify-between"

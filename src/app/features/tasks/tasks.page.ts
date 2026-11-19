@@ -14,12 +14,20 @@ import { ToastService } from '../../core/services/toast.service';
 import { WorkspaceStore } from '../../core/services/workspace.store';
 import { ICONS } from '../../core/ui/icons';
 import { SkeletonComponent } from '../../shared/components/skeleton.component';
+import { StatCardComponent } from '../../shared/components/stat-card.component';
+import { StatGridComponent } from '../../shared/components/stat-grid.component';
 
 const PAGE_SIZE = 12;
 
 @Component({
   selector: 'app-tasks-page',
-  imports: [ReactiveFormsModule, FaIconComponent, SkeletonComponent],
+  imports: [
+    ReactiveFormsModule,
+    FaIconComponent,
+    SkeletonComponent,
+    StatCardComponent,
+    StatGridComponent,
+  ],
   templateUrl: './tasks.page.html',
 })
 export class TasksPage {
@@ -47,6 +55,17 @@ export class TasksPage {
 
   protected readonly events = this.store.events;
   protected readonly managers = signal<EventManager[]>([]);
+  protected readonly allTasks = this.store.tasks;
+  protected readonly allTasksLoading = this.store.loading;
+
+  protected readonly taskStats = computed(() => {
+    const tasks = this.allTasks();
+    return {
+      total: tasks.length,
+      pending: tasks.filter((task) => !task.done).length,
+      done: tasks.filter((task) => task.done).length,
+    };
+  });
 
   protected readonly statusOptions: Array<{ id: TaskStatusFilter; labelKey: TranslationKey }> = [
     { id: 'all', labelKey: 'tasks.status.all' },

@@ -35,6 +35,7 @@ import { AvatarStackComponent } from '../../shared/components/avatar-stack.compo
 import { SkeletonComponent } from '../../shared/components/skeleton.component';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
 import { StatCardComponent } from '../../shared/components/stat-card.component';
+import { StatGridComponent } from '../../shared/components/stat-grid.component';
 import { TeamFormDialogComponent, TeamFormValue } from './team-form-dialog.component';
 
 const PAGE_SIZE = 12;
@@ -79,6 +80,7 @@ interface ManagerGroup {
     StatusBadgeComponent,
     AvatarStackComponent,
     StatCardComponent,
+    StatGridComponent,
     TeamFormDialogComponent,
   ],
   templateUrl: './team.page.html',
@@ -138,6 +140,18 @@ export class TeamPage {
   protected readonly loading = this.store.loading;
   protected readonly error = this.store.error;
   protected readonly pagination = this.store.pagination;
+
+  protected readonly teamStats = computed(() => {
+    const teams = this.items();
+    const total = this.pagination()?.total;
+    return {
+      teams: total ?? teams.length,
+      members: teams.reduce((sum, team) => sum + team.memberCount, 0),
+      openTasks: teams.reduce((sum, team) => sum + team.openTaskCount, 0),
+      doneTasks: teams.reduce((sum, team) => sum + team.completedTaskCount, 0),
+      pageHint: total === undefined ? this.i18n.t('teams.statCurrentPageHint') : '',
+    };
+  });
 
   private debounce: ReturnType<typeof setTimeout> | null = null;
 

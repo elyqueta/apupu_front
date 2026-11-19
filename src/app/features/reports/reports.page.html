@@ -99,7 +99,7 @@
     </div>
   </header>
 
-  <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+  <app-stat-grid>
     <app-stat-card
       [label]="i18n.t('reports.statResponses')"
       [value]="i18n.number(stats().confirmed + stats().declined)"
@@ -133,7 +133,7 @@
       tone="coral"
       [sparkline]="[3, 4, 4, 5, 5, 6, stats().declined]"
     />
-  </div>
+  </app-stat-grid>
 
   <div
     class="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-4 xl:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)]"

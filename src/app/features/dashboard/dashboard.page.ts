@@ -13,6 +13,7 @@ import { ActivityPresenter } from '../../shared/services/activity.presenter';
 import { AvatarComponent } from '../../shared/components/avatar.component';
 import { EventCardComponent } from '../../shared/components/event-card.component';
 import { StatCardComponent } from '../../shared/components/stat-card.component';
+import { StatGridComponent } from '../../shared/components/stat-grid.component';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
 import { TemplateArtworkComponent } from '../../shared/components/template-artwork.component';
 
@@ -30,6 +31,7 @@ interface ChartDay {
     AvatarComponent,
     EventCardComponent,
     StatCardComponent,
+    StatGridComponent,
     StatusBadgeComponent,
     TemplateArtworkComponent,
   ],

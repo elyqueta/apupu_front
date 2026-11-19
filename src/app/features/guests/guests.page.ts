@@ -16,6 +16,7 @@ import { AvatarComponent } from '../../shared/components/avatar.component';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog.component';
 import { GuestDialogComponent } from '../../shared/components/guest-dialog.component';
 import { StatCardComponent } from '../../shared/components/stat-card.component';
+import { StatGridComponent } from '../../shared/components/stat-grid.component';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
 
 type StatusFilter = 'all' | RsvpStatus;
@@ -31,6 +32,7 @@ type GuestEntry = { guest: Guest; event: HostEvent };
     ConfirmDialogComponent,
     GuestDialogComponent,
     StatCardComponent,
+    StatGridComponent,
     StatusBadgeComponent,
   ],
   templateUrl: './guests.page.html',

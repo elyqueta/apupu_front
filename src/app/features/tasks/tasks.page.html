@@ -17,6 +17,31 @@
     </div>
   </header>
 
+  @if (allTasksLoading()) {
+    <app-skeleton variant="cards" />
+  } @else {
+    <app-stat-grid [columns]="3">
+      <app-stat-card
+        [label]="i18n.t('tasks.statTotal')"
+        [value]="i18n.number(taskStats().total)"
+        [icon]="icons['checklist']"
+        tone="brand"
+      />
+      <app-stat-card
+        [label]="i18n.t('tasks.statPending')"
+        [value]="i18n.number(taskStats().pending)"
+        [icon]="icons['hourglass']"
+        tone="amber"
+      />
+      <app-stat-card
+        [label]="i18n.t('tasks.statDone')"
+        [value]="i18n.number(taskStats().done)"
+        [icon]="icons['checkDouble']"
+        tone="mint"
+      />
+    </app-stat-grid>
+  }
+
   <form
     class="grid gap-2 rounded-3xl border border-line bg-surface/70 p-3 shadow-card backdrop-blur-2xl sm:grid-cols-2 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)_minmax(0,1fr)]"
     [formGroup]="createForm"

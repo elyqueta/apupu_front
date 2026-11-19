@@ -19,15 +19,18 @@ import {
 } from '../../core/data/teams.query';
 import { Team, TeamCategory, TeamEventStatus, TeamMyRole } from '../../core/models/models';
 import { TeamsStore } from '../../core/services/teams.store';
+import { WorkspaceStore } from '../../core/services/workspace.store';
 import { ICONS } from '../../core/ui/icons';
 import { SkeletonComponent } from '../../shared/components/skeleton.component';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
 
 const PAGE_SIZE = 12;
 const SEARCH_DEBOUNCE_MS = 300;
+/** Acima deste número de eventos, o filtro de evento ganha pesquisa. */
+const EVENT_SEARCH_THRESHOLD = 8;
 
 interface FilterChip {
-  id: 'q' | 'role' | 'eventStatus' | 'category' | 'mine';
+  id: 'q' | 'role' | 'eventStatus' | 'category' | 'event' | 'mine';
   label: string;
 }
 
@@ -55,6 +58,7 @@ interface SelectOption<T extends string> {
 })
 export class TeamPage {
   private readonly store = inject(TeamsStore);
+  private readonly workspace = inject(WorkspaceStore);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
@@ -63,6 +67,35 @@ export class TeamPage {
 
   protected readonly filters = signal<TeamFilters>({ ...DEFAULT_TEAM_FILTERS });
   protected readonly searchInput = signal('');
+  protected readonly eventSearch = signal('');
+
+  /** Eventos a que o utilizador tem acesso; a API decide a lista. */
+  protected readonly events = this.workspace.events;
+  protected readonly eventSearchEnabled = computed(
+    () => this.events().length > EVENT_SEARCH_THRESHOLD,
+  );
+  protected readonly eventOptions = computed(() => {
+    const term = this.eventSearch().trim().toLocaleLowerCase(this.i18n.locale());
+    const selected = this.filters().eventId;
+    if (!term) {
+      return this.events();
+    }
+    return this.events().filter(
+      (event) =>
+        event.id === selected ||
+        event.title.toLocaleLowerCase(this.i18n.locale()).includes(term),
+    );
+  });
+  protected readonly selectedEventTitle = computed(() => {
+    const id = this.filters().eventId;
+    if (!id) {
+      return '';
+    }
+    return (
+      this.events().find((event) => event.id === id)?.title ??
+      this.i18n.t('teams.unknownEvent')
+    );
+  });
 
   protected readonly items = this.store.items;
   protected readonly loading = this.store.loading;
@@ -120,6 +153,9 @@ export class TeamPage {
         id: 'category',
         label: this.i18n.t(this.categoryLabelKey(filters.category)),
       });
+    }
+    if (filters.eventId) {
+      chips.push({ id: 'event', label: this.selectedEventTitle() });
     }
     if (filters.mine) {
       chips.push({ id: 'mine', label: this.i18n.t('teams.filterMine') });
@@ -220,6 +256,15 @@ export class TeamPage {
     });
   }
 
+  protected setEvent(value: string): void {
+    this.eventSearch.set('');
+    this.applyFilters({ ...this.filters(), eventId: value, page: 1 });
+  }
+
+  protected setEventSearch(value: string): void {
+    this.eventSearch.set(value);
+  }
+
   protected setMine(value: boolean): void {
     this.applyFilters({ ...this.filters(), mine: value, page: 1 });
   }
@@ -240,6 +285,10 @@ export class TeamPage {
       case 'category':
         this.applyFilters({ ...filters, category: 'all', page: 1 });
         return;
+      case 'event':
+        this.eventSearch.set('');
+        this.applyFilters({ ...filters, eventId: '', page: 1 });
+        return;
       case 'mine':
         this.applyFilters({ ...filters, mine: false, page: 1 });
     }
@@ -247,6 +296,7 @@ export class TeamPage {
 
   protected clearFilters(): void {
     this.searchInput.set('');
+    this.eventSearch.set('');
     this.applyFilters({ ...DEFAULT_TEAM_FILTERS });
   }
 

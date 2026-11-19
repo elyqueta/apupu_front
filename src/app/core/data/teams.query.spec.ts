@@ -9,6 +9,8 @@ import {
   teamFiltersToQuery,
 } from './teams.query';
 
+const EVENT_ID = 'f1111111-1111-4111-8111-111111111111';
+
 describe('team filters <-> URL', () => {
   it('reads every supported query param', () => {
     const filters = teamFiltersFromParams(
@@ -17,6 +19,7 @@ describe('team filters <-> URL', () => {
         papel: 'gestor',
         estado: 'em_curso',
         categoria: 'catering',
+        evento: EVENT_ID,
         minhas: '1',
         pagina: '3',
       }),
@@ -27,6 +30,7 @@ describe('team filters <-> URL', () => {
       role: 'gestor',
       eventStatus: 'em_curso',
       category: 'catering',
+      eventId: EVENT_ID,
       mine: true,
       page: 3,
     });
@@ -40,6 +44,7 @@ describe('team filters <-> URL', () => {
           papel: 'inventado',
           estado: 'amanha',
           categoria: 'nenhuma',
+          evento: 'não-é-um-id',
           pagina: '0',
         }),
       ),
@@ -52,6 +57,7 @@ describe('team filters <-> URL', () => {
       papel: null,
       estado: null,
       categoria: null,
+      evento: null,
       minhas: null,
       pagina: null,
     });
@@ -61,6 +67,7 @@ describe('team filters <-> URL', () => {
       role: 'membro',
       eventStatus: 'agendado',
       category: 'musica',
+      eventId: EVENT_ID,
       mine: true,
       page: 2,
     };
@@ -69,6 +76,7 @@ describe('team filters <-> URL', () => {
       papel: 'membro',
       estado: 'agendado',
       categoria: 'musica',
+      evento: EVENT_ID,
       minhas: '1',
       pagina: '2',
     });
@@ -80,6 +88,7 @@ describe('team filters <-> URL', () => {
       role: 'anfitriao',
       eventStatus: 'rascunho',
       category: 'decoracao',
+      eventId: EVENT_ID,
       mine: false,
       page: 4,
     };
@@ -100,6 +109,7 @@ describe('team filters <-> URL', () => {
       role: undefined,
       eventStatus: undefined,
       category: undefined,
+      eventId: undefined,
       mine: undefined,
       page: 1,
       pageSize: 12,
@@ -112,6 +122,7 @@ describe('team filters <-> URL', () => {
           role: 'gestor',
           eventStatus: 'concluido',
           category: 'catering',
+          eventId: EVENT_ID,
           mine: true,
           page: 2,
         },
@@ -122,6 +133,7 @@ describe('team filters <-> URL', () => {
       role: 'gestor',
       eventStatus: 'concluido',
       category: 'catering',
+      eventId: EVENT_ID,
       mine: true,
       page: 2,
       pageSize: 20,
@@ -131,11 +143,18 @@ describe('team filters <-> URL', () => {
   it('detects active filters and compares them', () => {
     expect(hasActiveTeamFilters(DEFAULT_TEAM_FILTERS)).toBe(false);
     expect(hasActiveTeamFilters({ ...DEFAULT_TEAM_FILTERS, mine: true })).toBe(true);
+    expect(hasActiveTeamFilters({ ...DEFAULT_TEAM_FILTERS, eventId: EVENT_ID })).toBe(true);
     expect(
       sameTeamFilters(DEFAULT_TEAM_FILTERS, { ...DEFAULT_TEAM_FILTERS, q: '  ' }),
     ).toBe(true);
     expect(
       sameTeamFilters(DEFAULT_TEAM_FILTERS, { ...DEFAULT_TEAM_FILTERS, page: 2 }),
+    ).toBe(false);
+    expect(
+      sameTeamFilters(DEFAULT_TEAM_FILTERS, {
+        ...DEFAULT_TEAM_FILTERS,
+        eventId: EVENT_ID,
+      }),
     ).toBe(false);
   });
 });

@@ -15,6 +15,8 @@ export interface TeamFilters {
   role: TeamRoleFilter;
   eventStatus: TeamEventStatusFilter;
   category: TeamCategoryFilter;
+  /** Evento selecionado; vazio significa todos. */
+  eventId: string;
   mine: boolean;
   page: number;
 }
@@ -24,6 +26,7 @@ export const DEFAULT_TEAM_FILTERS: TeamFilters = {
   role: 'all',
   eventStatus: 'all',
   category: 'all',
+  eventId: '',
   mine: false,
   page: 1,
 };
@@ -54,7 +57,16 @@ function positivePage(value: string | null): number {
   return Number.isInteger(parsed) && parsed > 0 ? parsed : 1;
 }
 
-/** Lê os filtros do URL (`q`, `papel`, `estado`, `minhas`, `categoria`, `pagina`). */
+/** Um id de evento inválido no URL é ignorado, para não gerar um 400. */
+function eventId(value: string | null): string {
+  const id = value?.trim() ?? '';
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id) ? id : '';
+}
+
+/**
+ * Lê os filtros do URL (`q`, `papel`, `estado`, `minhas`, `categoria`,
+ * `evento`, `pagina`).
+ */
 export function teamFiltersFromParams(params: ParamMap): TeamFilters {
   const mine = params.get('minhas');
   return {
@@ -62,6 +74,7 @@ export function teamFiltersFromParams(params: ParamMap): TeamFilters {
     role: pick(params.get('papel'), ROLES, 'all'),
     eventStatus: pick(params.get('estado'), EVENT_STATUSES, 'all'),
     category: pick(params.get('categoria'), CATEGORIES, 'all'),
+    eventId: eventId(params.get('evento')),
     mine: mine === '1' || mine === 'true',
     page: positivePage(params.get('pagina')),
   };
@@ -80,6 +93,7 @@ export function teamFiltersToParams(
     papel: filters.role === 'all' ? null : filters.role,
     estado: filters.eventStatus === 'all' ? null : filters.eventStatus,
     categoria: filters.category === 'all' ? null : filters.category,
+    evento: filters.eventId || null,
     minhas: filters.mine ? '1' : null,
     pagina: filters.page > 1 ? String(filters.page) : null,
   };
@@ -93,6 +107,7 @@ export function teamFiltersToQuery(filters: TeamFilters, pageSize: number): Team
     role: filters.role === 'all' ? undefined : filters.role,
     eventStatus: filters.eventStatus === 'all' ? undefined : filters.eventStatus,
     category: filters.category === 'all' ? undefined : filters.category,
+    eventId: filters.eventId || undefined,
     mine: filters.mine || undefined,
     page: filters.page,
     pageSize,
@@ -105,6 +120,7 @@ export function hasActiveTeamFilters(filters: TeamFilters): boolean {
     filters.role !== 'all' ||
     filters.eventStatus !== 'all' ||
     filters.category !== 'all' ||
+    filters.eventId !== '' ||
     filters.mine
   );
 }
@@ -115,6 +131,7 @@ export function sameTeamFilters(a: TeamFilters, b: TeamFilters): boolean {
     a.role === b.role &&
     a.eventStatus === b.eventStatus &&
     a.category === b.category &&
+    a.eventId === b.eventId &&
     a.mine === b.mine &&
     a.page === b.page
   );

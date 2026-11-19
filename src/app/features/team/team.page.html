@@ -42,7 +42,48 @@
         />
       </label>
 
-      <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
+        <div class="block sm:col-span-2">
+          <label class="block">
+            <span
+              class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted"
+            >
+              {{ i18n.t('teams.filterEvent') }}
+            </span>
+            @if (eventSearchEnabled()) {
+              <input
+                type="search"
+                class="mb-2 h-9 w-full rounded-xl border border-line bg-surface-raised px-3 text-xs text-ink outline-none transition placeholder:text-muted/60 focus:border-brand/50 focus-visible:ring-2 focus-visible:ring-brand/60"
+                [placeholder]="i18n.t('teams.searchEventPlaceholder')"
+                [attr.aria-label]="i18n.t('teams.searchEvent')"
+                [value]="eventSearch()"
+                (input)="setEventSearch($any($event.target).value)"
+              />
+            }
+            <div class="relative">
+              <select
+                class="h-11 w-full appearance-none rounded-xl border border-line bg-surface-raised pl-3 pr-9 text-sm text-ink outline-none transition focus:border-brand/50 focus-visible:ring-2 focus-visible:ring-brand/60"
+                [value]="filters().eventId"
+                [attr.aria-label]="i18n.t('teams.filterEvent')"
+                (change)="setEvent($any($event.target).value)"
+              >
+                <option value="">{{ i18n.t('teams.allEvents') }}</option>
+                @for (event of eventOptions(); track event.id) {
+                  <option [value]="event.id">{{ event.title }}</option>
+                }
+              </select>
+              <fa-icon
+                [icon]="icons['chevronDown']"
+                class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-muted"
+                aria-hidden="true"
+              />
+            </div>
+          </label>
+          @if (eventSearchEnabled() && eventOptions().length === 0) {
+            <p class="mt-1.5 text-[10px] text-muted">{{ i18n.t('teams.noEventMatches') }}</p>
+          }
+        </div>
+
         <label class="block">
           <span
             class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted"

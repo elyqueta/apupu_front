@@ -1,4 +1,4 @@
-import { Component, effect, HostListener, inject, input, output, signal } from '@angular/core';
+import { Component, effect, HostListener, inject, input, output } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { I18nService } from '../../core/i18n/i18n.service';

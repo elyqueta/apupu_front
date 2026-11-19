@@ -251,7 +251,7 @@ export class TeamDetailPage {
     return !this.isAssignee(task) || this.busyId() !== null;
   }
 
-  protected reassignDisabled(task: TeamTask): boolean {
+  protected reassignDisabled(_task: TeamTask): boolean {
     return !this.canManage() || this.busyId() !== null;
   }
 

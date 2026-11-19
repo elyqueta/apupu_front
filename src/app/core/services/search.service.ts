@@ -4,6 +4,7 @@ import { I18nService } from '../i18n/i18n.service';
 import { TranslationKey } from '../i18n/translations';
 import { ICONS } from '../ui/icons';
 import { NotificationPresenter } from '../../shared/services/notification.presenter';
+import { Resettable, SessionCache } from './session-cache';
 import { WorkspaceStore } from './workspace.store';
 
 /** Máximo de itens por categoria para manter a lista curta em mobile. */
@@ -42,12 +43,26 @@ interface PageShortcut {
  * insensível a maiúsculas e acentos.
  */
 @Injectable({ providedIn: 'root' })
-export class SearchService {
+export class SearchService implements Resettable {
   private readonly store = inject(WorkspaceStore);
   private readonly i18n = inject(I18nService);
   private readonly notifications = inject(NotificationPresenter);
+  private readonly sessions = inject(SessionCache);
 
+  /** `true` depois do primeiro `warm()`, para não repetir pedidos. */
   private warmed = false;
+
+  constructor() {
+    this.sessions.register(this);
+  }
+
+  /**
+   * Esquece o aquecimento quando a sessão muda, para a próxima pesquisa voltar
+   * a carregar convidados/tarefas do novo anfitrião.
+   */
+  reset(): void {
+    this.warmed = false;
+  }
 
   private readonly pages: PageShortcut[] = [
     { labelKey: 'nav.dashboard', path: '/painel', icon: ICONS['dashboard'] },
@@ -64,7 +79,12 @@ export class SearchService {
     { labelKey: 'shell.newEvent', path: '/criar-evento', icon: ICONS['plus'] },
   ];
 
-  /** Aquece convidados e tarefas (uma só vez) para os incluir nas sugestões. */
+  /**
+   * Aquece convidados e tarefas para as sugestões. Corre **uma só vez por
+   * sessão**: dispara no máximo 2 GETs (`/host/guests` e `/host/tasks`) na
+   * primeira abertura da pesquisa; focos e teclas seguintes não fazem pedidos.
+   * O `reset()` volta a permitir o aquecimento quando a sessão muda.
+   */
   warm(): void {
     if (this.warmed) {
       return;

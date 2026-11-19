@@ -7,6 +7,7 @@ import { API_BASE_URL } from '../api/api-config';
 import { apiRequestInterceptor } from '../api/api.interceptor';
 import { ApiEvent, ApiInvitation, ApiNotification, ApiTask } from '../api/api.models';
 import { SearchService } from './search.service';
+import { SessionCache } from './session-cache';
 import { WorkspaceStore } from './workspace.store';
 
 const BASE = 'http://localhost:3000/api/v1';
@@ -197,5 +198,20 @@ describe('SearchService · suggestions', () => {
 
   it('returns nothing for an empty term', () => {
     expect(search.suggest('   ')).toEqual([]);
+  });
+
+  it('only warms guests and tasks once, even after repeated warm() calls', () => {
+    search.warm();
+    search.warm();
+    search.warm();
+    expect(http.match((request) => request.url.endsWith('/host/guests')).length).toBe(0);
+    expect(http.match((request) => request.url.endsWith('/host/tasks')).length).toBe(0);
+  });
+
+  it('re-warms after a session reset', () => {
+    TestBed.inject(SessionCache).resetAll();
+    search.warm();
+    http.expectOne((request) => request.url.endsWith('/host/guests')).flush(page([guestFixture()]));
+    http.expectOne((request) => request.url.endsWith('/host/tasks')).flush(page([taskFixture()]));
   });
 });

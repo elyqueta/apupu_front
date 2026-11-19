@@ -1275,6 +1275,20 @@ const PT_AO = {
   'errors.teamMemberNotFound': 'Este membro já não pertence à equipa.',
   'errors.memberAlreadyActive': 'Este membro já tem acesso ao evento.',
   'errors.memberWithoutEmail': 'Este membro não tem e-mail para receber o convite.',
+
+  // Convite personalizado /isy — Isilda Manuel.
+  'isy.kicker': 'Venha celebrar comigo',
+  'isy.anos': 'anos',
+  'isy.aniv': 'Aniversário',
+  'isy.msg': 'Venha celebrar neste dia comigo a graça do Senhor na minha vida.',
+  'isy.date': 'Quinta-feira, 7 de Janeiro de 2027',
+  'isy.time': 'às 14h',
+  'isy.t1': 'Comunhão',
+  'isy.t2': 'Mesa',
+  'isy.t3': 'Dança',
+  'isy.dress': 'Traje',
+  'isy.white': 'Branco',
+  'isy.obs': 'Não esqueça do presente e não se atrase.',
 } as const;
 
 export type TranslationKey = keyof typeof PT_AO;
@@ -2548,6 +2562,20 @@ const EN: Record<TranslationKey, string> = {
   'errors.teamMemberNotFound': 'This member no longer belongs to the team.',
   'errors.memberAlreadyActive': 'This member already has access to the event.',
   'errors.memberWithoutEmail': 'This member has no email to receive the invite.',
+
+  // Personal invitation /isy — Isilda Manuel.
+  'isy.kicker': 'Come celebrate with me',
+  'isy.anos': 'years',
+  'isy.aniv': 'Birthday',
+  'isy.msg': "Come celebrate with me on this day the Lord's grace in my life.",
+  'isy.date': 'Thursday, January 7th, 2027',
+  'isy.time': 'at 2:00 PM',
+  'isy.t1': 'Fellowship',
+  'isy.t2': 'Table',
+  'isy.t3': 'Dance',
+  'isy.dress': 'Dress code',
+  'isy.white': 'White',
+  'isy.obs': "Don't forget the gift, and please don't be late.",
 };
 
 export const TRANSLATIONS: Record<Locale, Record<TranslationKey, string>> = {

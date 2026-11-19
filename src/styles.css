@@ -7,6 +7,11 @@
   --font-sans: 'Figtree', Arial, Helvetica, sans-serif;
   --font-display: 'Figtree', Arial, Helvetica, sans-serif;
 
+  /* Convite / Isilda — famílias usadas apenas na rota /isy. */
+  --font-cap: 'Cinzel', Georgia, serif;
+  --font-serif: 'Cormorant Garamond', Georgia, serif;
+  --font-script: 'Pinyon Script', cursive;
+
   /* Conto Contigo — tokens da marca expostos ao Tailwind (`bg-cc-*`, `text-cc-*`). */
   --color-cc-primary: var(--cc-primary-700);
   --color-cc-primary-900: var(--cc-primary-900);
@@ -109,6 +114,17 @@
   --ap-danger-hover: var(--cc-danger-hover);
   --ap-info: var(--cc-info);
   --ap-shadow-card: var(--cc-shadow-card);
+
+  /* Convite / Isilda — dourado sobre creme. */
+  --isy-bg: #fdf8f1;
+  --isy-bg-2: #f8efe1;
+  --isy-gold: #a98336;
+  --isy-gold-1: #8f6b27;
+  --isy-gold-2: #d8b768;
+  --isy-gold-3: #a98336;
+  --isy-gold-4: #ecd596;
+  --isy-ink: #7a5d25;
+  --isy-line: rgba(169, 131, 54, 0.55);
 }
 
 :root[data-font-size='large'] {
@@ -122,13 +138,13 @@
 @layer utilities {
   p[class~='uppercase'][class*='tracking-'][class*='text-[9px]']:not([class~='text-amber']):not(
       [class~='text-mint']
-    ):not([class~='text-coral']),
+    ):not([class~='text-coral']):not(app-isy-invite *),
   p[class~='uppercase'][class*='tracking-'][class*='text-[10px]']:not([class~='text-amber']):not(
       [class~='text-mint']
-    ):not([class~='text-coral']),
+    ):not([class~='text-coral']):not(app-isy-invite *),
   p[class~='uppercase'][class*='tracking-'][class*='text-[11px]']:not([class~='text-amber']):not(
       [class~='text-mint']
-    ):not([class~='text-coral']) {
+    ):not([class~='text-coral']):not(app-isy-invite *) {
     color: var(--ap-text-muted);
     font-weight: 400;
     letter-spacing: normal;
@@ -149,6 +165,44 @@
 
   :root[data-font-size] [class~='text-[11px]'] {
     font-size: calc(11px * var(--ap-font-scale));
+  }
+
+  /* Convite / Isilda — brilho metálico e entrada escalonada. */
+  .isy-gold-text {
+    background: linear-gradient(
+      110deg,
+      var(--isy-gold-1) 0%,
+      var(--isy-gold-2) 30%,
+      var(--isy-gold-3) 55%,
+      var(--isy-gold-4) 75%,
+      var(--isy-gold-1) 100%
+    );
+    background-size: 220% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+    animation-name: isy-shine;
+    animation-duration: 7s;
+    animation-timing-function: ease-in-out;
+    animation-iteration-count: infinite;
+  }
+
+  .isy-rise {
+    opacity: 0;
+    animation-name: isy-rise;
+    animation-duration: 0.9s;
+    animation-timing-function: ease-out;
+    animation-fill-mode: forwards;
+  }
+
+  /* Quando os dois se juntam, mantém-se a entrada e o brilho metálico. */
+  .isy-rise.isy-gold-text {
+    animation-name: isy-rise, isy-shine;
+    animation-duration: 0.9s, 7s;
+    animation-timing-function: ease-out, ease-in-out;
+    animation-iteration-count: 1, infinite;
+    animation-fill-mode: forwards, none;
   }
 }
 
@@ -174,6 +228,17 @@
   --ap-danger-hover: var(--cc-danger-hover);
   --ap-info: var(--cc-info);
   --ap-shadow-card: 0 4px 14px rgb(0 0 0 / 0.22);
+
+  /* Convite / Isilda — dourado mais luminoso sobre castanho-preto quente. */
+  --isy-bg: #14110c;
+  --isy-bg-2: #1d1810;
+  --isy-gold: #d9b865;
+  --isy-gold-1: #b8933f;
+  --isy-gold-2: #f0d890;
+  --isy-gold-3: #cfa94f;
+  --isy-gold-4: #fff0c2;
+  --isy-ink: #e6cf94;
+  --isy-line: rgba(217, 184, 101, 0.5);
 }
 
 @layer base {
@@ -296,5 +361,39 @@ svg.svg-inline--fa.fa-beat {
   }
   50% {
     transform: scale(1.12);
+  }
+}
+
+/* Convite / Isilda — animações da página /isy. */
+@keyframes isy-shine {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+@keyframes isy-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .isy-gold-text,
+  .isy-rise.isy-gold-text {
+    animation-name: none;
+  }
+
+  .isy-rise {
+    animation: none;
+    opacity: 1;
   }
 }

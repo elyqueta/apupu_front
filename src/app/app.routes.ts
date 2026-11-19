@@ -203,6 +203,12 @@ export const routes: Routes = [
       import('./features/invitation/invitation.page').then((m) => m.InvitationPage),
   },
   {
+    path: 'isy',
+    title: 'Convite · Isilda Manuel',
+    loadComponent: () =>
+      import('./features/isy-invite/isy-invite.component').then((m) => m.IsyInviteComponent),
+  },
+  {
     path: '**',
     title: 'Conto Contigo · Página não encontrada',
     loadComponent: () => import('./features/not-found/not-found.page').then((m) => m.NotFoundPage),

@@ -85,7 +85,7 @@
       <select
         [value]="kind()"
         (change)="kind.set($any($event.target).value); applyFilters()"
-        class="h-10 rounded-xl border border-line bg-surface-raised/70 px-3 text-xs text-ink outline-none transition focus:border-brand/50"
+        class="h-10 w-full min-w-0 max-w-full rounded-xl border border-line bg-surface-raised/70 px-3 text-xs text-ink outline-none transition focus:border-brand/50"
         [attr.aria-label]="i18n.t('notifications.filterKind')"
       >
         <option value="">{{ i18n.t('notifications.allKinds') }}</option>
@@ -97,7 +97,7 @@
       <select
         [value]="eventId()"
         (change)="eventId.set($any($event.target).value); applyFilters()"
-        class="h-10 rounded-xl border border-line bg-surface-raised/70 px-3 text-xs text-ink outline-none transition focus:border-brand/50"
+        class="h-10 w-full min-w-0 max-w-full rounded-xl border border-line bg-surface-raised/70 px-3 text-xs text-ink outline-none transition focus:border-brand/50"
         [attr.aria-label]="i18n.t('notifications.filterEvent')"
       >
         <option value="">{{ i18n.t('notifications.allEvents') }}</option>

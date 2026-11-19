@@ -76,6 +76,19 @@ export class TasksPage {
       this.q().trim() !== '',
   );
 
+  /** Em mobile os filtros começam recolhidos; em `md+` estão sempre visíveis. */
+  protected readonly filtersOpen = signal(false);
+
+  /** Quantos filtros estão ativos, para o badge do botão "Filtros". */
+  protected readonly activeFilterCount = computed(
+    () =>
+      (this.status() !== 'all' ? 1 : 0) +
+      (this.assignee() !== 'all' ? 1 : 0) +
+      (this.eventId() ? 1 : 0) +
+      (this.managerId() ? 1 : 0) +
+      (this.q().trim() ? 1 : 0),
+  );
+
   protected readonly rangeLabel = computed(() => {
     const pagination = this.pagination();
     if (!pagination || pagination.total === 0) {

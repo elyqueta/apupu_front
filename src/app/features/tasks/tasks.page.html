@@ -35,13 +35,13 @@
       />
     </label>
 
-    <label class="block">
+    <label class="block min-w-0">
       <span class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
         {{ i18n.t('tasks.event') }}
       </span>
       <select
         formControlName="eventId"
-        class="h-10 w-full rounded-xl border border-line bg-surface-raised/70 px-3 text-xs text-ink outline-none transition focus:border-brand/50"
+        class="h-10 w-full min-w-0 max-w-full rounded-xl border border-line bg-surface-raised/70 px-3 text-xs text-ink outline-none transition focus:border-brand/50"
       >
         <option value="">{{ i18n.t('tasks.noEvent') }}</option>
         @for (event of events(); track event.id) {
@@ -50,14 +50,14 @@
       </select>
     </label>
 
-    <label class="block">
+    <label class="block min-w-0">
       <span class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
         {{ i18n.t('tasks.manager') }}
       </span>
       <select
         formControlName="managerId"
         [disabled]="!createForm.controls.eventId.value || managersLoading()"
-        class="h-10 w-full rounded-xl border border-line bg-surface-raised/70 px-3 text-xs text-ink outline-none transition focus:border-brand/50 disabled:opacity-60"
+        class="h-10 w-full min-w-0 max-w-full rounded-xl border border-line bg-surface-raised/70 px-3 text-xs text-ink outline-none transition focus:border-brand/50 disabled:opacity-60"
       >
         <option value="">{{ i18n.t('tasks.ownTask') }}</option>
         @for (manager of managers(); track manager.id) {
@@ -82,90 +82,130 @@
     class="flex flex-col gap-3 rounded-3xl border border-line bg-surface/70 p-3 shadow-card backdrop-blur-2xl"
     (submit)="$event.preventDefault(); applyFilters()"
   >
-    <div class="flex flex-wrap items-center gap-1.5">
-      @for (option of statusOptions; track option.id) {
-        <button
-          type="button"
-          class="inline-flex h-9 items-center rounded-xl px-3 text-xs font-semibold transition"
-          [class]="
-            status() === option.id
-              ? 'border border-brand/30 bg-brand/15 text-ink'
-              : 'border border-transparent text-muted hover:bg-surface-raised/60 hover:text-ink'
-          "
-          (click)="status.set(option.id); applyFilters()"
-        >
-          {{ i18n.t(option.labelKey) }}
-        </button>
-      }
-
-      <span class="mx-1 hidden h-5 w-px bg-line sm:block"></span>
-
-      @for (option of assigneeOptions; track option.id) {
-        <button
-          type="button"
-          class="inline-flex h-9 items-center rounded-xl px-3 text-xs font-semibold transition"
-          [class]="
-            assignee() === option.id
-              ? 'border border-iris/30 bg-iris/15 text-ink'
-              : 'border border-transparent text-muted hover:bg-surface-raised/60 hover:text-ink'
-          "
-          (click)="assignee.set(option.id); applyFilters()"
-        >
-          {{ i18n.t(option.labelKey) }}
-        </button>
-      }
-    </div>
-
-    <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-      <label class="relative flex items-center">
-        <fa-icon
-          [icon]="icons['search']"
-          class="pointer-events-none absolute left-3 text-xs text-muted"
-          aria-hidden="true"
-        />
-        <input
-          type="search"
-          [value]="q()"
-          (input)="q.set($any($event.target).value)"
-          class="h-10 w-full rounded-xl border border-line bg-surface-raised/70 pl-9 pr-3 text-xs text-ink outline-none transition placeholder:text-muted/60 focus:border-brand/50"
-          [placeholder]="i18n.t('tasks.search')"
-          [attr.aria-label]="i18n.t('tasks.search')"
-        />
-      </label>
-
-      <select
-        [value]="eventId()"
-        (change)="eventId.set($any($event.target).value); managerId.set(''); applyFilters()"
-        class="h-10 rounded-xl border border-line bg-surface-raised/70 px-3 text-xs text-ink outline-none transition focus:border-brand/50"
-        [attr.aria-label]="i18n.t('tasks.event')"
-      >
-        <option value="">{{ i18n.t('tasks.allEvents') }}</option>
-        @for (event of events(); track event.id) {
-          <option [value]="event.id">{{ event.title }}</option>
+    <button
+      type="button"
+      class="flex h-11 w-full items-center justify-between gap-2 rounded-xl border border-line bg-surface-raised/70 px-3 text-xs font-semibold text-ink transition hover:border-brand/40 md:hidden"
+      [attr.aria-expanded]="filtersOpen()"
+      aria-controls="tasks-filters"
+      (click)="filtersOpen.set(!filtersOpen())"
+    >
+      <span class="inline-flex min-w-0 items-center gap-2">
+        <fa-icon [icon]="icons['filter']" class="text-[11px] text-muted" aria-hidden="true" />
+        {{ i18n.t('tasks.filters') }}
+        @if (activeFilterCount() > 0) {
+          <span
+            class="grid size-4 place-items-center rounded-full bg-brand text-[9px] font-semibold text-on-secondary"
+          >
+            {{ activeFilterCount() }}
+          </span>
         }
-      </select>
+      </span>
+      <fa-icon
+        [icon]="icons['chevronDown']"
+        class="text-[10px] text-muted transition"
+        [class.rotate-180]="filtersOpen()"
+        aria-hidden="true"
+      />
+    </button>
 
-      <div class="flex items-center justify-end gap-2">
-        @if (hasFilters()) {
+    <div
+      id="tasks-filters"
+      class="min-w-0 flex-col gap-3 md:flex"
+      [class.flex]="filtersOpen()"
+      [class.hidden]="!filtersOpen()"
+    >
+      <div class="flex min-w-0 flex-wrap items-center gap-1.5">
+        @for (option of statusOptions; track option.id) {
           <button
             type="button"
-            class="inline-flex h-9 items-center rounded-xl px-3 text-xs font-semibold text-muted transition hover:text-ink"
-            (click)="clearFilters()"
+            class="inline-flex h-9 items-center rounded-xl px-3 text-xs font-semibold transition"
+            [class]="
+              status() === option.id
+                ? 'border border-brand/30 bg-brand/15 text-ink'
+                : 'border border-transparent text-muted hover:bg-surface-raised/60 hover:text-ink'
+            "
+            (click)="status.set(option.id); applyFilters()"
           >
-            {{ i18n.t('tasks.clearFilters') }}
+            {{ i18n.t(option.labelKey) }}
           </button>
         }
-        <button
-          type="submit"
-          class="inline-flex h-9 items-center gap-2 rounded-xl bg-brand px-3 text-xs font-semibold text-on-secondary transition hover:bg-secondary-hover"
-        >
-          <fa-icon [icon]="icons['filter']" class="text-[10px]" aria-hidden="true" />
-          {{ i18n.t('tasks.applyFilters') }}
-        </button>
-      </div>
-    </div>
 
-    <p class="text-[10px] text-muted">{{ rangeLabel() }}</p>
+        <span class="mx-1 hidden h-5 w-px bg-line sm:block"></span>
+
+        @for (option of assigneeOptions; track option.id) {
+          <button
+            type="button"
+            class="inline-flex h-9 items-center rounded-xl px-3 text-xs font-semibold transition"
+            [class]="
+              assignee() === option.id
+                ? 'border border-iris/30 bg-iris/15 text-ink'
+                : 'border border-transparent text-muted hover:bg-surface-raised/60 hover:text-ink'
+            "
+            (click)="assignee.set(option.id); applyFilters()"
+          >
+            {{ i18n.t(option.labelKey) }}
+          </button>
+        }
+      </div>
+
+      <div class="grid min-w-0 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+        <label class="relative flex min-w-0 items-center">
+          <fa-icon
+            [icon]="icons['search']"
+            class="pointer-events-none absolute left-3 text-xs text-muted"
+            aria-hidden="true"
+          />
+          <input
+            type="search"
+            [value]="q()"
+            (input)="q.set($any($event.target).value)"
+            class="h-10 w-full rounded-xl border border-line bg-surface-raised/70 pl-9 pr-3 text-xs text-ink outline-none transition placeholder:text-muted/60 focus:border-brand/50"
+            [placeholder]="i18n.t('tasks.search')"
+            [attr.aria-label]="i18n.t('tasks.search')"
+          />
+        </label>
+
+        <label class="relative block min-w-0">
+          <select
+            [value]="eventId()"
+            (change)="eventId.set($any($event.target).value); managerId.set(''); applyFilters()"
+            class="h-10 w-full min-w-0 max-w-full appearance-none rounded-xl border border-line bg-surface-raised/70 pl-3 pr-9 text-xs text-ink outline-none transition focus:border-brand/50"
+            [attr.aria-label]="i18n.t('tasks.event')"
+          >
+            <option value="">{{ i18n.t('tasks.allEvents') }}</option>
+            @for (event of events(); track event.id) {
+              <option [value]="event.id">{{ event.title }}</option>
+            }
+          </select>
+          <fa-icon
+            [icon]="icons['chevronDown']"
+            class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-muted"
+            aria-hidden="true"
+          />
+        </label>
+
+        <div class="flex min-w-0 items-center justify-end gap-2">
+          @if (hasFilters()) {
+            <button
+              type="button"
+              class="inline-flex h-9 items-center rounded-xl px-3 text-xs font-semibold text-muted transition hover:text-ink"
+              (click)="clearFilters()"
+            >
+              {{ i18n.t('tasks.clearFilters') }}
+            </button>
+          }
+          <button
+            type="submit"
+            class="inline-flex h-9 items-center gap-2 rounded-xl bg-brand px-3 text-xs font-semibold text-on-secondary transition hover:bg-secondary-hover"
+          >
+            <fa-icon [icon]="icons['filter']" class="text-[10px]" aria-hidden="true" />
+            {{ i18n.t('tasks.applyFilters') }}
+          </button>
+        </div>
+      </div>
+
+      <p class="text-[10px] text-muted">{{ rangeLabel() }}</p>
+    </div>
   </form>
 
   @if (loading()) {
@@ -221,18 +261,22 @@
             <p class="mt-1 flex flex-wrap items-center gap-2 text-[10px] text-muted">
               @if (task.eventTitle) {
                 <span
-                  class="inline-flex items-center gap-1 rounded-full border border-line bg-surface px-2 py-0.5"
+                  class="inline-flex max-w-full min-w-0 items-center gap-1 rounded-full border border-line bg-surface px-2 py-0.5"
                 >
-                  <fa-icon [icon]="icons['calendar']" class="text-[8px]" aria-hidden="true" />
-                  {{ task.eventTitle }}
+                  <fa-icon
+                    [icon]="icons['calendar']"
+                    class="shrink-0 text-[8px]"
+                    aria-hidden="true"
+                  />
+                  <span class="truncate">{{ task.eventTitle }}</span>
                 </span>
               }
               @if (task.managerEmail) {
                 <span
-                  class="inline-flex items-center gap-1 rounded-full border border-iris/30 bg-iris/10 px-2 py-0.5 text-iris"
+                  class="inline-flex max-w-full min-w-0 items-center gap-1 rounded-full border border-iris/30 bg-iris/10 px-2 py-0.5 text-iris"
                 >
-                  <fa-icon [icon]="icons['user']" class="text-[8px]" aria-hidden="true" />
-                  {{ task.managerEmail }}
+                  <fa-icon [icon]="icons['user']" class="shrink-0 text-[8px]" aria-hidden="true" />
+                  <span class="truncate">{{ task.managerEmail }}</span>
                 </span>
               } @else {
                 <span

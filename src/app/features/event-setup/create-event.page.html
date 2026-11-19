@@ -1,4 +1,4 @@
-<section class="flex flex-col gap-4 md:gap-5">
+<section class="flex flex-col gap-4 pb-24 md:gap-5 md:pb-0">
   @if (created(); as event) {
     <article
       class="relative overflow-hidden rounded-4xl border border-line bg-surface p-6 shadow-card backdrop-blur-2xl animate-rise sm:p-8"
@@ -131,7 +131,7 @@
     </header>
 
     <ol
-      class="grid gap-2 rounded-3xl border border-line bg-surface/70 p-2.5 shadow-card backdrop-blur-2xl sm:grid-cols-2 lg:grid-cols-4"
+      class="grid grid-cols-2 gap-2 rounded-3xl border border-line bg-surface/70 p-2.5 shadow-card backdrop-blur-2xl lg:grid-cols-4"
     >
       @for (wizardStep of steps; track wizardStep.id; let index = $index) {
         <li>
@@ -179,12 +179,12 @@
       }
     </ol>
 
-    <div class="grid gap-4 xl:grid-cols-[minmax(0,1.5fr)_minmax(0,0.85fr)]">
-      <form class="flex flex-col gap-4" [formGroup]="form" (ngSubmit)="publish()">
+    <div class="grid gap-3 md:gap-4 xl:grid-cols-[minmax(0,1.5fr)_minmax(0,0.85fr)]">
+      <form class="flex flex-col gap-3 md:gap-4" [formGroup]="form" (ngSubmit)="publish()">
         @switch (step()) {
           @case (0) {
             <article
-              class="rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl sm:p-6"
+              class="rounded-4xl border border-line bg-surface p-4 shadow-card backdrop-blur-2xl sm:p-6"
             >
               <div class="flex items-start justify-between gap-3">
                 <div>
@@ -200,8 +200,8 @@
                 </span>
               </div>
 
-              <div class="mt-4 grid gap-3 sm:grid-cols-2">
-                <label class="block sm:col-span-2">
+              <div class="mt-3 grid grid-cols-2 gap-3 [&>label]:min-w-0 sm:mt-4">
+                <label class="col-span-2 block">
                   <span
                     class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted"
                   >
@@ -262,7 +262,7 @@
                   }
                 </label>
 
-                <label class="block sm:col-span-2">
+                <label class="col-span-2 block">
                   <span
                     class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted"
                   >
@@ -283,96 +283,108 @@
                 </label>
               </div>
 
-              <div class="mt-5 border-t border-line pt-4">
-                <div class="flex flex-wrap items-start justify-between gap-2">
-                  <div>
+              <details class="group mt-4 border-t border-line pt-4">
+                <summary
+                  class="flex cursor-pointer list-none items-center justify-between gap-3 [&::-webkit-details-marker]:hidden"
+                >
+                  <span class="min-w-0">
                     <span
                       class="block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted"
                     >
                       {{ i18n.t('create.field.cover') }}
                     </span>
-                    <p class="mt-1 text-[11px] leading-5 text-muted">
+                    <span class="mt-1 block text-[11px] leading-5 text-muted">
                       {{ i18n.t('create.coverHint') }}
-                    </p>
-                  </div>
-                  @if (coverPreview()) {
-                    <button
-                      type="button"
-                      class="text-[10px] font-semibold text-brand-strong underline-offset-2 hover:underline"
-                      (click)="clearCover()"
-                    >
-                      {{ i18n.t('create.coverRemove') }}
-                    </button>
-                  }
-                </div>
-
-                <label class="mt-3 block">
-                  <input
-                    type="url"
-                    formControlName="coverUrl"
-                    placeholder="https://res.cloudinary.com/..."
-                    (input)="onCoverUrlInput()"
-                    class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink outline-none transition placeholder:text-muted/60 focus:border-brand/50"
-                  />
-                  @if (fieldError('coverUrl')) {
-                    <span class="mt-1 block text-[10px] text-coral">{{
-                      fieldError('coverUrl')
-                    }}</span>
-                  }
-                </label>
-
-                <div class="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center">
-                  <label
-                    class="inline-flex h-10 w-fit cursor-pointer items-center gap-2 rounded-xl border border-line bg-surface-raised px-3.5 text-xs font-semibold text-ink transition hover:border-brand/40"
-                  >
-                    <fa-icon
-                      [icon]="icons['camera']"
-                      class="text-[11px] text-muted"
-                      aria-hidden="true"
-                    />
-                    {{ i18n.t('create.coverUpload') }}
-                    <input
-                      type="file"
-                      accept="image/png,image/jpeg,image/webp"
-                      class="sr-only"
-                      (change)="onCoverFile($event)"
-                    />
-                  </label>
-                  @if (coverFile(); as file) {
-                    <span class="min-w-0 truncate text-[11px] font-medium text-brand-strong">
-                      {{ i18n.t('create.coverFileReady', { name: file.name }) }}
                     </span>
-                  } @else {
-                    <span class="text-[11px] text-muted">{{
-                      i18n.t('create.coverUploadHint')
-                    }}</span>
-                  }
-                </div>
+                  </span>
+                  <span
+                    class="grid size-9 shrink-0 place-items-center rounded-xl border border-line bg-surface-raised text-muted transition group-open:rotate-180"
+                  >
+                    <fa-icon [icon]="icons['chevronDown']" class="text-xs" aria-hidden="true" />
+                  </span>
+                </summary>
 
-                <div
-                  class="mt-3 overflow-hidden rounded-2xl border border-line bg-surface-raised/60"
-                >
-                  @if (coverPreview(); as cover) {
-                    <img
-                      [src]="cover"
-                      [alt]="i18n.t('create.field.cover')"
-                      class="aspect-[16/9] w-full object-cover"
-                      loading="lazy"
-                    />
-                  } @else {
-                    <app-template-artwork
-                      [templateId]="formValue().templateId"
-                      variant="cover"
-                      [showIcon]="false"
-                      class="block"
-                    />
+                <div class="mt-3">
+                  @if (coverPreview()) {
+                    <div class="mb-2 flex justify-end">
+                      <button
+                        type="button"
+                        class="text-[10px] font-semibold text-brand-strong underline-offset-2 hover:underline"
+                        (click)="clearCover()"
+                      >
+                        {{ i18n.t('create.coverRemove') }}
+                      </button>
+                    </div>
                   }
+
+                  <label class="block">
+                    <input
+                      type="url"
+                      formControlName="coverUrl"
+                      placeholder="https://res.cloudinary.com/..."
+                      (input)="onCoverUrlInput()"
+                      class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink outline-none transition placeholder:text-muted/60 focus:border-brand/50"
+                    />
+                    @if (fieldError('coverUrl')) {
+                      <span class="mt-1 block text-[10px] text-coral">{{
+                        fieldError('coverUrl')
+                      }}</span>
+                    }
+                  </label>
+
+                  <div class="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center">
+                    <label
+                      class="inline-flex h-11 w-fit cursor-pointer items-center gap-2 rounded-xl border border-line bg-surface-raised px-3.5 text-xs font-semibold text-ink transition hover:border-brand/40"
+                    >
+                      <fa-icon
+                        [icon]="icons['camera']"
+                        class="text-[11px] text-muted"
+                        aria-hidden="true"
+                      />
+                      {{ i18n.t('create.coverUpload') }}
+                      <input
+                        type="file"
+                        accept="image/png,image/jpeg,image/webp"
+                        class="sr-only"
+                        (change)="onCoverFile($event)"
+                      />
+                    </label>
+                    @if (coverFile(); as file) {
+                      <span class="min-w-0 truncate text-[11px] font-medium text-brand-strong">
+                        {{ i18n.t('create.coverFileReady', { name: file.name }) }}
+                      </span>
+                    } @else {
+                      <span class="text-[11px] text-muted">{{
+                        i18n.t('create.coverUploadHint')
+                      }}</span>
+                    }
+                  </div>
+
+                  <div
+                    class="mt-3 overflow-hidden rounded-2xl border border-line bg-surface-raised/60"
+                  >
+                    @if (coverPreview(); as cover) {
+                      <img
+                        [src]="cover"
+                        [alt]="i18n.t('create.field.cover')"
+                        class="aspect-[16/9] w-full object-cover"
+                        loading="lazy"
+                      />
+                    } @else {
+                      <app-template-artwork
+                        [templateId]="formValue().templateId"
+                        variant="cover"
+                        [showIcon]="false"
+                        class="block"
+                      />
+                    }
+                  </div>
                 </div>
-              </div>
+              </details>
             </article>
 
             <article
-              class="rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl sm:p-6"
+              class="rounded-4xl border border-line bg-surface p-4 shadow-card backdrop-blur-2xl sm:p-6"
             >
               <div class="flex items-start justify-between gap-3">
                 <div>
@@ -388,7 +400,7 @@
                 </span>
               </div>
 
-              <div class="mt-4 grid gap-3 sm:grid-cols-2">
+              <div class="mt-3 grid grid-cols-2 gap-3 [&>label]:min-w-0 sm:mt-4">
                 <label class="block">
                   <span
                     class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted"
@@ -421,7 +433,7 @@
                   }
                 </label>
 
-                <label class="block sm:col-span-2">
+                <label class="col-span-2 block">
                   <span
                     class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted"
                   >
@@ -481,7 +493,7 @@
                   }
                 </label>
 
-                <label class="block sm:col-span-2">
+                <label class="col-span-2 block">
                   <span
                     class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted"
                   >
@@ -506,7 +518,7 @@
 
           @case (1) {
             <article
-              class="rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl sm:p-6"
+              class="rounded-4xl border border-line bg-surface p-4 shadow-card backdrop-blur-2xl sm:p-6"
             >
               <div class="flex items-start justify-between gap-3">
                 <div>
@@ -574,7 +586,7 @@
                 </div>
               }
 
-              <div class="mt-5 grid gap-3">
+              <div class="mt-4 grid gap-3">
                 <label class="block">
                   <span
                     class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted"
@@ -594,7 +606,7 @@
                   }
                 </label>
 
-                <div class="grid gap-3 sm:grid-cols-2">
+                <div class="grid grid-cols-2 gap-3 [&>label]:min-w-0">
                   <label class="block">
                     <span
                       class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted"
@@ -628,25 +640,36 @@
                   </label>
                 </div>
 
-                <label class="block">
-                  <span
-                    class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted"
+                <details class="group rounded-2xl border border-line bg-surface-raised/40">
+                  <summary
+                    class="flex cursor-pointer list-none items-center justify-between gap-3 p-3 [&::-webkit-details-marker]:hidden"
                   >
-                    {{ i18n.t('create.field.rules') }}
-                    <span class="text-muted/60">({{ i18n.t('common.optional') }})</span>
-                  </span>
-                  <textarea
-                    formControlName="rules"
-                    rows="3"
-                    [placeholder]="i18n.t('create.placeholder.rules')"
-                    class="w-full resize-y rounded-xl border border-line bg-surface-raised px-3 py-2.5 text-sm leading-6 text-ink outline-none transition placeholder:text-muted/60 focus:border-brand/50"
-                  ></textarea>
-                </label>
+                    <span
+                      class="block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted"
+                    >
+                      {{ i18n.t('create.field.rules') }}
+                      <span class="text-muted/60">({{ i18n.t('common.optional') }})</span>
+                    </span>
+                    <fa-icon
+                      [icon]="icons['chevronDown']"
+                      class="shrink-0 text-[10px] text-muted transition group-open:rotate-180"
+                      aria-hidden="true"
+                    />
+                  </summary>
+                  <div class="px-3 pb-3">
+                    <textarea
+                      formControlName="rules"
+                      rows="3"
+                      [placeholder]="i18n.t('create.placeholder.rules')"
+                      class="w-full resize-y rounded-xl border border-line bg-surface-raised px-3 py-2.5 text-sm leading-6 text-ink outline-none transition placeholder:text-muted/60 focus:border-brand/50"
+                    ></textarea>
+                  </div>
+                </details>
               </div>
             </article>
 
             <article
-              class="rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl sm:p-6"
+              class="rounded-4xl border border-line bg-surface p-4 shadow-card backdrop-blur-2xl sm:p-6"
             >
               <div class="flex flex-wrap items-start justify-between gap-3">
                 <div>
@@ -684,7 +707,7 @@
               </div>
 
               @if (form.controls.contributionEnabled.value) {
-                <div class="mt-4 grid gap-3 sm:grid-cols-2">
+                <div class="mt-3 grid grid-cols-2 gap-3 [&>label]:min-w-0 sm:mt-4">
                   <label class="block">
                     <span
                       class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted"
@@ -711,7 +734,7 @@
                       class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink outline-none transition placeholder:text-muted/60 focus:border-brand/50"
                     />
                   </label>
-                  <label class="block sm:col-span-2">
+                  <label class="col-span-2 block">
                     <span
                       class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted"
                     >
@@ -751,7 +774,7 @@
 
           @case (2) {
             <article
-              class="rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl sm:p-6"
+              class="rounded-4xl border border-line bg-surface p-4 shadow-card backdrop-blur-2xl sm:p-6"
             >
               <div class="flex flex-wrap items-start justify-between gap-3">
                 <div>
@@ -793,7 +816,7 @@
                       </button>
                     </div>
 
-                    <div class="mt-3 grid gap-3 sm:grid-cols-2">
+                    <div class="mt-3 grid grid-cols-2 gap-3 [&>label]:min-w-0">
                       <label class="block">
                         <span
                           class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted"
@@ -804,7 +827,7 @@
                           type="text"
                           formControlName="name"
                           [placeholder]="i18n.t('create.placeholder.guestName')"
-                          class="h-10 w-full rounded-xl border border-line bg-surface px-3 text-sm text-ink outline-none transition placeholder:text-muted/60 focus:border-brand/50"
+                          class="h-11 w-full rounded-xl border border-line bg-surface px-3 text-sm text-ink outline-none transition placeholder:text-muted/60 focus:border-brand/50"
                         />
                         @if (guestError(index, 'name')) {
                           <span class="mt-1 block text-[10px] text-coral">{{
@@ -823,7 +846,7 @@
                           type="email"
                           formControlName="email"
                           [placeholder]="i18n.t('create.placeholder.guestEmail')"
-                          class="h-10 w-full rounded-xl border border-line bg-surface px-3 text-sm text-ink outline-none transition placeholder:text-muted/60 focus:border-brand/50"
+                          class="h-11 w-full rounded-xl border border-line bg-surface px-3 text-sm text-ink outline-none transition placeholder:text-muted/60 focus:border-brand/50"
                         />
                         @if (guestError(index, 'email')) {
                           <span class="mt-1 block text-[10px] text-coral">{{
@@ -832,7 +855,7 @@
                         }
                       </label>
 
-                      <label class="block sm:col-span-2">
+                      <label class="col-span-2 block">
                         <span
                           class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted"
                         >
@@ -844,7 +867,7 @@
                           formControlName="phone"
                           appPhoneMask
                           [placeholder]="i18n.t('create.placeholder.guestPhone')"
-                          class="h-10 w-full rounded-xl border border-line bg-surface px-3 text-sm text-ink outline-none transition placeholder:text-muted/60 focus:border-brand/50"
+                          class="h-11 w-full rounded-xl border border-line bg-surface px-3 text-sm text-ink outline-none transition placeholder:text-muted/60 focus:border-brand/50"
                         />
                         <span class="mt-1 block text-[10px] text-muted">{{
                           i18n.t('common.phoneHint')
@@ -862,7 +885,7 @@
 
               <button
                 type="button"
-                class="mt-3 inline-flex h-10 items-center gap-2 rounded-xl border border-dashed border-brand/35 bg-brand/5 px-3.5 text-xs font-semibold text-brand-strong transition hover:bg-brand/10"
+                class="mt-3 inline-flex h-11 items-center gap-2 rounded-xl border border-dashed border-brand/35 bg-brand/5 px-3.5 text-xs font-semibold text-brand-strong transition hover:bg-brand/10"
                 (click)="addGuest()"
               >
                 <fa-icon [icon]="icons['userPlus']" class="text-[11px]" aria-hidden="true" />
@@ -884,7 +907,7 @@
 
           @case (3) {
             <article
-              class="rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl sm:p-6"
+              class="rounded-4xl border border-line bg-surface p-4 shadow-card backdrop-blur-2xl sm:p-6"
             >
               <div>
                 <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-brand-strong">
@@ -1052,13 +1075,13 @@
         }
 
         <div
-          class="flex flex-wrap items-center justify-between gap-3 rounded-3xl border border-line bg-surface/80 p-3 shadow-card backdrop-blur-2xl"
+          class="fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+3.5rem)] z-30 flex flex-wrap items-center justify-between gap-3 border-t border-line bg-surface-solid/95 px-3 py-3 backdrop-blur-2xl md:static md:inset-auto md:z-auto md:rounded-3xl md:border md:bg-surface/80 md:p-3 md:shadow-card"
         >
           <div class="min-w-0">
             @if (step() > 0) {
               <button
                 type="button"
-                class="inline-flex h-10 items-center gap-2 rounded-xl border border-line bg-surface-raised/70 px-3.5 text-xs font-semibold text-ink transition hover:border-brand/40"
+                class="inline-flex h-11 items-center gap-2 rounded-xl border border-line bg-surface-raised/70 px-3.5 text-xs font-semibold text-ink transition hover:border-brand/40"
                 (click)="previous()"
               >
                 <fa-icon
@@ -1082,7 +1105,7 @@
             @if (step() < 3) {
               <button
                 type="button"
-                class="inline-flex h-10 items-center gap-2 rounded-xl bg-brand hover:bg-secondary-hover px-4 text-xs font-semibold text-on-secondary transition"
+                class="inline-flex h-11 items-center gap-2 rounded-xl bg-brand hover:bg-secondary-hover px-4 text-xs font-semibold text-on-secondary transition"
                 (click)="next()"
               >
                 {{ i18n.t('create.next') }}
@@ -1092,7 +1115,7 @@
               <button
                 type="submit"
                 [disabled]="publishing()"
-                class="inline-flex h-10 items-center gap-2 rounded-xl bg-brand hover:bg-secondary-hover px-4 text-xs font-semibold text-on-secondary transition disabled:cursor-wait disabled:opacity-70"
+                class="inline-flex h-11 items-center gap-2 rounded-xl bg-brand hover:bg-secondary-hover px-4 text-xs font-semibold text-on-secondary transition disabled:cursor-wait disabled:opacity-70"
               >
                 @if (publishing()) {
                   <fa-icon
@@ -1115,7 +1138,7 @@
         <article
           class="overflow-hidden rounded-4xl border border-line bg-surface shadow-card backdrop-blur-2xl"
         >
-          <div class="relative h-56 overflow-hidden">
+          <div class="relative h-44 overflow-hidden sm:h-56">
             <app-template-artwork
               [templateId]="formValue().templateId"
               variant="hero"
@@ -1130,7 +1153,7 @@
             />
           </div>
 
-          <div class="p-5">
+          <div class="p-4 sm:p-5">
             <div class="flex items-center justify-between gap-2">
               <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-brand-strong">
                 {{ i18n.t('create.preview.title') }}
@@ -1138,7 +1161,7 @@
               <span class="text-[10px] text-muted">{{ i18n.t('create.preview.hint') }}</span>
             </div>
 
-            <dl class="mt-4 flex flex-col gap-3 text-[11px]">
+            <dl class="mt-3 flex flex-col gap-3 text-[11px] sm:mt-4">
               <div class="flex items-start gap-2.5">
                 <span
                   class="grid size-8 shrink-0 place-items-center rounded-xl border border-brand/25 bg-brand/10 text-brand-strong"
@@ -1215,7 +1238,7 @@
               }
             </dl>
 
-            <div class="mt-4 rounded-2xl border border-line bg-surface-raised/50 p-3">
+            <div class="mt-3 rounded-2xl border border-line bg-surface-raised/50 p-3 sm:mt-4">
               <p class="text-[9px] font-semibold uppercase tracking-[0.18em] text-muted">
                 {{ i18n.t('create.field.message') }}
               </p>

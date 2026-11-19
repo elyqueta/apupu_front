@@ -91,12 +91,12 @@
       [class.flex]="filtersOpen()"
       [class.hidden]="!filtersOpen()"
     >
-      <label class="relative block">
+      <label class="relative block min-w-0">
         <span class="sr-only">{{ i18n.t('guests.filterEvent') }}</span>
         <select
           [value]="eventFilter()"
           (change)="eventFilter.set($any($event.target).value)"
-          class="h-10 w-full appearance-none rounded-xl border border-line bg-surface-raised/70 pl-3 pr-9 text-xs text-ink outline-none transition focus:border-brand/50 sm:w-56"
+          class="h-10 w-full min-w-0 max-w-full appearance-none rounded-xl border border-line bg-surface-raised/70 pl-3 pr-9 text-xs text-ink outline-none transition focus:border-brand/50 sm:w-56"
         >
           <option value="all">{{ i18n.t('guests.allEvents') }}</option>
           @for (event of store.events(); track event.id) {
@@ -110,12 +110,12 @@
         />
       </label>
 
-      <label class="relative block">
+      <label class="relative block min-w-0">
         <span class="sr-only">{{ i18n.t('common.status') }}</span>
         <select
           [value]="statusFilter()"
           (change)="statusFilter.set($any($event.target).value)"
-          class="h-10 w-full appearance-none rounded-xl border border-line bg-surface-raised/70 pl-3 pr-9 text-xs text-ink outline-none transition focus:border-brand/50 sm:w-44"
+          class="h-10 w-full min-w-0 max-w-full appearance-none rounded-xl border border-line bg-surface-raised/70 pl-3 pr-9 text-xs text-ink outline-none transition focus:border-brand/50 sm:w-44"
         >
           @for (option of statusOptions; track option.id) {
             <option [value]="option.id">{{ i18n.t(option.labelKey) }}</option>

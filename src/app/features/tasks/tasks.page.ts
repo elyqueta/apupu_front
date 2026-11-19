@@ -13,6 +13,7 @@ import { EventManager, WorkspaceTask } from '../../core/models/models';
 import { ToastService } from '../../core/services/toast.service';
 import { WorkspaceStore } from '../../core/services/workspace.store';
 import { ICONS } from '../../core/ui/icons';
+import { PageHeaderComponent } from '../../shared/components/page-header.component';
 import { SkeletonComponent } from '../../shared/components/skeleton.component';
 import { StatCardComponent } from '../../shared/components/stat-card.component';
 import { StatGridComponent } from '../../shared/components/stat-grid.component';
@@ -24,6 +25,7 @@ const PAGE_SIZE = 12;
   imports: [
     ReactiveFormsModule,
     FaIconComponent,
+    PageHeaderComponent,
     SkeletonComponent,
     StatCardComponent,
     StatGridComponent,

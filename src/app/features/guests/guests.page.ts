@@ -16,6 +16,7 @@ import { ICONS } from '../../core/ui/icons';
 import { ActionMenuItem } from '../../shared/components/action-menu.component';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog.component';
 import { GuestDialogComponent } from '../../shared/components/guest-dialog.component';
+import { PageHeaderComponent } from '../../shared/components/page-header.component';
 import { PersonCardComponent, PersonMetaItem, PersonPrimaryAction } from '../../shared/components/person-card.component';
 import { SkeletonComponent } from '../../shared/components/skeleton.component';
 import { StatCardComponent } from '../../shared/components/stat-card.component';
@@ -40,6 +41,7 @@ const SEARCH_DEBOUNCE_MS = 300;
     FaIconComponent,
     ConfirmDialogComponent,
     GuestDialogComponent,
+    PageHeaderComponent,
     PersonCardComponent,
     SkeletonComponent,
     StatCardComponent,

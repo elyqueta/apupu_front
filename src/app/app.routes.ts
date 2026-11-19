@@ -93,23 +93,6 @@ export const routes: Routes = [
         },
       },
       {
-        // Alias antigo da pesquisa global: /eventos/:eventId?tarefa=<termo> → /tarefas?q=<termo>
-        path: 'eventos/:eventId',
-        canMatch: [(_route, _segments, snapshot) => Boolean(snapshot.queryParams['tarefa'])],
-        redirectTo: (data) => {
-          const router = inject(Router);
-          const queryParams = { ...data.queryParams };
-          const term = queryParams['tarefa'];
-          delete queryParams['tarefa'];
-          if (term !== undefined) {
-            queryParams['q'] = term;
-          } else {
-            delete queryParams['q'];
-          }
-          return router.createUrlTree(['/tarefas'], { queryParams });
-        },
-      },
-      {
         path: 'eventos/:eventId',
         title: 'Conto Contigo · Evento',
         loadComponent: () =>

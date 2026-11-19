@@ -42,7 +42,7 @@
           </div>
         </section>
       } @else if (event(); as item) {
-        <div class="flex flex-col gap-5">
+        <div class="flex flex-col gap-4 md:gap-5">
           <section
             class="rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl sm:p-7"
           >
@@ -179,10 +179,7 @@
                       maxlength="200"
                       class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink outline-none transition focus:border-brand/50"
                     />
-                    @if (
-                      editForm.controls.venue.touched &&
-                      !editForm.controls.venue.value.trim()
-                    ) {
+                    @if (editForm.controls.venue.touched && !editForm.controls.venue.value.trim()) {
                       <span class="mt-1 block text-[11px] text-coral">
                         {{ i18n.t('create.errors.required') }}
                       </span>
@@ -315,7 +312,11 @@
               </p>
             }
 
-            <form class="mt-4 flex flex-col gap-2" [formGroup]="coverForm" (ngSubmit)="setCoverUrl()">
+            <form
+              class="mt-4 flex flex-col gap-2"
+              [formGroup]="coverForm"
+              (ngSubmit)="setCoverUrl()"
+            >
               <label class="block">
                 <span
                   class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted"
@@ -330,7 +331,9 @@
                 />
               </label>
               @if (coverForm.controls.url.touched && coverForm.controls.url.invalid) {
-                <span class="text-[11px] text-coral">{{ i18n.t('eventDetail.coverUrlInvalid') }}</span>
+                <span class="text-[11px] text-coral">{{
+                  i18n.t('eventDetail.coverUrlInvalid')
+                }}</span>
               }
               <button
                 type="submit"
@@ -346,7 +349,11 @@
               <label
                 class="inline-flex h-10 cursor-pointer items-center gap-2 rounded-xl border border-line bg-surface-raised px-3.5 text-xs font-semibold text-ink transition hover:border-brand/40"
               >
-                <fa-icon [icon]="icons['camera']" class="text-[11px] text-muted" aria-hidden="true" />
+                <fa-icon
+                  [icon]="icons['camera']"
+                  class="text-[11px] text-muted"
+                  aria-hidden="true"
+                />
                 {{ i18n.t('eventDetail.coverUpload') }}
                 <input
                   type="file"
@@ -382,7 +389,9 @@
           </section>
 
           <div class="grid items-start gap-5 lg:grid-cols-[minmax(0,0.72fr)_minmax(0,1.28fr)]">
-            <section class="rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl">
+            <section
+              class="rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl"
+            >
               <div class="flex items-start justify-between gap-3">
                 <div>
                   <h2 class="text-sm font-semibold text-ink">
@@ -397,9 +406,15 @@
                 </span>
               </div>
 
-              <form class="mt-4 flex flex-col gap-3" [formGroup]="guestForm" (ngSubmit)="addGuest()">
+              <form
+                class="mt-4 flex flex-col gap-3"
+                [formGroup]="guestForm"
+                (ngSubmit)="addGuest()"
+              >
                 <label class="block">
-                  <span class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
+                  <span
+                    class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted"
+                  >
                     {{ i18n.t('common.name') }}
                   </span>
                   <input
@@ -412,7 +427,9 @@
                   />
                 </label>
                 <label class="block">
-                  <span class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
+                  <span
+                    class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted"
+                  >
                     {{ i18n.t('common.email') }}
                   </span>
                   <input
@@ -425,7 +442,9 @@
                   />
                 </label>
                 <label class="block">
-                  <span class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
+                  <span
+                    class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted"
+                  >
                     {{ i18n.t('common.phone') }} · {{ i18n.t('common.optional') }}
                   </span>
                   <input
@@ -456,19 +475,29 @@
               </form>
             </section>
 
-            <section class="rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl">
+            <section
+              class="rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl"
+            >
               <div class="flex flex-wrap items-center justify-between gap-2">
                 <div>
-                  <h2 class="text-sm font-semibold text-ink">{{ i18n.t('management.guestsTitle') }}</h2>
+                  <h2 class="text-sm font-semibold text-ink">
+                    {{ i18n.t('management.guestsTitle') }}
+                  </h2>
                   <p class="mt-1 text-xs text-muted">
                     {{ invitations().length }} {{ i18n.t('management.guestCount') }}
                   </p>
                 </div>
-                <fa-icon [icon]="icons['userPlus']" class="text-sm text-brand-strong" aria-hidden="true" />
+                <fa-icon
+                  [icon]="icons['userPlus']"
+                  class="text-sm text-brand-strong"
+                  aria-hidden="true"
+                />
               </div>
 
               @if (invitations().length === 0) {
-                <div class="mt-4 rounded-2xl border border-dashed border-line bg-surface-raised/30 p-6 text-center">
+                <div
+                  class="mt-4 rounded-2xl border border-dashed border-line bg-surface-raised/30 p-6 text-center"
+                >
                   <p class="text-xs leading-5 text-muted">{{ i18n.t('management.emptyGuests') }}</p>
                 </div>
               } @else {
@@ -477,8 +506,12 @@
                     <li class="rounded-2xl border border-line bg-surface-raised/40 p-3">
                       <div class="flex flex-wrap items-start justify-between gap-3">
                         <div class="min-w-0">
-                          <p class="truncate text-xs font-semibold text-ink">{{ guest.guest_name }}</p>
-                          <p class="mt-0.5 break-all text-[10px] text-muted">{{ guest.guest_email }}</p>
+                          <p class="truncate text-xs font-semibold text-ink">
+                            {{ guest.guest_name }}
+                          </p>
+                          <p class="mt-0.5 break-all text-[10px] text-muted">
+                            {{ guest.guest_email }}
+                          </p>
                           <span
                             class="mt-2 inline-flex rounded-full border border-line bg-surface px-2 py-0.5 text-[9px] font-semibold text-muted"
                           >
@@ -495,7 +528,9 @@
                               (click)="resend(guest)"
                             >
                               <fa-icon
-                                [icon]="icons[pendingAction() === guest.id ? 'spinner' : 'envelope']"
+                                [icon]="
+                                  icons[pendingAction() === guest.id ? 'spinner' : 'envelope']
+                                "
                                 [class.animate-spin]="pendingAction() === guest.id"
                                 class="text-[10px]"
                                 aria-hidden="true"
@@ -528,7 +563,9 @@
             </section>
           </div>
 
-          <section class="rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl">
+          <section
+            class="rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl"
+          >
             <div class="flex flex-wrap items-center justify-between gap-2">
               <div>
                 <h2 class="text-sm font-semibold text-ink">
@@ -536,7 +573,11 @@
                 </h2>
                 <p class="mt-1 text-xs text-muted">{{ i18n.t('management.eventSubtitle') }}</p>
               </div>
-              <fa-icon [icon]="icons['clock']" class="text-sm text-brand-strong" aria-hidden="true" />
+              <fa-icon
+                [icon]="icons['clock']"
+                class="text-sm text-brand-strong"
+                aria-hidden="true"
+              />
             </div>
 
             @if (activityLoading() && activityItems().length === 0) {
@@ -550,7 +591,9 @@
             } @else {
               <ol class="mt-4 flex flex-col gap-1">
                 @for (entry of activityItems(); track entry.id) {
-                  <li class="flex items-start gap-3 rounded-2xl p-2 transition hover:bg-surface-raised/60">
+                  <li
+                    class="flex items-start gap-3 rounded-2xl p-2 transition hover:bg-surface-raised/60"
+                  >
                     <span
                       class="mt-0.5 grid size-8 shrink-0 place-items-center rounded-xl border"
                       [class]="activityTone(entry.kind)"
@@ -582,7 +625,9 @@
 
               @if (activityPagination(); as page) {
                 @if (page.total_pages > 1) {
-                  <div class="mt-3 flex items-center justify-between gap-2 border-t border-line pt-3">
+                  <div
+                    class="mt-3 flex items-center justify-between gap-2 border-t border-line pt-3"
+                  >
                     <button
                       type="button"
                       class="inline-flex h-8 items-center gap-1.5 rounded-lg border border-line bg-surface-raised/60 px-2.5 text-[10px] font-semibold text-ink transition hover:border-brand/40 disabled:opacity-50"

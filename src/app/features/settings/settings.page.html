@@ -1,12 +1,16 @@
-<section class="flex flex-col gap-5">
+<section class="flex flex-col gap-4 md:gap-5">
   <header>
-    <p class="text-[10px] font-semibold uppercase tracking-[0.26em] text-brand-strong">
+    <p
+      class="hidden text-[10px] font-semibold uppercase tracking-[0.26em] text-brand-strong md:block"
+    >
       {{ i18n.t('settings.eyebrow') }}
     </p>
-    <h2 class="mt-1.5 font-display text-2xl font-semibold tracking-tight text-ink sm:text-3xl">
+    <h2
+      class="mt-1.5 hidden font-display text-2xl font-semibold tracking-tight text-ink sm:text-3xl md:block"
+    >
       {{ i18n.t('settings.title') }}
     </h2>
-    <p class="mt-1.5 max-w-2xl text-sm leading-6 text-muted">
+    <p class="text-[13px] leading-5 text-muted md:mt-1.5 md:max-w-2xl md:text-sm md:leading-6">
       {{ i18n.t('settings.subtitle') }}
     </p>
   </header>

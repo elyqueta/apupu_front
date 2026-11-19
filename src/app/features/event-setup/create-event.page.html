@@ -1,4 +1,4 @@
-<section class="flex flex-col gap-5">
+<section class="flex flex-col gap-4 md:gap-5">
   @if (created(); as event) {
     <article
       class="relative overflow-hidden rounded-4xl border border-line bg-surface p-6 shadow-card backdrop-blur-2xl animate-rise sm:p-8"
@@ -95,13 +95,19 @@
   } @else {
     <header class="flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
       <div class="min-w-0">
-        <p class="text-[10px] font-semibold uppercase tracking-[0.26em] text-brand-strong">
+        <p
+          class="hidden text-[10px] font-semibold uppercase tracking-[0.26em] text-brand-strong md:block"
+        >
           {{ i18n.t('create.eyebrow') }}
         </p>
-        <h2 class="mt-1.5 font-display text-2xl font-semibold tracking-tight text-ink sm:text-3xl">
+        <h2
+          class="mt-1.5 hidden font-display text-2xl font-semibold tracking-tight text-ink sm:text-3xl md:block"
+        >
           {{ i18n.t('create.title') }}
         </h2>
-        <p class="mt-1.5 max-w-2xl text-sm leading-6 text-muted">{{ i18n.t('create.subtitle') }}</p>
+        <p class="text-[13px] leading-5 text-muted md:mt-1.5 md:max-w-2xl md:text-sm md:leading-6">
+          {{ i18n.t('create.subtitle') }}
+        </p>
       </div>
       <div class="flex flex-wrap items-center gap-2">
         <span

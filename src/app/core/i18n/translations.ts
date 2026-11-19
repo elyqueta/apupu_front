@@ -92,11 +92,14 @@ const PT_AO = {
 
   'shell.searchPlaceholder': 'Pesquisar convidados, eventos...',
   'shell.newEvent': 'Criar evento',
+  'shell.newEventShort': 'Criar',
   'shell.notificationsTitle': 'Atividade recente',
   'shell.notificationsEmpty': 'Sem atividade por agora.',
   'shell.profileRole': 'Anfitriã',
   'shell.calendar': 'Agenda',
   'shell.openProfile': 'Abrir o meu perfil',
+  'shell.more': 'Mais',
+  'shell.preferences': 'Aparência e idioma',
 
   'dashboard.eyebrow': 'Painel de controlo',
   'dashboard.greeting': 'Olá, {name}',
@@ -541,6 +544,7 @@ const PT_AO = {
   'guests.contactLocked':
     'O convidado já abriu o convite. O email e o telefone já não podem ser alterados.',
   'guests.remove': 'Remover convidado',
+  'guests.removeConfirm': 'Remover {name} da lista? Esta ação não pode ser anulada.',
   'guests.removed': 'Convidado removido.',
   'guests.filterAllStatus': 'Todos os estados',
   'guests.count': '{count} convidados',
@@ -1156,11 +1160,14 @@ const EN: Record<TranslationKey, string> = {
 
   'shell.searchPlaceholder': 'Search guests, events...',
   'shell.newEvent': 'Create event',
+  'shell.newEventShort': 'New',
   'shell.notificationsTitle': 'Recent activity',
   'shell.notificationsEmpty': 'No activity yet.',
   'shell.profileRole': 'Host',
   'shell.calendar': 'Schedule',
   'shell.openProfile': 'Open my profile',
+  'shell.more': 'More',
+  'shell.preferences': 'Appearance & language',
 
   'dashboard.eyebrow': 'Control centre',
   'dashboard.greeting': 'Hello, {name}',
@@ -1604,6 +1611,7 @@ const EN: Record<TranslationKey, string> = {
   'guests.contactLocked':
     'The guest has already opened the invitation. Email and phone can no longer be changed.',
   'guests.remove': 'Remove guest',
+  'guests.removeConfirm': 'Remove {name} from the list? This action cannot be undone.',
   'guests.removed': 'Guest removed.',
   'guests.filterAllStatus': 'All statuses',
   'guests.count': '{count} guests',

@@ -294,7 +294,7 @@
   <app-confirm-dialog
     [open]="removeTarget() !== null"
     [title]="i18n.t('guests.remove')"
-    [message]="i18n.t('guests.shareText')"
+    [message]="i18n.t('guests.removeConfirm', { name: removeTarget()?.name ?? '' })"
     [confirmLabel]="i18n.t('common.remove')"
     [cancelLabel]="i18n.t('common.cancel')"
     tone="danger"

@@ -53,6 +53,7 @@ export class ShellComponent {
   protected readonly mobileOpen = signal(false);
   protected readonly notificationsOpen = signal(false);
   protected readonly searchTerm = signal('');
+  protected readonly mobileSearchOpen = signal(false);
   protected readonly loggingOut = signal(false);
   protected readonly pageTitle = signal<TranslationKey>('nav.dashboard');
   protected readonly skeletonVariant = signal<SkeletonVariant>('dashboard');
@@ -74,6 +75,17 @@ export class ShellComponent {
     },
   ];
 
+  /**
+   * Itens da barra inferior (apenas mobile). Os quatro destinos mais usados do
+   * anfitrião; o resto fica acessível pelo botão "Mais", que abre o drawer.
+   */
+  protected readonly bottomNavItems: NavItem[] = [
+    { path: '/painel', labelKey: 'nav.dashboard', icon: ICONS['dashboard'], exact: true },
+    { path: '/eventos', labelKey: 'nav.events', icon: ICONS['events'], exact: false },
+    { path: '/convidados', labelKey: 'nav.guests', icon: ICONS['guests'], exact: false },
+    { path: '/tarefas', labelKey: 'nav.tasks', icon: ICONS['checklist'], exact: false },
+  ];
+
   protected readonly notifications = computed(() => this.store.notifications());
   protected readonly unreadNotifications = this.store.unreadNotifications;
 
@@ -91,6 +103,7 @@ export class ShellComponent {
         this.updatePageTitle();
         this.mobileOpen.set(false);
         this.notificationsOpen.set(false);
+        this.mobileSearchOpen.set(false);
       });
     this.updatePageTitle();
   }
@@ -102,6 +115,13 @@ export class ShellComponent {
     }
     void this.router.navigate(['/convidados'], { queryParams: { q: term } });
     this.searchTerm.set('');
+  }
+
+  /** Submete a pesquisa sobreposta do mobile e fecha-a. */
+  protected submitMobileSearch(event: Event): void {
+    event.preventDefault();
+    this.search();
+    this.mobileSearchOpen.set(false);
   }
 
   protected notificationIcon(kind: HostNotification['kind']): IconDefinition {
@@ -131,6 +151,7 @@ export class ShellComponent {
   protected closeMenus(): void {
     this.mobileOpen.set(false);
     this.notificationsOpen.set(false);
+    this.mobileSearchOpen.set(false);
   }
 
   protected async retry(): Promise<void> {

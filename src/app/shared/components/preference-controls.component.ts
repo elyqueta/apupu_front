@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, computed, inject, input } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { ThemeService } from '../../core/theme/theme.service';
@@ -17,7 +17,7 @@ import { ICONS } from '../../core/ui/icons';
         (click)="toggleLocale()"
       >
         <fa-icon [icon]="icons['globe']" class="text-sm" aria-hidden="true" />
-        <span>{{ i18n.locale() === 'pt-AO' ? 'PT' : 'EN' }}</span>
+        <span>{{ languageLabel() }}</span>
       </button>
 
       <button
@@ -37,9 +37,17 @@ import { ICONS } from '../../core/ui/icons';
   `,
 })
 export class PreferenceControlsComponent {
+  /** Por omissão mostra o idioma actual; o convite /isy mostra o de destino. */
+  readonly showTargetLocale = input(false);
+
   protected readonly i18n = inject(I18nService);
   protected readonly theme = inject(ThemeService);
   protected readonly icons = ICONS;
+
+  protected readonly languageLabel = computed(() => {
+    const isPortuguese = this.i18n.locale() === 'pt-AO';
+    return (this.showTargetLocale() ? !isPortuguese : isPortuguese) ? 'PT' : 'EN';
+  });
 
   protected toggleLocale(): void {
     this.i18n.setLocale(this.i18n.locale() === 'pt-AO' ? 'en' : 'pt-AO');

@@ -675,5 +675,16 @@
       <p>{{ i18n.t('footer.rights', { year: 2026 }) }}</p>
       <span>{{ i18n.t('footer.made') }}</span>
     </footer>
+
+    <app-confirm-dialog
+      [open]="confirmTarget() !== null"
+      [title]="i18n.t('common.remove')"
+      [message]="confirmMessage()"
+      [confirmLabel]="i18n.t('common.remove')"
+      [cancelLabel]="i18n.t('common.cancel')"
+      tone="danger"
+      (confirmed)="confirmRemoval()"
+      (cancelled)="confirmTarget.set(null)"
+    />
   </div>
 </div>

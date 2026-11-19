@@ -8,53 +8,29 @@ import { WorkspaceStore } from '../../core/services/workspace.store';
 import { ToastService } from '../../core/services/toast.service';
 import { ICONS } from '../../core/ui/icons';
 import { PhoneMaskDirective } from '../directives/phone-mask.directive';
+import { ModalComponent } from './modal.component';
 
 @Component({
   selector: 'app-guest-dialog',
-  imports: [ReactiveFormsModule, FaIconComponent, PhoneMaskDirective],
+  imports: [ReactiveFormsModule, FaIconComponent, PhoneMaskDirective, ModalComponent],
   template: `
-    @if (open()) {
-      <div class="fixed inset-0 z-[100] grid place-items-center overflow-y-auto p-4">
-        <button
-          type="button"
-          class="fixed inset-0 bg-canvas/70 backdrop-blur-md"
-          [attr.aria-label]="i18n.t('common.close')"
-          (click)="close()"
-        ></button>
-
-        <div
-          role="dialog"
-          aria-modal="true"
-          [attr.aria-label]="isEdit() ? i18n.t('guests.editTitle') : i18n.t('guests.dialogTitle')"
-          class="relative my-8 w-full max-w-lg rounded-4xl border border-line bg-surface-solid/95 p-6 shadow-card backdrop-blur-2xl animate-rise sm:p-7"
+    <app-modal
+      [open]="open()"
+      [title]="isEdit() ? i18n.t('guests.editTitle') : i18n.t('guests.dialogTitle')"
+      (closed)="close()"
+    >
+      <div class="flex items-start gap-3">
+        <span
+          class="grid size-11 shrink-0 place-items-center rounded-2xl border border-brand/25 bg-brand/15 text-brand-strong"
         >
-          <div class="flex items-start justify-between gap-4">
-            <div class="flex items-start gap-3">
-              <span
-                class="grid size-11 shrink-0 place-items-center rounded-2xl border border-brand/25 bg-brand/15 text-brand-strong"
-              >
-                <fa-icon [icon]="isEdit() ? icons['pen'] : icons['userPlus']" aria-hidden="true" />
-              </span>
-              <div>
-                <h2 class="font-display text-xl font-semibold tracking-tight text-ink">
-                  {{ isEdit() ? i18n.t('guests.editTitle') : i18n.t('guests.dialogTitle') }}
-                </h2>
-                <p class="mt-1 text-xs leading-5 text-muted">
-                  {{ isEdit() ? i18n.t('guests.editHint') : i18n.t('guests.dialogHint') }}
-                </p>
-              </div>
-            </div>
-            <button
-              type="button"
-              class="grid size-8 place-items-center rounded-lg text-muted transition hover:bg-surface-raised hover:text-ink"
-              [attr.aria-label]="i18n.t('common.close')"
-              (click)="close()"
-            >
-              <fa-icon [icon]="icons['close']" class="text-sm" />
-            </button>
-          </div>
+          <fa-icon [icon]="isEdit() ? icons['pen'] : icons['userPlus']" aria-hidden="true" />
+        </span>
+        <p class="mt-2 text-xs leading-5 text-muted">
+          {{ isEdit() ? i18n.t('guests.editHint') : i18n.t('guests.dialogHint') }}
+        </p>
+      </div>
 
-          <form class="mt-6 flex flex-col gap-4" [formGroup]="form" (ngSubmit)="submit()">
+      <form class="mt-6 flex flex-col gap-4" [formGroup]="form" (ngSubmit)="submit()">
             <label class="block">
               <span
                 class="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.16em] text-muted"
@@ -185,10 +161,8 @@ import { PhoneMaskDirective } from '../directives/phone-mask.directive';
                 {{ isEdit() ? i18n.t('guests.editSubmit') : i18n.t('guests.dialogSubmit') }}
               </button>
             </div>
-          </form>
-        </div>
-      </div>
-    }
+      </form>
+    </app-modal>
   `,
 })
 export class GuestDialogComponent {

@@ -16,10 +16,12 @@ import {
 } from '../../core/api/api.models';
 import { normalizeActivityKind } from '../../core/api/mappers';
 import { I18nService } from '../../core/i18n/i18n.service';
+import { TranslationKey } from '../../core/i18n/translations';
 import { EventActivity } from '../../core/models/models';
 import { ICONS } from '../../core/ui/icons';
 import { ActivityPresenter } from '../../shared/services/activity.presenter';
 import { BrandComponent } from '../../shared/components/brand.component';
+import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog.component';
 import { PreferenceControlsComponent } from '../../shared/components/preference-controls.component';
 import { SkeletonComponent } from '../../shared/components/skeleton.component';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
@@ -38,6 +40,7 @@ interface EventDetailResponse {
     ReactiveFormsModule,
     FaIconComponent,
     BrandComponent,
+    ConfirmDialogComponent,
     PreferenceControlsComponent,
     SkeletonComponent,
     StatusBadgeComponent,
@@ -60,6 +63,9 @@ export class ManagementEventPage {
   protected readonly actionError = signal('');
   protected readonly feedback = signal('');
   protected readonly pendingAction = signal<string | null>(null);
+  protected readonly confirmTarget = signal<{ kind: 'guest' | 'activity'; id: string } | null>(
+    null,
+  );
   protected readonly role = signal<ApiEventAccessRole>('host');
   protected readonly activityItems = signal<ApiActivity[]>([]);
   protected readonly activityPagination = signal<Pagination | null>(null);
@@ -201,30 +207,58 @@ export class ManagementEventPage {
     }
   }
 
-  protected async remove(guest: ApiInvitation): Promise<void> {
-    if (this.pendingAction() || !window.confirm(this.i18n.t('management.guestRemovedConfirm'))) {
-      return;
-    }
-    this.pendingAction.set(guest.id);
-    this.actionError.set('');
-    this.feedback.set('');
-    try {
-      await this.api.delete(
-        `/host/events/${encodeURIComponent(guest.event_id)}/invitations/${encodeURIComponent(guest.id)}`,
-      );
-      const guests = this.invitations().filter((item) => item.id !== guest.id);
-      this.invitations.set(guests);
-      this.syncEventStats(guests);
-      this.feedback.set(this.i18n.t('management.guestRemoved'));
-    } catch (error: unknown) {
-      this.actionError.set(toApiError(error).message);
-    } finally {
-      this.pendingAction.set(null);
+  protected remove(guest: ApiInvitation): void {
+    if (!this.pendingAction()) {
+      this.confirmTarget.set({ kind: 'guest', id: guest.id });
     }
   }
 
-  protected async removeActivity(item: ApiActivity): Promise<void> {
-    if (this.pendingAction() || !window.confirm(this.i18n.t('management.activityRemoveConfirm'))) {
+  protected removeActivity(item: ApiActivity): void {
+    if (!this.pendingAction()) {
+      this.confirmTarget.set({ kind: 'activity', id: item.id });
+    }
+  }
+
+  protected confirmMessage(): string {
+    const key: TranslationKey =
+      this.confirmTarget()?.kind === 'activity'
+        ? 'management.activityRemoveConfirm'
+        : 'management.guestRemovedConfirm';
+    return this.i18n.t(key);
+  }
+
+  protected async confirmRemoval(): Promise<void> {
+    const target = this.confirmTarget();
+    this.confirmTarget.set(null);
+    if (!target || this.pendingAction()) {
+      return;
+    }
+    if (target.kind === 'guest') {
+      const guest = this.invitations().find((item) => item.id === target.id);
+      if (!guest) {
+        return;
+      }
+      this.pendingAction.set(guest.id);
+      this.actionError.set('');
+      this.feedback.set('');
+      try {
+        await this.api.delete(
+          `/host/events/${encodeURIComponent(guest.event_id)}/invitations/${encodeURIComponent(guest.id)}`,
+        );
+        const guests = this.invitations().filter((item) => item.id !== guest.id);
+        this.invitations.set(guests);
+        this.syncEventStats(guests);
+        this.feedback.set(this.i18n.t('management.guestRemoved'));
+      } catch (error: unknown) {
+        this.actionError.set(toApiError(error).message);
+      } finally {
+        this.pendingAction.set(null);
+      }
+      return;
+    }
+
+    const item = this.activityItems().find((entry) => entry.id === target.id);
+    if (!item) {
       return;
     }
     this.pendingAction.set(item.id);

@@ -8,6 +8,7 @@ import { ApiEvent } from '../../core/api/api.models';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { ICONS } from '../../core/ui/icons';
 import { BrandComponent } from '../../shared/components/brand.component';
+import { ModalComponent } from '../../shared/components/modal.component';
 import { PreferenceControlsComponent } from '../../shared/components/preference-controls.component';
 
 interface HostSessionResponse {
@@ -28,7 +29,7 @@ interface AccountPrompt {
 
 @Component({
   selector: 'app-management-entry-page',
-  imports: [FaIconComponent, BrandComponent, PreferenceControlsComponent],
+  imports: [FaIconComponent, BrandComponent, PreferenceControlsComponent, ModalComponent],
   templateUrl: './management-entry.page.html',
 })
 export class ManagementEntryPage {

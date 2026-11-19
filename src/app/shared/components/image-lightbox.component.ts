@@ -1,5 +1,15 @@
 import { DOCUMENT, isPlatformBrowser } from '@angular/common';
-import { Component, HostListener, PLATFORM_ID, effect, inject, input, output } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  HostListener,
+  PLATFORM_ID,
+  effect,
+  inject,
+  input,
+  output,
+  viewChild,
+} from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ICONS } from '../../core/ui/icons';
 
@@ -33,6 +43,7 @@ import { ICONS } from '../../core/ui/icons';
           <div class="flex items-center justify-between gap-3 px-4 py-3 sm:px-6">
             <p class="min-w-0 flex-1 truncate text-xs font-semibold text-ink">{{ alt() }}</p>
             <button
+              #closeButton
               type="button"
               class="inline-flex size-10 shrink-0 items-center justify-center rounded-full border border-line bg-surface text-ink shadow-card transition hover:border-brand/40 hover:text-brand-strong"
               [attr.aria-label]="closeLabel()"
@@ -67,6 +78,8 @@ export class ImageLightboxComponent {
 
   protected readonly icons = ICONS;
 
+  private readonly closeButton = viewChild<ElementRef<HTMLButtonElement>>('closeButton');
+
   constructor() {
     effect((onCleanup) => {
       if (!this.src() || !isPlatformBrowser(this.platformId)) {
@@ -74,17 +87,49 @@ export class ImageLightboxComponent {
       }
       const body = this.document.body;
       const previousOverflow = body.style.overflow;
+      const restoreFocus =
+        this.document.activeElement instanceof HTMLElement ? this.document.activeElement : null;
       body.style.overflow = 'hidden';
+      queueMicrotask(() => this.closeButton()?.nativeElement.focus());
       onCleanup(() => {
         body.style.overflow = previousOverflow;
+        if (restoreFocus?.isConnected) {
+          queueMicrotask(() => restoreFocus.focus());
+        }
       });
     });
   }
 
-  @HostListener('document:keydown.escape')
-  protected onEscape(): void {
-    if (this.src()) {
+  @HostListener('document:keydown', ['$event'])
+  protected onKeydown(event: KeyboardEvent): void {
+    if (!this.src()) {
+      return;
+    }
+    if (event.key === 'Escape') {
+      event.preventDefault();
       this.closed.emit();
+      return;
+    }
+    if (event.key !== 'Tab' || !isPlatformBrowser(this.platformId)) {
+      return;
+    }
+    const root = this.closeButton()?.nativeElement.parentElement?.parentElement?.parentElement;
+    if (!root) {
+      return;
+    }
+    const items = Array.from(root.querySelectorAll<HTMLElement>('button:not([disabled])'));
+    if (items.length === 0) {
+      return;
+    }
+    const first = items[0];
+    const last = items[items.length - 1];
+    const active = this.document.activeElement;
+    if (event.shiftKey && (active === first || !root.contains(active))) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && (active === last || !root.contains(active))) {
+      event.preventDefault();
+      first.focus();
     }
   }
 }

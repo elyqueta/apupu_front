@@ -100,6 +100,37 @@ export class I18nService {
     return `${this.shortDate(value, timeZone)} · ${this.time(value, timeZone)}`;
   }
 
+  /** Formato compacto usado nas tarefas: `sáb, 22 nov 2026 · 15:00`. */
+  weekdayDateTime(value: string | Date, timeZone: string): string {
+    const date = typeof value === 'string' ? new Date(value) : value;
+    if (Number.isNaN(date.getTime())) {
+      return '—';
+    }
+    const weekday = this.formatDate(date, timeZone, { weekday: 'short' })
+      .replace('.', '')
+      .slice(0, 3);
+    const day = this.dayNumber(date, timeZone);
+    const month = this.monthShort(date, timeZone);
+    const year = this.formatDate(date, timeZone, { year: 'numeric' });
+    const time = this.time(date, timeZone);
+    return `${weekday}, ${day} ${month} ${year} · ${time}`;
+  }
+
+  /**
+   * Dia de calendário `YYYY-MM-DD` (sem hora). Formata em UTC para não
+   * deslocar o dia quando o fuso do utilizador está à frente de UTC.
+   */
+  calendarDate(value: string): string {
+    const date = new Date(`${value}T00:00:00Z`);
+    if (Number.isNaN(date.getTime())) {
+      return '—';
+    }
+    const day = this.formatDate(date, 'UTC', { day: '2-digit' });
+    const month = this.monthShort(date, 'UTC');
+    const year = this.formatDate(date, 'UTC', { year: 'numeric' });
+    return `${day} ${month} ${year}`;
+  }
+
   number(value: number): string {
     return new Intl.NumberFormat(this.localeTag()).format(value);
   }

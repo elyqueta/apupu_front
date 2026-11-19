@@ -238,3 +238,125 @@ export interface HostProfile {
   emailVerified: boolean;
   profileComplete: boolean;
 }
+
+/* ------------------------------------------------------------------ */
+/* Equipas, membros e tarefas por equipa (Fase 4)                      */
+/* ------------------------------------------------------------------ */
+
+export type TeamCategory =
+  | 'logistica'
+  | 'decoracao'
+  | 'musica'
+  | 'catering'
+  | 'rececao'
+  | 'outra';
+
+/** Papel da conta autenticada **na equipa**. */
+export type TeamMyRole = 'anfitriao' | 'gestor' | 'membro';
+
+/** Estado observável do evento, derivado de `status` e das datas. */
+export type TeamEventStatus =
+  | 'agendado'
+  | 'em_curso'
+  | 'concluido'
+  | 'cancelado'
+  | 'rascunho';
+
+export type TeamMemberRole = 'gestor' | 'membro';
+export type TeamMemberStatus = 'ativo' | 'convite_pendente';
+export type TeamMemberOrigin = 'convidado' | 'email';
+
+export type TaskStatus = 'por_fazer' | 'em_curso' | 'concluida';
+export type TaskPriority = 'baixa' | 'normal' | 'alta';
+
+export interface Team {
+  id: string;
+  eventId: string;
+  eventTitle: string;
+  eventStatus: TeamEventStatus;
+  myRole: TeamMyRole;
+  name: string;
+  category: TeamCategory;
+  description: string | null;
+  memberCount: number;
+  openTaskCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TeamMember {
+  id: string;
+  teamId: string;
+  email: string;
+  displayName: string | null;
+  role: TeamMemberRole;
+  status: TeamMemberStatus;
+  origin: TeamMemberOrigin;
+  isHost: boolean;
+  openTaskCount: number;
+  /** `false` → responsável sem acesso ao evento. */
+  hasEventAccess: boolean;
+  joinedAt: string | null;
+  createdAt: string;
+}
+
+export interface TeamMemberAddRow {
+  email: string;
+  memberId: string | null;
+  status: TeamMemberStatus;
+  reason?: string;
+}
+
+export interface AddTeamMembersResult {
+  added: TeamMemberAddRow[];
+  pending: TeamMemberAddRow[];
+  skipped: TeamMemberAddRow[];
+}
+
+export interface UpdateTeamMemberRoleResult {
+  member: TeamMember;
+  eventManagerId: string | null;
+}
+
+export interface DeleteTeamResult {
+  deleted: true;
+  reassignedToTeamId: string | null;
+  reassignedTasks: number;
+  archivedTasks: number;
+}
+
+export interface RemoveTeamMemberResult {
+  removed: true;
+  reassignedTasks: number;
+}
+
+export interface InviteResendResult {
+  sendCount: number;
+  lastSentAt: string;
+  expiresAt: string;
+}
+
+export interface TeamTask {
+  id: string;
+  eventId: string | null;
+  eventTitle: string | null;
+  teamId: string | null;
+  teamName: string | null;
+  assigneeMemberId: string | null;
+  assigneeEmail: string | null;
+  assigneeDisplayName: string | null;
+  /** `false` → responsável sem acesso ao evento. */
+  assigneeHasAccess: boolean | null;
+  title: string;
+  description: string | null;
+  /** Dia de calendário `YYYY-MM-DD`, sem hora nem fuso. */
+  dueDate: string | null;
+  priority: TaskPriority;
+  status: TaskStatus;
+  createdByHostId: string | null;
+  completedByMemberId: string | null;
+  completedAt: string | null;
+  archivedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}

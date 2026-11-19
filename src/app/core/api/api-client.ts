@@ -60,6 +60,16 @@ export class ApiClient {
     return this.unwrap(this.http.post<ApiEnvelope<T>>(this.url(path), body ?? {}), path);
   }
 
+  /**
+   * `POST` cujo corpo **não** vem no envelope `{ data }`.
+   *
+   * Usado por endpoints que devolvem o recurso diretamente (ex.:
+   * `POST /host/teams/{id}/members` → `{ added, pending, skipped }`).
+   */
+  postRaw<T>(path: string, body?: unknown): Promise<T> {
+    return firstValueFrom(this.http.post<T>(this.url(path), body ?? {}));
+  }
+
   /** `POST` com `multipart/form-data` (o `HttpClient` define o boundary). */
   postForm<T>(path: string, body: FormData): Promise<T> {
     return this.unwrap(this.http.post<ApiEnvelope<T>>(this.url(path), body), path);
@@ -115,8 +125,11 @@ export class ApiClient {
     return this.unwrap(this.http.put<ApiEnvelope<T>>(this.url(path), body), path);
   }
 
-  async delete(path: string): Promise<void> {
-    await firstValueFrom(this.http.delete<void>(this.url(path)));
+  async delete(
+    path: string,
+    query?: Record<string, string | number | undefined>,
+  ): Promise<void> {
+    await firstValueFrom(this.http.delete<void>(this.url(path), { params: this.params(query) }));
   }
 
   /**
@@ -144,8 +157,14 @@ export class ApiClient {
   }
 
   /** `DELETE` que devolve um recurso no envelope `{ data }`. */
-  deleteWithData<T>(path: string): Promise<T> {
-    return this.unwrap(this.http.delete<ApiEnvelope<T>>(this.url(path)), path);
+  deleteWithData<T>(
+    path: string,
+    query?: Record<string, string | number | undefined>,
+  ): Promise<T> {
+    return this.unwrap(
+      this.http.delete<ApiEnvelope<T>>(this.url(path), { params: this.params(query) }),
+      path,
+    );
   }
 
   async postNoContent(path: string, body?: unknown): Promise<void> {

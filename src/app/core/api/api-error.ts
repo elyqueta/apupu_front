@@ -8,6 +8,8 @@ export class ApiError extends Error {
     message: string,
     readonly fields: Record<string, string[]> = {},
     readonly requestId = '',
+    /** Contexto adicional devolvido pela API (ex.: tarefas abertas). */
+    readonly details: unknown = null,
   ) {
     super(message);
     this.name = 'ApiError';
@@ -43,6 +45,7 @@ export function toApiError(error: unknown): ApiError {
         error.error.error.message,
         error.error.error.fields ?? {},
         error.error.error.request_id,
+        error.error.error.details ?? null,
       );
     }
     return new ApiError(

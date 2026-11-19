@@ -7,8 +7,13 @@ import { AvatarComponent } from './avatar.component';
   template: `
     <div class="flex items-center">
       <div class="flex -space-x-2.5">
-        @for (name of visibleNames(); track name) {
-          <app-avatar [name]="name" size="sm" class="transition duration-300 hover:-translate-y-1" />
+        @for (person of visiblePeople(); track person.id) {
+          <app-avatar
+            [name]="person.name"
+            [imageUrl]="person.imageUrl"
+            size="sm"
+            class="transition duration-300 hover:-translate-y-1"
+          />
         }
         @if (remaining() > 0) {
           <span
@@ -23,10 +28,20 @@ import { AvatarComponent } from './avatar.component';
 })
 export class AvatarStackComponent {
   readonly names = input.required<string[]>();
+  /** URLs alinhadas com `names`; quando ausentes, o avatar usa iniciais. */
+  readonly images = input<Array<string | null>>([]);
   readonly max = input(3);
 
-  protected readonly visibleNames = computed(() => this.names().slice(0, this.max()));
+  protected readonly visiblePeople = computed(() =>
+    this.names()
+      .slice(0, this.max())
+      .map((name, index) => ({
+        id: index,
+        name,
+        imageUrl: this.images()[index] ?? null,
+      })),
+  );
   protected readonly remaining = computed(() =>
-    Math.max(0, this.names().length - this.visibleNames().length),
+    Math.max(0, this.names().length - this.visiblePeople().length),
   );
 }

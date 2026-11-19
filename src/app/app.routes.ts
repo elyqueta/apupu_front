@@ -1,4 +1,5 @@
-import { Routes } from '@angular/router';
+import { inject } from '@angular/core';
+import { Router, Routes } from '@angular/router';
 import { ShellComponent } from './core/layout/shell.component';
 import { authenticatedGuard } from './core/api/auth.guard';
 
@@ -59,6 +60,39 @@ export const routes: Routes = [
         loadComponent: () => import('./features/events/events.page').then((m) => m.EventsPage),
       },
       {
+        // Alias antigo: /eventos/:eventId/equipas?equipa=<uuid> → /equipas?evento=<uuid>
+        path: 'eventos/:eventId/equipas',
+        redirectTo: (data) => {
+          const router = inject(Router);
+          const queryParams = { ...data.queryParams };
+          const eventId = queryParams['equipa'] ?? data.params['eventId'];
+          delete queryParams['equipa'];
+          if (eventId) {
+            queryParams['evento'] = eventId;
+          } else {
+            delete queryParams['evento'];
+          }
+          return router.createUrlTree(['/equipas'], { queryParams });
+        },
+      },
+      {
+        // Alias das tarefas de um evento: /eventos/:eventId/tarefas?tarefa=<termo>
+        path: 'eventos/:eventId/tarefas',
+        redirectTo: (data) => {
+          const router = inject(Router);
+          const queryParams = { ...data.queryParams };
+          const term = queryParams['tarefa'];
+          delete queryParams['tarefa'];
+          if (term !== undefined) {
+            queryParams['q'] = term;
+          } else {
+            delete queryParams['q'];
+          }
+          queryParams['evento'] = data.params['eventId'];
+          return router.createUrlTree(['/tarefas'], { queryParams });
+        },
+      },
+      {
         path: 'eventos/:eventId',
         title: 'Conto Contigo · Evento',
         loadComponent: () =>
@@ -85,6 +119,12 @@ export const routes: Routes = [
         path: 'convidados',
         title: 'Conto Contigo · Convidados',
         loadComponent: () => import('./features/guests/guests.page').then((m) => m.GuestsPage),
+      },
+      {
+        path: 'equipas/:teamId',
+        title: 'Conto Contigo · Equipa',
+        loadComponent: () =>
+          import('./features/team/team-detail.page').then((m) => m.TeamDetailPage),
       },
       {
         path: 'equipas',

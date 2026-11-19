@@ -7,6 +7,8 @@ import {
   ApiNotification,
   ApiRsvpStatus,
   ApiTask,
+  ApiTeam,
+  ApiTeamMember,
   ApiTemplate,
   EventLocation,
   Host,
@@ -24,7 +26,10 @@ import {
   HostNotification,
   HostProfile,
   NotificationKind,
+  Team,
   TeamManager,
+  TeamMember,
+  TeamTask,
   WorkspaceTask,
 } from '../models/models';
 
@@ -233,6 +238,73 @@ export function mapHostEventManager(manager: ApiHostEventManager): TeamManager {
       startsAt: manager.event.starts_at,
       status: manager.event.status,
     },
+  };
+}
+
+export function mapTeam(team: ApiTeam): Team {
+  return {
+    id: team.id,
+    eventId: team.event_id,
+    eventTitle: team.event_title,
+    eventStatus: team.event_status,
+    myRole: team.my_role,
+    name: team.name,
+    category: team.category,
+    description: team.description,
+    memberCount: team.member_count,
+    taskCount: team.task_count ?? 0,
+    completedTaskCount: team.completed_task_count ?? 0,
+    membersPreview: (team.members_preview ?? []).map((member) => ({
+      id: member.id,
+      displayName: member.display_name,
+      avatarUrl: member.avatar_url,
+    })),
+    openTaskCount: team.open_task_count,
+    createdAt: team.created_at,
+    updatedAt: team.updated_at,
+  };
+}
+
+export function mapTeamMember(member: ApiTeamMember): TeamMember {
+  return {
+    id: member.id,
+    teamId: member.team_id,
+    email: member.email,
+    displayName: member.display_name,
+    role: member.role,
+    status: member.status,
+    origin: member.origin,
+    isHost: member.is_host,
+    openTaskCount: member.open_task_count,
+    hasEventAccess: member.has_event_access,
+    joinedAt: member.joined_at,
+    createdAt: member.created_at,
+  };
+}
+
+/** Tarefa com equipa, responsável e estado (`/host/tasks`). */
+export function mapTeamTask(task: ApiTask): TeamTask {
+  return {
+    id: task.id,
+    eventId: task.event_id,
+    eventTitle: task.event_title,
+    teamId: task.team_id,
+    teamName: task.team_name,
+    assigneeMemberId: task.assignee_member_id,
+    assigneeEmail: task.assignee_email,
+    assigneeDisplayName: task.assignee_display_name,
+    assigneeHasAccess: task.assignee_has_access,
+    title: task.title ?? task.label,
+    description: task.description ?? null,
+    dueDate: task.due_date ?? null,
+    priority: task.priority ?? 'normal',
+    status: task.status ?? (task.done ? 'concluida' : 'por_fazer'),
+    createdByHostId: task.created_by_host_id ?? null,
+    completedByMemberId: task.completed_by_member_id ?? null,
+    completedAt: task.completed_at,
+    archivedAt: task.archived_at ?? null,
+    createdAt: task.created_at,
+    updatedAt: task.updated_at,
   };
 }
 

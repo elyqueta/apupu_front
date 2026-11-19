@@ -32,14 +32,22 @@ export class StatusBadgeComponent {
       case 'confirmed':
       case 'published':
       case 'scheduled':
+      case 'agendado':
+      case 'concluida':
         return 'border-mint/30 bg-mint/15 text-mint';
       case 'declined':
       case 'cancelled':
+      case 'cancelado':
         return 'border-coral/30 bg-coral/10 text-coral';
       case 'completed':
+      case 'concluido':
         return 'border-aqua/30 bg-aqua/15 text-aqua';
       case 'pending':
+      case 'por_fazer':
+      case 'rascunho':
         return 'border-amber/30 bg-amber/15 text-amber';
+      case 'em_curso':
+        return 'border-iris/30 bg-iris/10 text-iris';
       default:
         return 'border-line bg-surface-raised text-muted';
     }
@@ -51,13 +59,21 @@ export class StatusBadgeComponent {
         return ICONS['success'];
       case 'declined':
       case 'cancelled':
+      case 'cancelado':
         return ICONS['error'];
       case 'pending':
+      case 'por_fazer':
+      case 'rascunho':
         return ICONS['clock'];
       case 'completed':
+      case 'concluido':
+      case 'concluida':
         return ICONS['completed'];
+      case 'em_curso':
+        return ICONS['spinner'];
       case 'published':
       case 'scheduled':
+      case 'agendado':
         return ICONS['paperPlane'];
       default:
         return ICONS['pen'];

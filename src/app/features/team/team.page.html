@@ -4,160 +4,287 @@
       <p
         class="hidden text-[10px] font-semibold uppercase tracking-[0.26em] text-brand-strong md:block"
       >
-        {{ i18n.t('team.eyebrow') }}
+        {{ i18n.t('teams.eyebrow') }}
       </p>
       <h2
         class="mt-1.5 hidden font-display text-2xl font-semibold tracking-tight text-ink sm:text-3xl md:block"
       >
-        {{ i18n.t('team.title') }}
+        {{ i18n.t('teams.title') }}
       </h2>
       <p class="text-[13px] leading-5 text-muted md:mt-1.5 md:max-w-2xl md:text-sm md:leading-6">
-        {{ i18n.t('team.subtitle') }}
+        {{ i18n.t('teams.subtitle') }}
       </p>
     </div>
-    <a
-      routerLink="/eventos"
-      class="inline-flex h-10 items-center gap-2 rounded-xl border border-line bg-surface px-3.5 text-xs font-semibold text-ink transition hover:border-brand/40"
-    >
-      <fa-icon [icon]="icons['events']" class="text-[11px] text-muted" aria-hidden="true" />
-      {{ i18n.t('team.openEvents') }}
-    </a>
+    <div class="flex flex-wrap items-center gap-2">
+      @if (tab() === 'teams') {
+        <button
+          type="button"
+          data-testid="new-team"
+          class="inline-flex h-10 items-center gap-2 rounded-xl bg-brand px-3.5 text-xs font-semibold text-on-secondary transition hover:bg-secondary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60"
+          (click)="openCreate()"
+        >
+          <fa-icon [icon]="icons['plus']" class="text-[10px]" aria-hidden="true" />
+          {{ i18n.t('teams.new') }}
+        </button>
+      }
+      <a
+        routerLink="/eventos"
+        class="inline-flex h-10 items-center gap-2 rounded-xl border border-line bg-surface px-3.5 text-xs font-semibold text-ink transition hover:border-brand/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60"
+      >
+        <fa-icon [icon]="icons['events']" class="text-[11px] text-muted" aria-hidden="true" />
+        {{ i18n.t('teams.viewEvents') }}
+      </a>
+    </div>
   </header>
 
-  <div class="grid gap-3 sm:grid-cols-3">
-    <app-stat-card
-      [label]="i18n.t('team.statManagers')"
-      [value]="stats().managers"
-      [hint]="i18n.t('team.statManagersHint')"
-      [icon]="icons['guestGroup']"
-      tone="iris"
-    />
-    <app-stat-card
-      [label]="i18n.t('team.statEvents')"
-      [value]="stats().events"
-      [hint]="i18n.t('team.statEventsHint')"
-      [icon]="icons['events']"
-      tone="brand"
-    />
-    <app-stat-card
-      [label]="i18n.t('team.statAccounts')"
-      [value]="stats().accounts"
-      [hint]="i18n.t('team.statAccountsHint')"
-      [icon]="icons['user']"
-      tone="mint"
-    />
-  </div>
-
-  <div class="grid min-w-0 gap-4 xl:grid-cols-[minmax(0,0.85fr)_minmax(0,1.65fr)]">
-    <article
-      class="h-fit rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl"
+  <nav
+    role="tablist"
+    class="flex items-center gap-1 rounded-2xl border border-line bg-surface p-1 shadow-card"
+    [attr.aria-label]="i18n.t('teams.title')"
+  >
+    <button
+      type="button"
+      role="tab"
+      data-testid="team-tab-teams"
+      class="inline-flex h-10 flex-1 items-center justify-center gap-2 rounded-xl px-3 text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60"
+      [class]="tab() === 'teams' ? 'bg-brand/15 text-ink' : 'text-muted hover:text-ink'"
+      [attr.aria-selected]="tab() === 'teams'"
+      (click)="setTab('teams')"
     >
-      <div class="flex items-start justify-between gap-3">
-        <div>
-          <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-brand-strong">
-            {{ i18n.t('team.addTitle') }}
-          </p>
-          <p class="mt-1 text-xs leading-5 text-muted">{{ i18n.t('team.addHint') }}</p>
-        </div>
-        <span
-          class="grid size-9 place-items-center rounded-xl border border-line bg-surface-raised text-muted"
-        >
-          <fa-icon [icon]="icons['userPlus']" class="text-xs" aria-hidden="true" />
-        </span>
-      </div>
+      <fa-icon [icon]="icons['guestGroup']" class="text-[11px]" aria-hidden="true" />
+      {{ i18n.t('teams.tabs.teams') }}
+    </button>
+    <button
+      type="button"
+      role="tab"
+      data-testid="team-tab-managers"
+      class="inline-flex h-10 flex-1 items-center justify-center gap-2 rounded-xl px-3 text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60"
+      [class]="tab() === 'managers' ? 'bg-brand/15 text-ink' : 'text-muted hover:text-ink'"
+      [attr.aria-selected]="tab() === 'managers'"
+      (click)="setTab('managers')"
+    >
+      <fa-icon [icon]="icons['userCheck']" class="text-[11px]" aria-hidden="true" />
+      {{ i18n.t('teams.tabs.managers') }}
+    </button>
+  </nav>
 
-      @if (hostEvents().length === 0) {
-        <p
-          class="mt-4 rounded-2xl border border-dashed border-line p-4 text-xs leading-5 text-muted"
-        >
-          {{ i18n.t('team.noEvents') }}
-        </p>
-      } @else {
-        <form class="mt-4 flex flex-col gap-3" [formGroup]="form" (ngSubmit)="addManager()">
-          <label class="block">
-            <span
-              class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted"
-            >
-              {{ i18n.t('team.fieldEvent') }}
-            </span>
-            <div class="relative">
-              <select
-                formControlName="eventId"
-                class="h-11 w-full appearance-none rounded-xl border border-line bg-surface-raised pl-3 pr-9 text-sm text-ink outline-none transition focus:border-brand/50"
-              >
-                @for (event of hostEvents(); track event.id) {
-                  <option [value]="event.id">{{ event.title }}</option>
-                }
-              </select>
-              <fa-icon
-                [icon]="icons['chevronDown']"
-                class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-muted"
-                aria-hidden="true"
-              />
-            </div>
-          </label>
-
-          <label class="block">
-            <span
-              class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted"
-            >
-              {{ i18n.t('team.fieldEmail') }}
-            </span>
-            <input
-              type="email"
-              formControlName="email"
-              autocomplete="email"
-              class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink outline-none transition placeholder:text-muted/60 focus:border-brand/50"
-              [placeholder]="i18n.t('team.fieldEmailPlaceholder')"
-            />
-            @if (form.controls.email.touched && form.controls.email.invalid) {
-              <span class="mt-1 block text-[10px] text-coral">
-                {{ i18n.t('team.fieldEmailInvalid') }}
-              </span>
-            }
-          </label>
-
-          <button
-            type="submit"
-            class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-brand px-4 text-xs font-semibold text-on-secondary transition hover:bg-secondary-hover disabled:cursor-not-allowed disabled:opacity-60"
-            [disabled]="adding()"
-          >
+  @switch (tab()) {
+    @case ('teams') {
+      <article class="rounded-4xl border border-line bg-surface p-4 shadow-card backdrop-blur-2xl sm:p-5">
+        <div class="flex flex-col gap-4">
+          <label class="relative block">
+            <span class="sr-only">{{ i18n.t('teams.searchLabel') }}</span>
             <fa-icon
-              [icon]="adding() ? icons['spinner'] : icons['userPlus']"
-              class="text-[11px]"
-              [class.animate-spin]="adding()"
+              [icon]="icons['search']"
+              class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[11px] text-muted"
               aria-hidden="true"
             />
-            {{ adding() ? i18n.t('team.adding') : i18n.t('team.addSubmit') }}
+            <input
+              type="search"
+              class="h-11 w-full rounded-2xl border border-line bg-surface-raised pl-10 pr-3 text-sm text-ink outline-none transition placeholder:text-muted/60 focus:border-brand/50 focus-visible:ring-2 focus-visible:ring-brand/60"
+              [placeholder]="i18n.t('teams.searchPlaceholder')"
+              [value]="searchInput()"
+              (input)="setSearch($any($event.target).value)"
+            />
+          </label>
+
+          <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
+            <div class="block sm:col-span-2">
+              <label class="block">
+                <span
+                  class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted"
+                >
+                  {{ i18n.t('teams.filterEvent') }}
+                </span>
+                @if (eventSearchEnabled()) {
+                  <input
+                    type="search"
+                    class="mb-2 h-9 w-full rounded-xl border border-line bg-surface-raised px-3 text-xs text-ink outline-none transition placeholder:text-muted/60 focus:border-brand/50 focus-visible:ring-2 focus-visible:ring-brand/60"
+                    [placeholder]="i18n.t('teams.searchEventPlaceholder')"
+                    [attr.aria-label]="i18n.t('teams.searchEvent')"
+                    [value]="eventSearch()"
+                    (input)="setEventSearch($any($event.target).value)"
+                  />
+                }
+                <div class="relative">
+                  <select
+                    class="h-11 w-full appearance-none rounded-xl border border-line bg-surface-raised pl-3 pr-9 text-sm text-ink outline-none transition focus:border-brand/50 focus-visible:ring-2 focus-visible:ring-brand/60"
+                    [value]="filters().eventId"
+                    [attr.aria-label]="i18n.t('teams.filterEvent')"
+                    (change)="setEvent($any($event.target).value)"
+                  >
+                    <option value="">{{ i18n.t('teams.allEvents') }}</option>
+                    @for (event of eventOptions(); track event.id) {
+                      <option [value]="event.id">{{ event.title }}</option>
+                    }
+                  </select>
+                  <fa-icon
+                    [icon]="icons['chevronDown']"
+                    class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-muted"
+                    aria-hidden="true"
+                  />
+                </div>
+              </label>
+              @if (eventSearchEnabled() && eventOptions().length === 0) {
+                <p class="mt-1.5 text-[10px] text-muted">{{ i18n.t('teams.noEventMatches') }}</p>
+              }
+            </div>
+
+            <label class="block">
+              <span
+                class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted"
+              >
+                {{ i18n.t('teams.filterRole') }}
+              </span>
+              <div class="relative">
+                <select
+                  class="h-11 w-full appearance-none rounded-xl border border-line bg-surface-raised pl-3 pr-9 text-sm text-ink outline-none transition focus:border-brand/50 focus-visible:ring-2 focus-visible:ring-brand/60"
+                  [value]="filters().role"
+                  (change)="setRole($any($event.target).value)"
+                >
+                  @for (option of roleOptions; track option.id) {
+                    <option [value]="option.id">{{ i18n.t(option.labelKey) }}</option>
+                  }
+                </select>
+                <fa-icon
+                  [icon]="icons['chevronDown']"
+                  class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-muted"
+                  aria-hidden="true"
+                />
+              </div>
+            </label>
+
+            <label class="block">
+              <span
+                class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted"
+              >
+                {{ i18n.t('teams.filterStatus') }}
+              </span>
+              <div class="relative">
+                <select
+                  class="h-11 w-full appearance-none rounded-xl border border-line bg-surface-raised pl-3 pr-9 text-sm text-ink outline-none transition focus:border-brand/50 focus-visible:ring-2 focus-visible:ring-brand/60"
+                  [value]="filters().eventStatus"
+                  (change)="setEventStatus($any($event.target).value)"
+                >
+                  @for (option of statusOptions; track option.id) {
+                    <option [value]="option.id">{{ i18n.t(option.labelKey) }}</option>
+                  }
+                </select>
+                <fa-icon
+                  [icon]="icons['chevronDown']"
+                  class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-muted"
+                  aria-hidden="true"
+                />
+              </div>
+            </label>
+
+            <label class="block">
+              <span
+                class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted"
+              >
+                {{ i18n.t('teams.filterCategory') }}
+              </span>
+              <div class="relative">
+                <select
+                  class="h-11 w-full appearance-none rounded-xl border border-line bg-surface-raised pl-3 pr-9 text-sm text-ink outline-none transition focus:border-brand/50 focus-visible:ring-2 focus-visible:ring-brand/60"
+                  [value]="filters().category"
+                  (change)="setCategory($any($event.target).value)"
+                >
+                  @for (option of categoryOptions; track option.id) {
+                    <option [value]="option.id">{{ i18n.t(option.labelKey) }}</option>
+                  }
+                </select>
+                <fa-icon
+                  [icon]="icons['chevronDown']"
+                  class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-muted"
+                  aria-hidden="true"
+                />
+              </div>
+            </label>
+
+            <div class="flex flex-col justify-end">
+              <label
+                class="flex h-11 cursor-pointer items-center gap-2.5 rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink transition hover:border-brand/40 focus-within:ring-2 focus-within:ring-brand/60"
+              >
+                <input
+                  type="checkbox"
+                  class="size-4 rounded border-line text-brand accent-[var(--ap-secondary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60"
+                  [checked]="filters().mine"
+                  aria-describedby="teams-mine-hint"
+                  (change)="setMine($any($event.target).checked)"
+                />
+                <span class="min-w-0">
+                  <span class="block text-xs font-semibold">{{ i18n.t('teams.filterMine') }}</span>
+                  <span id="teams-mine-hint" class="block truncate text-[10px] text-muted">
+                    {{ i18n.t('teams.filterMineHint') }}
+                  </span>
+                </span>
+              </label>
+            </div>
+          </div>
+
+          @if (hasFilters()) {
+            <div class="flex flex-wrap items-center gap-2 border-t border-line pt-3">
+              <span class="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
+                {{ i18n.t('teams.activeFilters') }}
+              </span>
+              @for (chip of chips(); track chip.id) {
+                <button
+                  type="button"
+                  class="inline-flex items-center gap-1.5 rounded-full border border-brand/30 bg-brand/10 px-2.5 py-1 text-[10px] font-semibold text-brand-strong transition hover:border-brand/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60"
+                  [attr.aria-label]="i18n.t('teams.removeFilter', { label: chip.label })"
+                  (click)="removeChip(chip.id)"
+                >
+                  {{ chip.label }}
+                  <fa-icon [icon]="icons['close']" class="text-[9px]" aria-hidden="true" />
+                </button>
+              }
+              <button
+                type="button"
+                class="ml-auto inline-flex h-8 items-center gap-1.5 rounded-lg px-2 text-[10px] font-semibold text-muted transition hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60"
+                (click)="clearFilters()"
+              >
+                {{ i18n.t('teams.clearFilters') }}
+              </button>
+            </div>
+          }
+        </div>
+      </article>
+
+      <div class="flex flex-wrap items-center justify-between gap-2" aria-live="polite">
+        <p class="text-xs text-muted">{{ resultsLabel() }}</p>
+        @if (loading()) {
+          <span class="inline-flex items-center gap-1.5 text-[10px] font-semibold text-muted">
+            <fa-icon [icon]="icons['spinner']" class="animate-spin" aria-hidden="true" />
+            {{ i18n.t('teams.loading') }}
+          </span>
+        }
+      </div>
+
+      @if (error(); as loadError) {
+        <div
+          class="flex flex-col items-center justify-center rounded-4xl border border-dashed border-coral/40 bg-coral/5 px-5 py-10 text-center"
+          role="alert"
+        >
+          <span class="grid size-12 place-items-center rounded-2xl border border-coral/30 bg-coral/10 text-coral">
+            <fa-icon [icon]="icons['error']" class="text-lg" aria-hidden="true" />
+          </span>
+          <h3 class="mt-4 font-display text-lg font-semibold text-ink">
+            {{ i18n.t('teams.loadError') }}
+          </h3>
+          <p class="mt-1.5 max-w-md text-sm leading-6 text-muted">{{ errorMessage() }}</p>
+          <button
+            type="button"
+            class="mt-4 inline-flex h-10 items-center gap-2 rounded-xl bg-brand px-4 text-xs font-semibold text-on-secondary transition hover:bg-secondary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60"
+            (click)="retry()"
+          >
+            <fa-icon [icon]="icons['refresh']" class="text-[11px]" aria-hidden="true" />
+            {{ i18n.t('teams.retry') }}
           </button>
-        </form>
-      }
-
-      <p class="mt-4 border-t border-line pt-3 text-[10px] leading-5 text-muted">
-        {{ i18n.t('team.addFootnote') }}
-      </p>
-    </article>
-
-    <div class="flex min-w-0 flex-col gap-3">
-      <label class="relative block">
-        <span class="sr-only">{{ i18n.t('team.searchPlaceholder') }}</span>
-        <fa-icon
-          [icon]="icons['search']"
-          class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[11px] text-muted"
-          aria-hidden="true"
-        />
-        <input
-          type="search"
-          class="h-11 w-full rounded-2xl border border-line bg-surface pl-10 pr-3 text-sm text-ink shadow-card outline-none transition placeholder:text-muted/60 focus:border-brand/50"
-          [placeholder]="i18n.t('team.searchPlaceholder')"
-          [value]="search()"
-          (input)="setSearch($any($event.target).value)"
-        />
-      </label>
-
-      @if (loading() && members().length === 0) {
+        </div>
+      } @else if (loading() && items().length === 0) {
         <app-skeleton variant="cards" />
-      } @else if (groups().length === 0) {
+      } @else if (items().length === 0) {
         <div
           class="flex flex-col items-center justify-center rounded-4xl border border-dashed border-line bg-surface/60 px-5 py-10 text-center backdrop-blur-2xl sm:px-6 sm:py-16"
         >
@@ -167,110 +294,275 @@
             <fa-icon [icon]="icons['guestGroup']" class="text-xl" aria-hidden="true" />
           </span>
           <h3 class="mt-4 font-display text-lg font-semibold text-ink">
-            {{ i18n.t('team.empty') }}
+            {{ i18n.t(emptyTitle()) }}
           </h3>
           <p class="mt-1.5 max-w-md text-sm leading-6 text-muted">
-            {{ i18n.t('team.emptyHint') }}
+            {{ i18n.t(emptyHint()) }}
           </p>
+          @if (hasFilters()) {
+            <button
+              type="button"
+              class="mt-4 inline-flex h-10 items-center gap-2 rounded-xl border border-line bg-surface px-4 text-xs font-semibold text-ink transition hover:border-brand/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60"
+              (click)="clearFilters()"
+            >
+              {{ i18n.t('teams.clearFilters') }}
+            </button>
+          }
         </div>
       } @else {
-        @for (group of groups(); track group.eventId) {
-          <article
-            class="overflow-hidden rounded-4xl border border-line bg-surface shadow-card backdrop-blur-2xl"
-          >
-            <div class="flex flex-wrap items-center gap-3 border-b border-line p-4">
-              <div class="h-14 w-20 shrink-0 overflow-hidden rounded-xl bg-surface-raised">
-                @if (group.coverUrl) {
-                  <img
-                    [src]="group.coverUrl"
-                    [alt]="group.title"
-                    class="size-full object-cover"
-                    loading="lazy"
-                  />
-                } @else {
-                  <app-template-artwork
-                    [templateId]="group.templateId"
-                    variant="cover"
-                    [showIcon]="false"
-                    class="block size-full"
-                  />
-                }
-              </div>
-
-              <div class="min-w-0 flex-1">
-                <div class="flex flex-wrap items-center gap-2">
-                  <p class="truncate text-sm font-semibold text-ink">{{ group.title }}</p>
-                  <app-status-badge [value]="group.status" />
-                </div>
-                <p class="mt-1 text-[11px] text-muted">
-                  {{ i18n.t('team.groupCount', { count: group.members.length }) }}
-                  @if (group.startsAt) {
-                    · {{ i18n.longDate(group.startsAt, group.timezone) }}
-                  }
-                </p>
-              </div>
-
-              <a
-                [routerLink]="['/eventos', group.eventId]"
-                class="inline-flex h-8 items-center gap-1.5 rounded-lg border border-line bg-surface-raised/60 px-2.5 text-[10px] font-semibold text-muted transition hover:border-brand/40 hover:text-brand-strong"
+        <ul class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          @for (team of items(); track team.id) {
+            <li class="min-w-0">
+              <article
+                class="flex h-full flex-col gap-3 rounded-4xl border border-line bg-surface p-4 shadow-card backdrop-blur-2xl transition hover:border-brand/30 sm:p-5"
+                [attr.data-testid]="'team-card-' + team.id"
               >
-                {{ i18n.t('team.openEvent') }}
-                <fa-icon [icon]="icons['chevronRight']" class="text-[9px]" aria-hidden="true" />
-              </a>
-            </div>
+                <div class="flex items-start justify-between gap-3">
+                  <div class="min-w-0">
+                    <span
+                      class="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface-raised px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.14em] text-muted"
+                    >
+                      <fa-icon [icon]="icons['guestGroup']" class="text-[9px]" aria-hidden="true" />
+                      {{ categoryLabel(team.category) }}
+                    </span>
+                    <h3 class="mt-2 truncate font-display text-lg font-semibold text-ink">
+                      {{ team.name }}
+                    </h3>
+                  </div>
+                  <app-status-badge [value]="team.eventStatus" />
+                </div>
 
-            <ul class="divide-y divide-line">
-              @for (member of group.members; track member.id) {
-                <li class="flex flex-wrap items-center gap-3 px-4 py-3">
-                  <span
-                    class="grid size-9 shrink-0 place-items-center rounded-xl border border-iris/30 bg-iris/10 text-iris"
+                @if (team.description) {
+                  <p class="line-clamp-2 text-xs leading-5 text-muted">{{ team.description }}</p>
+                }
+
+                <div
+                  class="flex flex-col gap-1.5 rounded-2xl border border-line bg-surface-raised/40 px-3 py-2"
+                  [attr.data-testid]="'team-progress-' + team.id"
+                >
+                  <div class="flex items-center justify-between gap-2 text-[10px] font-semibold text-muted">
+                    <span>{{ progressLabel(team) }}</span>
+                    <span>{{ progressPercent(team) }}%</span>
+                  </div>
+                  <div
+                    class="h-1.5 overflow-hidden rounded-full bg-line"
+                    role="progressbar"
+                    [attr.aria-label]="i18n.t('teams.progressLabel')"
+                    [attr.aria-valuenow]="progressPercent(team)"
+                    aria-valuemin="0"
+                    aria-valuemax="100"
                   >
-                    <fa-icon [icon]="icons['user']" class="text-[11px]" aria-hidden="true" />
-                  </span>
-
-                  <div class="min-w-0 flex-1">
-                    <p class="truncate text-xs font-semibold text-ink">{{ member.email }}</p>
-                    <p class="mt-0.5 text-[10px] text-muted">
-                      {{ member.hasAccount ? i18n.t('team.hasAccount') : i18n.t('team.linkOnly') }}
-                      @if (member.lastUsedAt) {
-                        · {{ i18n.relative(member.lastUsedAt) }}
-                      }
-                    </p>
+                    <div
+                      class="h-full rounded-full bg-brand transition-all duration-500"
+                      [style.width.%]="progressPercent(team)"
+                    ></div>
                   </div>
+                </div>
 
-                  <div class="flex items-center gap-1">
-                    <button
-                      type="button"
-                      class="grid size-8 place-items-center rounded-lg border border-line bg-surface text-muted transition hover:border-brand/40 hover:text-brand-strong disabled:cursor-not-allowed disabled:opacity-40"
-                      [disabled]="busyId() !== null"
-                      [attr.aria-label]="i18n.t('team.resend')"
-                      [attr.title]="i18n.t('team.resend')"
-                      (click)="resendInvite(member)"
+                <div class="mt-auto flex flex-col gap-2 border-t border-line pt-3">
+                  <p class="flex min-w-0 items-center gap-1.5 text-[11px] text-muted">
+                    <fa-icon [icon]="icons['calendar']" class="text-[10px]" aria-hidden="true" />
+                    <span class="truncate">{{ team.eventTitle }}</span>
+                  </p>
+                  <div class="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[11px] text-muted">
+                    <span class="inline-flex items-center gap-1.5">
+                      <fa-icon [icon]="icons['user']" class="text-[10px]" aria-hidden="true" />
+                      {{ roleLabel(team.myRole) }}
+                    </span>
+                    <span class="inline-flex items-center gap-1.5">
+                      <fa-icon [icon]="icons['guestGroup']" class="text-[10px]" aria-hidden="true" />
+                      {{ memberLabel(team) }}
+                    </span>
+                    <span
+                      class="inline-flex items-center gap-1.5"
+                      [class.text-amber]="team.openTaskCount > 0"
                     >
-                      <fa-icon
-                        [icon]="busyId() === member.id ? icons['spinner'] : icons['paperPlane']"
-                        class="text-[10px]"
-                        [class.animate-spin]="busyId() === member.id"
-                        aria-hidden="true"
-                      />
-                    </button>
-                    <button
-                      type="button"
-                      class="grid size-8 place-items-center rounded-lg border border-line bg-surface text-muted transition hover:border-coral/40 hover:text-coral disabled:cursor-not-allowed disabled:opacity-40"
-                      [disabled]="busyId() !== null"
-                      [attr.aria-label]="i18n.t('team.remove')"
-                      [attr.title]="i18n.t('team.remove')"
-                      (click)="removeManager(member)"
-                    >
-                      <fa-icon [icon]="icons['trash']" class="text-[10px]" aria-hidden="true" />
-                    </button>
+                      <fa-icon [icon]="icons['checklist']" class="text-[10px]" aria-hidden="true" />
+                      {{ openTasksLabel(team) }}
+                    </span>
+                    @if (team.membersPreview.length > 0) {
+                      <span
+                        class="inline-flex items-center"
+                        [attr.data-testid]="'team-avatars-' + team.id"
+                      >
+                        <app-avatar-stack
+                          [names]="previewNames(team)"
+                          [images]="previewImages(team)"
+                          [max]="3"
+                        />
+                      </span>
+                    }
                   </div>
-                </li>
-              }
-            </ul>
-          </article>
+                </div>
+
+                <a
+                  [routerLink]="['/equipas', team.id]"
+                  class="inline-flex h-9 items-center justify-center gap-1.5 rounded-xl border border-line bg-surface-raised/60 px-3 text-[11px] font-semibold text-ink transition hover:border-brand/40 hover:text-brand-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60"
+                  [attr.aria-label]="i18n.t('teams.openTeamAria', { name: team.name })"
+                >
+                  {{ i18n.t('teams.openTeam') }}
+                  <fa-icon [icon]="icons['chevronRight']" class="text-[9px]" aria-hidden="true" />
+                </a>
+              </article>
+            </li>
+          }
+        </ul>
+      }
+
+      @if (pagination(); as page) {
+        @if (page.total_pages > 1) {
+          <nav
+            class="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-line bg-surface px-3 py-2"
+            [attr.aria-label]="i18n.t('teams.page', { page: page.page, total: page.total_pages })"
+          >
+            <button
+              type="button"
+              class="inline-flex h-9 items-center gap-1.5 rounded-xl border border-line bg-surface-raised px-3 text-[11px] font-semibold text-ink transition hover:border-brand/40 disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60"
+              [disabled]="page.page <= 1"
+              [attr.aria-label]="i18n.t('teams.previous')"
+              (click)="goToPage(page.page - 1)"
+            >
+              <fa-icon [icon]="icons['chevronLeft']" class="text-[10px]" aria-hidden="true" />
+              {{ i18n.t('teams.previous') }}
+            </button>
+            <span class="text-[11px] font-semibold text-muted">{{ rangeLabel() }}</span>
+            <button
+              type="button"
+              class="inline-flex h-9 items-center gap-1.5 rounded-xl border border-line bg-surface-raised px-3 text-[11px] font-semibold text-ink transition hover:border-brand/40 disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60"
+              [disabled]="page.page >= page.total_pages"
+              [attr.aria-label]="i18n.t('teams.next')"
+              (click)="goToPage(page.page + 1)"
+            >
+              {{ i18n.t('teams.next') }}
+              <fa-icon [icon]="icons['chevronRight']" class="text-[10px]" aria-hidden="true" />
+            </button>
+          </nav>
         }
       }
-    </div>
-  </div>
+    }
+
+    @case ('managers') {
+      <div data-testid="managers-panel" class="flex flex-col gap-4">
+        <p class="text-xs leading-5 text-muted">{{ i18n.t('teams.managerHint') }}</p>
+
+        @if (managerErrorMessage()) {
+          <div role="alert" class="rounded-2xl border border-coral/30 bg-coral/5 p-4 text-xs text-coral">
+            {{ managerErrorMessage() }}
+          </div>
+        }
+
+        <div class="grid gap-3 sm:grid-cols-3">
+          <app-stat-card
+            [label]="i18n.t('team.statManagers')"
+            [value]="managerStats().managers"
+            [hint]="i18n.t('team.statManagersHint')"
+            [icon]="icons['guestGroup']"
+            tone="iris"
+          />
+          <app-stat-card
+            [label]="i18n.t('team.statEvents')"
+            [value]="managerStats().events"
+            [hint]="i18n.t('team.statEventsHint')"
+            [icon]="icons['events']"
+            tone="brand"
+          />
+          <app-stat-card
+            [label]="i18n.t('team.statAccounts')"
+            [value]="managerStats().accounts"
+            [hint]="i18n.t('team.statAccountsHint')"
+            [icon]="icons['user']"
+            tone="mint"
+          />
+        </div>
+
+        <label class="relative block">
+          <span class="sr-only">{{ i18n.t('team.searchPlaceholder') }}</span>
+          <fa-icon
+            [icon]="icons['search']"
+            class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[11px] text-muted"
+            aria-hidden="true"
+          />
+          <input
+            type="search"
+            class="h-11 w-full rounded-2xl border border-line bg-surface pl-10 pr-3 text-sm text-ink shadow-card outline-none transition placeholder:text-muted/60 focus:border-brand/50 focus-visible:ring-2 focus-visible:ring-brand/60"
+            [placeholder]="i18n.t('team.searchPlaceholder')"
+            [value]="managerSearch()"
+            (input)="setManagerSearch($any($event.target).value)"
+          />
+        </label>
+
+        @if (managersLoading() && managers().length === 0) {
+          <app-skeleton variant="cards" />
+        } @else if (managerGroups().length === 0) {
+          <div
+            class="flex flex-col items-center justify-center rounded-4xl border border-dashed border-line bg-surface/60 px-5 py-10 text-center backdrop-blur-2xl"
+          >
+            <span
+              class="grid size-14 place-items-center rounded-2xl border border-brand/25 bg-brand/15 text-brand-strong"
+            >
+              <fa-icon [icon]="icons['guestGroup']" class="text-xl" aria-hidden="true" />
+            </span>
+            <h3 class="mt-4 font-display text-lg font-semibold text-ink">
+              {{ i18n.t('teams.managerEmpty') }}
+            </h3>
+          </div>
+        } @else {
+          @for (group of managerGroups(); track group.eventId) {
+            <article class="overflow-hidden rounded-4xl border border-line bg-surface shadow-card backdrop-blur-2xl">
+              <div class="flex flex-wrap items-center gap-3 border-b border-line p-4">
+                <div class="min-w-0 flex-1">
+                  <div class="flex flex-wrap items-center gap-2">
+                    <p class="truncate text-sm font-semibold text-ink">{{ group.title }}</p>
+                    <app-status-badge [value]="group.status" />
+                  </div>
+                  <p class="mt-1 text-[11px] text-muted">
+                    {{ i18n.t('team.groupCount', { count: group.members.length }) }}
+                    @if (group.startsAt) {
+                      · {{ i18n.longDate(group.startsAt, group.timezone) }}
+                    }
+                  </p>
+                </div>
+                <a
+                  [routerLink]="['/eventos', group.eventId]"
+                  [attr.data-testid]="'manager-link-' + group.eventId"
+                  class="inline-flex h-8 items-center gap-1.5 rounded-lg border border-line bg-surface-raised/60 px-2.5 text-[10px] font-semibold text-muted transition hover:border-brand/40 hover:text-brand-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60"
+                >
+                  {{ i18n.t('team.openEvent') }}
+                  <fa-icon [icon]="icons['chevronRight']" class="text-[9px]" aria-hidden="true" />
+                </a>
+              </div>
+              <ul class="divide-y divide-line">
+                @for (member of group.members; track member.id) {
+                  <li class="flex flex-wrap items-center gap-3 px-4 py-3">
+                    <span class="grid size-9 shrink-0 place-items-center rounded-xl border border-iris/30 bg-iris/10 text-iris">
+                      <fa-icon [icon]="icons['user']" class="text-[11px]" aria-hidden="true" />
+                    </span>
+                    <div class="min-w-0 flex-1">
+                      <p class="truncate text-xs font-semibold text-ink">{{ member.email }}</p>
+                      <p class="mt-0.5 text-[10px] text-muted">
+                        {{ member.hasAccount ? i18n.t('team.hasAccount') : i18n.t('team.linkOnly') }}
+                        @if (member.lastUsedAt) {
+                          · {{ i18n.relative(member.lastUsedAt) }}
+                        }
+                      </p>
+                    </div>
+                  </li>
+                }
+              </ul>
+            </article>
+          }
+        }
+      </div>
+    }
+  }
+
+  <app-team-form-dialog
+    [open]="formOpen()"
+    [team]="formTeam()"
+    [events]="events()"
+    [defaultEventId]="filters().eventId"
+    [saving]="formSaving()"
+    (saved)="saveTeam($event)"
+    (cancel)="closeForm()"
+  />
 </section>

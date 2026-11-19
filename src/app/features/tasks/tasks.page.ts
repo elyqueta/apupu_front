@@ -1,7 +1,7 @@
 import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, ParamMap } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { skip } from 'rxjs';
 import { toApiError } from '../../core/api/api-error';
@@ -76,6 +76,19 @@ export class TasksPage {
       this.q().trim() !== '',
   );
 
+  /** Em mobile os filtros começam recolhidos; em `md+` estão sempre visíveis. */
+  protected readonly filtersOpen = signal(false);
+
+  /** Quantos filtros estão ativos, para o badge do botão "Filtros". */
+  protected readonly activeFilterCount = computed(
+    () =>
+      (this.status() !== 'all' ? 1 : 0) +
+      (this.assignee() !== 'all' ? 1 : 0) +
+      (this.eventId() ? 1 : 0) +
+      (this.managerId() ? 1 : 0) +
+      (this.q().trim() ? 1 : 0),
+  );
+
   protected readonly rangeLabel = computed(() => {
     const pagination = this.pagination();
     if (!pagination || pagination.total === 0) {
@@ -89,17 +102,19 @@ export class TasksPage {
   constructor() {
     this.store.load({ tasks: true, events: true });
 
-    // Abre já filtrado quando se chega de uma sugestão de pesquisa (`?q=`).
-    const initialQuery = this.route.snapshot.queryParamMap.get('q')?.trim() ?? '';
-    if (initialQuery) {
-      this.q.set(initialQuery);
-    }
+    // Abre já filtrado quando se chega de uma sugestão de pesquisa (`?q=`)
+    // ou do filtro por evento (`?evento=` / `?event_id=`).
+    const initial = this.readQuery(this.route.snapshot.queryParamMap);
+    this.q.set(initial.q);
+    this.eventId.set(initial.eventId);
     this.route.queryParamMap.pipe(skip(1), takeUntilDestroyed()).subscribe((params) => {
-      const next = params.get('q')?.trim() ?? '';
-      if (next === this.q().trim()) {
+      const next = this.readQuery(params);
+      if (next.q === this.q().trim() && next.eventId === this.eventId()) {
         return;
       }
-      this.q.set(next);
+      this.q.set(next.q);
+      this.eventId.set(next.eventId);
+      this.managerId.set('');
       this.page.set(1);
       void this.load();
     });
@@ -216,6 +231,13 @@ export class TasksPage {
     } finally {
       this.busyId.set(null);
     }
+  }
+
+  private readQuery(params: ParamMap): { q: string; eventId: string } {
+    return {
+      q: params.get('q')?.trim() ?? '',
+      eventId: (params.get('evento') ?? params.get('event_id') ?? '').trim(),
+    };
   }
 
   private async loadManagers(eventId: string): Promise<void> {

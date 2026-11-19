@@ -7,6 +7,8 @@ export interface ApiErrorEnvelope {
     code: string;
     message: string;
     fields?: Record<string, string[]>;
+    /** Contexto adicional (ex.: lista de tarefas abertas ao remover). */
+    details?: unknown;
     request_id: string;
   };
 }
@@ -172,15 +174,131 @@ export interface ApiActivity {
   event_title?: string;
 }
 
+export type ApiTeamCategory =
+  | 'logistica'
+  | 'decoracao'
+  | 'musica'
+  | 'catering'
+  | 'rececao'
+  | 'outra';
+export type ApiTeamMyRole = 'anfitriao' | 'gestor' | 'membro';
+export type ApiTeamEventStatus =
+  | 'agendado'
+  | 'em_curso'
+  | 'concluido'
+  | 'cancelado'
+  | 'rascunho';
+export type ApiTeamMemberRole = 'gestor' | 'membro';
+export type ApiTeamMemberStatus = 'ativo' | 'convite_pendente';
+export type ApiTeamMemberOrigin = 'convidado' | 'email';
+export type ApiTaskStatus = 'por_fazer' | 'em_curso' | 'concluida';
+export type ApiTaskPriority = 'baixa' | 'normal' | 'alta';
+
+/** Pré-visualização de membros devolvida em todas as respostas de equipa. */
+export interface ApiTeamMemberPreview {
+  id: string;
+  display_name: string | null;
+  avatar_url: string | null;
+}
+
+/** Equipa com o resumo do evento e o papel da conta autenticada. */
+export interface ApiTeam {
+  id: string;
+  event_id: string;
+  event_title: string;
+  event_status: ApiTeamEventStatus;
+  my_role: ApiTeamMyRole;
+  name: string;
+  category: ApiTeamCategory;
+  description: string | null;
+  member_count: number;
+  task_count: number;
+  completed_task_count: number;
+  members_preview: ApiTeamMemberPreview[];
+  open_task_count: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ApiTeamMember {
+  id: string;
+  team_id: string;
+  email: string;
+  display_name: string | null;
+  role: ApiTeamMemberRole;
+  status: ApiTeamMemberStatus;
+  origin: ApiTeamMemberOrigin;
+  is_host: boolean;
+  open_task_count: number;
+  /** `false` → responsável sem acesso ao evento. */
+  has_event_access: boolean;
+  joined_at: string | null;
+  created_at: string;
+}
+
+export interface ApiTeamMemberAddRow {
+  email: string;
+  member_id: string | null;
+  status: ApiTeamMemberStatus;
+  reason?: string;
+}
+
+/** `POST /host/teams/{id}/members` devolve o corpo sem envelope `data`. */
+export interface ApiAddTeamMembersResult {
+  added: ApiTeamMemberAddRow[];
+  pending: ApiTeamMemberAddRow[];
+  skipped: ApiTeamMemberAddRow[];
+}
+
+export interface ApiUpdateTeamMemberRoleResult {
+  member: ApiTeamMember;
+  event_manager_id: string | null;
+}
+
+export interface ApiDeleteTeamResult {
+  deleted: true;
+  reassigned_to_team_id: string | null;
+  reassigned_tasks: number;
+  archived_tasks: number;
+}
+
+export interface ApiRemoveTeamMemberResult {
+  removed: true;
+  reassigned_tasks: number;
+}
+
+export interface ApiInviteResendResult {
+  send_count: number;
+  last_sent_at: string;
+  expires_at: string;
+}
+
 export interface ApiTask {
   id: string;
   event_id: string | null;
   event_title: string | null;
+  team_id: string | null;
+  team_name: string | null;
+  assignee_member_id: string | null;
+  assignee_email: string | null;
+  assignee_display_name: string | null;
+  /** `false` → mostrar "Responsável sem acesso". */
+  assignee_has_access: boolean | null;
   manager_id: string | null;
   manager_email: string | null;
-  label: string;
-  done: boolean;
+  title: string;
+  description: string | null;
+  due_date: string | null;
+  priority: ApiTaskPriority;
+  status: ApiTaskStatus;
+  created_by_host_id: string | null;
+  completed_by_member_id: string | null;
   completed_at: string | null;
+  archived_at: string | null;
+  /** @deprecated Use `title`. */
+  label: string;
+  /** @deprecated Use `status === 'concluida'`. */
+  done: boolean;
   created_at: string;
   updated_at: string;
 }

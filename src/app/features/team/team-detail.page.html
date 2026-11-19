@@ -1,0 +1,605 @@
+<section class="flex flex-col gap-4 md:gap-5">
+  <a
+    routerLink="/equipas"
+    class="inline-flex w-fit items-center gap-1.5 text-[11px] font-semibold text-muted transition hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60"
+  >
+    <fa-icon [icon]="icons['chevronLeft']" class="text-[9px]" aria-hidden="true" />
+    {{ i18n.t('teamDetail.back') }}
+  </a>
+
+  @if (loading()) {
+    <app-skeleton variant="cards" />
+  } @else if (errorMessage()) {
+    <div
+      role="alert"
+      data-testid="detail-error"
+      class="flex flex-col items-center justify-center rounded-4xl border border-dashed border-coral/40 bg-coral/5 px-5 py-12 text-center"
+    >
+      <span class="grid size-14 place-items-center rounded-2xl border border-coral/30 bg-coral/10 text-coral">
+        <fa-icon [icon]="icons['error']" class="text-xl" aria-hidden="true" />
+      </span>
+      <h2 class="mt-4 font-display text-lg font-semibold text-ink">{{ errorMessage() }}</h2>
+    </div>
+  } @else if (team(); as currentTeam) {
+    <header class="flex flex-wrap items-start justify-between gap-4">
+      <div class="min-w-0">
+        <p class="text-[10px] font-semibold uppercase tracking-[0.26em] text-brand-strong">
+          {{ i18n.t('teamDetail.eyebrow') }}
+        </p>
+        <h1 class="mt-1.5 font-display text-2xl font-semibold tracking-tight text-ink sm:text-3xl">
+          {{ currentTeam.name }}
+        </h1>
+        <div class="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-muted">
+          <span class="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface px-2.5 py-1">
+            <fa-icon [icon]="icons['guestGroup']" class="text-[9px]" aria-hidden="true" />
+            {{ categoryLabel() }}
+          </span>
+          <span class="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface px-2.5 py-1">
+            <fa-icon [icon]="icons['calendar']" class="text-[9px]" aria-hidden="true" />
+            {{ currentTeam.eventTitle }}
+          </span>
+          <app-status-badge [value]="currentTeam.eventStatus" />
+          <span class="inline-flex items-center gap-1.5 rounded-full border border-brand/25 bg-brand/10 px-2.5 py-1 text-brand-strong">
+            <fa-icon [icon]="icons['userCheck']" class="text-[9px]" aria-hidden="true" />
+            {{ i18n.t('teamDetail.role') }}: {{ myRoleLabel() }}
+          </span>
+        </div>
+        @if (currentTeam.description) {
+          <p class="mt-3 max-w-2xl text-sm leading-6 text-muted">{{ currentTeam.description }}</p>
+        }
+      </div>
+
+      <div data-testid="team-menu" class="relative">
+        <app-action-menu
+          [items]="menuItems()"
+          [triggerLabel]="i18n.t('common.moreActions')"
+          [disabledHint]="i18n.t('teamDetail.permissionHint')"
+          (selected)="onMenu($event)"
+        />
+      </div>
+    </header>
+
+    <nav
+      role="tablist"
+      class="flex items-center gap-1 rounded-2xl border border-line bg-surface p-1 shadow-card"
+      [attr.aria-label]="currentTeam.name"
+    >
+      <button
+        type="button"
+        role="tab"
+        data-testid="detail-tab-tasks"
+        class="inline-flex h-10 flex-1 items-center justify-center gap-2 rounded-xl px-3 text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60"
+        [class]="tab() === 'tarefas' ? 'bg-brand/15 text-ink' : 'text-muted hover:text-ink'"
+        [attr.aria-selected]="tab() === 'tarefas'"
+        (click)="setTab('tarefas')"
+      >
+        <fa-icon [icon]="icons['checklist']" class="text-[11px]" aria-hidden="true" />
+        {{ i18n.t('teamDetail.tabs.tasks') }}
+      </button>
+      <button
+        type="button"
+        role="tab"
+        data-testid="detail-tab-members"
+        class="inline-flex h-10 flex-1 items-center justify-center gap-2 rounded-xl px-3 text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60"
+        [class]="tab() === 'membros' ? 'bg-brand/15 text-ink' : 'text-muted hover:text-ink'"
+        [attr.aria-selected]="tab() === 'membros'"
+        (click)="setTab('membros')"
+      >
+        <fa-icon [icon]="icons['guestGroup']" class="text-[11px]" aria-hidden="true" />
+        {{ i18n.t('teamDetail.tabs.members') }}
+      </button>
+    </nav>
+
+    @switch (tab()) {
+      @case ('tarefas') {
+        @if (tasks().length === 0) {
+          <div
+            class="flex flex-col items-center justify-center rounded-4xl border border-dashed border-line bg-surface/60 px-5 py-12 text-center backdrop-blur-2xl"
+          >
+            <span class="grid size-14 place-items-center rounded-2xl border border-brand/25 bg-brand/15 text-brand-strong">
+              <fa-icon [icon]="icons['checklist']" class="text-xl" aria-hidden="true" />
+            </span>
+            <p class="mt-4 text-sm text-muted">{{ i18n.t('teamDetail.tasksEmpty') }}</p>
+          </div>
+        } @else {
+          <ul class="flex flex-col gap-2">
+            @for (task of tasks(); track task.id) {
+              <li
+                class="flex flex-col gap-3 rounded-3xl border border-line bg-surface/70 p-3 shadow-card backdrop-blur-2xl sm:flex-row sm:items-start sm:p-4"
+                [attr.data-testid]="'task-' + task.id"
+              >
+                <button
+                  type="button"
+                  class="grid size-9 shrink-0 place-items-center rounded-xl border transition disabled:cursor-not-allowed disabled:opacity-50"
+                  [class]="
+                    task.status === 'concluida'
+                      ? 'border-mint/30 bg-mint/15 text-mint'
+                      : 'border-line bg-surface-raised text-muted hover:border-brand/40 hover:text-ink'
+                  "
+                  [disabled]="toggleDisabled(task)"
+                  [attr.aria-disabled]="toggleDisabled(task) ? 'true' : null"
+                  [attr.title]="toggleDisabled(task) ? i18n.t('teamDetail.taskNotYours') : null"
+                  [attr.aria-label]="task.status === 'concluida' ? i18n.t('teamDetail.taskReopen') : i18n.t('teamDetail.taskComplete')"
+                  [attr.data-testid]="'task-toggle-' + task.id"
+                  (click)="toggleTask(task)"
+                >
+                  <fa-icon [icon]="icons['check']" class="text-[11px]" aria-hidden="true" />
+                </button>
+
+                <div class="min-w-0 flex-1">
+                  <div class="flex flex-wrap items-center gap-2">
+                    <p
+                      class="text-sm font-semibold text-ink"
+                      [class.line-through]="task.status === 'concluida'"
+                      [class.text-muted]="task.status === 'concluida'"
+                    >
+                      {{ task.title }}
+                    </p>
+                    <app-status-badge [value]="task.status" />
+                  </div>
+                  <div class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-muted">
+                    <span class="inline-flex items-center gap-1.5">
+                      <fa-icon [icon]="icons['user']" class="text-[9px]" aria-hidden="true" />
+                      {{ i18n.t('teamDetail.taskAssignee') }}: {{ taskAssigneeName(task) }}
+                    </span>
+                    @if (task.assigneeHasAccess === false) {
+                      <span class="inline-flex items-center gap-1.5 text-coral">
+                        <fa-icon [icon]="icons['warning']" class="text-[9px]" aria-hidden="true" />
+                        {{ i18n.t('teamDetail.noAccessWarning') }}
+                      </span>
+                    }
+                    <span>
+                      {{ i18n.t('teamDetail.taskPriority') }}: {{ i18n.t(priorityLabel(task.priority)) }}
+                    </span>
+                    @if (task.dueDate) {
+                      <span>{{ i18n.t('teamDetail.taskDue') }}: {{ i18n.calendarDate(task.dueDate) }}</span>
+                    }
+                  </div>
+                  @if (task.description) {
+                    <p class="mt-2 text-xs leading-5 text-muted">{{ task.description }}</p>
+                  }
+                </div>
+
+                <label class="flex min-w-0 flex-col gap-1 sm:w-48">
+                  <span class="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted">
+                    {{ i18n.t('teamDetail.reassignTask') }}
+                  </span>
+                  <select
+                    class="h-9 w-full rounded-xl border border-line bg-surface-raised px-2 text-xs text-ink outline-none transition focus:border-brand/50 disabled:cursor-not-allowed disabled:opacity-50"
+                    [disabled]="reassignDisabled(task)"
+                    [attr.aria-disabled]="reassignDisabled(task) ? 'true' : null"
+                    [attr.title]="!canManage() ? i18n.t('teamDetail.permissionHint') : null"
+                    [attr.aria-label]="i18n.t('teamDetail.reassignTask')"
+                    [attr.data-testid]="'task-reassign-' + task.id"
+                    [value]="task.assigneeMemberId ?? ''"
+                    (change)="reassign(task, $any($event.target).value)"
+                  >
+                    <option value="">{{ i18n.t('teamDetail.taskUnassigned') }}</option>
+                    @for (member of members(); track member.id) {
+                      <option [value]="member.id">{{ memberName(member) }}</option>
+                    }
+                  </select>
+                </label>
+              </li>
+            }
+          </ul>
+        }
+      }
+
+      @case ('membros') {
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <p class="text-xs text-muted">
+            {{ i18n.t('teams.memberCount', { count: members().length }) }}
+          </p>
+          <button
+            type="button"
+            data-testid="add-member"
+            class="inline-flex h-10 items-center gap-2 rounded-xl bg-brand px-4 text-xs font-semibold text-on-secondary transition hover:bg-secondary-hover disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60"
+            [disabled]="!canManage()"
+            [attr.aria-disabled]="!canManage() ? 'true' : null"
+            [attr.title]="!canManage() ? i18n.t('teamDetail.permissionHint') : null"
+            (click)="openDrawer()"
+          >
+            <fa-icon [icon]="icons['userPlus']" class="text-[11px]" aria-hidden="true" />
+            {{ i18n.t('teamDetail.addMember') }}
+          </button>
+        </div>
+
+        @if (!canManage()) {
+          <p class="rounded-2xl border border-line bg-surface/60 px-4 py-3 text-xs text-muted">
+            {{ i18n.t('teamDetail.permissionHint') }}
+          </p>
+        }
+
+        @if (members().length === 0) {
+          <div
+            class="flex flex-col items-center justify-center rounded-4xl border border-dashed border-line bg-surface/60 px-5 py-12 text-center backdrop-blur-2xl"
+          >
+            <span class="grid size-14 place-items-center rounded-2xl border border-brand/25 bg-brand/15 text-brand-strong">
+              <fa-icon [icon]="icons['guestGroup']" class="text-xl" aria-hidden="true" />
+            </span>
+            <p class="mt-4 text-sm text-muted">{{ i18n.t('teamDetail.membersEmpty') }}</p>
+          </div>
+        } @else {
+          <ul class="grid gap-2 lg:grid-cols-2">
+            @for (member of members(); track member.id) {
+              <li
+                class="flex flex-col gap-3 rounded-3xl border border-line bg-surface/70 p-4 shadow-card backdrop-blur-2xl"
+                [attr.data-testid]="'member-' + member.id"
+              >
+                <div class="flex min-w-0 items-start gap-3">
+                  <app-avatar [name]="memberName(member)" size="md" />
+                  <div class="min-w-0 flex-1">
+                    <p class="truncate text-sm font-semibold text-ink">{{ memberName(member) }}</p>
+                    <p class="truncate text-[11px] text-muted">{{ member.email }}</p>
+                    <div class="mt-1.5 flex flex-wrap items-center gap-1.5">
+                      <span class="rounded-full border border-line bg-surface-raised px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.12em] text-muted">
+                        {{ i18n.t(roleLabel(member.role)) }}
+                      </span>
+                      <span class="rounded-full border border-line bg-surface-raised px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.12em] text-muted">
+                        {{ i18n.t(memberStatusLabel(member.status)) }}
+                      </span>
+                      @if (member.openTaskCount > 0) {
+                        <span class="text-[10px] font-semibold text-amber">
+                          {{ i18n.t('teamDetail.openTasksMember', { count: member.openTaskCount }) }}
+                        </span>
+                      }
+                    </div>
+                    @if (!member.hasEventAccess) {
+                      <p class="mt-1.5 inline-flex items-center gap-1 text-[10px] font-semibold text-coral">
+                        <fa-icon [icon]="icons['warning']" class="text-[9px]" aria-hidden="true" />
+                        {{ i18n.t('teamDetail.noAccessWarning') }}
+                      </p>
+                    }
+                  </div>
+                </div>
+
+                <div class="flex flex-wrap gap-1.5 border-t border-line pt-3">
+                  <button
+                    type="button"
+                    class="inline-flex h-8 items-center gap-1.5 rounded-lg border border-line bg-surface px-2.5 text-[10px] font-semibold text-ink transition hover:border-brand/40 disabled:cursor-not-allowed disabled:opacity-50"
+                    [disabled]="memberDisabled(member, member.role === 'gestor' ? 'demote' : 'promote')"
+                    [attr.aria-disabled]="memberDisabled(member, member.role === 'gestor' ? 'demote' : 'promote') ? 'true' : null"
+                    [attr.title]="memberDisabledHint(member, member.role === 'gestor' ? 'demote' : 'promote')"
+                    [attr.data-testid]="'member-role-' + member.id"
+                    (click)="changeRole(member)"
+                  >
+                    <fa-icon
+                      [icon]="member.role === 'gestor' ? icons['minus'] : icons['userCheck']"
+                      class="text-[9px]"
+                      aria-hidden="true"
+                    />
+                    {{ i18n.t(member.role === 'gestor' ? 'teamDetail.demote' : 'teamDetail.promote') }}
+                  </button>
+                  @if (member.status === 'convite_pendente') {
+                    <button
+                      type="button"
+                      class="inline-flex h-8 items-center gap-1.5 rounded-lg border border-line bg-surface px-2.5 text-[10px] font-semibold text-ink transition hover:border-brand/40 disabled:cursor-not-allowed disabled:opacity-50"
+                      [disabled]="memberDisabled(member, 'resend')"
+                      [attr.aria-disabled]="memberDisabled(member, 'resend') ? 'true' : null"
+                      [attr.title]="memberDisabledHint(member, 'resend')"
+                      [attr.data-testid]="'member-resend-' + member.id"
+                      (click)="resendInvite(member)"
+                    >
+                      <fa-icon [icon]="icons['paperPlane']" class="text-[9px]" aria-hidden="true" />
+                      {{ i18n.t('teamDetail.resendInvite') }}
+                    </button>
+                  }
+                  <button
+                    type="button"
+                    class="inline-flex h-8 items-center gap-1.5 rounded-lg border border-coral/30 bg-coral/5 px-2.5 text-[10px] font-semibold text-coral transition hover:border-coral/60 disabled:cursor-not-allowed disabled:opacity-50"
+                    [disabled]="memberDisabled(member, 'remove')"
+                    [attr.aria-disabled]="memberDisabled(member, 'remove') ? 'true' : null"
+                    [attr.title]="memberDisabledHint(member, 'remove')"
+                    [attr.data-testid]="'member-remove-' + member.id"
+                    (click)="askRemoveMember(member)"
+                  >
+                    <fa-icon [icon]="icons['trash']" class="text-[9px]" aria-hidden="true" />
+                    {{ i18n.t('teamDetail.removeMember') }}
+                  </button>
+                </div>
+              </li>
+            }
+          </ul>
+        }
+      }
+    }
+  }
+
+  <!-- Drawer Adicionar membro -->
+  @if (drawerOpen()) {
+    <div class="fixed inset-0 z-[100] flex justify-end">
+      <button
+        type="button"
+        class="absolute inset-0 bg-canvas/70 backdrop-blur-md"
+        [attr.aria-label]="i18n.t('common.close')"
+        (click)="closeDrawer()"
+      ></button>
+      <aside
+        role="dialog"
+        aria-modal="true"
+        data-testid="member-drawer"
+        [attr.aria-label]="i18n.t('teamDetail.drawerTitle')"
+        class="relative flex h-full w-full max-w-md flex-col overflow-y-auto border-l border-line bg-surface-solid/95 p-5 shadow-card backdrop-blur-2xl animate-rise sm:p-6"
+      >
+        <div class="flex items-start justify-between gap-3">
+          <div>
+            <h2 class="font-display text-xl font-semibold tracking-tight text-ink">
+              {{ i18n.t('teamDetail.drawerTitle') }}
+            </h2>
+            <p class="mt-1 text-xs leading-5 text-muted">{{ i18n.t('teamDetail.drawerHint') }}</p>
+          </div>
+          <button
+            type="button"
+            class="grid size-9 shrink-0 place-items-center rounded-xl border border-line bg-surface-raised text-muted transition hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60"
+            [attr.aria-label]="i18n.t('common.close')"
+            (click)="closeDrawer()"
+          >
+            <fa-icon [icon]="icons['close']" class="text-xs" aria-hidden="true" />
+          </button>
+        </div>
+
+        <div class="mt-5 grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            data-testid="drawer-mode-account"
+            class="rounded-xl border p-3 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60"
+            [class]="drawerMode() === 'account' ? 'border-brand/40 bg-brand/10 text-ink' : 'border-line bg-surface-raised text-muted'"
+            [attr.aria-pressed]="drawerMode() === 'account'"
+            (click)="setDrawerMode('account')"
+          >
+            <fa-icon [icon]="icons['user']" class="text-xs" aria-hidden="true" />
+            <span class="mt-2 block text-xs font-semibold">{{ i18n.t('teamDetail.mode.account') }}</span>
+            <span class="mt-1 block text-[10px] leading-4 text-muted">
+              {{ i18n.t('teamDetail.mode.accountHint') }}
+            </span>
+          </button>
+          <button
+            type="button"
+            data-testid="drawer-mode-list"
+            class="rounded-xl border p-3 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60"
+            [class]="drawerMode() === 'list' ? 'border-brand/40 bg-brand/10 text-ink' : 'border-line bg-surface-raised text-muted'"
+            [attr.aria-pressed]="drawerMode() === 'list'"
+            (click)="setDrawerMode('list')"
+          >
+            <fa-icon [icon]="icons['envelope']" class="text-xs" aria-hidden="true" />
+            <span class="mt-2 block text-xs font-semibold">{{ i18n.t('teamDetail.mode.list') }}</span>
+            <span class="mt-1 block text-[10px] leading-4 text-muted">
+              {{ i18n.t('teamDetail.mode.listHint') }}
+            </span>
+          </button>
+        </div>
+
+        <label class="mt-5 block">
+          <span class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
+            {{ i18n.t(drawerMode() === 'account' ? 'teamDetail.fieldEmail' : 'teamDetail.fieldEmails') }}
+          </span>
+          @if (drawerMode() === 'account') {
+            <input
+              type="email"
+              data-testid="drawer-email"
+              class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink outline-none transition focus:border-brand/50 focus-visible:ring-2 focus-visible:ring-brand/60"
+              [value]="drawerEmail()"
+              (input)="drawerEmail.set($any($event.target).value)"
+            />
+          } @else {
+            <textarea
+              rows="10"
+              data-testid="drawer-emails"
+              class="w-full resize-none rounded-xl border border-line bg-surface-raised px-3 py-2 text-sm text-ink outline-none transition focus:border-brand/50 focus-visible:ring-2 focus-visible:ring-brand/60"
+              [value]="drawerEmailsText()"
+              (input)="drawerEmailsText.set($any($event.target).value)"
+            ></textarea>
+          }
+        </label>
+
+        <div class="mt-2 flex items-center justify-between gap-2">
+          <span
+            data-testid="drawer-count"
+            class="text-[10px] font-semibold text-muted"
+            [class.text-coral]="drawerCount() > 50"
+          >
+            {{ i18n.t('teamDetail.emailsCount', { count: drawerCount() }) }}
+          </span>
+          @if (drawerMessage()) {
+            <span data-testid="drawer-error" class="text-[10px] text-coral">{{ drawerMessage() }}</span>
+          }
+        </div>
+
+        <div class="mt-auto flex flex-col-reverse gap-2 pt-6 sm:flex-row sm:justify-end">
+          <button
+            type="button"
+            class="inline-flex h-11 items-center justify-center rounded-xl border border-line bg-surface-raised px-4 text-sm font-semibold text-ink transition hover:border-brand/40"
+            (click)="closeDrawer()"
+          >
+            {{ i18n.t('common.cancel') }}
+          </button>
+          <button
+            type="button"
+            data-testid="drawer-submit"
+            class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-brand px-4 text-sm font-semibold text-on-secondary transition hover:bg-secondary-hover disabled:cursor-not-allowed disabled:opacity-50"
+            [disabled]="drawerSaving() || !!drawerMessage()"
+            (click)="addMembers()"
+          >
+            <fa-icon
+              [icon]="drawerSaving() ? icons['spinner'] : icons['userPlus']"
+              class="text-[11px]"
+              [class.animate-spin]="drawerSaving()"
+              aria-hidden="true"
+            />
+            {{ drawerSaving() ? i18n.t('teamDetail.adding') : i18n.t('teamDetail.addMembers') }}
+          </button>
+        </div>
+      </aside>
+    </div>
+  }
+
+  <!-- Editar equipa -->
+  <app-team-form-dialog
+    [open]="formOpen()"
+    [team]="team()"
+    [events]="events()"
+    [saving]="formSaving()"
+    (saved)="saveTeam($event)"
+    (cancel)="closeForm()"
+  />
+
+  <!-- Apagar equipa -->
+  <app-confirm-dialog
+    [open]="deleteConfirmOpen()"
+    [title]="i18n.t('teamDetail.deleteTitle')"
+    [message]="i18n.t('teamDetail.deleteMessage', { name: team()?.name ?? '' })"
+    [confirmLabel]="i18n.t('teamDetail.deleteConfirm')"
+    [cancelLabel]="i18n.t('common.cancel')"
+    (confirmed)="confirmDelete()"
+    (cancelled)="closeDelete()"
+  />
+
+  @if (deleteBlockedOpen()) {
+    <div class="fixed inset-0 z-[100] grid place-items-center p-4">
+      <button
+        type="button"
+        class="absolute inset-0 bg-canvas/70 backdrop-blur-md"
+        [attr.aria-label]="i18n.t('common.close')"
+        (click)="closeBlockedDelete()"
+      ></button>
+      <div
+        role="dialog"
+        aria-modal="true"
+        data-testid="delete-blocked"
+        [attr.aria-label]="i18n.t('teamDetail.openTasksTitle')"
+        class="relative w-full max-w-lg rounded-4xl border border-line bg-surface-solid/95 p-6 shadow-card backdrop-blur-2xl animate-rise"
+      >
+        <h2 class="font-display text-xl font-semibold tracking-tight text-ink">
+          {{ i18n.t('teamDetail.openTasksTitle') }}
+        </h2>
+        <p class="mt-2 text-sm leading-6 text-muted">
+          {{ i18n.t('teamDetail.openTasksMessage', { count: blockedTaskCount() }) }}
+        </p>
+
+        @if (targetTeamOptions().length > 0) {
+          <label class="mt-5 block">
+            <span class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
+              {{ i18n.t('teamDetail.reassignTargetTeam') }}
+            </span>
+            <select
+              data-testid="delete-target-team"
+              class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink outline-none transition focus:border-brand/50"
+              [value]="deleteTargetTeamId()"
+              (change)="deleteTargetTeamId.set($any($event.target).value)"
+            >
+              <option value="">{{ i18n.t('teamDetail.chooseTargetTeam') }}</option>
+              @for (option of targetTeamOptions(); track option.id) {
+                <option [value]="option.id">{{ option.name }}</option>
+              }
+            </select>
+          </label>
+        } @else {
+          <p class="mt-4 rounded-2xl border border-dashed border-line p-3 text-xs text-muted">
+            {{ i18n.t('teamDetail.noTargetTeam') }}
+          </p>
+        }
+
+        <div class="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <button
+            type="button"
+            class="inline-flex h-11 items-center justify-center rounded-xl border border-line bg-surface-raised px-4 text-sm font-semibold text-ink"
+            (click)="closeBlockedDelete()"
+          >
+            {{ i18n.t('common.cancel') }}
+          </button>
+          @if (targetTeamOptions().length > 0) {
+            <button
+              type="button"
+              data-testid="delete-reassign"
+              class="inline-flex h-11 items-center justify-center rounded-xl bg-brand px-4 text-sm font-semibold text-on-secondary transition hover:bg-secondary-hover disabled:opacity-50"
+              [disabled]="deleteBusy() || !deleteTargetTeamId()"
+              (click)="deleteAndReassign()"
+            >
+              {{ i18n.t('teamDetail.reassignTeam') }}
+            </button>
+          }
+          <button
+            type="button"
+            data-testid="delete-archive"
+            class="inline-flex h-11 items-center justify-center rounded-xl border border-coral/30 bg-coral/10 px-4 text-sm font-semibold text-coral transition hover:border-coral/60 disabled:opacity-50"
+            [disabled]="deleteBusy()"
+            (click)="deleteAndArchive()"
+          >
+            {{ i18n.t('teamDetail.archiveTasks') }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Remover membro -->
+  <app-confirm-dialog
+    [open]="removeTarget() !== null && !removeReassignOpen()"
+    [title]="i18n.t('teamDetail.removeMemberTitle')"
+    [message]="i18n.t('teamDetail.removeMemberMessage', { name: removeTarget() ? memberName(removeTarget()!) : '' })"
+    [confirmLabel]="i18n.t('common.remove')"
+    [cancelLabel]="i18n.t('common.cancel')"
+    (confirmed)="confirmRemoveMember()"
+    (cancelled)="closeRemove()"
+  />
+
+  @if (removeReassignOpen()) {
+    <div class="fixed inset-0 z-[100] grid place-items-center p-4">
+      <button
+        type="button"
+        class="absolute inset-0 bg-canvas/70 backdrop-blur-md"
+        [attr.aria-label]="i18n.t('common.close')"
+        (click)="closeRemove()"
+      ></button>
+      <div
+        role="dialog"
+        aria-modal="true"
+        data-testid="remove-reassign"
+        [attr.aria-label]="i18n.t('teamDetail.removeReassignTitle', { name: removeTarget() ? memberName(removeTarget()!) : '' })"
+        class="relative w-full max-w-lg rounded-4xl border border-line bg-surface-solid/95 p-6 shadow-card backdrop-blur-2xl animate-rise"
+      >
+        <h2 class="font-display text-xl font-semibold tracking-tight text-ink">
+          {{ i18n.t('teamDetail.removeReassignTitle', { name: removeTarget() ? memberName(removeTarget()!) : '' }) }}
+        </h2>
+        <p class="mt-2 text-sm leading-6 text-muted">
+          {{ i18n.t('teamDetail.removeReassignMessage', { count: memberBlockedTaskCount() }) }}
+        </p>
+        <label class="mt-5 block">
+          <span class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
+            {{ i18n.t('teamDetail.reassignTargetMember') }}
+          </span>
+          <select
+            data-testid="remove-target-member"
+            class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink outline-none transition focus:border-brand/50"
+            [value]="removeTargetMemberId()"
+            (change)="removeTargetMemberId.set($any($event.target).value)"
+          >
+            <option value="">{{ i18n.t('teamDetail.chooseTargetMember') }}</option>
+            @for (member of reassignMemberOptions(); track member.id) {
+              <option [value]="member.id">{{ memberName(member) }}</option>
+            }
+          </select>
+        </label>
+        <div class="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <button
+            type="button"
+            class="inline-flex h-11 items-center justify-center rounded-xl border border-line bg-surface-raised px-4 text-sm font-semibold text-ink"
+            (click)="closeRemove()"
+          >
+            {{ i18n.t('common.cancel') }}
+          </button>
+          <button
+            type="button"
+            data-testid="remove-confirm-reassign"
+            class="inline-flex h-11 items-center justify-center rounded-xl bg-brand px-4 text-sm font-semibold text-on-secondary transition hover:bg-secondary-hover disabled:opacity-50"
+            [disabled]="busyId() !== null || !removeTargetMemberId()"
+            (click)="confirmRemoveReassign()"
+          >
+            {{ i18n.t('teamDetail.confirmRemoveReassign') }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</section>

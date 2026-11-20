@@ -100,6 +100,7 @@ import { InvitationResponseStatus } from '../invitation.models';
             : statusTone() === 'danger'
               ? 'border-coral/30 bg-coral/10'
               : 'border-amber/30 bg-amber/10'"
+          data-testid="invitation-rsvp-status"
           aria-live="polite"
         >
           <p class="flex items-center gap-2 text-sm font-semibold" [class]="statusTextClass()">

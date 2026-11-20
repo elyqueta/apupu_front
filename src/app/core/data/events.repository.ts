@@ -230,6 +230,33 @@ export class EventsRepository extends CachedRepository<HostEvent[]> {
     };
   }
 
+  /**
+   * O gestor troca o próprio código sem ter conta de anfitrião. O novo
+   * código só é devolvido uma vez e as sessões antigas do evento ficam
+   * revogadas (`POST /host/manager/access-code`).
+   */
+  async rotateOwnManagerAccess(): Promise<ManagerInviteResult> {
+    const response = await this.api.post<ApiManagerInviteResult>('/host/manager/access-code', {});
+    return {
+      manager: mapEventManager(response.manager),
+      emailStatus: response.invite_email_status,
+      link: response.link,
+      accessCode: response.access_code,
+    };
+  }
+
+  /** Nova validade do link individual do convite (máx. fim do evento + 30 dias). */
+  async updateInvitationLink(
+    eventId: string,
+    invitationId: string,
+    expiresAt: string
+  ): Promise<void> {
+    await this.api.patch(
+      `/host/events/${encodeURIComponent(eventId)}/invitations/${encodeURIComponent(invitationId)}/link`,
+      { expires_at: expiresAt },
+    );
+  }
+
   async revokeManagerLink(eventId: string, managerId: string): Promise<EventManager> {
     const response = await this.api.post<{ manager: ApiEventManager }>(
       `/host/events/${encodeURIComponent(eventId)}/managers/${encodeURIComponent(managerId)}/revoke`,

@@ -19,14 +19,18 @@ import {
   InvitationResponseStatus,
   InvitationView,
 } from './invitation.models';
+import { InvitationCancelledComponent } from './parts/invitation-cancelled.component';
 import { InvitationDetailsDialogComponent } from './parts/invitation-details-dialog.component';
 import { InvitationDetailsMenuComponent } from './parts/invitation-details-menu.component';
 import { InvitationHeroComponent } from './parts/invitation-hero.component';
 import { InvitationHostDialogComponent } from './parts/invitation-host-dialog.component';
 import { InvitationKeyInfoComponent } from './parts/invitation-key-info.component';
 import { InvitationLocationDialogComponent } from './parts/invitation-location-dialog.component';
+import { InvitationReplyComponent } from './parts/invitation-reply.component';
 import { InvitationRsvpComponent } from './parts/invitation-rsvp.component';
 import { InvitationRsvpDialogComponent } from './parts/invitation-rsvp-dialog.component';
+import { InvitationShareComponent } from './parts/invitation-share.component';
+import { InvitationWelcomeComponent } from './parts/invitation-welcome.component';
 
 @Component({
   selector: 'app-invitation-page',
@@ -37,9 +41,13 @@ import { InvitationRsvpDialogComponent } from './parts/invitation-rsvp-dialog.co
     LogoComponent,
     PreferenceControlsComponent,
     SkeletonComponent,
+    InvitationCancelledComponent,
     InvitationHeroComponent,
     InvitationKeyInfoComponent,
+    InvitationReplyComponent,
     InvitationRsvpComponent,
+    InvitationShareComponent,
+    InvitationWelcomeComponent,
     InvitationDetailsMenuComponent,
     InvitationDetailsDialogComponent,
     InvitationHostDialogComponent,
@@ -68,6 +76,10 @@ export class InvitationPage {
   );
   protected readonly deadlinePassed = computed(() => this.invitation()?.deadlinePassed ?? false);
   protected readonly countdownDays = computed(() => this.invitation()?.countdownDays ?? 0);
+  protected readonly eventCancelled = computed(
+    () => this.invitation()?.event.status === 'cancelled',
+  );
+  protected readonly showWelcome = signal(false);
 
   protected readonly saving = signal(false);
   protected readonly accountDismissed = signal(false);
@@ -104,6 +116,10 @@ export class InvitationPage {
 
   protected retry(): void {
     void this.load(this.token());
+  }
+
+  protected continueToInvitation(): void {
+    this.showWelcome.set(false);
   }
 
   protected createAccount(useSameEmail: boolean): void {
@@ -176,6 +192,7 @@ export class InvitationPage {
     this.actionError.set('');
     this.accountDismissed.set(false);
     this.invitation.set(null);
+    this.showWelcome.set(false);
     const path = `/public/invitations/${encodeURIComponent(token)}`;
     try {
       let result: PublicInvitation;
@@ -189,7 +206,9 @@ export class InvitationPage {
         result = await this.api.post<PublicInvitation>(`${path}/claim`);
       }
       if (version === this.loadVersion) {
-        this.invitation.set(mapPublicInvitation(result));
+        const view = mapPublicInvitation(result);
+        this.invitation.set(view);
+        this.showWelcome.set(Boolean(view.event.coverUrl) && view.event.status !== 'cancelled');
       }
     } catch (error: unknown) {
       if (version === this.loadVersion) {

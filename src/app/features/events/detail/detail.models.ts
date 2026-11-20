@@ -2,7 +2,7 @@ import { TranslationKey } from '../../../core/i18n/translations';
 import { RsvpStatus } from '../../../core/models/models';
 
 /** Separadores partilhados pelo painel do anfitrião e pelo painel do gestor. */
-export type EventTab = 'resumo' | 'convidados' | 'equipas' | 'gestores' | 'atividade';
+export type EventTab = 'resumo' | 'convidados' | 'mensagens' | 'equipas' | 'gestores' | 'atividade';
 
 export interface EventTabDefinition {
   id: EventTab;
@@ -13,6 +13,7 @@ export interface EventTabDefinition {
 export const EVENT_TABS: EventTabDefinition[] = [
   { id: 'resumo', labelKey: 'eventDetail.tabs.overview', icon: 'dashboardAlt' },
   { id: 'convidados', labelKey: 'eventDetail.tabs.guests', icon: 'guests' },
+  { id: 'mensagens', labelKey: 'messages.title', icon: 'envelope' },
   { id: 'equipas', labelKey: 'eventDetail.tabs.teams', icon: 'guestGroup' },
   { id: 'gestores', labelKey: 'eventDetail.tabs.managers', icon: 'user' },
   { id: 'atividade', labelKey: 'eventDetail.tabs.activity', icon: 'clock' },

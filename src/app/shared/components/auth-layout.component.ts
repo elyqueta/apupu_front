@@ -41,20 +41,21 @@ import { LogoComponent } from './logo.component';
           </a>
 
           <div class="flex items-center gap-2">
-            <!-- TODO: seletor de idioma — sem função por agora, como no protótipo. -->
             <button
               type="button"
-              class="inline-flex h-10 min-w-10 items-center justify-center gap-1.5 rounded-xl border border-line bg-surface-raised px-2.5 text-[13px] font-semibold text-ink transition hover:border-brand/40"
+              data-testid="auth-language-toggle"
+              class="inline-flex min-h-11 min-w-11 items-center justify-center gap-1.5 rounded-xl border border-line bg-surface-raised px-2.5 text-[13px] font-semibold text-ink transition hover:border-brand/40"
               [attr.aria-label]="i18n.t('common.language')"
-              title="TODO: seletor de idioma"
+              [attr.title]="i18n.t('common.language')"
+              (click)="toggleLocale()"
             >
               <fa-icon [icon]="icons['globe']" class="text-sm" aria-hidden="true" />
-              <span>PT</span>
+              <span>{{ languageLabel() }}</span>
             </button>
 
             <button
               type="button"
-              class="inline-flex size-10 items-center justify-center rounded-xl border border-line bg-surface-raised text-ink transition hover:border-brand/40"
+              class="inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl border border-line bg-surface-raised px-2 text-ink transition hover:border-brand/40"
               [attr.aria-label]="i18n.t('common.theme')"
               [attr.aria-pressed]="theme.isDark()"
               (click)="theme.toggle()"
@@ -82,7 +83,7 @@ import { LogoComponent } from './logo.component';
       <aside [class]="heroClass()" aria-hidden="false">
         <img
           [src]="heroImage()"
-          [alt]="heroAlt()"
+          [alt]="resolvedHeroAlt()"
           width="1536"
           height="1024"
           fetchpriority="high"
@@ -98,7 +99,7 @@ import { LogoComponent } from './logo.component';
             class="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.2em] text-white/90 backdrop-blur-md"
           >
             <fa-icon [icon]="icons['checkDouble']" class="text-[11px]" />
-            Eventos sem complicações
+            {{ i18n.t('auth.hero.badge') }}
           </span>
         </div>
 
@@ -110,21 +111,20 @@ import { LogoComponent } from './logo.component';
               {{ i18n.t('app.name') }}
             </p>
             <p class="mt-2 font-display text-[26px] font-semibold leading-snug">
-              Organiza. Convida. Celebra.
+              {{ i18n.t('auth.hero.title') }}
             </p>
             <p class="mt-2 text-sm leading-relaxed text-white/80">
-              Convites individuais, confirmações em tempo real e lembretes por email, para que a
-              festa comece antes do primeiro brinde.
+              {{ i18n.t('auth.hero.text') }}
             </p>
             <div class="mt-4 flex flex-wrap gap-2 text-[12px] font-medium text-white/85">
               <span class="rounded-full border border-white/20 bg-white/10 px-2.5 py-1">
-                Convites individuais
+                {{ i18n.t('auth.hero.tag.invites') }}
               </span>
               <span class="rounded-full border border-white/20 bg-white/10 px-2.5 py-1">
-                RSVP em tempo real
+                {{ i18n.t('auth.hero.tag.rsvp') }}
               </span>
               <span class="rounded-full border border-white/20 bg-white/10 px-2.5 py-1">
-                Lembretes por email
+                {{ i18n.t('auth.hero.tag.reminders') }}
               </span>
             </div>
           </div>
@@ -141,7 +141,18 @@ export class AuthLayoutComponent {
   /** Espelha o layout no desktop: formulário à direita e imagem à esquerda (criar conta). */
   readonly reverse = input(false);
   readonly heroImage = input('/auth-login.webp');
-  readonly heroAlt = input('Amigos de costas a celebrar ao pôr do sol na baía de Luanda');
+  /** Quando não é indicado, usa o texto alternativo genérico traduzido. */
+  readonly heroAlt = input<string | null>(null);
+
+  protected readonly languageLabel = computed(() =>
+    this.i18n.locale() === 'pt-AO' ? 'PT' : 'EN',
+  );
+
+  protected readonly resolvedHeroAlt = computed(() => this.heroAlt() ?? this.i18n.t('auth.hero.alt.login'));
+
+  protected toggleLocale(): void {
+    this.i18n.setLocale(this.i18n.locale() === 'pt-AO' ? 'en' : 'pt-AO');
+  }
 
   protected readonly shellClass = computed(() =>
     this.reverse()

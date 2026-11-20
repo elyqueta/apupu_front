@@ -256,17 +256,17 @@
               @for (chip of chips(); track chip.id) {
                 <button
                   type="button"
-                  class="inline-flex items-center gap-1.5 rounded-full border border-brand/30 bg-brand/10 px-2.5 py-1 text-[10px] font-semibold text-brand-strong transition hover:border-brand/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60"
+                  class="ui-chip-interactive border-brand/30 bg-brand/10 text-brand-strong hover:border-brand/60 hover:text-brand-strong"
                   [attr.aria-label]="i18n.t('teams.removeFilter', { label: chip.label })"
                   (click)="removeChip(chip.id)"
                 >
                   {{ chip.label }}
-                  <fa-icon [icon]="icons['close']" class="text-[9px]" aria-hidden="true" />
+                  <fa-icon [icon]="icons['close']" class="text-xs" aria-hidden="true" />
                 </button>
               }
               <button
                 type="button"
-                class="ml-auto inline-flex h-8 items-center gap-1.5 rounded-lg px-2 text-[10px] font-semibold text-muted transition hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60"
+                class="ui-chip-interactive ml-auto border-transparent bg-transparent text-muted"
                 (click)="clearFilters()"
               >
                 {{ i18n.t('teams.clearFilters') }}

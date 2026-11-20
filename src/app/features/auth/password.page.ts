@@ -9,6 +9,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { AuthService } from '../../core/api/auth.service';
 import { toApiError } from '../../core/api/api-error';
+import { I18nService } from '../../core/i18n/i18n.service';
 import { ToastService } from '../../core/services/toast.service';
 import { ICONS } from '../../core/ui/icons';
 import { AuthLayoutComponent } from '../../shared/components/auth-layout.component';
@@ -25,14 +26,14 @@ type PasswordStep = 'form' | 'done';
       @if (mode() === 'forgot') {
         @if (step() === 'form') {
           <div class="animate-screen">
-            <h1 [class]="titleClass">Recuperar senha</h1>
-            <p [class]="leadClass">
-              Indica o teu email e enviamos-te um link para definires uma nova senha.
-            </p>
+            <h1 [class]="titleClass">{{ i18n.t('password.forgotTitle') }}</h1>
+            <p [class]="leadClass">{{ i18n.t('password.forgotLead') }}</p>
 
             <form class="space-y-4" [formGroup]="forgotForm" (ngSubmit)="submit()" novalidate>
               <div class="grid gap-1.5">
-                <label for="forgot-email" class="text-sm font-semibold text-ink">Email</label>
+                <label for="forgot-email" class="text-sm font-semibold text-ink">
+                  {{ i18n.t('auth.email') }}
+                </label>
                 <input
                   id="forgot-email"
                   formControlName="email"
@@ -46,14 +47,14 @@ type PasswordStep = 'form' | 'done';
               </div>
 
               <button type="submit" [disabled]="busy()" [class]="submitClass">
-                {{ busy() ? 'A enviar…' : 'Enviar link' }}
+                {{ busy() ? i18n.t('password.sendingLink') : i18n.t('password.sendLink') }}
               </button>
             </form>
 
             <div class="mt-6">
               <a routerLink="/entrar" [class]="secondaryButtonClass">
                 <fa-icon [icon]="icons['arrowLeft']" class="text-sm" aria-hidden="true" />
-                Voltar a entrar
+                {{ i18n.t('password.backToLogin') }}
               </a>
             </div>
           </div>
@@ -65,21 +66,20 @@ type PasswordStep = 'form' | 'done';
             >
               <fa-icon [icon]="icons['envelope']" class="text-xl" />
             </div>
-            <h1 [class]="titleClass">Verifica o teu email</h1>
+            <h1 [class]="titleClass">{{ i18n.t('password.checkEmail') }}</h1>
             <p [class]="leadClass">
-              Se existir uma conta com <b class="font-semibold text-ink">{{ email() }}</b>, enviámos
-              um link para redefinires a senha.
+              {{ i18n.t('password.checkEmailLead', { email: email() }) }}
               <!-- TODO: contrato não confirmado — indicar a validade do link quando o backend a definir. -->
             </p>
 
             <button type="button" [disabled]="busy()" [class]="submitClass" (click)="resend()">
-              {{ busy() ? 'A enviar…' : 'Reenviar link' }}
+              {{ busy() ? i18n.t('password.sendingLink') : i18n.t('password.resendLink') }}
             </button>
 
             <div class="mt-6">
               <a routerLink="/entrar" [class]="secondaryButtonClass">
                 <fa-icon [icon]="icons['arrowLeft']" class="text-sm" aria-hidden="true" />
-                Voltar a entrar
+                {{ i18n.t('password.backToLogin') }}
               </a>
             </div>
           </div>
@@ -87,13 +87,13 @@ type PasswordStep = 'form' | 'done';
       } @else {
         @if (step() === 'form') {
           <div class="animate-screen">
-            <h1 [class]="titleClass">Define a nova senha</h1>
-            <p [class]="leadClass">Escolhe uma senha que ainda não uses noutros sítios.</p>
+            <h1 [class]="titleClass">{{ i18n.t('password.resetTitle') }}</h1>
+            <p [class]="leadClass">{{ i18n.t('password.resetLead') }}</p>
 
             <form class="space-y-4" [formGroup]="resetForm" (ngSubmit)="submit()" novalidate>
               <div class="grid gap-1.5">
                 <label for="reset-password" class="text-sm font-semibold text-ink"
-                  >Nova senha</label
+                  >{{ i18n.t('password.newPassword') }}</label
                 >
                 <div class="relative">
                   <input
@@ -109,7 +109,9 @@ type PasswordStep = 'form' | 'done';
                   <button
                     type="button"
                     class="absolute right-1 top-1 grid size-11 place-items-center rounded-xl text-muted transition hover:text-ink"
-                    [attr.aria-label]="showNewPassword() ? 'Esconder senha' : 'Mostrar senha'"
+                    [attr.aria-label]="
+                      showNewPassword() ? i18n.t('auth.hidePassword') : i18n.t('auth.showPassword')
+                    "
                     [attr.aria-pressed]="showNewPassword()"
                     (click)="togglePassword('new')"
                   >
@@ -119,12 +121,12 @@ type PasswordStep = 'form' | 'done';
                     />
                   </button>
                 </div>
-                <span class="text-[13px] text-muted">Mínimo de 8 caracteres.</span>
+                <span class="text-[13px] text-muted">{{ i18n.t('password.minPassword') }}</span>
               </div>
 
               <div class="grid gap-1.5">
                 <label for="reset-confirm" class="text-sm font-semibold text-ink">
-                  Confirmar senha
+                  {{ i18n.t('password.confirmPassword') }}
                 </label>
                 <div class="relative">
                   <input
@@ -139,7 +141,11 @@ type PasswordStep = 'form' | 'done';
                   <button
                     type="button"
                     class="absolute right-1 top-1 grid size-11 place-items-center rounded-xl text-muted transition hover:text-ink"
-                    [attr.aria-label]="showConfirmPassword() ? 'Esconder senha' : 'Mostrar senha'"
+                    [attr.aria-label]="
+                      showConfirmPassword()
+                        ? i18n.t('auth.hidePassword')
+                        : i18n.t('auth.showPassword')
+                    "
                     [attr.aria-pressed]="showConfirmPassword()"
                     (click)="togglePassword('confirm')"
                   >
@@ -152,20 +158,20 @@ type PasswordStep = 'form' | 'done';
               </div>
 
               <button type="submit" [disabled]="busy()" [class]="submitClass">
-                {{ busy() ? 'A guardar…' : 'Guardar nova senha' }}
+                {{ busy() ? i18n.t('password.saving') : i18n.t('password.saveNewPassword') }}
               </button>
             </form>
           </div>
         } @else {
           <div class="animate-screen">
-            <h1 [class]="titleClass">Senha atualizada</h1>
-            <p [class]="leadClass">Já podes entrar com a nova senha.</p>
+            <h1 [class]="titleClass">{{ i18n.t('password.updatedTitle') }}</h1>
+            <p [class]="leadClass">{{ i18n.t('password.updatedLead') }}</p>
 
             <a
               routerLink="/entrar"
               class="inline-flex h-[52px] w-full items-center justify-center rounded-[14px] bg-brand text-base font-semibold text-on-secondary no-underline transition hover:bg-secondary-hover"
             >
-              Entrar
+              {{ i18n.t('auth.signIn') }}
             </a>
           </div>
         }
@@ -178,6 +184,7 @@ export class PasswordPage {
   private readonly auth = inject(AuthService);
   private readonly route = inject(ActivatedRoute);
   private readonly toasts = inject(ToastService);
+  private readonly i18n = inject(I18nService);
 
   protected readonly icons = ICONS;
 
@@ -251,7 +258,7 @@ export class PasswordPage {
     this.busy.set(true);
     try {
       await this.auth.requestPasswordReset(this.email());
-      this.toasts.success(`Reenviámos o link para ${this.email()}.`);
+      this.toasts.success(this.i18n.t('password.error.linkResent', { email: this.email() }));
     } catch (error: unknown) {
       this.toasts.error(toApiError(error).message);
     } finally {
@@ -263,7 +270,7 @@ export class PasswordPage {
     const email = this.forgotForm.controls.email.value.trim();
     if (!this.forgotForm.controls.email.valid || !email) {
       this.forgotForm.controls.email.markAsTouched();
-      this.toasts.error('Indica um email válido.');
+      this.toasts.error(this.i18n.t('auth.error.invalidEmail'));
       return;
     }
     this.busy.set(true);
@@ -272,7 +279,7 @@ export class PasswordPage {
       // A mensagem de sucesso é sempre a mesma, exista ou não conta.
       this.email.set(email);
       this.step.set('done');
-      this.toasts.success('Se o email existir, enviámos um link para redefinires a senha.');
+      this.toasts.success(this.i18n.t('password.error.conditionalLink'));
     } catch (error: unknown) {
       this.toasts.error(toApiError(error).message);
     } finally {
@@ -285,19 +292,19 @@ export class PasswordPage {
     const confirm = this.resetForm.controls.confirm.value;
     if (password.length < 8) {
       this.resetForm.controls.password.markAsTouched();
-      this.toasts.error('A senha precisa de pelo menos 8 caracteres.');
+      this.toasts.error(this.i18n.t('auth.error.passwordMin'));
       return;
     }
     if (password !== confirm) {
       this.resetForm.controls.confirm.markAsTouched();
-      this.toasts.error('As senhas não coincidem.');
+      this.toasts.error(this.i18n.t('auth.passwordsMismatch'));
       return;
     }
     this.busy.set(true);
     try {
       await this.auth.resetPassword(this.token(), password);
       this.step.set('done');
-      this.toasts.success('Senha atualizada com sucesso.');
+      this.toasts.success(this.i18n.t('password.error.updated'));
     } catch (error: unknown) {
       this.toasts.error(toApiError(error).message);
     } finally {

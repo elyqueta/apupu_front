@@ -55,6 +55,8 @@ export function mapPublicInvitation(invitation: PublicInvitation): InvitationVie
       emailHasAccount: invitation.guest.email_has_account,
       status: mapRsvpStatus(invitation.guest.rsvp_status),
       message: invitation.guest.message ?? null,
+      answer: invitation.guest.message_answer?.trim() || null,
+      answeredAt: invitation.guest.message_answered_at ?? null,
     },
     deadlinePassed: invitation.rsvp_deadline_passed,
     countdownDays,

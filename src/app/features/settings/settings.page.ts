@@ -14,6 +14,7 @@ import { FontSize, FontSizeService } from '../../core/theme/font-size.service';
 import { ThemeService } from '../../core/theme/theme.service';
 import { ICONS } from '../../core/ui/icons';
 import { AvatarComponent } from '../../shared/components/avatar.component';
+import { SupportDialogComponent } from '../landing/support-dialog.component';
 
 interface ThemeOption {
   mode: ThemeMode;
@@ -33,7 +34,7 @@ interface SettingsSection {
  */
 @Component({
   selector: 'app-settings-page',
-  imports: [RouterLink, ReactiveFormsModule, FaIconComponent, AvatarComponent],
+  imports: [RouterLink, ReactiveFormsModule, FaIconComponent, AvatarComponent, SupportDialogComponent],
   templateUrl: './settings.page.html',
 })
 export class SettingsPage {
@@ -51,6 +52,7 @@ export class SettingsPage {
   protected readonly changingPassword = signal(false);
   protected readonly loggingOut = signal(false);
   protected readonly passwordError = signal('');
+  protected readonly supportOpen = signal(false);
 
   protected readonly sections: SettingsSection[] = [
     { id: 'perfil', labelKey: 'settings.profile' },

@@ -17,12 +17,35 @@ export class I18nService {
   readonly dictionary = computed(() => TRANSLATIONS[this.locale()]);
   readonly localeTag = computed(() => (this.locale() === 'pt-AO' ? 'pt-AO' : 'en-GB'));
 
+  constructor() {
+    // O valor guardado é lido antes de qualquer componente existir, mas
+    // `<html lang>` vinha fixo no index.html. Aplicá-lo aqui garante que o
+    // idioma persistido é visível ao browser e a tecnologias de apoio logo
+    // no arranque, sem esperar pelo primeiro clique. Em SSR (e em testes
+    // com DOCUMENT simplificado) não existe elemento de documento para
+    // actualizar, pelo que o arranque não pode depender disso.
+    if (this.browser && this.document?.documentElement) {
+      this.applyDocumentLang(this.locale());
+    }
+  }
+
   setLocale(locale: Locale): void {
     this.locale.set(locale);
     if (this.browser) {
-      localStorage.setItem(LOCALE_STORAGE_KEY, locale);
+      try {
+        localStorage.setItem(LOCALE_STORAGE_KEY, locale);
+      } catch {
+        // Armazenamento indisponível (modo privado, quota): a troca continua
+        // a funcionar na sessão actual.
+      }
     }
-    this.document.documentElement.lang = locale;
+    this.applyDocumentLang(locale);
+  }
+
+  private applyDocumentLang(locale: Locale): void {
+    if (this.document?.documentElement) {
+      this.document.documentElement.lang = locale;
+    }
   }
 
   t(key: TranslationKey, params?: Record<string, string | number>): string {
@@ -164,7 +187,11 @@ export class I18nService {
     if (!isPlatformBrowser(this.platformId)) {
       return DEFAULT_LOCALE;
     }
-    const stored = localStorage.getItem(LOCALE_STORAGE_KEY);
-    return stored === 'en' ? 'en' : DEFAULT_LOCALE;
+    try {
+      const stored = localStorage.getItem(LOCALE_STORAGE_KEY);
+      return stored === 'en' ? 'en' : DEFAULT_LOCALE;
+    } catch {
+      return DEFAULT_LOCALE;
+    }
   }
 }

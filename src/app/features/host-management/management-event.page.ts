@@ -35,6 +35,7 @@ import {
   EventStats,
   Guest,
   HostEvent,
+  ManagerInviteResult,
   managerPermissions,
   Team,
   WorkspaceTask,
@@ -43,11 +44,14 @@ import { ShareService } from '../../core/services/share.service';
 import { ToastService } from '../../core/services/toast.service';
 import { WorkspaceStore } from '../../core/services/workspace.store';
 import { ICONS } from '../../core/ui/icons';
+import { ActionMenuItem } from '../../shared/components/action-menu.component';
 import { BrandComponent } from '../../shared/components/brand.component';
+import { EventSectionItem, EventSectionShellComponent } from '../../shared/components/event-section-shell.component';
 import { GuestDialogComponent } from '../../shared/components/guest-dialog.component';
 import { ModalComponent } from '../../shared/components/modal.component';
 import { PreferenceControlsComponent } from '../../shared/components/preference-controls.component';
 import { SkeletonComponent } from '../../shared/components/skeleton.component';
+import { ManagerCredentialsDialogComponent } from '../team/manager-credentials-dialog.component';
 import {
   EVENT_TABS,
   EventTab,
@@ -55,6 +59,7 @@ import {
   GuestFilter,
   parseEventTab,
 } from '../events/detail/detail.models';
+import { MessagesInboxComponent } from '../messages/messages-inbox.component';
 import { EventActivitySectionComponent } from '../events/detail/event-activity-section.component';
 import { EventGuestsSectionComponent } from '../events/detail/event-guests-section.component';
 import { EventManagersSectionComponent } from '../events/detail/event-managers-section.component';
@@ -86,6 +91,8 @@ function isoDatePlusDays(value: string, days: number): string {
     ReactiveFormsModule,
     FaIconComponent,
     BrandComponent,
+    EventSectionShellComponent,
+    MessagesInboxComponent,
     GuestDialogComponent,
     ModalComponent,
     PreferenceControlsComponent,
@@ -93,6 +100,7 @@ function isoDatePlusDays(value: string, days: number): string {
     EventActivitySectionComponent,
     EventGuestsSectionComponent,
     EventManagersSectionComponent,
+    ManagerCredentialsDialogComponent,
     EventSummaryComponent,
     EventTasksSectionComponent,
     EventTeamsSectionComponent,
@@ -131,9 +139,62 @@ export class ManagementEventPage {
   protected readonly permissions = computed<EventPermissions>(() =>
     managerPermissions({ accessRole: this.event()?.accessRole ?? 'manager' }),
   );
+
+  /** Evento cancelado: o painel do gestor fica só de leitura. */
+  protected readonly eventCancelled = computed(() => this.event()?.status === 'cancelled');
+
+  protected readonly effectivePermissions = computed<EventPermissions>(() => {
+    const permissions = this.permissions();
+    if (!this.eventCancelled()) return permissions;
+    return {
+      ...permissions,
+      canEditEvent: false,
+      canManageGuests: false,
+      canManageTeams: false,
+      canManageManagers: false,
+      canCancelEvent: false,
+      canChangeEventStatus: false,
+      canEditExistingGuests: false,
+      canDeleteActivity: false,
+      canManageTasks: false,
+      canResendManageLink: false,
+    };
+  });
+
   protected readonly stats = computed<EventStats>(
     () => this.event()?.stats ?? statsForGuests(this.detailGuests()),
   );
+
+  protected readonly eventBadges = computed<string[]>(() => [
+    this.i18n.t('eventDetail.roleManager'),
+  ]);
+
+  /** Secções do rail, sem duplicar a barra de separadores no cabeçalho. */
+  protected readonly sections = computed<EventSectionItem[]>(() =>
+    EVENT_TABS.map((definition) => ({
+      id: definition.id,
+      label: this.i18n.t(definition.labelKey),
+      icon: ICONS[definition.icon],
+      count: definition.id === 'convidados' ? this.stats().total : null,
+    })),
+  );
+
+  protected readonly sectionActions = computed<ActionMenuItem[]>(() => {
+    const items: ActionMenuItem[] = [];
+    if (this.effectivePermissions().canEditEvent) {
+      items.push({
+        id: 'edit',
+        label: this.i18n.t('eventDetail.editEvent'),
+        icon: ICONS['pen'],
+      });
+      items.push({
+        id: 'cover',
+        label: this.i18n.t('eventDetail.coverTitle'),
+        icon: ICONS['camera'],
+      });
+    }
+    return items;
+  });
   protected readonly typeLabel = computed(() => {
     const type = this.event()?.type;
     return type ? this.i18n.t(`type.${type}` as TranslationKey) : '';
@@ -198,6 +259,11 @@ export class ManagementEventPage {
   protected readonly needsAccount = signal(false);
   protected readonly accountEmail = signal('');
   protected readonly accountModalOpen = signal(false);
+
+  /** Troca de código pelo próprio gestor (sessão de gestão, sem conta). */
+  protected readonly accessResult = signal<ManagerInviteResult | null>(null);
+  protected readonly rotatingAccess = signal(false);
+  protected readonly accessError = signal('');
 
   protected readonly editModalOpen = signal(false);
   protected readonly coverModalOpen = signal(false);
@@ -277,6 +343,21 @@ export class ManagementEventPage {
     });
   }
 
+  protected onSectionChange(id: string): void {
+    this.setTab(id as EventTab);
+  }
+
+  protected onSectionAction(id: string): void {
+    switch (id) {
+      case 'edit':
+        this.openEditModal();
+        break;
+      case 'cover':
+        this.openCoverModal();
+        break;
+    }
+  }
+
   /** Ações que exigem conta abrem o modal em vez de falhar com 401/403. */
   protected requireAccount(): boolean {
     if (!this.needsAccount()) {
@@ -307,6 +388,27 @@ export class ManagementEventPage {
         returnUrl,
       },
     });
+  }
+
+  protected async rotateOwnAccess(): Promise<void> {
+    if (this.rotatingAccess() || this.eventCancelled()) {
+      return;
+    }
+    this.rotatingAccess.set(true);
+    this.accessError.set('');
+    try {
+      const result = await this.eventsRepo.rotateOwnManagerAccess();
+      this.accessResult.set(result);
+      this.feedback.set(this.i18n.t('managerAccess.rotated'));
+    } catch (error: unknown) {
+      this.accessError.set(toApiError(error).message);
+    } finally {
+      this.rotatingAccess.set(false);
+    }
+  }
+
+  protected closeAccessDialog(): void {
+    this.accessResult.set(null);
   }
 
   protected async retry(): Promise<void> {

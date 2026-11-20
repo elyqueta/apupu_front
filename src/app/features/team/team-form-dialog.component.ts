@@ -31,6 +31,7 @@ interface CategoryOption {
   template: `
     <app-modal [open]="open()" [title]="title()" (closed)="cancel.emit()">
       <form
+        id="app-team-form"
         data-testid="team-form-dialog"
         [formGroup]="form"
         (ngSubmit)="submit()"
@@ -110,25 +111,23 @@ interface CategoryOption {
             </label>
           </div>
 
-          <div class="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-            <button
-              type="button"
-              class="inline-flex h-11 items-center justify-center rounded-xl border border-line bg-surface-raised px-4 text-sm font-semibold text-ink transition hover:border-brand/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60"
-              (click)="cancel.emit()"
-            >
-              {{ i18n.t('common.cancel') }}
-            </button>
-            <button
-              type="submit"
-              data-testid="team-form-submit"
-              [disabled]="saving() || form.invalid"
-              class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-brand px-4 text-sm font-semibold text-on-secondary transition hover:bg-secondary-hover disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60"
-            >
-              <fa-icon [icon]="icons['check']" class="text-[10px]" aria-hidden="true" />
-              {{ team() ? i18n.t('teams.form.save') : i18n.t('teams.form.create') }}
-            </button>
-        </div>
       </form>
+
+      <div modal-footer class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+        <button type="button" class="ui-btn-secondary" (click)="cancel.emit()">
+          {{ i18n.t('common.cancel') }}
+        </button>
+        <button
+          type="submit"
+          form="app-team-form"
+          data-testid="team-form-submit"
+          class="ui-btn"
+          [disabled]="saving() || form.invalid"
+        >
+          <fa-icon [icon]="icons['check']" class="text-xs" aria-hidden="true" />
+          {{ team() ? i18n.t('teams.form.save') : i18n.t('teams.form.create') }}
+        </button>
+      </div>
     </app-modal>
   `,
 })

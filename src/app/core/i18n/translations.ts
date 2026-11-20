@@ -1,6 +1,15 @@
 import { Locale } from '../models/models';
+import { BLOCK5_KEYS_EN, BLOCK5_KEYS_PT } from './block5-keys';
+import { BLOCK6_KEYS_EN, BLOCK6_KEYS_PT } from './block6-keys';
+import { BLOCK7_KEYS_EN, BLOCK7_KEYS_PT } from './block7-keys';
+import { BLOCK8_KEYS_EN, BLOCK8_KEYS_PT } from './block8-keys';
 
 const PT_AO = {
+  ...BLOCK5_KEYS_PT,
+  ...BLOCK6_KEYS_PT,
+  ...BLOCK7_KEYS_PT,
+  ...BLOCK8_KEYS_PT,
+
   'app.name': 'Conto Contigo',
   'app.tagline': 'Eventos & convites',
   'app.demoBadge': 'Demonstração',
@@ -39,6 +48,7 @@ const PT_AO = {
   'common.edit': 'Editar',
   'common.copy': 'Copiar',
   'common.copied': 'Copiado',
+  'common.copyFailed': 'Não foi possível copiar. Tenta novamente.',
   'common.share': 'Partilhar',
   'common.retry': 'Tentar novamente',
   'common.back': 'Voltar',
@@ -883,6 +893,11 @@ const PT_AO = {
   'invitation.hostedBy': 'Organizado por {name}',
   'invitation.youAreInvited': 'Estás convidado',
   'invitation.guestGreeting': 'Olá, {name}',
+  'invitation.welcomeTitle': 'Tens um convite especial',
+  'invitation.welcomeMessage': 'Olá, {name}! Tens um convite especial.',
+  'invitation.welcomeAction': 'Ver convite',
+  'invitation.hostInline': 'Anfitrião: {name}',
+  'invitation.cancelledContact': 'Se tiveres dúvidas, fala com o anfitrião.',
   'invitation.countdown': 'Faltam',
   'invitation.detailsTitle': 'Detalhes do evento',
   'invitation.when': 'Quando',
@@ -927,6 +942,7 @@ const PT_AO = {
     'Este link é individual e está vinculado ao primeiro navegador que o abrir.',
   'invitation.copyLink': 'Copiar link',
   'invitation.shareLink': 'Partilhar',
+  'invitation.shareMessage': 'Olá! Tens um convite especial: {url}',
   'invitation.shareWarning':
     'Não encaminhes este link. Cada convidado deve receber o seu próprio convite.',
   'invitation.footer': 'Convite criado com Conto Contigo',
@@ -947,7 +963,7 @@ const PT_AO = {
     'Este link é privado. Não mostra outros convidados nem os teus dados de contacto.',
   'invitation.cancelledTitle': 'Evento cancelado',
   'invitation.cancelledText':
-    'O anfitrião cancelou este evento. Se tiveres dúvidas, contacta diretamente a pessoa que te convidou.',
+    'Este evento foi cancelado. Lamentamos e agradecemos a tua compreensão.',
   'invitation.responseRecorded': 'Resposta atualizada.',
   'invitation.changeToConfirmed': 'Voltar a confirmar',
   'invitation.changeToConfirmedTitle': 'Confirmar presença novamente?',
@@ -1490,6 +1506,11 @@ const PT_AO = {
 export type TranslationKey = keyof typeof PT_AO;
 
 const EN: Record<TranslationKey, string> = {
+  ...BLOCK5_KEYS_EN,
+  ...BLOCK6_KEYS_EN,
+  ...BLOCK7_KEYS_EN,
+  ...BLOCK8_KEYS_EN,
+
   'app.name': 'Conto Contigo',
   'app.tagline': 'Events & invitations',
   'app.demoBadge': 'Demo',
@@ -1528,6 +1549,7 @@ const EN: Record<TranslationKey, string> = {
   'common.edit': 'Edit',
   'common.copy': 'Copy',
   'common.copied': 'Copied',
+  'common.copyFailed': 'Could not copy. Please try again.',
   'common.share': 'Share',
   'common.retry': 'Try again',
   'common.back': 'Back',
@@ -2366,6 +2388,11 @@ const EN: Record<TranslationKey, string> = {
   'invitation.hostedBy': 'Hosted by {name}',
   'invitation.youAreInvited': 'You are invited',
   'invitation.guestGreeting': 'Hello, {name}',
+  'invitation.welcomeTitle': 'You have a special invitation',
+  'invitation.welcomeMessage': 'Hello, {name}! You have a special invitation.',
+  'invitation.welcomeAction': 'View invitation',
+  'invitation.hostInline': 'Host: {name}',
+  'invitation.cancelledContact': 'If you have questions, contact the host.',
   'invitation.countdown': 'Only',
   'invitation.detailsTitle': 'Event details',
   'invitation.when': 'When',
@@ -2410,6 +2437,7 @@ const EN: Record<TranslationKey, string> = {
   'invitation.shareText': 'This link is individual and bound to the first browser that opens it.',
   'invitation.copyLink': 'Copy link',
   'invitation.shareLink': 'Share',
+  'invitation.shareMessage': 'Hello! You have a special invitation: {url}',
   'invitation.shareWarning':
     'Do not forward this link. Each guest should receive their own invitation.',
   'invitation.footer': 'Invitation created with Conto Contigo',
@@ -2431,7 +2459,7 @@ const EN: Record<TranslationKey, string> = {
     'This link is private. It does not show other guests or your contact details.',
   'invitation.cancelledTitle': 'Event cancelled',
   'invitation.cancelledText':
-    'The host cancelled this event. If you have questions, contact the person who invited you.',
+    'This event has been cancelled. We are sorry and thank you for your understanding.',
   'invitation.responseRecorded': 'Response updated.',
   'invitation.changeToConfirmed': 'Confirm again',
   'invitation.changeToConfirmedTitle': 'Confirm attendance again?',

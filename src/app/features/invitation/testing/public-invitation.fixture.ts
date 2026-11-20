@@ -1,4 +1,4 @@
-import { ApiRsvpStatus, PublicInvitation } from '../../../core/api/api.models';
+import { ApiEventStatus, ApiRsvpStatus, PublicInvitation } from '../../../core/api/api.models';
 
 export interface InvitationFixtureOverrides {
   rsvpStatus?: ApiRsvpStatus;
@@ -7,6 +7,10 @@ export interface InvitationFixtureOverrides {
   endsAt?: string | null;
   rsvpDeadline?: string | null;
   hostPhone?: string | null;
+  coverUrl?: string | null;
+  status?: ApiEventStatus;
+  messageAnswer?: string | null;
+  messageAnsweredAt?: string | null;
 }
 
 /** DTO público mínimo, alinhado com `PublicInvitation` do backend. */
@@ -34,12 +38,12 @@ export function publicInvitationFixture(
       message: 'Celebramos juntos.',
       rules: 'Traje formal.',
       dress_code: 'Formal',
-      cover_url: null,
+      cover_url: 'coverUrl' in overrides ? overrides.coverUrl ?? null : null,
       theme: { mode: 'dark', palette: 'default' },
       contribution: { enabled: false },
       rsvp_deadline:
         'rsvpDeadline' in overrides ? overrides.rsvpDeadline ?? null : '2027-08-01T22:59:59.000Z',
-      status: 'scheduled',
+      status: overrides.status ?? 'scheduled',
     },
     guest: {
       name: 'João',
@@ -48,6 +52,8 @@ export function publicInvitationFixture(
       rsvp_status: overrides.rsvpStatus ?? 'pending',
       rsvp_responded_at: null,
       message: 'message' in overrides ? overrides.message ?? null : null,
+      message_answer: overrides.messageAnswer ?? null,
+      message_answered_at: overrides.messageAnsweredAt ?? null,
     },
     rsvp_deadline_passed: overrides.deadlinePassed ?? false,
     csrf_token: 'csrf-token',

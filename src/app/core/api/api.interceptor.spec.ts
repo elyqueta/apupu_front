@@ -135,6 +135,29 @@ describe('apiRequestInterceptor · authenticated event creation', () => {
     controller.verify();
   });
 
+  it('sends the account CSRF token on admin writes', async () => {
+    configure('');
+    const api = TestBed.inject(ApiClient);
+    const controller = TestBed.inject(HttpTestingController);
+
+    const login = api.post('/auth/login', {});
+    controller.expectOne('http://localhost:3000/api/v1/auth/login').flush({
+      data: { csrf_token: 'admin-token' },
+    });
+    await login;
+
+    const suspend = api.post('/admin/users/host-1/suspend', {});
+    const request = controller.expectOne(
+      'http://localhost:3000/api/v1/admin/users/host-1/suspend',
+    );
+    expect(request.request.method).toBe('POST');
+    expect(request.request.headers.get('X-CSRF-Token')).toBe('admin-token');
+    expect(request.request.withCredentials).toBe(true);
+    request.flush({ data: null });
+    await suspend;
+    controller.verify();
+  });
+
   it('refreshes a stale CSRF token from the current auth session before event creation', async () => {
     configure('');
     const api = TestBed.inject(ApiClient);

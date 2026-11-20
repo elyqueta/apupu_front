@@ -20,6 +20,20 @@
         <app-skeleton variant="invitation" />
       </main>
     } @else if (invitation(); as view) {
+      @if (eventCancelled()) {
+        <app-invitation-cancelled
+          [hostName]="view.event.hostName"
+          [hostEmail]="view.event.hostEmail"
+          [hostPhone]="view.event.hostPhone"
+        />
+      } @else if (showWelcome() && view.event.coverUrl; as cover) {
+        <app-invitation-welcome
+          [coverUrl]="cover"
+          [guestName]="view.guest.name"
+          [eventTitle]="view.event.title"
+          (continue)="continueToInvitation()"
+        />
+      } @else {
       <main class="flex flex-1 flex-col gap-4 py-5">
         <app-invitation-hero
           [event]="view.event"
@@ -28,11 +42,18 @@
           (coverOpen)="openCover()"
         />
 
+        <app-invitation-share [token]="token()" />
+
         <app-invitation-key-info
           [event]="view.event"
           [deadlinePassed]="deadlinePassed()"
           (openHost)="hostOpen.set(true)"
           (openLocation)="locationOpen.set(true)"
+        />
+
+        <app-invitation-reply
+          [answer]="view.guest.answer"
+          [answeredAt]="view.guest.answeredAt"
         />
 
         <div class="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,20rem)]">
@@ -102,6 +123,7 @@
           (confirmed)="confirmRsvp($event)"
           (cancelled)="closeRsvpDialog()"
         />
+      }
       }
     } @else {
       <main class="flex flex-1 items-center justify-center py-10">

@@ -65,7 +65,9 @@ export class CsrfTokenStore {
 
   private scope(apiPath: string): string | null {
     const path = apiPathFromUrl(apiPath);
-    if (path.startsWith('/auth/')) {
+    // O painel admin autentica com a mesma sessão de conta (`apupu_auth`),
+    // pelo que usa o CSRF do login — tal como as rotas `/host/*` da conta.
+    if (path.startsWith('/auth/') || path.startsWith('/admin/')) {
       return 'auth';
     }
     if (path.startsWith('/public/invitations/')) {

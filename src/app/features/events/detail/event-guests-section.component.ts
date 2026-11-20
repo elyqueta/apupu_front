@@ -198,6 +198,7 @@ export class EventGuestsSectionComponent {
   readonly addGuest = output<void>();
   readonly editGuest = output<Guest>();
   readonly resendGuest = output<Guest>();
+  readonly editGuestLink = output<Guest>();
   readonly removeGuest = output<Guest>();
   readonly ticketGuest = output<Guest>();
   readonly whatsappGuest = output<Guest>();
@@ -229,14 +230,6 @@ export class EventGuestsSectionComponent {
         label: `${this.i18n.t('eventDetail.table.table')}: ${entry.guest.tableName ?? '—'}`,
       },
     ];
-    const message = entry.guest.message?.trim();
-    if (message) {
-      const short = message.length > 120 ? `${message.slice(0, 117)}…` : message;
-      meta.unshift({
-        icon: 'quote',
-        label: this.i18n.t('guests.guestMessage', { message: short }),
-      });
-    }
     return meta;
   }
 
@@ -247,6 +240,11 @@ export class EventGuestsSectionComponent {
       items.push(
         { id: 'edit', label: this.i18n.t('guests.editAction'), icon: ICONS['pen'] },
         { id: 'resend', label: this.i18n.t('eventDetail.resend'), icon: ICONS['paperPlane'] },
+        {
+          id: 'link',
+          label: this.i18n.t('eventDetail.linkValidityAction'),
+          icon: ICONS['link'],
+        },
       );
     }
     if (this.permissions().canExport) {
@@ -283,6 +281,9 @@ export class EventGuestsSectionComponent {
         break;
       case 'resend':
         this.resendGuest.emit(entry.guest);
+        break;
+      case 'link':
+        this.editGuestLink.emit(entry.guest);
         break;
       case 'ticket':
         this.ticketGuest.emit(entry.guest);

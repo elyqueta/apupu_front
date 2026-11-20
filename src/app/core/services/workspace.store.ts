@@ -504,6 +504,10 @@ export class WorkspaceStore implements Resettable {
     return this.profileRepo.uploadAvatar(file);
   }
 
+  async removeAvatar(): Promise<HostProfile> {
+    return this.profileRepo.removeAvatar();
+  }
+
   async setCoverUrl(coverUrl: string): Promise<HostProfile> {
     return this.profileRepo.setCoverUrl(coverUrl);
   }

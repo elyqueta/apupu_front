@@ -30,7 +30,7 @@ import { ModalComponent } from './modal.component';
         </p>
       </div>
 
-      <form class="mt-6 flex flex-col gap-4" [formGroup]="form" (ngSubmit)="submit()">
+      <form id="app-guest-form" class="mt-6 flex flex-col gap-4" [formGroup]="form" (ngSubmit)="submit()">
             <label class="block">
               <span
                 class="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.16em] text-muted"
@@ -140,28 +140,26 @@ import { ModalComponent } from './modal.component';
               </p>
             }
 
-            <div class="mt-2 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-              <button
-                type="button"
-                class="inline-flex h-11 items-center justify-center rounded-xl border border-line bg-surface-raised px-4 text-sm font-semibold text-ink transition hover:border-brand/40"
-                (click)="close()"
-              >
-                {{ i18n.t('common.cancel') }}
-              </button>
-              <button
-                type="submit"
-                class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-brand px-4 text-sm font-semibold text-on-secondary transition hover:bg-secondary-hover disabled:cursor-not-allowed disabled:opacity-60"
-                [disabled]="saving()"
-              >
-                <fa-icon
-                  [icon]="isEdit() ? icons['check'] : icons['plus']"
-                  class="text-xs"
-                  aria-hidden="true"
-                />
-                {{ isEdit() ? i18n.t('guests.editSubmit') : i18n.t('guests.dialogSubmit') }}
-              </button>
-            </div>
       </form>
+
+      <div modal-footer class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+        <button type="button" class="ui-btn-secondary" (click)="close()">
+          {{ i18n.t('common.cancel') }}
+        </button>
+        <button
+          type="submit"
+          form="app-guest-form"
+          class="ui-btn"
+          [disabled]="saving()"
+        >
+          <fa-icon
+            [icon]="isEdit() ? icons['check'] : icons['plus']"
+            class="text-xs"
+            aria-hidden="true"
+          />
+          {{ isEdit() ? i18n.t('guests.editSubmit') : i18n.t('guests.dialogSubmit') }}
+        </button>
+      </div>
     </app-modal>
   `,
 })

@@ -56,8 +56,8 @@ o guard ainda vê o valor antigo.
 2. Entrar de novo em `/entrar` com a mesma conta.
 3. Abrir `/admin` na barra de endereço.
 
-O shell do painel mostra agora seis abas: **Visão geral**, **Eventos**,
-**Utilizadores**, **Auditoria**, **Apoio** e **Novidades**.
+O shell do painel mostra agora sete abas: **Visão geral**, **Eventos**,
+**Utilizadores**, **Auditoria**, **Apoio**, **Novidades** e **Relatórios**.
 
 ## 4. Verificações rápidas
 
@@ -67,6 +67,12 @@ O shell do painel mostra agora seis abas: **Visão geral**, **Eventos**,
   conta normal recebe `403 admin_forbidden`.
 - Em `/admin/apoio` devem aparecer as mensagens enviadas pelo modal de apoio;
   em `/admin/novidades` os emails subscritos no rodapé da landing.
+- Em `/admin/utilizadores`, cada card mostra a foto (ou iniciais) e o botão
+  “Ver detalhe” abre um modal com capa, avatar, dados, eventos e equipas.
+  O botão “Exportar PDF” descarrega o relatório individual da conta.
+- Em `/admin/relatorios`, “Exportar todos os perfis” gera um PDF global
+  imediato. A tabela abaixo lista as semanas já arquivadas pelo job backend
+  (segunda-feira, 09:00 de Luanda) com o botão “Descarregar” por linha.
 
 ## Pontos de atenção
 

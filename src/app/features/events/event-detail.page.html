@@ -46,8 +46,8 @@
           [loading]="guestListLoading()" [loaded]="guestListLoaded()" [search]="guestSearch()" [filter]="guestFilter()"
           [rangeLabel]="guestRangeLabel()" [permissions]="effectivePermissions()" (searchChange)="onGuestSearch($event)"
           (filterChange)="setGuestFilter($event)" (pageChange)="goToGuestPage($event)" (addGuest)="openGuestCreate()"
-          (editGuest)="openGuestEdit($event)" (resendGuest)="resend($event)" (removeGuest)="removeGuest($event)"
-          (ticketGuest)="downloadTicket($event)" (whatsappGuest)="forwardWhatsApp($event)" />
+          (editGuest)="openGuestEdit($event)" (resendGuest)="resend($event)" (editGuestLink)="openLinkDialog($event)"
+          (removeGuest)="removeGuest($event)" (ticketGuest)="downloadTicket($event)" (whatsappGuest)="forwardWhatsApp($event)" />
       </div>
     }
 
@@ -77,6 +77,16 @@
   </app-event-section-shell>
 
   <app-guest-dialog [open]="guestDialogOpen() || guestEditTarget() !== null" [fixedEventId]="event.id" [guest]="guestEditTarget()" (closed)="closeGuestDialog()" />
+
+  <app-invitation-link-dialog
+    [open]="linkDialogOpen()"
+    [guestName]="linkGuest()?.name ?? ''"
+    [maxDate]="maxInvitationDate()"
+    [saving]="linkSaving()"
+    [error]="linkError()"
+    (saved)="saveLinkValidity($event)"
+    (closed)="closeLinkDialog()"
+  />
 
   <app-task-form-dialog [open]="taskDialogOpen()" [events]="events()" [teams]="teams()" [assignees]="taskAssignees()"
     [saving]="creatingTask()" context="event" [eventId]="eventId()" (closed)="taskDialogOpen.set(false)" (submitted)="submitTask($event)" />

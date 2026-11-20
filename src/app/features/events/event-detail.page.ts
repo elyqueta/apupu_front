@@ -66,6 +66,7 @@ import {
 import { MessagesInboxComponent } from '../messages/messages-inbox.component';
 import { EventActivitySectionComponent } from './detail/event-activity-section.component';
 import { EventGuestsSectionComponent } from './detail/event-guests-section.component';
+import { InvitationLinkDialogComponent } from './detail/invitation-link-dialog.component';
 import { EventManagersSectionComponent } from './detail/event-managers-section.component';
 import { EventSummaryComponent } from './detail/event-summary.component';
 import { EventTasksSectionComponent } from './detail/event-tasks-section.component';
@@ -110,6 +111,7 @@ function isoDaysAgo(days: number): string {
     TeamManagerDialogComponent,
     EventActivitySectionComponent,
     EventGuestsSectionComponent,
+    InvitationLinkDialogComponent,
     EventManagersSectionComponent,
     EventSummaryComponent,
     EventTasksSectionComponent,
@@ -151,6 +153,11 @@ export class EventDetailPage {
   private guestDebounce: ReturnType<typeof setTimeout> | null = null;
   protected readonly guestDialogOpen = signal(false);
   protected readonly guestEditTarget = signal<Guest | null>(null);
+  /** Diálogo de validade do link individual do convite. */
+  protected readonly linkDialogOpen = signal(false);
+  protected readonly linkGuest = signal<Guest | null>(null);
+  protected readonly linkSaving = signal(false);
+  protected readonly linkError = signal('');
   protected readonly exportOpen = signal(false);
   protected readonly exporting = signal<string | null>(null);
   protected readonly periodFrom = signal(isoDaysAgo(29));
@@ -302,6 +309,12 @@ export class EventDetailPage {
   protected readonly maxValidityDate = computed(() => {
     const event = this.event();
     return event ? isoDatePlusDays(event.startsAt, 1) : '';
+  });
+
+  /** O link do convite pode ir até 30 dias depois do fim do evento. */
+  protected readonly maxInvitationDate = computed(() => {
+    const event = this.event();
+    return event ? isoDatePlusDays(event.endsAt || event.startsAt, 30) : '';
   });
 
   protected readonly typeLabel = computed(() => {
@@ -1062,6 +1075,42 @@ export class EventDetailPage {
     this.guestDialogOpen.set(false);
     this.guestEditTarget.set(null);
     void this.loadGuests();
+  }
+
+  protected openLinkDialog(guest: Guest): void {
+    if (!this.effectivePermissions().canEditExistingGuests) {
+      return;
+    }
+    this.linkGuest.set(guest);
+    this.linkError.set('');
+    this.linkDialogOpen.set(true);
+  }
+
+  protected closeLinkDialog(): void {
+    this.linkDialogOpen.set(false);
+    this.linkGuest.set(null);
+    this.linkError.set('');
+    this.linkSaving.set(false);
+  }
+
+  protected async saveLinkValidity(expiresAt: string): Promise<void> {
+    const event = this.event();
+    const guest = this.linkGuest();
+    if (!event || !guest || this.linkSaving()) {
+      return;
+    }
+    this.linkSaving.set(true);
+    this.linkError.set('');
+    try {
+      await this.eventsRepository.updateInvitationLink(event.id, guest.id, expiresAt);
+      this.closeLinkDialog();
+      this.toasts.success(this.i18n.t('eventDetail.linkValiditySaved'));
+      await this.loadGuests();
+    } catch (error: unknown) {
+      this.linkError.set(toApiError(error).message);
+    } finally {
+      this.linkSaving.set(false);
+    }
   }
 
   protected toggleExport(): void {

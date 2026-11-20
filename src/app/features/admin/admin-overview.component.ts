@@ -1,21 +1,17 @@
 import { Component, inject, signal } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { I18nService } from '../../core/i18n/i18n.service';
-import { TranslationKey } from '../../core/i18n/translations';
 import { ICONS } from '../../core/ui/icons';
 import { SkeletonComponent } from '../../shared/components/skeleton.component';
 import { StatCardComponent } from '../../shared/components/stat-card.component';
 import { StatGridComponent } from '../../shared/components/stat-grid.component';
-import { AdminOverview, adminErrorMessage } from './admin.models';
+import {
+  AdminOverview,
+  adminActionLabel,
+  adminErrorMessage,
+  adminTargetLabel,
+} from './admin.models';
 import { AdminRepository } from './admin.repository';
-
-const ACTION_KEYS: Record<string, TranslationKey> = {
-  cancel_event: 'admin.audit.action.cancel_event',
-  suspend_user: 'admin.audit.action.suspend_user',
-  reactivate_user: 'admin.audit.action.reactivate_user',
-  revoke_sessions: 'admin.audit.action.revoke_sessions',
-  create_event: 'admin.audit.action.create_event',
-};
 
 /** Cartões de estatísticas e lista curta de atividade recente. */
 @Component({
@@ -104,22 +100,34 @@ const ACTION_KEYS: Record<string, TranslationKey> = {
           } @else {
             <ul class="mt-5 divide-y divide-line" data-testid="admin-overview-activity">
               @for (item of data()?.activity ?? []; track item.id) {
-                <li class="flex flex-wrap items-center gap-3 py-3">
+                <li
+                  class="flex flex-wrap items-start gap-3 py-3"
+                  [attr.data-testid]="'admin-overview-activity-' + item.id"
+                >
                   <span
                     class="grid size-9 shrink-0 place-items-center rounded-xl border border-brand/25 bg-brand/10 text-brand-strong"
                   >
                     <fa-icon [icon]="icons['history']" class="text-xs" aria-hidden="true" />
                   </span>
                   <div class="min-w-0 flex-1">
-                    <p class="truncate text-sm font-semibold text-ink">
+                    <p
+                      class="text-sm font-semibold text-ink"
+                      [attr.data-testid]="'admin-overview-action-' + item.id"
+                    >
                       {{ actionLabel(item.action) }}
                     </p>
-                    <p class="text-xs text-muted">
-                      {{ item.actor || i18n.t('admin.overview.activity.systemActor') }}
+                    <p class="mt-0.5 text-xs text-muted">
+                      {{ i18n.t('admin.overview.activity.performedBy', { who: actor(item) }) }}
                       @if (item.createdAt) {
                         · {{ i18n.dateTime(item.createdAt, timeZone) }}
                       }
                     </p>
+                    @if (item.targetId) {
+                      <p class="mt-0.5 text-xs text-muted">
+                        {{ i18n.t('admin.overview.activity.target', { type: targetLabel(item.targetType) }) }}
+                        <span class="font-mono text-[11px]">{{ shortId(item.targetId) }}</span>
+                      </p>
+                    }
                     @if (item.reason) {
                       <p class="mt-1 line-clamp-2 text-xs text-muted">{{ item.reason }}</p>
                     }
@@ -161,7 +169,19 @@ export class AdminOverviewComponent {
   }
 
   protected actionLabel(action: string): string {
-    const key = ACTION_KEYS[action];
-    return key ? this.i18n.t(key) : action || this.i18n.t('admin.audit.action.unknown');
+    return adminActionLabel(action, this.i18n);
+  }
+
+  protected targetLabel(targetType: string): string {
+    return adminTargetLabel(targetType, this.i18n);
+  }
+
+  protected actor(item: { actor: string }): string {
+    return item.actor || this.i18n.t('admin.overview.activity.adminFallback');
+  }
+
+  /** O id completo é longo; a auditoria mantém o valor por inteiro nos detalhes. */
+  protected shortId(id: string): string {
+    return id.length > 12 ? `${id.slice(0, 8)}…${id.slice(-4)}` : id;
   }
 }

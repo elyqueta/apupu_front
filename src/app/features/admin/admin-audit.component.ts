@@ -1,21 +1,17 @@
 import { Component, inject, signal } from '@angular/core';
 import { Pagination } from '../../core/api/api.models';
 import { I18nService } from '../../core/i18n/i18n.service';
-import { TranslationKey } from '../../core/i18n/translations';
 import { SkeletonComponent } from '../../shared/components/skeleton.component';
 import { AdminPaginationComponent } from './admin-pagination.component';
-import { AdminAuditEntry, adminErrorMessage } from './admin.models';
+import {
+  AdminAuditEntry,
+  adminActionLabel,
+  adminErrorMessage,
+  adminTargetLabel,
+} from './admin.models';
 import { AdminRepository } from './admin.repository';
 
 const PAGE_SIZE = 10;
-
-const ACTION_KEYS: Record<string, TranslationKey> = {
-  cancel_event: 'admin.audit.action.cancel_event',
-  suspend_user: 'admin.audit.action.suspend_user',
-  reactivate_user: 'admin.audit.action.reactivate_user',
-  revoke_sessions: 'admin.audit.action.revoke_sessions',
-  create_event: 'admin.audit.action.create_event',
-};
 
 /** Registo de auditoria: lista paginada e só de leitura. */
 @Component({
@@ -94,12 +90,23 @@ const ACTION_KEYS: Record<string, TranslationKey> = {
             >
               <div class="flex flex-wrap items-start justify-between gap-3">
                 <div class="min-w-0">
-                  <p class="text-sm font-semibold text-ink">
+                  <p
+                    class="text-sm font-semibold text-ink"
+                    [attr.data-testid]="'admin-audit-actor-' + entry.id"
+                  >
                     {{ entry.actor || i18n.t('admin.audit.unknownActor') }}
                   </p>
-                  <p class="mt-1 text-sm text-muted">{{ i18n.t(actionLabel(entry.action)) }}</p>
+                  <p
+                    class="mt-1 text-sm text-muted"
+                    [attr.data-testid]="'admin-audit-action-' + entry.id"
+                  >
+                    {{ actionLabel(entry.action) }}
+                  </p>
                   @if (entry.targetId) {
-                    <p class="mt-1 text-xs text-muted">{{ entry.targetType }} · {{ entry.targetId }}</p>
+                    <p class="mt-1 text-xs text-muted">
+                      {{ targetLabel(entry.targetType) }}
+                      <span class="font-mono">{{ shortId(entry.targetId) }}</span>
+                    </p>
                   }
                   @if (entry.reason) {
                     <p class="mt-2 rounded-xl bg-surface-raised p-2 text-xs text-muted">
@@ -192,7 +199,15 @@ export class AdminAuditComponent {
     void this.load();
   }
 
-  protected actionLabel(action: string): TranslationKey {
-    return ACTION_KEYS[action] ?? 'admin.audit.action.unknown';
+  protected actionLabel(action: string): string {
+    return adminActionLabel(action, this.i18n);
+  }
+
+  protected targetLabel(targetType: string): string {
+    return adminTargetLabel(targetType, this.i18n);
+  }
+
+  protected shortId(id: string): string {
+    return id.length > 12 ? `${id.slice(0, 8)}…${id.slice(-4)}` : id;
   }
 }

@@ -6,6 +6,7 @@ import { I18nService } from '../../core/i18n/i18n.service';
 import { TranslationKey } from '../../core/i18n/translations';
 import { ToastService } from '../../core/services/toast.service';
 import { ICONS } from '../../core/ui/icons';
+import { AvatarComponent } from '../../shared/components/avatar.component';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog.component';
 import { SkeletonComponent } from '../../shared/components/skeleton.component';
 import { AdminPaginationComponent } from './admin-pagination.component';
@@ -13,6 +14,7 @@ import { AdminUserDetailDialogComponent } from './admin-user-detail-dialog.compo
 import {
   AdminRole,
   AdminUser,
+  AdminUserDetail,
   AdminUserStatus,
   adminErrorMessage,
 } from './admin.models';
@@ -34,6 +36,7 @@ interface ConfirmState {
   selector: 'app-admin-users',
   imports: [
     FaIconComponent,
+    AvatarComponent,
     SkeletonComponent,
     ConfirmDialogComponent,
     AdminPaginationComponent,
@@ -130,22 +133,29 @@ interface ConfirmState {
               [attr.data-testid]="'admin-user-card-' + user.id"
             >
               <div class="flex flex-wrap items-start justify-between gap-3">
-                <div class="min-w-0">
-                  <p class="font-display text-lg font-semibold text-ink">
-                    {{ user.displayName || user.email }}
-                  </p>
-                  <p class="break-all text-xs text-muted">{{ user.email }}</p>
-                  <p class="mt-2 text-xs text-muted">
-                    {{ i18n.t(roleLabel(user.role)) }} · {{ i18n.t(statusLabel(user.status)) }}
-                  </p>
-                  <p class="mt-1 text-xs text-muted">
-                    {{ i18n.t('admin.users.eventsCreated', { count: user.eventsCreated }) }}
-                  </p>
-                  @if (user.createdAt) {
-                    <p class="mt-1 text-xs text-muted">
-                      {{ i18n.t('admin.users.registered', { date: i18n.shortDate(user.createdAt, timeZone) }) }}
+                <div class="flex min-w-0 items-start gap-3">
+                  <app-avatar
+                    size="md"
+                    [name]="user.displayName || user.email"
+                    [imageUrl]="user.avatarUrl"
+                  />
+                  <div class="min-w-0">
+                    <p class="font-display text-lg font-semibold text-ink">
+                      {{ user.displayName || user.email }}
                     </p>
-                  }
+                    <p class="break-all text-xs text-muted">{{ user.email }}</p>
+                    <p class="mt-2 text-xs text-muted">
+                      {{ i18n.t(roleLabel(user.role)) }} · {{ i18n.t(statusLabel(user.status)) }}
+                    </p>
+                    <p class="mt-1 text-xs text-muted">
+                      {{ i18n.t('admin.users.eventsCreated', { count: user.eventsCreated }) }}
+                    </p>
+                    @if (user.createdAt) {
+                      <p class="mt-1 text-xs text-muted">
+                        {{ i18n.t('admin.users.registered', { date: i18n.shortDate(user.createdAt, timeZone) }) }}
+                      </p>
+                    }
+                  </div>
                 </div>
                 <span
                   class="rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider"
@@ -220,9 +230,10 @@ interface ConfirmState {
       }
 
       <app-admin-user-detail-dialog
-        [open]="!!detail()"
+        [open]="detailLoading() || !!detail()"
         [user]="detail()"
-        (closed)="detail.set(null)"
+        [loading]="detailLoading()"
+        (closed)="closeDetail()"
       />
       <app-confirm-dialog
         [open]="!!confirm()"
@@ -253,7 +264,8 @@ export class AdminUsersComponent {
   protected readonly pagination = signal<Pagination | null>(null);
   protected readonly loading = signal(true);
   protected readonly error = signal('');
-  protected readonly detail = signal<AdminUser | null>(null);
+  protected readonly detail = signal<AdminUserDetail | null>(null);
+  protected readonly detailLoading = signal(false);
   protected readonly confirm = signal<ConfirmState | null>(null);
   protected readonly timeZone = 'Africa/Luanda';
 
@@ -350,11 +362,20 @@ export class AdminUsersComponent {
   }
 
   protected async openDetail(user: AdminUser): Promise<void> {
+    this.detail.set(null);
+    this.detailLoading.set(true);
     try {
       this.detail.set(await this.repository.userDetail(user.id));
     } catch (error: unknown) {
       this.toasts.error(adminErrorMessage(error, this.i18n));
+    } finally {
+      this.detailLoading.set(false);
     }
+  }
+
+  protected closeDetail(): void {
+    this.detail.set(null);
+    this.detailLoading.set(false);
   }
 
   protected requestSuspend(user: AdminUser): void {

@@ -42,7 +42,43 @@ function userFixture(id: string, overrides: Record<string, unknown> = {}) {
     status: 'active',
     created_at: '2026-01-01T00:00:00Z',
     events_created: 3,
+    avatar_url:
+      id === SELF_ID ? null : 'https://res.cloudinary.com/demo/image/upload/avatar.png',
+    cover_url: null,
     ...overrides,
+  };
+}
+
+function userDetailFixture() {
+  return {
+    ...userFixture(OTHER_ID),
+    display_name: 'Outro Utilizador',
+    phone: '+244923000000',
+    birth_date: '1990-05-20',
+    locale: 'pt-AO',
+    timezone: 'Africa/Luanda',
+    email_verified_at: '2026-01-02T00:00:00Z',
+    profile_complete: true,
+    avatar_url: 'https://res.cloudinary.com/demo/image/upload/avatar.png',
+    cover_url: 'https://res.cloudinary.com/demo/image/upload/cover.jpg',
+    events: [
+      {
+        id: 'event-1',
+        title: 'Casamento da Ana',
+        status: 'scheduled',
+        starts_at: '2026-06-20T15:00:00Z',
+        created_at: '2026-01-01T00:00:00Z',
+        guest_count: 12,
+      },
+    ],
+    teams: [
+      {
+        id: 'team-1',
+        name: 'Decoração',
+        member_count: 4,
+        event_title: 'Casamento da Ana',
+      },
+    ],
   };
 }
 
@@ -166,6 +202,43 @@ describe('AdminUsersComponent', () => {
       pageOf([userFixture(SELF_ID), userFixture(OTHER_ID, { status: 'suspended' })]),
     );
     await settle(context.fixture);
+    context.fixture.destroy();
+  });
+
+  it('mostra a foto no card e abre o detalhe com capa, eventos e equipas', async () => {
+    const context = setup();
+    http = context.http;
+    context.fixture.detectChanges();
+    await settle(context.fixture);
+    flushUsers(http);
+    await settle(context.fixture);
+
+    const otherCard: HTMLElement = context.fixture.nativeElement.querySelector(
+      `[data-testid="admin-user-card-${OTHER_ID}"]`,
+    );
+    expect(
+      otherCard.querySelector<HTMLImageElement>('app-avatar img')?.getAttribute('src'),
+    ).toContain('avatar.png');
+
+    otherCard.querySelector<HTMLButtonElement>('[data-testid="admin-user-view"]')?.click();
+    const detailRequest = http.expectOne(
+      (req) => req.url === `${BASE}/admin/users/${OTHER_ID}`,
+    );
+    expect(detailRequest.request.method).toBe('GET');
+    detailRequest.flush({ data: userDetailFixture() });
+    await settle(context.fixture);
+
+    const root: HTMLElement = context.fixture.nativeElement;
+    expect(root.querySelector('[data-testid="admin-user-profile"]')).toBeTruthy();
+    expect(
+      root.querySelector('[data-testid="admin-user-cover-image"]')?.getAttribute('src'),
+    ).toBe('https://res.cloudinary.com/demo/image/upload/cover.jpg');
+    expect(root.querySelector('[data-testid="admin-user-events"]')?.textContent).toContain(
+      'Casamento da Ana',
+    );
+    expect(root.querySelector('[data-testid="admin-user-teams"]')?.textContent).toContain(
+      'Decoração',
+    );
     context.fixture.destroy();
   });
 });

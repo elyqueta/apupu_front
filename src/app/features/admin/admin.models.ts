@@ -50,6 +50,48 @@ export interface AdminUser {
   status: AdminUserStatus;
   createdAt: string | null;
   eventsCreated: number;
+  avatarUrl: string | null;
+  coverUrl: string | null;
+  phone: string | null;
+  birthDate: string | null;
+  locale: string;
+  timezone: string;
+  emailVerifiedAt: string | null;
+  profileComplete: boolean;
+}
+
+export interface AdminProfileEvent {
+  id: string;
+  title: string;
+  status: string;
+  startsAt: string | null;
+  createdAt: string | null;
+  guestCount: number;
+}
+
+export interface AdminProfileTeam {
+  id: string;
+  name: string;
+  memberCount: number;
+  eventTitle: string | null;
+}
+
+/** Detalhe de conta devolvido por `GET /admin/users/:userId`. */
+export interface AdminUserDetail extends AdminUser {
+  events: AdminProfileEvent[];
+  teams: AdminProfileTeam[];
+}
+
+/** PDF semanal guardado para download no painel. */
+export interface AdminWeeklyReport {
+  id: string;
+  weekStart: string;
+  status: 'generating' | 'ready';
+  filename: string;
+  sizeBytes: number;
+  hostCount: number;
+  generatedAt: string | null;
+  createdAt: string | null;
 }
 
 export interface AdminActivity {
@@ -204,6 +246,61 @@ interface AdminUserDto {
   createdAt?: string | null;
   events_created?: number;
   eventsCreated?: number;
+  avatar_url?: string | null;
+  avatarUrl?: string | null;
+  cover_url?: string | null;
+  coverUrl?: string | null;
+  phone?: string | null;
+  birth_date?: string | null;
+  birthDate?: string | null;
+  locale?: string | null;
+  timezone?: string | null;
+  email_verified_at?: string | null;
+  emailVerifiedAt?: string | null;
+  profile_complete?: boolean;
+  profileComplete?: boolean;
+}
+
+interface AdminProfileEventDto {
+  id?: string;
+  title?: string | null;
+  status?: string | null;
+  starts_at?: string | null;
+  startsAt?: string | null;
+  created_at?: string | null;
+  createdAt?: string | null;
+  guest_count?: number;
+  guestCount?: number;
+}
+
+interface AdminProfileTeamDto {
+  id?: string;
+  name?: string | null;
+  member_count?: number;
+  memberCount?: number;
+  event_title?: string | null;
+  eventTitle?: string | null;
+}
+
+interface AdminUserDetailDto extends AdminUserDto {
+  events?: AdminProfileEventDto[];
+  teams?: AdminProfileTeamDto[];
+}
+
+interface AdminWeeklyReportDto {
+  id: string;
+  week_start?: string;
+  weekStart?: string;
+  status?: string;
+  filename?: string;
+  size_bytes?: number;
+  sizeBytes?: number;
+  host_count?: number;
+  hostCount?: number;
+  generated_at?: string | null;
+  generatedAt?: string | null;
+  created_at?: string | null;
+  createdAt?: string | null;
 }
 
 interface AdminActivityDto {
@@ -310,6 +407,47 @@ export function mapAdminUser(dto: AdminUserDto): AdminUser {
     status: mapUserStatus(dto.status),
     createdAt: dto.created_at ?? dto.createdAt ?? null,
     eventsCreated: firstNumber(dto.events_created, dto.eventsCreated),
+    avatarUrl: dto.avatar_url ?? dto.avatarUrl ?? null,
+    coverUrl: dto.cover_url ?? dto.coverUrl ?? null,
+    phone: dto.phone ?? null,
+    birthDate: dto.birth_date ?? dto.birthDate ?? null,
+    locale: firstText(dto.locale) || 'pt-AO',
+    timezone: firstText(dto.timezone) || 'Africa/Luanda',
+    emailVerifiedAt: dto.email_verified_at ?? dto.emailVerifiedAt ?? null,
+    profileComplete: dto.profile_complete ?? dto.profileComplete ?? false,
+  };
+}
+
+export function mapAdminUserDetail(dto: AdminUserDetailDto): AdminUserDetail {
+  return {
+    ...mapAdminUser(dto),
+    events: (dto.events ?? []).map((event) => ({
+      id: firstText(event.id),
+      title: firstText(event.title),
+      status: firstText(event.status),
+      startsAt: event.starts_at ?? event.startsAt ?? null,
+      createdAt: event.created_at ?? event.createdAt ?? null,
+      guestCount: firstNumber(event.guest_count, event.guestCount),
+    })),
+    teams: (dto.teams ?? []).map((team) => ({
+      id: firstText(team.id),
+      name: firstText(team.name),
+      memberCount: firstNumber(team.member_count, team.memberCount),
+      eventTitle: team.event_title ?? team.eventTitle ?? null,
+    })),
+  };
+}
+
+export function mapAdminWeeklyReport(dto: AdminWeeklyReportDto): AdminWeeklyReport {
+  return {
+    id: dto.id,
+    weekStart: firstText(dto.week_start, dto.weekStart),
+    status: dto.status === 'ready' ? 'ready' : 'generating',
+    filename: firstText(dto.filename),
+    sizeBytes: firstNumber(dto.size_bytes, dto.sizeBytes),
+    hostCount: firstNumber(dto.host_count, dto.hostCount),
+    generatedAt: dto.generated_at ?? dto.generatedAt ?? null,
+    createdAt: dto.created_at ?? dto.createdAt ?? null,
   };
 }
 

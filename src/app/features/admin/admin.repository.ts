@@ -13,7 +13,9 @@ import {
   AdminSupportMessage,
   AdminSupportQuery,
   AdminUser,
+  AdminUserDetail,
   AdminUsersQuery,
+  AdminWeeklyReport,
   mapAdminActivity,
   mapAdminEvent,
   mapAdminEventDetail,
@@ -21,6 +23,8 @@ import {
   mapAdminOverview,
   mapAdminSupportMessage,
   mapAdminUser,
+  mapAdminUserDetail,
+  mapAdminWeeklyReport,
 } from './admin.models';
 
 /**
@@ -86,11 +90,36 @@ export class AdminRepository {
     };
   }
 
-  async userDetail(userId: string): Promise<AdminUser> {
-    const response = await this.api.get<Parameters<typeof mapAdminUser>[0]>(
+  /** Detalhe rico do modal: perfil, eventos e equipas. */
+  async userDetail(userId: string): Promise<AdminUserDetail> {
+    const response = await this.api.get<Parameters<typeof mapAdminUserDetail>[0]>(
       `/admin/users/${encodeURIComponent(userId)}`,
     );
-    return mapAdminUser(response);
+    return mapAdminUserDetail(response);
+  }
+
+  /** PDF individual, com o mesmo conteúdo do detalhe. */
+  async exportUserReport(userId: string): Promise<DownloadFile> {
+    return this.api.download(`/admin/users/${encodeURIComponent(userId)}/report`);
+  }
+
+  /** PDF global imediato, com o mesmo renderizador do job semanal. */
+  async exportAllUsersReport(): Promise<DownloadFile> {
+    return this.api.download('/admin/reports/all');
+  }
+
+  /** Lista das semanas já geradas e prontas para download. */
+  async weeklyReports(): Promise<AdminWeeklyReport[]> {
+    const response = await this.api.get<Parameters<typeof mapAdminWeeklyReport>[0][]>(
+      '/admin/reports/weekly',
+    );
+    return response.map(mapAdminWeeklyReport);
+  }
+
+  async weeklyReportDownload(reportId: string): Promise<DownloadFile> {
+    return this.api.download(
+      `/admin/reports/weekly/${encodeURIComponent(reportId)}/download`,
+    );
   }
 
   async suspendUser(userId: string): Promise<void> {

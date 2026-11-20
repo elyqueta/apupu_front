@@ -122,7 +122,8 @@ Sem alteração.
 | `src/routes/v1/*`, `src/controllers/manageAccess.controller.ts`, `src/services/manageAccess.service.ts` | `POST /public/manage/access-code` (sessão de gestão via `managerSessionAuth`, CSRF, rate limit): gera novo código com `generateAccessCode()`, atualiza hash, revoga sessões antigas se necessário e devolve o código em claro **uma vez**. Erros uniformes (`access_denied`), sem revelar se o código anterior estava certo. |
 | `src/services/eventManager.service.ts`, rotas existentes | Garantir que troca de código e revogação funcionam **mesmo sem conta** (o anfitrião pode revogar; o gestor pode trocar o código da sua sessão). Revogação invalida `event_host_sessions`. |
 | `src/schemas/manageAccess.schemas.ts`, `src/schemas/invitation.schemas.ts` | Schemas para `{ code }`, `{ expires_at }` e para validade configurável do convite. |
-| `src/services/invitation.service.ts`, rotas de host | `PATCH /host/invitations/:invitationId/link` com `expires_at` (data futura, ≤ fim do evento + 30 dias), devolvendo link e validade. Manter default atual e randomicidade de 256 bits. |
+| `src/services/invitation.service.ts`, rotas de host | `PATCH /host/invitations/:invitationId/link` com `expires_at` (data futura, **≤ fim do evento + 30 dias**), devolvendo link e validade. Manter default atual e randomicidade de 256 bits. |
+| `src/services/linkValidity.service.ts`, `manageLink.service.ts` | **Link do gestor mantém a regra anterior**: default de **1 semana**, configurável pelo anfitrião, máximo de **1 dia depois do fim do evento**. A regra de +30 dias aplica-se só ao link do convite. |
 
 ### Aceitação
 
@@ -176,7 +177,7 @@ Sem alteração.
 | Ficheiro | Alteração |
 |---|---|
 | `src/app/features/guests/guests.page.ts`, `src/app/features/events/detail/event-guests-section.component.ts` | **Remover** o item "Mensagem: …" dos cards de convidado e a chave `guests.guestMessage` da apresentação. A mensagem passa a viver só na caixa de entrada. |
-| `src/app/features/messages/messages-inbox.component.ts` + `.html` (**novos**) | Lista com filtros por convidado, estado de leitura, intervalo de datas e resposta (sim/não); leitura confortável com nome, e-mail, data e mensagem completos; ações "Marcar como lido/não lido" e "Responder"; estados carregar/vazio/erro/sucesso. |
+| `src/app/features/messages/messages-inbox.component.ts` + `.html` (**novos**) | Lista com filtros por convidado, estado de leitura, intervalo de datas e resposta (sim/não); leitura confortável com nome, e-mail, data e mensagem completos; ações "Marcar como lido/não lido" e "Responder"; estados carregar/vazio/erro/sucesso. A resposta **não fica sem destino**: é guardada no backend, mostrada ao convidado no convite público e notificada por e-mail quando o convidado tiver e-mail (opção b do utilizador). |
 | `src/app/features/messages/messages.page.ts` (**novo**) + rota `/mensagens` | Página global com seletor de evento, reutilizando o componente. |
 | `src/app/features/events/event-detail.page.html` + rail direito | Nova secção `?separador=mensagens` e link próprio "Caixa de entrada" no menu do evento. |
 | `src/app/core/layout/shell.component.ts` | Item de navegação "Caixa de entrada" → `/mensagens`. |
@@ -204,7 +205,7 @@ Sem alteração.
 | `src/types/host.types.ts`, `src/repositories/host.repository.ts`, `src/schemas/host.schemas.ts` | Incluir `avatarPublicId`/`avatarHash` no mapa e nos dados de atualização. |
 | `src/services/avatar.service.ts`, `src/services/profile.service.ts` | `setAvatarFromUrl()` e `uploadAvatar()` passam a gravar `public_id`/hash e a chamar `destroyImage(anterior)`; novo `removeAvatar()`; `update()` com `avatar_url` também apaga o asset antigo quando a URL muda. Idempotência por conteúdo e por URL. |
 | `src/routes/v1/host.routes.ts` | `DELETE /host/profile/avatar`. |
-| `src/scripts/cleanupCloudinary.ts` (**novo**) + script `cloudinary:cleanup` em `package.json` | Lista assets das pastas configuradas via Admin API, compara com `public_id` presentes nas tabelas, apaga órfãs em modo `--dry-run` por omissão; logs estruturados; `--apply` confirma. Nunca apaga nada que esteja referenciado. Documentar agendamento periódico (cron do Render/worker) sem código de agendamento novo. |
+| `src/scripts/cleanupCloudinary.ts` (**novo**) + script `cloudinary:cleanup` em `package.json` | Lista **apenas** assets das pastas configuradas/da nossa conta via Admin API, compara com `public_id` presentes nas tabelas, **ignora assets criados nas últimas 24 horas** e nunca toca em imagens de URL externo. Apaga órfãs em modo `--dry-run` por omissão; logs estruturados; `--apply` confirma. Nunca apaga nada referenciado. Documentar agendamento periódico (cron do Render/worker) sem código de agendamento novo. |
 
 ### Front
 
@@ -218,7 +219,7 @@ Sem alteração.
 
 | Ficheiro | Alteração |
 |---|---|
-| `src/middlewares/requireActiveEvent.ts` (**novo**) | Para pedidos de escrita com `eventId` (params ou body) ou recursos ligados ao evento (tarefas, convites, mensagens, equipas, gestores), consulta `events.status`; se `cancelled`, responde **409** `{ error: { code: 'event_cancelled', message: 'Este evento foi cancelado. Já não é possível fazer alterações.', request_id } }`. Ignora GET, rotas públicas de leitura e o próprio endpoint de cancelamento. |
+| `src/middlewares/requireActiveEvent.ts` (**novo**) | Para **todas** as rotas de escrita ligadas ao evento, consulta `events.status`; quando o `eventId` só existe dentro de outro recurso (ex.: `PATCH /host/tasks/:id`), resolve o evento pelo repositório. Se `cancelled`, responde **409** `{ error: { code: 'event_cancelled', message: 'Este evento foi cancelado. Já não é possível fazer alterações.', request_id } }`. Ignora GET, rotas públicas de leitura e o próprio endpoint de cancelamento. |
 | `src/app.ts` / `src/routes/v1/index.ts` | Montar o guard antes das rotas protegidas. |
 | `src/routes/v1/host.routes.ts` | `POST /host/events/:eventId/cancel` com `{ reason?, otp }` (anfitrião). Reutiliza OTP por e-mail; escreve `cancelled_at`/`cancelled_by`, auditoria (quando aplicável) e notificação. |
 | `src/services/invitation.service.ts`, `public.controller.ts` | Convite público de evento cancelado devolve `event.status = 'cancelled'` sem dados de RSVP; o front mostra o estado. Continuar a rejeitar RSVP no backend. |
@@ -228,6 +229,7 @@ Sem alteração.
 
 | Ficheiro | Alteração |
 |---|---|
+| `src/app/features/invitation/parts/invitation-reply.component.ts` (**novo**) | Cartão "Resposta do anfitrião" no convite, com data e texto da resposta guardada no backend. Só aparece quando existir resposta. |
 | `src/app/features/invitation/invitation.page.html` + novo `parts/invitation-cancelled.component.ts` | Se `view.event.status === 'cancelled'`, renderiza **só** o estado "Evento cancelado" (com texto simpático e contacto do anfitrião quando disponível), sem boas-vindas, sem capa destacada, sem RSVP. |
 | `src/app/features/events/event-detail.page.ts/.html`, `management-event.page.ts/.html`, secções em `detail/` | `eventCancelled()` computed; banner persistente; todas as ações de escrita desativadas (`[disabled]`, `aria-disabled`, tooltip com o mesmo texto do erro), incluindo adicionar tarefa/gestor/membro, editar, enviar convites, respostas da caixa de entrada. Itens do `app-action-menu` usam `disabled` + `disabledHint`. |
 | `src/app/core/i18n/translations.ts` | `event.cancelledBanner`, `event.cancelledActionHint`, `invitation.cancelledTitle`, `invitation.cancelledText` (pt-PT + en). |
@@ -262,7 +264,10 @@ Sem alteração.
 - **OTP para cancelamento do anfitrião:** o bloco exige OTP mas não diz se o motivo é obrigatório também para o anfitrião. Decisão inicial: OTP obrigatório, motivo opcional no anfitrião e obrigatório no super admin. Registar em `DECISIONS.md`.
 - **Guard de evento cancelado:** rotas cujo `eventId` só existe dentro de outro recurso (ex.: `PATCH /host/tasks/:id`) exigem consulta ao repositório para resolver o evento. Se alguma rota não permitir resolução segura, bloquear no front e registar em `BLOCKERS.md` em vez de inventar comportamento.
 - **Chips "adicionar e-mail":** não existe implementação única no código atual; o padrão novo será aplicado aos formulários de e-mail existentes (`guest-dialog`, equipas). Se o Elizandro enviar prints com outro componente, ajustar depois — o padrão centralizado facilita.
-- **Limpeza de órfãs:** é destrutiva por natureza. O script corre em `--dry-run` por omissão e a documentação recomenda revisão antes de `--apply`; nenhuma limpeza automática será executada contra produção neste bloco.
+- **Limpeza de órfãs:** é destrutiva por natureza. O script corre em `--dry-run` por omissão, ignora assets com menos de 24 horas, só considera as pastas configuradas/da nossa conta, nunca toca em URLs externas e a documentação recomenda revisão antes de `--apply`; nenhuma limpeza automática será executada contra produção neste bloco.
+- **Resposta da caixa de entrada:** escolhida a opção (b) do utilizador — a resposta fica guardada, é mostrada ao convidado no convite e gera e-mail quando possível. Ver `DECISIONS.md`.
+- **Validade dos links:** manager = 1 semana por omissão, configurável, máx. fim do evento + 1 dia; convite = máx. fim do evento + 30 dias. Ver `DECISIONS.md`.
+- **Bloco 6:** landing e painel admin seguem `docs/bloco-6-landing-e-super-admin.md` e têm plano próprio em `docs/PLANO-BLOCO-6.md`; por conflito prevalece o Bloco 6.
 - **Ausência de capturas automatizadas:** verificação visual continue a ser por revisão de classes + checklist manual, como nos blocos anteriores.
 
 ## O que fica por fazer (atualizado no fim do bloco)

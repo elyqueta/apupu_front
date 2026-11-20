@@ -119,3 +119,16 @@ Mapeamento feito antes de alterar código. O frontend parte de `feat/bloco-3-det
 | 2026-11-20 | Estado inativo. | Link inválido, expirado ou revogado usa apenas `invitation.inactiveText`; não há ação “Falar com o anfitrião” nesse estado. | A resposta genérica do backend não devolve contacto; não há dados para a ação e o motivo nunca é diferenciado. Ver `BLOCKERS.md`. |
 | 2026-11-20 | Mensagem na lista do anfitrião. | `guests.guestMessage` com truncamento a 120 caracteres na primeira linha de `app-person-card`; texto integral continua no convite. | Evita cartões longos em `/convidados`, no detalhe do evento e no painel do gestor sem perder a mensagem. |
 | 2026-11-20 | Testes do carregamento. | `settle()` nos testes da página espera duas estabilizações antes de verificar o DOM. | O carregamento é disparado por um `effect()`; com deteção zoneless o resultado só reflete no DOM após o ciclo seguinte. |
+
+## Blocos 5 e 6 — Ajustes pós fase 4 e landing/super admin
+
+| Data | Dúvida / ponto ambíguo | Escolha | Motivo |
+|---|---|---|---|
+| 2026-11-20 | Idioma dos textos. | Textos visíveis em **pt-PT**, mantendo a infraestrutura de chaves `pt-AO`/`en` do projeto. | Decisão explícita do utilizador; evita duplicar sistema de i18n. |
+| 2026-11-20 | Resposta da caixa de entrada. | Opção (b): guardar `message_answer`/`message_answered_at`, devolver no convite público e notificar o convidado por e-mail quando tiver e-mail. | O utilizador exigiu que a resposta não ficasse sem destino; mostrar no convite cobre os casos sem e-mail. |
+| 2026-11-20 | Validade dos links. | Gestor: 1 semana por omissão, configurável pelo anfitrião, máx. fim do evento + 1 dia. Convite: default atual (fim do evento + 1 dia), configurável, máx. fim do evento + 30 dias. | O utilizador confirmou que a regra antiga do gestor se mantém; +30 dias aplica-se só ao convite. |
+| 2026-11-20 | Cancelamento pelo anfitrião. | OTP obrigatório; motivo opcional. Super admin: OTP + motivo obrigatório (mín. 10 caracteres). | Decisão do utilizador; o Bloco 6 detalha o fluxo admin. |
+| 2026-11-20 | Limpeza de órfãs no Cloudinary. | `--dry-run` por omissão; ignorar assets com <24 h; apenas pastas configuradas/da nossa conta; nunca URLs externas; `--apply` explícito. | Evitar apagar uploads muito recentes ou alheios; operação destrutiva exige confirmação. |
+| 2026-11-20 | Bloqueio de evento cancelado. | Guard na API resolve o evento pelo repositório mesmo quando o `eventId` só existe dentro de outro recurso; `event_cancelled` em todas as rotas de escrita. | O utilizador exigiu cobertura total, sem atalhos registados como bloqueio. |
+| 2026-11-20 | Branch do Bloco 6. | Integrar landing/admin na branch `feat/ajustes-fase-4` em vez de criar `feat/landing-super-admin`. | As regras de trabalho proíbem merge; uma branch separada deixaria as duas metades do front desalinhadas. |
+| 2026-11-20 | Precedência documental. | `docs/bloco-6-landing-e-super-admin.md` prevalece sobre a Parte E do Bloco 5; plano próprio em `docs/PLANO-BLOCO-6.md`. | Determinação explícita do utilizador. |

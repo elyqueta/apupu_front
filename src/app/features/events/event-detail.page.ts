@@ -475,7 +475,7 @@ export class EventDetailPage {
   }
 
   protected guestMeta(entry: GuestListEntry): PersonMetaItem[] {
-    return [
+    const meta: PersonMetaItem[] = [
       {
         icon: 'clock',
         label: `${this.i18n.t('guests.tableInvited')}: ${this.i18n.shortDate(entry.guest.invitedAt, entry.event.timezone)}`,
@@ -491,6 +491,15 @@ export class EventDetailPage {
         label: `${this.i18n.t('eventDetail.table.table')}: ${entry.guest.tableName ?? '—'}`,
       },
     ];
+    const message = entry.guest.message?.trim();
+    if (message) {
+      const short = message.length > 120 ? `${message.slice(0, 117)}…` : message;
+      meta.unshift({
+        icon: 'quote',
+        label: this.i18n.t('guests.guestMessage', { message: short }),
+      });
+    }
+    return meta;
   }
 
   protected guestPrimary(entry: GuestListEntry): PersonPrimaryAction | null {

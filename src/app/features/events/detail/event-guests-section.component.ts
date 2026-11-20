@@ -213,7 +213,7 @@ export class EventGuestsSectionComponent {
   /** Linhas curtas do cartão, alinhadas com a página global de convidados. */
   protected metaFor(entry: GuestListEntry): PersonMetaItem[] {
     const timezone = entry.event.timezone;
-    return [
+    const meta: PersonMetaItem[] = [
       {
         icon: 'clock',
         label: `${this.i18n.t('guests.tableInvited')}: ${this.i18n.shortDate(entry.guest.invitedAt, timezone)}`,
@@ -229,6 +229,15 @@ export class EventGuestsSectionComponent {
         label: `${this.i18n.t('eventDetail.table.table')}: ${entry.guest.tableName ?? '—'}`,
       },
     ];
+    const message = entry.guest.message?.trim();
+    if (message) {
+      const short = message.length > 120 ? `${message.slice(0, 117)}…` : message;
+      meta.unshift({
+        icon: 'quote',
+        label: this.i18n.t('guests.guestMessage', { message: short }),
+      });
+    }
+    return meta;
   }
 
   protected actionsFor(_entry: GuestListEntry): ActionMenuItem[] {

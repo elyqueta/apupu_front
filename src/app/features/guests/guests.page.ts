@@ -246,9 +246,9 @@ export class GuestsPage {
     this.editTarget.set(null);
   }
 
-  /** Linhas curtas do cartão: evento, abertura, convite e resposta. */
+  /** Linhas curtas do cartão: mensagem do convidado, evento, abertura, convite e resposta. */
   protected metaFor(entry: GuestListEntry): PersonMetaItem[] {
-    return [
+    const meta: PersonMetaItem[] = [
       { icon: 'calendar', label: `${entry.event.title} · ${i18nDate(this.i18n, entry.event.startsAt, entry.event.timezone)}` },
       {
         icon: 'envelopeOpen',
@@ -264,6 +264,15 @@ export class GuestsPage {
           : this.i18n.t('guests.notResponded'),
       },
     ];
+    const message = entry.guest.message?.trim();
+    if (message) {
+      const short = message.length > 120 ? `${message.slice(0, 117)}…` : message;
+      meta.unshift({
+        icon: 'quote',
+        label: this.i18n.t('guests.guestMessage', { message: short }),
+      });
+    }
+    return meta;
   }
 
   protected actionsFor(entry: GuestListEntry): ActionMenuItem[] {

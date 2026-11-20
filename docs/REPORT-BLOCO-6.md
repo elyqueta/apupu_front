@@ -6,7 +6,7 @@
 
 ## Resumo
 
-O bloco 6 executa a Parte E do bloco 5: uma landing pública em `/`, aviso de protótipo nas páginas públicas e uma área `/admin` protegida por guard, com visão geral, eventos, utilizadores e auditoria. O cancelamento de evento exige motivo e OTP por e-mail.
+O bloco 6 executa a Parte E do bloco 5: uma landing pública em `/` e uma área `/admin` protegida por guard, com visão geral, eventos, utilizadores e auditoria. O cancelamento de evento exige motivo e OTP por e-mail. A faixa “Protótipo” do topo das páginas públicas foi removida a pedido do utilizador (ver abaixo).
 
 ## Commits
 
@@ -21,7 +21,7 @@ O bloco 6 executa a Parte E do bloco 5: uma landing pública em `/`, aviso de pr
 ### Landing (`src/app/features/landing/**`)
 - `landing.page.ts` + `landing.page.html`: rota `/`, primeira tela pública.
 - Secções standalone: hero, benefícios, passos, para quem é, sobre, NS2 Innovation e rodapé.
-- `public-shell.component.ts`: casca das páginas públicas com o aviso “Protótipo — versão em teste”; a landing mostra o aviso nela própria para não duplicar.
+- `public-shell.component.ts`: casca comum das páginas públicas (fundo e altura mínima), sem faixas no topo.
 - Componentes reutilizáveis, mobile-first, tema claro/escuro, sem imagens novas nem dependências.
 - SEO básico (título, meta description e Open Graph) aplicado via `Title`/`Meta` no `landing.page.ts`.
 
@@ -40,18 +40,18 @@ O bloco 6 executa a Parte E do bloco 5: uma landing pública em `/`, aviso de pr
 ### Rotas e infraestrutura
 - `app.routes.ts`: `/` → landing dentro da casca pública; `/entrar`, `/criar-conta`, recuperação, gestão e convites públicos na mesma casca; `/admin` com `superAdminGuard`; `/mensagens` na casca autenticada.
 - `block6-keys.ts`: 216 chaves PT e 216 EN, resolvidas por `translations.ts`.
-- `protected-notice.component.ts`: aviso de protótipo reutilizável.
+- Sem aviso de protótipo no topo: a faixa foi removida por pedido do utilizador (registo em `DECISIONS.md`).
 
 ## Verificação
 
 - `npx tsc --noEmit` — 0 erros.
 - `npm test -- --watch=false` — suíte completa aprovada (landing, guard, admin e restante app).
 - `npm run lint` — 0 erros; avisos legados pré-existentes.
-- `npx eslint src/app/features/landing src/app/features/admin src/app/shared/components/protected-notice.component.ts src/app/core/i18n/block6-keys.ts src/app/app.routes.ts` — 0 erros e 0 avisos.
+- `npx eslint src/app/features/landing src/app/features/admin src/app/core/i18n/block6-keys.ts src/app/app.routes.ts` — 0 erros e 0 avisos.
 
 ## Testes manuais sugeridos
 
-1. Abrir `/` em 360 px e 1440 px: hero, benefícios, passos, para quem, sobre, NS2, CTA e rodapé; verificar contraste, foco e aviso de protótipo.
+1. Abrir `/` em 360 px e 1440 px: hero, benefícios, passos, para quem, sobre, NS2, CTA e rodapé; verificar contraste e foco. Confirmar que não existe faixa “Protótipo” no topo desta nem das páginas públicas.
 2. Com sessão ativa, confirmar que `/` encaminha para `/painel` e que `/admin` abre a área de administração.
 3. Sem papel de super admin, confirmar redirecionamento genérico para `/painel` em todas as rotas `/admin/*`.
 4. Em `/admin/eventos`, cancelar um evento: motivo obrigatório, OTP por e-mail, reenvio, erro genérico em código inválido e auditoria gravada.

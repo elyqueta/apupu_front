@@ -122,6 +122,21 @@ Reutilizar `reports.exportPdf`, `reports.exporting`, `common.notAvailable`,
 - Actualizar `docs/GUIA-ACESSO-ADMIN.md` com o caminho da nova aba e o local
   dos downloads semanais.
 
+## Melhoria — exposição explícita da atividade administrativa
+
+Substituir as chaves cruas e o ator “Sistema” por descrições legíveis em PT/EN.
+
+- Mapa único e completo `ADMIN_ACTION_KEYS` em `admin.models.ts`, com todas as
+  acções escritas pelo backend (`admin_*`, `support_message_resolved`,
+  `newsletter_subscription_removed`) e as legadas; usado por “Atividade
+  recente” e “Auditoria”.
+- `adminActionLabel()` e `adminTargetLabel()` centralizados: acção descrita no
+  passado, tipo de alvo traduzido (`Conta`, `Evento`, `Apoio`, …) e acções
+  desconhecidas identificadas pelo código em vez de escondidas.
+- `AdminActivityDto` aceita `admin_email`/`admin_name` e usa-os como ator;
+  fallback explícito para “Super admin” quando o backend não os enviar.
+- Testes de mapeamento e de renderização das duas vistas.
+
 ## Fora de âmbito
 
 - Reenviar relatórios por email ou colocá-los em serviço de objectos.

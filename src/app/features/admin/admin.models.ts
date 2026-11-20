@@ -308,6 +308,7 @@ interface AdminActivityDto {
   actor?: string | null;
   actor_email?: string | null;
   admin_email?: string | null;
+  admin_name?: string | null;
   who?: string | null;
   action?: string | null;
   target_type?: string | null;
@@ -477,7 +478,7 @@ export function mapAdminNewsletterSubscription(
 export function mapAdminActivity(dto: AdminActivityDto): AdminActivity {
   return {
     id: firstText(dto.id) || `${firstText(dto.action)}-${firstText(dto.created_at, dto.createdAt)}`,
-    actor: firstText(dto.actor, dto.actor_email, dto.admin_email, dto.who),
+    actor: firstText(dto.actor, dto.admin_name, dto.actor_email, dto.admin_email, dto.who),
     action: firstText(dto.action),
     targetType: firstText(dto.target_type, dto.targetType),
     targetId: firstText(dto.target_id, dto.targetId),
@@ -543,4 +544,63 @@ export function adminErrorMessage(error: unknown, i18n: I18nService): string {
     return i18n.t('admin.error.generic');
   }
   return i18n.t('admin.error.generic');
+}
+
+/**
+ * Códigos gravados em `admin_audit_log` e a sua descrição legível.
+ *
+ * Mantido num único sítio para que "Atividade recente" e "Auditoria" mostrem
+ * exactamente o mesmo texto. As cinco entradas sem prefixo são códigos
+ * legados que ainda podem existir em registos antigos.
+ */
+export const ADMIN_ACTION_KEYS: Record<string, TranslationKey> = {
+  admin_overview_viewed: 'admin.audit.action.overviewViewed',
+  admin_events_listed: 'admin.audit.action.eventsListed',
+  admin_event_viewed: 'admin.audit.action.eventViewed',
+  admin_cancel_otp_requested: 'admin.audit.action.cancelOtpRequested',
+  admin_event_cancelled: 'admin.audit.action.eventCancelled',
+  admin_users_listed: 'admin.audit.action.usersListed',
+  admin_user_viewed: 'admin.audit.action.userViewed',
+  admin_user_suspended: 'admin.audit.action.userSuspended',
+  admin_user_reactivated: 'admin.audit.action.userReactivated',
+  admin_sessions_revoked: 'admin.audit.action.sessionsRevoked',
+  admin_audit_listed: 'admin.audit.action.auditListed',
+  admin_support_listed: 'admin.audit.action.supportListed',
+  admin_support_viewed: 'admin.audit.action.supportViewed',
+  support_message_resolved: 'admin.audit.action.supportResolved',
+  admin_newsletter_listed: 'admin.audit.action.newsletterListed',
+  newsletter_subscription_removed: 'admin.audit.action.newsletterRemoved',
+  admin_newsletter_exported: 'admin.audit.action.newsletterExported',
+  admin_user_report_exported: 'admin.audit.action.userReportExported',
+  admin_all_users_report_exported: 'admin.audit.action.allUsersReportExported',
+  cancel_event: 'admin.audit.action.cancel_event',
+  suspend_user: 'admin.audit.action.suspend_user',
+  reactivate_user: 'admin.audit.action.reactivate_user',
+  revoke_sessions: 'admin.audit.action.revoke_sessions',
+  create_event: 'admin.audit.action.create_event',
+};
+
+const ADMIN_TARGET_KEYS: Record<string, TranslationKey> = {
+  admin: 'admin.audit.target.admin',
+  event: 'admin.audit.target.event',
+  host: 'admin.audit.target.host',
+  newsletter_subscription: 'admin.audit.target.newsletter',
+  support_message: 'admin.audit.target.support',
+};
+
+/** Descreve uma acção em vez de mostrar o código cru da auditoria. */
+export function adminActionLabel(action: string, i18n: I18nService): string {
+  const key = ADMIN_ACTION_KEYS[action];
+  if (key) {
+    return i18n.t(key);
+  }
+  return action
+    ? i18n.t('admin.audit.action.unknownDetail', { action })
+    : i18n.t('admin.audit.action.unknown');
+}
+
+/** Tipo de entidade visado pela acção, em texto legível. */
+export function adminTargetLabel(targetType: string, i18n: I18nService): string {
+  const key = ADMIN_TARGET_KEYS[targetType];
+  return key ? i18n.t(key) : targetType || i18n.t('admin.audit.target.unknown');
 }

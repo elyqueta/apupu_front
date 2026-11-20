@@ -71,7 +71,7 @@
         <h1 class="font-display text-xl font-semibold tracking-tight text-ink sm:text-2xl">{{ item.title }}</h1>
       </header>
 
-      <nav class="mb-4 flex gap-1 overflow-x-auto border-b border-line pb-2" role="tablist" [attr.aria-label]="i18n.t('eventDetail.detailsTitle')">
+      <nav class="no-scrollbar mb-4 flex gap-1 overflow-x-auto border-b border-line pb-2" role="tablist" [attr.aria-label]="i18n.t('eventDetail.detailsTitle')">
         @for (definition of tabs; track definition.id) {
           <button type="button" role="tab" class="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-xl px-3 text-xs font-semibold transition" [class]="tab() === definition.id ? 'border border-brand/30 bg-brand/15 text-ink' : 'border border-line text-muted hover:bg-surface-raised/60 hover:text-ink'" [attr.aria-selected]="tab() === definition.id" (click)="setTab(definition.id)">
             <fa-icon [icon]="icons[definition.icon]" aria-hidden="true" />
@@ -86,12 +86,10 @@
         @if (feedback()) { <p role="status" class="rounded-2xl border border-mint/25 bg-mint/5 p-3 text-xs leading-5 text-mint">{{ feedback() }}</p> }
 
         @if (tab() === 'resumo') {
-          <div class="grid gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
-            <app-event-summary [event]="item" [stats]="stats()" [typeLabel]="typeLabel()" [templateName]="templateName()" [permissions]="permissions()" [isManagement]="true" [deadlinePassed]="deadlinePassed()" (editEvent)="openEditModal()" (copyInvitation)="copyInvitation()" (openInvitation)="openInvitation()" />
-            <div class="flex flex-col gap-4">
-              <app-event-tasks-section [tasks]="tasks()" [doneCount]="tasksDone()" [permissions]="permissions()" (toggleTask)="onTaskToggle()" />
-              <app-event-teams-section [teams]="teams()" [loading]="teamsLoading()" [permissions]="permissions()" [eventId]="item.id" (openTeam)="openTeam($event)" />
-            </div>
+          <app-event-summary [event]="item" [stats]="stats()" [typeLabel]="typeLabel()" [templateName]="templateName()" [permissions]="permissions()" [isManagement]="true" [deadlinePassed]="deadlinePassed()" (editEvent)="openEditModal()" (copyInvitation)="copyInvitation()" (openInvitation)="openInvitation()" />
+          <div class="grid gap-4 lg:grid-cols-2">
+            <app-event-tasks-section [tasks]="tasks()" [doneCount]="tasksDone()" [permissions]="permissions()" (toggleTask)="onTaskToggle()" />
+            <app-event-teams-section [teams]="teams()" [loading]="teamsLoading()" [permissions]="permissions()" [eventId]="item.id" (openTeam)="openTeam($event)" />
           </div>
         }
 

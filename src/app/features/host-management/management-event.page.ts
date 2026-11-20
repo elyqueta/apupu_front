@@ -273,7 +273,7 @@ export class ManagementEventPage {
     void this.router.navigate([], {
       relativeTo: this.route,
       queryParams: { separador: eventTabQuery(tab) },
-      queryParamsHandling: 'preserve',
+      queryParamsHandling: 'merge',
     });
   }
 

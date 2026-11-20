@@ -31,7 +31,7 @@
     </div>
   </header>
 
-  <nav class="mx-auto flex max-w-7xl gap-1 overflow-x-auto border-b border-line px-4 py-2 sm:px-6" role="tablist" [attr.aria-label]="i18n.t('eventDetail.detailsTitle')">
+  <nav class="no-scrollbar mx-auto flex max-w-7xl gap-1 overflow-x-auto border-b border-line px-4 py-2 sm:px-6" role="tablist" [attr.aria-label]="i18n.t('eventDetail.detailsTitle')">
     <button type="button" role="tab" class="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-xl px-3 text-xs font-semibold transition" [class]="tab() === 'resumo' ? 'border border-brand/30 bg-brand/15 text-ink' : 'border border-line text-muted hover:bg-surface-raised/60 hover:text-ink'" [attr.aria-selected]="tab() === 'resumo'" (click)="setTab('resumo')">
       <fa-icon [icon]="icons['dashboardAlt']" aria-hidden="true" /> {{ i18n.t('eventDetail.tabs.overview') }}
     </button>
@@ -50,25 +50,23 @@
     </button>
   </nav>
 
-  <main class="mx-auto flex max-w-7xl flex-col gap-4 px-4 pb-10 sm:px-6">
+  <main class="mx-auto flex max-w-7xl flex-col gap-4 px-4 pb-10 pt-4 sm:px-6">
     @if (tab() === 'resumo') {
-      <div class="grid gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
-        <app-event-summary [event]="event" [stats]="stats()" [typeLabel]="typeLabel()" [templateName]="templateName()"
-          [permissions]="permissions()" [isManagement]="isManagement()" [exporting]="exporting()" [deadlinePassed]="deadlinePassed()"
-          [periodFrom]="periodFrom()" [periodTo]="periodTo()" [periodInvalid]="periodInvalid()"
-          (resendManageLink)="resendManagementLink()" (publish)="publish()" (editEvent)="openEditModal()" (cancelEvent)="cancelEvent()"
-          (exportDocument)="exportDocument($event.document, $event.format)" (exportPeriod)="exportPeriodReport($event)"
-          (periodFromChange)="setPeriodFrom($event)" (periodToChange)="setPeriodTo($event)"
-          (copyInvitation)="copyInvitation()" (openInvitation)="openInvitation()" />
-        <div class="flex flex-col gap-4">
-          <app-event-tasks-section [tasks]="tasks()" [doneCount]="tasksDone()" [permissions]="permissions()" [busyId]="taskBusyId()"
-            [onlyMine]="onlyMine()" [loading]="false" (createTask)="openTaskDialog()" (toggleTask)="toggleTask($event.id)"
-            (removeTask)="removeTask($event)" (onlyMineChange)="onOnlyMineChange($event)" />
-          @if (teamsLoading()) { <app-skeleton variant="cards" /> } @else {
-            <app-event-teams-section [teams]="teams()" [loading]="false" [permissions]="permissions()" [eventId]="eventId()"
-              (openTeam)="openTeam($event)" (createTeam)="openManagerDialog()" />
-          }
-        </div>
+      <app-event-summary [event]="event" [stats]="stats()" [typeLabel]="typeLabel()" [templateName]="templateName()"
+        [permissions]="permissions()" [isManagement]="isManagement()" [exporting]="exporting()" [deadlinePassed]="deadlinePassed()"
+        [periodFrom]="periodFrom()" [periodTo]="periodTo()" [periodInvalid]="periodInvalid()"
+        (resendManageLink)="resendManagementLink()" (publish)="publish()" (editEvent)="openEditModal()" (cancelEvent)="cancelEvent()"
+        (exportDocument)="exportDocument($event.document, $event.format)" (exportPeriod)="exportPeriodReport($event)"
+        (periodFromChange)="setPeriodFrom($event)" (periodToChange)="setPeriodTo($event)"
+        (copyInvitation)="copyInvitation()" (openInvitation)="openInvitation()" />
+      <div class="grid gap-4 lg:grid-cols-2">
+        <app-event-tasks-section [tasks]="tasks()" [doneCount]="tasksDone()" [permissions]="permissions()" [busyId]="taskBusyId()"
+          [onlyMine]="onlyMine()" [loading]="false" (createTask)="openTaskDialog()" (toggleTask)="toggleTask($event.id)"
+          (removeTask)="removeTask($event)" (onlyMineChange)="onOnlyMineChange($event)" />
+        @if (teamsLoading()) { <app-skeleton variant="cards" /> } @else {
+          <app-event-teams-section [teams]="teams()" [loading]="false" [permissions]="permissions()" [eventId]="eventId()"
+            (openTeam)="openTeam($event)" (createTeam)="openManagerDialog()" />
+        }
       </div>
     }
 

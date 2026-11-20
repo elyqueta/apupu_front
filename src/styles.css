@@ -205,6 +205,16 @@
     animation-iteration-count: 1, infinite;
     animation-fill-mode: forwards, none;
   }
+
+  /* Navegação por separadores: mantém o scroll sem barra horizontal visível. */
+  .no-scrollbar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 .dark {

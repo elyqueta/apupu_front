@@ -86,7 +86,7 @@ import { GUEST_FILTERS, GuestFilter } from './detail.models';
           </label>
         </div>
 
-        <div id="event-guests-list" class="scroll-mt-24">
+        <div>
           @if (loading() || !loaded()) {
             <app-skeleton variant="cards" />
           } @else if (entries().length === 0) {

@@ -73,33 +73,32 @@ const PRIMARY_ACTION_CLASS = 'inline-flex h-11 items-center gap-2 rounded-2xl bg
         </div>
       </article>
 
-      <div class="grid gap-4 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
-        <app-stat-grid>
-          @for (card of statCards(); track card.key) {
-            <app-stat-card [label]="card.label" [value]="card.value" [hint]="card.hint" [icon]="card.icon" [tone]="card.tone" />
-          }
-        </app-stat-grid>
-        <div class="flex flex-col gap-4">
-          <article class="rounded-4xl border border-line bg-surface p-5 shadow-card">
-            <div class="flex items-center justify-between gap-3">
-              <p class="text-xs font-semibold uppercase tracking-wider text-brand">{{ i18n.t('eventDetail.progressTitle') }}</p>
-              <span class="text-xs font-semibold text-ink">{{ stats().responseRate }}%</span>
-            </div>
-            <div class="mt-3 h-1.5 overflow-hidden rounded-full bg-line" role="progressbar" aria-valuemin="0" aria-valuemax="100" [attr.aria-valuenow]="stats().responseRate" [attr.aria-label]="i18n.t('eventDetail.progressTitle')">
-              <div class="h-full rounded-full bg-brand" [style.width.%]="stats().responseRate"></div>
-            </div>
-            <p class="mt-2 text-xs text-muted">{{ i18n.t('eventDetail.progressHint', { responded: respondedCount(), total: stats().total }) }}</p>
-          </article>
-          <article class="rounded-4xl border border-line bg-surface p-5 shadow-card">
-            <p class="text-xs font-semibold uppercase tracking-wider text-brand">{{ i18n.t('eventDetail.primaryInvite') }}</p>
-            <h3 class="mt-1 text-sm font-semibold text-ink">{{ i18n.t('eventDetail.invitationCard') }}</h3>
-            <p class="mt-1 text-xs text-muted">{{ i18n.t('eventDetail.invitationHint') }}</p>
-            <div class="mt-3 flex flex-wrap gap-2">
-              <button type="button" class="inline-flex h-11 items-center gap-2 rounded-2xl border border-line bg-surface px-4 text-xs font-semibold text-ink transition hover:border-brand/40" (click)="copyInvitation.emit()"><fa-icon [icon]="icons['copy']" aria-hidden="true" /> {{ i18n.t('eventDetail.copyInvitation') }}</button>
-              <button type="button" class="inline-flex h-11 items-center gap-2 rounded-2xl border border-line bg-surface px-4 text-xs font-semibold text-ink transition hover:border-brand/40" (click)="openInvitation.emit()"><fa-icon [icon]="icons['arrowUpRight']" aria-hidden="true" /> {{ i18n.t('eventDetail.openInvitation') }}</button>
-            </div>
-          </article>
-        </div>
+      <app-stat-grid>
+        @for (card of statCards(); track card.key) {
+          <app-stat-card [label]="card.label" [value]="card.value" [hint]="card.hint" [icon]="card.icon" [tone]="card.tone" />
+        }
+      </app-stat-grid>
+
+      <div class="grid gap-4 lg:grid-cols-2">
+        <article class="rounded-4xl border border-line bg-surface p-5 shadow-card">
+          <div class="flex items-center justify-between gap-3">
+            <p class="text-xs font-semibold uppercase tracking-wider text-brand">{{ i18n.t('eventDetail.progressTitle') }}</p>
+            <span class="text-xs font-semibold text-ink">{{ stats().responseRate }}%</span>
+          </div>
+          <div class="mt-3 h-1.5 overflow-hidden rounded-full bg-line" role="progressbar" aria-valuemin="0" aria-valuemax="100" [attr.aria-valuenow]="stats().responseRate" [attr.aria-label]="i18n.t('eventDetail.progressTitle')">
+            <div class="h-full rounded-full bg-brand" [style.width.%]="stats().responseRate"></div>
+          </div>
+          <p class="mt-2 text-xs text-muted">{{ i18n.t('eventDetail.progressHint', { responded: respondedCount(), total: stats().total }) }}</p>
+        </article>
+        <article class="rounded-4xl border border-line bg-surface p-5 shadow-card">
+          <p class="text-xs font-semibold uppercase tracking-wider text-brand">{{ i18n.t('eventDetail.primaryInvite') }}</p>
+          <h3 class="mt-1 text-sm font-semibold text-ink">{{ i18n.t('eventDetail.invitationCard') }}</h3>
+          <p class="mt-1 text-xs text-muted">{{ i18n.t('eventDetail.invitationHint') }}</p>
+          <div class="mt-3 flex flex-wrap gap-2">
+            <button type="button" class="inline-flex h-11 items-center gap-2 rounded-2xl border border-line bg-surface px-4 text-xs font-semibold text-ink transition hover:border-brand/40" (click)="copyInvitation.emit()"><fa-icon [icon]="icons['copy']" aria-hidden="true" /> {{ i18n.t('eventDetail.copyInvitation') }}</button>
+            <button type="button" class="inline-flex h-11 items-center gap-2 rounded-2xl border border-line bg-surface px-4 text-xs font-semibold text-ink transition hover:border-brand/40" (click)="openInvitation.emit()"><fa-icon [icon]="icons['arrowUpRight']" aria-hidden="true" /> {{ i18n.t('eventDetail.openInvitation') }}</button>
+          </div>
+        </article>
       </div>
 
       @if (permissions().canExport) {

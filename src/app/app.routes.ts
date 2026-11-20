@@ -2,8 +2,15 @@ import { inject } from '@angular/core';
 import { Router, Routes } from '@angular/router';
 import { ShellComponent } from './core/layout/shell.component';
 import { authenticatedGuard } from './core/api/auth.guard';
+import { I18nService } from './core/i18n/i18n.service';
+import { TranslationKey } from './core/i18n/translations';
 import { superAdminGuard } from './features/admin/admin.guard';
 import { PublicShellComponent } from './features/landing/public-shell.component';
+
+/** Título da rota resolvido no idioma corrente, sem mudar os URLs. */
+function pageTitle(key: TranslationKey): () => string {
+  return () => inject(I18nService).t(key);
+}
 
 export const routes: Routes = [
   {
@@ -15,18 +22,18 @@ export const routes: Routes = [
       {
         path: '',
         pathMatch: 'full',
-        title: 'Conto Contigo · Eventos e convites',
+        title: pageTitle('route.home'),
         loadComponent: () => import('./features/landing/landing.page').then((m) => m.LandingPage),
       },
       {
         path: 'entrar',
-        title: 'Conto Contigo · Entrar',
+        title: pageTitle('route.login'),
         loadComponent: () => import('./features/auth/auth.page').then((m) => m.AuthPage),
         data: { mode: 'login' },
       },
       {
         path: 'criar-conta',
-        title: 'Conto Contigo · Criar conta',
+        title: pageTitle('route.signup'),
         loadComponent: () => import('./features/auth/auth.page').then((m) => m.AuthPage),
         data: { mode: 'register' },
       },
@@ -37,13 +44,13 @@ export const routes: Routes = [
       },
       {
         path: 'recuperar-senha',
-        title: 'Conto Contigo · Recuperar senha',
+        title: pageTitle('route.forgot'),
         loadComponent: () => import('./features/auth/password.page').then((m) => m.PasswordPage),
         data: { mode: 'forgot' },
       },
       {
         path: 'redefinir-senha',
-        title: 'Conto Contigo · Redefinir senha',
+        title: pageTitle('route.reset'),
         loadComponent: () => import('./features/auth/password.page').then((m) => m.PasswordPage),
         data: { mode: 'reset' },
       },
@@ -54,7 +61,7 @@ export const routes: Routes = [
       },
       {
         path: 'gestao',
-        title: 'Conto Contigo · Gestão',
+        title: pageTitle('route.management'),
         loadComponent: () =>
           import('./features/host-management/management-entry.page').then(
             (m) => m.ManagementEntryPage,
@@ -62,7 +69,7 @@ export const routes: Routes = [
       },
       {
         path: 'gerir/:token',
-        title: 'Conto Contigo · Gestão',
+        title: pageTitle('route.management'),
         loadComponent: () =>
           import('./features/host-management/management-entry.page').then(
             (m) => m.ManagementEntryPage,
@@ -70,7 +77,7 @@ export const routes: Routes = [
       },
       {
         path: 'gestao/evento/:eventId',
-        title: 'Conto Contigo · Gestão do evento',
+        title: pageTitle('route.managementEvent'),
         loadComponent: () =>
           import('./features/host-management/management-event.page').then(
             (m) => m.ManagementEventPage,
@@ -83,7 +90,7 @@ export const routes: Routes = [
       },
       {
         path: 'gestao/:token',
-        title: 'Conto Contigo · Gestão',
+        title: pageTitle('route.management'),
         loadComponent: () =>
           import('./features/host-management/management-entry.page').then(
             (m) => m.ManagementEntryPage,
@@ -91,13 +98,13 @@ export const routes: Routes = [
       },
       {
         path: 'convite/:token',
-        title: 'Conto Contigo · Convite',
+        title: pageTitle('route.invitation'),
         loadComponent: () =>
           import('./features/invitation/invitation.page').then((m) => m.InvitationPage),
       },
       {
         path: 'i/:token',
-        title: 'Conto Contigo · Convite',
+        title: pageTitle('route.invitation'),
         loadComponent: () =>
           import('./features/invitation/invitation.page').then((m) => m.InvitationPage),
       },
@@ -121,27 +128,41 @@ export const routes: Routes = [
       },
       {
         path: 'visao-geral',
-        title: 'Conto Contigo · Administração · Visão geral',
+        title: pageTitle('route.admin.overview'),
         loadComponent: () =>
           import('./features/admin/admin-overview.component').then((m) => m.AdminOverviewComponent),
       },
       {
         path: 'eventos',
-        title: 'Conto Contigo · Administração · Eventos',
+        title: pageTitle('route.admin.events'),
         loadComponent: () =>
           import('./features/admin/admin-events.component').then((m) => m.AdminEventsComponent),
       },
       {
         path: 'utilizadores',
-        title: 'Conto Contigo · Administração · Utilizadores',
+        title: pageTitle('route.admin.users'),
         loadComponent: () =>
           import('./features/admin/admin-users.component').then((m) => m.AdminUsersComponent),
       },
       {
         path: 'auditoria',
-        title: 'Conto Contigo · Administração · Auditoria',
+        title: pageTitle('route.admin.audit'),
         loadComponent: () =>
           import('./features/admin/admin-audit.component').then((m) => m.AdminAuditComponent),
+      },
+      {
+        path: 'apoio',
+        title: pageTitle('route.admin.support'),
+        loadComponent: () =>
+          import('./features/admin/admin-support.component').then((m) => m.AdminSupportComponent),
+      },
+      {
+        path: 'novidades',
+        title: pageTitle('route.admin.newsletter'),
+        loadComponent: () =>
+          import('./features/admin/admin-newsletter.component').then(
+            (m) => m.AdminNewsletterComponent,
+          ),
       },
     ],
   },

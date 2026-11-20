@@ -72,6 +72,27 @@ export interface AdminOverview {
 
 export type AdminAuditEntry = AdminActivity;
 
+export type SupportMessageStatus = 'open' | 'resolved';
+
+/** Mensagem enviada pelo formulário público de apoio. */
+export interface AdminSupportMessage {
+  id: string;
+  name: string;
+  email: string;
+  message: string;
+  status: SupportMessageStatus;
+  createdAt: string | null;
+  resolvedAt: string | null;
+  resolvedBy: string | null;
+}
+
+/** Email inscrito para receber novidades do site. */
+export interface AdminNewsletterSubscription {
+  id: string;
+  email: string;
+  createdAt: string | null;
+}
+
 export interface AdminPage<T> {
   items: T[];
   pagination: Pagination;
@@ -100,6 +121,23 @@ export interface AdminAuditQuery {
   q?: string;
   action?: string;
   from?: string;
+  page: number;
+  page_size: number;
+}
+
+export interface AdminSupportQuery {
+  q?: string;
+  status?: SupportMessageStatus | 'all';
+  from?: string;
+  to?: string;
+  page: number;
+  page_size: number;
+}
+
+export interface AdminNewsletterQuery {
+  q?: string;
+  from?: string;
+  to?: string;
   page: number;
   page_size: number;
 }
@@ -184,6 +222,27 @@ interface AdminActivityDto {
   createdAt?: string | null;
 }
 
+interface AdminSupportMessageDto {
+  id: string;
+  name?: string | null;
+  email?: string | null;
+  message?: string | null;
+  status?: string | null;
+  created_at?: string | null;
+  createdAt?: string | null;
+  resolved_at?: string | null;
+  resolvedAt?: string | null;
+  resolved_by?: string | null;
+  resolvedBy?: string | null;
+}
+
+interface AdminNewsletterSubscriptionDto {
+  id: string;
+  email?: string | null;
+  created_at?: string | null;
+  createdAt?: string | null;
+}
+
 interface AdminOverviewDto {
   stats?: {
     users?: number;
@@ -251,6 +310,29 @@ export function mapAdminUser(dto: AdminUserDto): AdminUser {
     status: mapUserStatus(dto.status),
     createdAt: dto.created_at ?? dto.createdAt ?? null,
     eventsCreated: firstNumber(dto.events_created, dto.eventsCreated),
+  };
+}
+
+export function mapAdminSupportMessage(dto: AdminSupportMessageDto): AdminSupportMessage {
+  return {
+    id: dto.id,
+    name: firstText(dto.name),
+    email: firstText(dto.email),
+    message: firstText(dto.message),
+    status: dto.status === 'resolved' ? 'resolved' : 'open',
+    createdAt: dto.created_at ?? dto.createdAt ?? null,
+    resolvedAt: dto.resolved_at ?? dto.resolvedAt ?? null,
+    resolvedBy: firstText(dto.resolved_by, dto.resolvedBy) || null,
+  };
+}
+
+export function mapAdminNewsletterSubscription(
+  dto: AdminNewsletterSubscriptionDto,
+): AdminNewsletterSubscription {
+  return {
+    id: dto.id,
+    email: firstText(dto.email),
+    createdAt: dto.created_at ?? dto.createdAt ?? null,
   };
 }
 

@@ -1,19 +1,25 @@
 import { inject, Injectable } from '@angular/core';
-import { ApiClient } from '../../core/api/api-client';
+import { ApiClient, DownloadFile } from '../../core/api/api-client';
 import {
   AdminAuditEntry,
   AdminAuditQuery,
   AdminEvent,
   AdminEventDetail,
   AdminEventsQuery,
+  AdminNewsletterQuery,
+  AdminNewsletterSubscription,
   AdminOverview,
   AdminPage,
+  AdminSupportMessage,
+  AdminSupportQuery,
   AdminUser,
   AdminUsersQuery,
   mapAdminActivity,
   mapAdminEvent,
   mapAdminEventDetail,
+  mapAdminNewsletterSubscription,
   mapAdminOverview,
+  mapAdminSupportMessage,
   mapAdminUser,
 } from './admin.models';
 
@@ -111,5 +117,69 @@ export class AdminRepository {
       items: page.data.map(mapAdminActivity),
       pagination: page.pagination,
     };
+  }
+
+  async supportMessages(query: AdminSupportQuery): Promise<AdminPage<AdminSupportMessage>> {
+    const page = await this.api.getPage<Parameters<typeof mapAdminSupportMessage>[0]>(
+      '/admin/support',
+      {
+        q: query.q,
+        status: query.status === 'all' ? undefined : query.status,
+        from: query.from,
+        to: query.to,
+        page: query.page,
+        page_size: query.page_size,
+      },
+    );
+    return {
+      items: page.data.map(mapAdminSupportMessage),
+      pagination: page.pagination,
+    };
+  }
+
+  async supportMessageDetail(messageId: string): Promise<AdminSupportMessage> {
+    const response = await this.api.get<Parameters<typeof mapAdminSupportMessage>[0]>(
+      `/admin/support/${encodeURIComponent(messageId)}`,
+    );
+    return mapAdminSupportMessage(response);
+  }
+
+  async resolveSupportMessage(messageId: string): Promise<AdminSupportMessage> {
+    const response = await this.api.post<Parameters<typeof mapAdminSupportMessage>[0]>(
+      `/admin/support/${encodeURIComponent(messageId)}/resolve`,
+    );
+    return mapAdminSupportMessage(response);
+  }
+
+  async newsletter(query: AdminNewsletterQuery): Promise<AdminPage<AdminNewsletterSubscription>> {
+    const page = await this.api.getPage<Parameters<typeof mapAdminNewsletterSubscription>[0]>(
+      '/admin/newsletter',
+      {
+        q: query.q,
+        from: query.from,
+        to: query.to,
+        page: query.page,
+        page_size: query.page_size,
+      },
+    );
+    return {
+      items: page.data.map(mapAdminNewsletterSubscription),
+      pagination: page.pagination,
+    };
+  }
+
+  /** Remove uma subscrição; a API responde `{ data: { removed: true } }`. */
+  async removeNewsletterSubscription(subscriptionId: string): Promise<void> {
+    await this.api.deleteWithData<{ removed: boolean }>(
+      `/admin/newsletter/${encodeURIComponent(subscriptionId)}`,
+    );
+  }
+
+  async exportNewsletterCsv(query: AdminNewsletterQuery): Promise<DownloadFile> {
+    return this.api.download('/admin/newsletter/export', {
+      q: query.q,
+      from: query.from,
+      to: query.to,
+    });
   }
 }

@@ -13,7 +13,7 @@ interface AdminNavItem {
   icon: IconDefinition;
 }
 
-/** Shell do painel Super Admin: voltar, menu das quatro abas e router-outlet. */
+/** Shell do painel Super Admin: voltar, menu das abas e router-outlet. */
 @Component({
   selector: 'app-admin-page',
   imports: [RouterLink, RouterLinkActive, RouterOutlet, FaIconComponent, LogoComponent],
@@ -32,5 +32,7 @@ export class AdminPage {
     { path: '/admin/eventos', labelKey: 'admin.nav.events', icon: ICONS['events'] },
     { path: '/admin/utilizadores', labelKey: 'admin.nav.users', icon: ICONS['guests'] },
     { path: '/admin/auditoria', labelKey: 'admin.nav.audit', icon: ICONS['history'] },
+    { path: '/admin/apoio', labelKey: 'admin.nav.support', icon: ICONS['envelope'] },
+    { path: '/admin/novidades', labelKey: 'admin.nav.newsletter', icon: ICONS['paperPlane'] },
   ];
 }

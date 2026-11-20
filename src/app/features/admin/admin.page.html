@@ -1,0 +1,58 @@
+<div class="min-h-dvh bg-canvas text-ink" data-testid="admin-shell">
+  <div class="mx-auto max-w-[1400px] px-4 py-4 sm:px-6 lg:px-8 lg:py-6">
+    <header class="flex flex-wrap items-center justify-between gap-3">
+      <a
+        routerLink="/painel"
+        data-testid="admin-back"
+        class="inline-flex min-h-11 items-center gap-2 rounded-xl border border-line bg-surface px-3 text-sm font-semibold text-ink transition hover:border-brand/40"
+      >
+        <fa-icon [icon]="icons['arrowLeft']" class="text-xs" aria-hidden="true" />
+        {{ i18n.t('admin.back') }}
+      </a>
+      <div class="flex items-center gap-3">
+        <span
+          class="inline-flex min-h-11 items-center gap-2 rounded-full border border-brand/25 bg-brand/10 px-3 text-[11px] font-semibold uppercase tracking-wider text-brand-strong"
+        >
+          <fa-icon [icon]="icons['shield']" class="text-xs" aria-hidden="true" />
+          {{ i18n.t('admin.roleBadge') }}
+        </span>
+      </div>
+    </header>
+
+    <div class="mt-6 flex flex-col gap-6 lg:flex-row lg:items-start">
+      <aside class="lg:w-60 lg:shrink-0">
+        <div class="flex items-center gap-2 px-1">
+          <app-logo variant="symbol" [height]="36" class="dark:hidden" />
+          <app-logo variant="symbol" theme="white" [height]="36" class="hidden dark:block" />
+          <div>
+            <p class="font-display text-lg font-semibold leading-tight text-ink">
+              {{ i18n.t('admin.title') }}
+            </p>
+            <p class="text-[11px] text-muted">{{ i18n.t('landing.footer.product') }}</p>
+          </div>
+        </div>
+        <nav
+          class="mt-4 flex gap-2 overflow-x-auto pb-2 lg:mt-6 lg:flex-col lg:overflow-visible lg:pb-0"
+          [attr.aria-label]="i18n.t('admin.title')"
+          data-testid="admin-nav"
+        >
+          @for (item of navItems; track item.path) {
+            <a
+              [routerLink]="item.path"
+              routerLinkActive="border-brand/40 bg-brand/10 text-brand-strong"
+              [routerLinkActiveOptions]="{ exact: true }"
+              class="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-xl border border-line bg-surface px-3 text-sm font-medium text-muted transition hover:border-brand/35 hover:text-ink lg:w-full"
+            >
+              <fa-icon [icon]="item.icon" class="w-4 text-xs" aria-hidden="true" />
+              {{ i18n.t(item.labelKey) }}
+            </a>
+          }
+        </nav>
+      </aside>
+
+      <main class="min-w-0 flex-1" data-testid="admin-content">
+        <router-outlet />
+      </main>
+    </div>
+  </div>
+</div>

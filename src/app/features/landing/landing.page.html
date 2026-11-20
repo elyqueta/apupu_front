@@ -1,0 +1,117 @@
+<app-protected-notice />
+
+<a
+  href="#conteudo"
+  data-testid="landing-skip"
+  class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:min-h-11 focus:rounded-xl focus:bg-brand focus:px-4 focus:text-sm focus:font-semibold focus:text-on-secondary"
+>
+  {{ i18n.t('landing.skipToContent') }}
+</a>
+
+<header
+  class="sticky top-0 z-40 border-b border-line bg-canvas/90 backdrop-blur-xl"
+  data-testid="landing-header"
+>
+  <div class="mx-auto flex min-h-16 max-w-6xl items-center justify-between gap-4 px-5 sm:px-8">
+    <a routerLink="/" class="inline-flex items-center" [attr.aria-label]="i18n.t('app.name')">
+      <app-logo variant="horizontal" [height]="32" class="dark:hidden" />
+      <app-logo variant="horizontal" theme="white" [height]="32" class="hidden dark:block" />
+    </a>
+
+    <nav
+      class="hidden items-center gap-6 md:flex"
+      [attr.aria-label]="i18n.t('app.name')"
+      data-testid="landing-desktop-nav"
+    >
+      <a
+        routerLink="/"
+        fragment="como-funciona"
+        class="min-h-11 inline-flex items-center text-sm font-medium text-muted transition hover:text-ink"
+      >
+        {{ i18n.t('landing.nav.how') }}
+      </a>
+      <a
+        routerLink="/"
+        fragment="sobre"
+        class="min-h-11 inline-flex items-center text-sm font-medium text-muted transition hover:text-ink"
+      >
+        {{ i18n.t('landing.nav.about') }}
+      </a>
+    </nav>
+
+    <div class="hidden items-center gap-2 md:flex">
+      <a
+        routerLink="/entrar"
+        class="inline-flex min-h-11 items-center rounded-xl px-4 text-sm font-semibold text-ink transition hover:bg-surface-raised"
+      >
+        {{ i18n.t('landing.nav.login') }}
+      </a>
+      <a
+        routerLink="/criar-conta"
+        class="inline-flex min-h-11 items-center rounded-xl bg-brand px-4 text-sm font-semibold text-on-secondary transition hover:bg-secondary-hover"
+      >
+        {{ i18n.t('landing.nav.signup') }}
+      </a>
+    </div>
+
+    <button
+      type="button"
+      data-testid="landing-mobile-menu"
+      class="grid size-11 place-items-center rounded-xl border border-line bg-surface text-ink md:hidden"
+      [attr.aria-label]="menuOpen() ? i18n.t('landing.menu.close') : i18n.t('landing.menu.open')"
+      [attr.aria-expanded]="menuOpen()"
+      (click)="toggleMenu()"
+    >
+      <fa-icon [icon]="menuOpen() ? icons['close'] : icons['menu']" aria-hidden="true" />
+    </button>
+  </div>
+
+  @if (menuOpen()) {
+    <nav
+      data-testid="landing-mobile-nav"
+      class="flex flex-col gap-1 border-t border-line bg-surface-solid px-5 py-4 md:hidden"
+      [attr.aria-label]="i18n.t('app.name')"
+    >
+      <a
+        routerLink="/"
+        fragment="como-funciona"
+        class="min-h-11 inline-flex items-center rounded-xl px-2 text-sm font-medium text-ink"
+        (click)="closeMenu()"
+      >
+        {{ i18n.t('landing.nav.how') }}
+      </a>
+      <a
+        routerLink="/"
+        fragment="sobre"
+        class="min-h-11 inline-flex items-center rounded-xl px-2 text-sm font-medium text-ink"
+        (click)="closeMenu()"
+      >
+        {{ i18n.t('landing.nav.about') }}
+      </a>
+      <a
+        routerLink="/entrar"
+        class="min-h-11 inline-flex items-center rounded-xl px-2 text-sm font-medium text-ink"
+        (click)="closeMenu()"
+      >
+        {{ i18n.t('landing.nav.login') }}
+      </a>
+      <a
+        routerLink="/criar-conta"
+        class="mt-1 inline-flex min-h-11 items-center justify-center rounded-xl bg-brand px-4 text-sm font-semibold text-on-secondary"
+        (click)="closeMenu()"
+      >
+        {{ i18n.t('landing.nav.signup') }}
+      </a>
+    </nav>
+  }
+</header>
+
+<main id="conteudo" data-testid="landing-main">
+  <app-landing-hero />
+  <app-landing-benefits />
+  <app-landing-steps />
+  <app-landing-audience />
+  <app-landing-about />
+  <app-landing-ns2 />
+  <app-landing-footer />
+</main>

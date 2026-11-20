@@ -2,41 +2,148 @@ import { inject } from '@angular/core';
 import { Router, Routes } from '@angular/router';
 import { ShellComponent } from './core/layout/shell.component';
 import { authenticatedGuard } from './core/api/auth.guard';
+import { superAdminGuard } from './features/admin/admin.guard';
+import { PublicShellComponent } from './features/landing/public-shell.component';
 
 export const routes: Routes = [
   {
-    path: 'entrar',
-    title: 'Conto Contigo · Entrar',
-    loadComponent: () => import('./features/auth/auth.page').then((m) => m.AuthPage),
-    data: { mode: 'login' },
+    // Casca das páginas públicas: garante o aviso de protótipo sem editar as
+    // páginas de auth, recuperação ou convite. A landing mostra o aviso nela.
+    path: '',
+    component: PublicShellComponent,
+    children: [
+      {
+        path: '',
+        pathMatch: 'full',
+        title: 'Conto Contigo · Eventos e convites',
+        loadComponent: () => import('./features/landing/landing.page').then((m) => m.LandingPage),
+      },
+      {
+        path: 'entrar',
+        title: 'Conto Contigo · Entrar',
+        loadComponent: () => import('./features/auth/auth.page').then((m) => m.AuthPage),
+        data: { mode: 'login' },
+      },
+      {
+        path: 'criar-conta',
+        title: 'Conto Contigo · Criar conta',
+        loadComponent: () => import('./features/auth/auth.page').then((m) => m.AuthPage),
+        data: { mode: 'register' },
+      },
+      {
+        path: 'registar',
+        pathMatch: 'full',
+        redirectTo: 'criar-conta',
+      },
+      {
+        path: 'recuperar-senha',
+        title: 'Conto Contigo · Recuperar senha',
+        loadComponent: () => import('./features/auth/password.page').then((m) => m.PasswordPage),
+        data: { mode: 'forgot' },
+      },
+      {
+        path: 'redefinir-senha',
+        title: 'Conto Contigo · Redefinir senha',
+        loadComponent: () => import('./features/auth/password.page').then((m) => m.PasswordPage),
+        data: { mode: 'reset' },
+      },
+      {
+        path: 'repor-senha',
+        pathMatch: 'full',
+        redirectTo: 'redefinir-senha',
+      },
+      {
+        path: 'gestao',
+        title: 'Conto Contigo · Gestão',
+        loadComponent: () =>
+          import('./features/host-management/management-entry.page').then(
+            (m) => m.ManagementEntryPage,
+          ),
+      },
+      {
+        path: 'gerir/:token',
+        title: 'Conto Contigo · Gestão',
+        loadComponent: () =>
+          import('./features/host-management/management-entry.page').then(
+            (m) => m.ManagementEntryPage,
+          ),
+      },
+      {
+        path: 'gestao/evento/:eventId',
+        title: 'Conto Contigo · Gestão do evento',
+        loadComponent: () =>
+          import('./features/host-management/management-event.page').then(
+            (m) => m.ManagementEventPage,
+          ),
+      },
+      {
+        path: 'gestao/evento',
+        pathMatch: 'full',
+        redirectTo: 'gestao',
+      },
+      {
+        path: 'gestao/:token',
+        title: 'Conto Contigo · Gestão',
+        loadComponent: () =>
+          import('./features/host-management/management-entry.page').then(
+            (m) => m.ManagementEntryPage,
+          ),
+      },
+      {
+        path: 'convite/:token',
+        title: 'Conto Contigo · Convite',
+        loadComponent: () =>
+          import('./features/invitation/invitation.page').then((m) => m.InvitationPage),
+      },
+      {
+        path: 'i/:token',
+        title: 'Conto Contigo · Convite',
+        loadComponent: () =>
+          import('./features/invitation/invitation.page').then((m) => m.InvitationPage),
+      },
+      {
+        path: 'isy',
+        title: 'Convite · Isilda Manuel',
+        loadComponent: () =>
+          import('./features/isy-invite/isy-invite.component').then((m) => m.IsyInviteComponent),
+      },
+    ],
   },
   {
-    path: 'criar-conta',
-    title: 'Conto Contigo · Criar conta',
-    loadComponent: () => import('./features/auth/auth.page').then((m) => m.AuthPage),
-    data: { mode: 'register' },
-  },
-  {
-    path: 'registar',
-    pathMatch: 'full',
-    redirectTo: 'criar-conta',
-  },
-  {
-    path: 'recuperar-senha',
-    title: 'Conto Contigo · Recuperar senha',
-    loadComponent: () => import('./features/auth/password.page').then((m) => m.PasswordPage),
-    data: { mode: 'forgot' },
-  },
-  {
-    path: 'redefinir-senha',
-    title: 'Conto Contigo · Redefinir senha',
-    loadComponent: () => import('./features/auth/password.page').then((m) => m.PasswordPage),
-    data: { mode: 'reset' },
-  },
-  {
-    path: 'repor-senha',
-    pathMatch: 'full',
-    redirectTo: 'redefinir-senha',
+    path: 'admin',
+    canActivate: [superAdminGuard],
+    loadComponent: () => import('./features/admin/admin.page').then((m) => m.AdminPage),
+    children: [
+      {
+        path: '',
+        pathMatch: 'full',
+        redirectTo: 'visao-geral',
+      },
+      {
+        path: 'visao-geral',
+        title: 'Conto Contigo · Administração · Visão geral',
+        loadComponent: () =>
+          import('./features/admin/admin-overview.component').then((m) => m.AdminOverviewComponent),
+      },
+      {
+        path: 'eventos',
+        title: 'Conto Contigo · Administração · Eventos',
+        loadComponent: () =>
+          import('./features/admin/admin-events.component').then((m) => m.AdminEventsComponent),
+      },
+      {
+        path: 'utilizadores',
+        title: 'Conto Contigo · Administração · Utilizadores',
+        loadComponent: () =>
+          import('./features/admin/admin-users.component').then((m) => m.AdminUsersComponent),
+      },
+      {
+        path: 'auditoria',
+        title: 'Conto Contigo · Administração · Auditoria',
+        loadComponent: () =>
+          import('./features/admin/admin-audit.component').then((m) => m.AdminAuditComponent),
+      },
+    ],
   },
   {
     path: '',
@@ -116,6 +223,11 @@ export const routes: Routes = [
           import('./features/notifications/notifications.page').then((m) => m.NotificationsPage),
       },
       {
+        path: 'mensagens',
+        title: 'Conto Contigo · Caixa de entrada',
+        loadComponent: () => import('./features/messages/messages.page').then((m) => m.MessagesPage),
+      },
+      {
         path: 'convidados',
         title: 'Conto Contigo · Convidados',
         loadComponent: () => import('./features/guests/guests.page').then((m) => m.GuestsPage),
@@ -140,8 +252,7 @@ export const routes: Routes = [
       {
         path: 'templates',
         title: 'Conto Contigo · Modelos',
-        loadComponent: () =>
-          import('./features/templates/templates.page').then((m) => m.TemplatesPage),
+        loadComponent: () => import('./features/templates/templates.page').then((m) => m.TemplatesPage),
       },
       {
         path: 'relatorios',
@@ -160,53 +271,6 @@ export const routes: Routes = [
         loadComponent: () => import('./features/profile/profile.page').then((m) => m.ProfilePage),
       },
     ],
-  },
-  {
-    path: 'gestao',
-    title: 'Conto Contigo · Gestão',
-    loadComponent: () =>
-      import('./features/host-management/management-entry.page').then((m) => m.ManagementEntryPage),
-  },
-  {
-    path: 'gerir/:token',
-    title: 'Conto Contigo · Gestão',
-    loadComponent: () =>
-      import('./features/host-management/management-entry.page').then((m) => m.ManagementEntryPage),
-  },
-  {
-    path: 'gestao/evento/:eventId',
-    title: 'Conto Contigo · Gestão do evento',
-    loadComponent: () =>
-      import('./features/host-management/management-event.page').then((m) => m.ManagementEventPage),
-  },
-  {
-    path: 'gestao/evento',
-    pathMatch: 'full',
-    redirectTo: 'gestao',
-  },
-  {
-    path: 'gestao/:token',
-    title: 'Conto Contigo · Gestão',
-    loadComponent: () =>
-      import('./features/host-management/management-entry.page').then((m) => m.ManagementEntryPage),
-  },
-  {
-    path: 'convite/:token',
-    title: 'Conto Contigo · Convite',
-    loadComponent: () =>
-      import('./features/invitation/invitation.page').then((m) => m.InvitationPage),
-  },
-  {
-    path: 'i/:token',
-    title: 'Conto Contigo · Convite',
-    loadComponent: () =>
-      import('./features/invitation/invitation.page').then((m) => m.InvitationPage),
-  },
-  {
-    path: 'isy',
-    title: 'Convite · Isilda Manuel',
-    loadComponent: () =>
-      import('./features/isy-invite/isy-invite.component').then((m) => m.IsyInviteComponent),
   },
   {
     path: '**',

@@ -53,6 +53,14 @@ export class ShareService {
     return `https://wa.me/${digits}?text=${encodeURIComponent(text)}`;
   }
 
+  /**
+   * Partilha sem destinatário específico (ex.: convite público). O WhatsApp
+   * abre o seletor de contactos com a mensagem já preenchida.
+   */
+  whatsappShareUrl(text: string): string {
+    return `https://wa.me/?text=${encodeURIComponent(text)}`;
+  }
+
   /** Abre um URL externo num novo separador (no-op no servidor). */
   openExternal(url: string): void {
     if (!this.browser) {

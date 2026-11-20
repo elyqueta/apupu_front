@@ -21,23 +21,11 @@ import { InvitationEventView } from '../invitation.models';
           (click)="coverOpen.emit()"
         >
           <img
+            data-testid="invitation-cover-image"
             [src]="cover"
             [alt]="event().title"
             class="size-full object-cover transition duration-500 group-hover/cover:scale-[1.02]"
           />
-          <span
-            class="pointer-events-none absolute inset-0 bg-gradient-to-t from-ink/85 via-ink/25 to-transparent"
-          ></span>
-          <span
-            class="pointer-events-none absolute inset-x-0 bottom-0 flex flex-col gap-1 p-5 text-white sm:p-6"
-          >
-            <span class="text-xs font-semibold uppercase tracking-[0.18em] text-white/85">
-              {{ i18n.t('invitation.hostedBy', { name: event().hostName }) }}
-            </span>
-            <span class="font-display text-2xl font-semibold tracking-tight sm:text-3xl">
-              {{ event().title }}
-            </span>
-          </span>
         </button>
       } @else {
         <app-template-artwork
@@ -57,6 +45,12 @@ import { InvitationEventView } from '../invitation.models';
           <h1 class="mt-1 font-display text-2xl font-semibold tracking-tight text-ink sm:text-3xl">
             {{ i18n.t('invitation.guestGreeting', { name: guestName() }) }}
           </h1>
+          @if (event().coverUrl) {
+            <h2 class="mt-2 font-display text-xl font-semibold text-ink">{{ event().title }}</h2>
+            <p class="mt-1 text-sm text-muted">
+              {{ i18n.t('invitation.hostInline', { name: event().hostName }) }}
+            </p>
+          }
           @if (typeLabel()) {
             <p class="mt-2 inline-flex items-center gap-2 text-sm text-muted">
               <fa-icon [icon]="typeIcon()" aria-hidden="true" />

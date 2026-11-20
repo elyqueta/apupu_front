@@ -86,6 +86,73 @@ describe('InvitationPage', () => {
     ).toContain(TestBed.inject(I18nService).t('invitation.alreadyConfirmed'));
   });
 
+  it('mostra as boas-vindas quando há capa e abre o convite ao clicar em Ver convite', async () => {
+    const context = setup();
+    http = context.http;
+    const path = `${BASE}/public/invitations/${TOKEN}`;
+
+    http.expectOne(path).flush({
+      data: publicInvitationFixture({ coverUrl: 'https://exemplo.ao/capa.jpg' }),
+    });
+    await settle(context.fixture);
+
+    const native = context.fixture.nativeElement as HTMLElement;
+    const welcomeCover = native.querySelector(
+      '[data-testid="invitation-welcome-cover"]',
+    ) as HTMLImageElement | null;
+    expect(welcomeCover).not.toBeNull();
+    expect(welcomeCover?.getAttribute('src')).toBe('https://exemplo.ao/capa.jpg');
+    expect(welcomeCover?.textContent ?? '').toBe('');
+    expect(native.querySelector('[data-testid="invitation-accept"]')).toBeNull();
+
+    (native.querySelector('[data-testid="invitation-welcome-continue"]') as HTMLButtonElement).click();
+    await settle(context.fixture);
+
+    expect(native.querySelector('[data-testid="invitation-welcome-cover"]')).toBeNull();
+    expect(native.querySelector('[data-testid="invitation-cover-image"]')).not.toBeNull();
+    expect(native.querySelector('[data-testid="invitation-accept"]')).not.toBeNull();
+    const coverText = native
+      .querySelector('[data-testid="invitation-cover-image"]')
+      ?.parentElement?.textContent ?? '';
+    expect(coverText).not.toContain('Organizado por');
+    expect(coverText).not.toContain('Casamento da Ana');
+  });
+
+  it('abre diretamente o convite quando não há capa', async () => {
+    const context = setup();
+    http = context.http;
+    const path = `${BASE}/public/invitations/${TOKEN}`;
+
+    http.expectOne(path).flush({ data: publicInvitationFixture() });
+    await settle(context.fixture);
+
+    const native = context.fixture.nativeElement as HTMLElement;
+    expect(native.querySelector('[data-testid="invitation-welcome-cover"]')).toBeNull();
+    expect(native.querySelector('[data-testid="invitation-accept"]')).not.toBeNull();
+  });
+
+  it('mostra apenas o estado de cancelado num evento cancelado', async () => {
+    const context = setup();
+    http = context.http;
+    const path = `${BASE}/public/invitations/${TOKEN}`;
+
+    http.expectOne(path).flush({
+      data: publicInvitationFixture({
+        coverUrl: 'https://exemplo.ao/capa.jpg',
+        status: 'cancelled',
+      }),
+    });
+    await settle(context.fixture);
+
+    const native = context.fixture.nativeElement as HTMLElement;
+    expect(native.querySelector('[data-testid="invitation-cancelled"]')).not.toBeNull();
+    expect(native.querySelector('[data-testid="invitation-welcome-cover"]')).toBeNull();
+    expect(native.querySelector('[data-testid="invitation-accept"]')).toBeNull();
+    expect(native.textContent).toContain(
+      TestBed.inject(I18nService).t('invitation.cancelledTitle'),
+    );
+  });
+
   it('mostra sempre a mesma mensagem genérica para links inválidos, expirados ou revogados', async () => {
     const context = setup();
     http = context.http;

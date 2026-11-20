@@ -59,6 +59,17 @@
       </div>
     </header>
 
+    <app-stat-grid [columns]="4">
+      @for (stat of stats(); track stat.label) {
+        <app-stat-card
+          [label]="stat.label"
+          [value]="stat.value"
+          [icon]="stat.icon"
+          [tone]="stat.tone"
+        />
+      }
+    </app-stat-grid>
+
     <nav
       role="tablist"
       class="flex items-center gap-1 rounded-2xl border border-line bg-surface p-1 shadow-card"
@@ -92,6 +103,31 @@
 
     @switch (tab()) {
       @case ('tarefas') {
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <label class="inline-flex cursor-pointer items-center gap-2 text-xs font-semibold text-ink">
+            <input
+              type="checkbox"
+              data-testid="personal-tasks"
+              class="size-4 rounded border-line accent-brand"
+              [checked]="personalOnly()"
+              (change)="togglePersonal()"
+            />
+            {{ i18n.t('teamDetail.myTasksOnly') }}
+          </label>
+          <button
+            type="button"
+            data-testid="add-task"
+            class="inline-flex h-10 items-center gap-2 rounded-xl bg-brand px-4 text-xs font-semibold text-on-secondary transition hover:bg-secondary-hover disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60"
+            [disabled]="!canManage()"
+            [attr.aria-disabled]="!canManage() ? 'true' : null"
+            [attr.title]="!canManage() ? i18n.t('teamDetail.permissionHint') : null"
+            (click)="openTaskModal()"
+          >
+            <fa-icon [icon]="icons['plus']" class="text-[10px]" aria-hidden="true" />
+            {{ i18n.t('teamDetail.newTask') }}
+          </button>
+        </div>
+
         @if (tasks().length === 0) {
           <div
             class="flex flex-col items-center justify-center rounded-4xl border border-dashed border-line bg-surface/60 px-5 py-12 text-center backdrop-blur-2xl"
@@ -198,7 +234,7 @@
             [disabled]="!canManage()"
             [attr.aria-disabled]="!canManage() ? 'true' : null"
             [attr.title]="!canManage() ? i18n.t('teamDetail.permissionHint') : null"
-            (click)="openDrawer()"
+            (click)="openMemberModal()"
           >
             <fa-icon [icon]="icons['userPlus']" class="text-[11px]" aria-hidden="true" />
             {{ i18n.t('teamDetail.addMember') }}
@@ -223,81 +259,16 @@
         } @else {
           <ul class="grid gap-2 lg:grid-cols-2">
             @for (member of members(); track member.id) {
-              <li
-                class="flex flex-col gap-3 rounded-3xl border border-line bg-surface/70 p-4 shadow-card backdrop-blur-2xl"
-                [attr.data-testid]="'member-' + member.id"
-              >
-                <div class="flex min-w-0 items-start gap-3">
-                  <app-avatar [name]="memberName(member)" size="md" />
-                  <div class="min-w-0 flex-1">
-                    <p class="truncate text-sm font-semibold text-ink">{{ memberName(member) }}</p>
-                    <p class="truncate text-[11px] text-muted">{{ member.email }}</p>
-                    <div class="mt-1.5 flex flex-wrap items-center gap-1.5">
-                      <span class="rounded-full border border-line bg-surface-raised px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.12em] text-muted">
-                        {{ i18n.t(roleLabel(member.role)) }}
-                      </span>
-                      <span class="rounded-full border border-line bg-surface-raised px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.12em] text-muted">
-                        {{ i18n.t(memberStatusLabel(member.status)) }}
-                      </span>
-                      @if (member.openTaskCount > 0) {
-                        <span class="text-[10px] font-semibold text-amber">
-                          {{ i18n.t('teamDetail.openTasksMember', { count: member.openTaskCount }) }}
-                        </span>
-                      }
-                    </div>
-                    @if (!member.hasEventAccess) {
-                      <p class="mt-1.5 inline-flex items-center gap-1 text-[10px] font-semibold text-coral">
-                        <fa-icon [icon]="icons['warning']" class="text-[9px]" aria-hidden="true" />
-                        {{ i18n.t('teamDetail.noAccessWarning') }}
-                      </p>
-                    }
-                  </div>
-                </div>
-
-                <div class="flex flex-wrap gap-1.5 border-t border-line pt-3">
-                  <button
-                    type="button"
-                    class="inline-flex h-8 items-center gap-1.5 rounded-lg border border-line bg-surface px-2.5 text-[10px] font-semibold text-ink transition hover:border-brand/40 disabled:cursor-not-allowed disabled:opacity-50"
-                    [disabled]="memberDisabled(member, member.role === 'gestor' ? 'demote' : 'promote')"
-                    [attr.aria-disabled]="memberDisabled(member, member.role === 'gestor' ? 'demote' : 'promote') ? 'true' : null"
-                    [attr.title]="memberDisabledHint(member, member.role === 'gestor' ? 'demote' : 'promote')"
-                    [attr.data-testid]="'member-role-' + member.id"
-                    (click)="changeRole(member)"
-                  >
-                    <fa-icon
-                      [icon]="member.role === 'gestor' ? icons['minus'] : icons['userCheck']"
-                      class="text-[9px]"
-                      aria-hidden="true"
-                    />
-                    {{ i18n.t(member.role === 'gestor' ? 'teamDetail.demote' : 'teamDetail.promote') }}
-                  </button>
-                  @if (member.status === 'convite_pendente') {
-                    <button
-                      type="button"
-                      class="inline-flex h-8 items-center gap-1.5 rounded-lg border border-line bg-surface px-2.5 text-[10px] font-semibold text-ink transition hover:border-brand/40 disabled:cursor-not-allowed disabled:opacity-50"
-                      [disabled]="memberDisabled(member, 'resend')"
-                      [attr.aria-disabled]="memberDisabled(member, 'resend') ? 'true' : null"
-                      [attr.title]="memberDisabledHint(member, 'resend')"
-                      [attr.data-testid]="'member-resend-' + member.id"
-                      (click)="resendInvite(member)"
-                    >
-                      <fa-icon [icon]="icons['paperPlane']" class="text-[9px]" aria-hidden="true" />
-                      {{ i18n.t('teamDetail.resendInvite') }}
-                    </button>
-                  }
-                  <button
-                    type="button"
-                    class="inline-flex h-8 items-center gap-1.5 rounded-lg border border-coral/30 bg-coral/5 px-2.5 text-[10px] font-semibold text-coral transition hover:border-coral/60 disabled:cursor-not-allowed disabled:opacity-50"
-                    [disabled]="memberDisabled(member, 'remove')"
-                    [attr.aria-disabled]="memberDisabled(member, 'remove') ? 'true' : null"
-                    [attr.title]="memberDisabledHint(member, 'remove')"
-                    [attr.data-testid]="'member-remove-' + member.id"
-                    (click)="askRemoveMember(member)"
-                  >
-                    <fa-icon [icon]="icons['trash']" class="text-[9px]" aria-hidden="true" />
-                    {{ i18n.t('teamDetail.removeMember') }}
-                  </button>
-                </div>
+              <li [attr.data-testid]="'member-' + member.id">
+                <app-person-card
+                  [name]="memberName(member)"
+                  [subtitle]="memberSubtitle(member)"
+                  [status]="i18n.t(memberStatusLabel(member.status))"
+                  [meta]="memberMeta(member)"
+                  [actions]="memberActions(member)"
+                  [actionsLabel]="i18n.t('common.moreActions')"
+                  (actionSelected)="onMemberAction(member, $event)"
+                />
               </li>
             }
           </ul>
@@ -306,133 +277,263 @@
     }
   }
 
-  <!-- Drawer Adicionar membro -->
-  @if (drawerOpen()) {
-    <div class="fixed inset-0 z-[100] flex justify-end">
+  <!-- Adicionar membro (modal, uma pessoa de cada vez) -->
+  <app-modal
+    [open]="memberModalOpen()"
+    [title]="i18n.t('teamDetail.drawerTitle')"
+    size="md"
+    (closed)="closeMemberModal()"
+  >
+    <div data-testid="member-drawer" class="flex flex-col gap-4">
+      <p class="text-xs leading-5 text-muted">{{ i18n.t('teamDetail.addMemberHint') }}</p>
+
+      <label class="block">
+        <span class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
+          {{ i18n.t('teamDetail.fieldName') }}
+        </span>
+        <input
+          type="text"
+          data-testid="member-name"
+          class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink outline-none transition focus:border-brand/50 focus-visible:ring-2 focus-visible:ring-brand/60"
+          [value]="memberForm.controls.displayName.value"
+          (input)="memberForm.controls.displayName.setValue($any($event.target).value)"
+        />
+      </label>
+
+      <div class="grid gap-3 sm:grid-cols-2">
+        <label class="block">
+          <span class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
+            {{ i18n.t('managerDialog.email') }}
+          </span>
+          <input
+            type="email"
+            data-testid="member-email"
+            class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink outline-none transition focus:border-brand/50 focus-visible:ring-2 focus-visible:ring-brand/60"
+            [value]="memberForm.controls.email.value"
+            (input)="memberForm.controls.email.setValue($any($event.target).value)"
+          />
+        </label>
+        <label class="block">
+          <span class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
+            {{ i18n.t('managerDialog.phone') }}
+          </span>
+          <input
+            type="tel"
+            appPhoneMask
+            inputmode="tel"
+            data-testid="member-phone"
+            class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink outline-none transition focus:border-brand/50 focus-visible:ring-2 focus-visible:ring-brand/60"
+            [value]="memberForm.controls.phone.value"
+            (input)="memberForm.controls.phone.setValue($any($event.target).value)"
+          />
+        </label>
+      </div>
+
+      @if (memberValidation()) {
+        <p data-testid="member-validation" class="text-xs text-coral" role="alert">{{ memberValidation() }}</p>
+      }
+      @if (memberModalError()) {
+        <p class="text-xs text-coral" role="alert">{{ memberModalError() }}</p>
+      }
+      <p class="text-xs leading-5 text-muted">{{ i18n.t('teamDetail.contactNotice') }}</p>
+    </div>
+    <div modal-footer class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
       <button
         type="button"
-        class="absolute inset-0 bg-canvas/70 backdrop-blur-md"
-        [attr.aria-label]="i18n.t('common.close')"
-        (click)="closeDrawer()"
-      ></button>
-      <aside
-        role="dialog"
-        aria-modal="true"
-        data-testid="member-drawer"
-        [attr.aria-label]="i18n.t('teamDetail.drawerTitle')"
-        class="relative flex h-full w-full max-w-md flex-col overflow-y-auto border-l border-line bg-surface-solid/95 p-5 shadow-card backdrop-blur-2xl animate-rise sm:p-6"
+        class="inline-flex h-11 items-center justify-center rounded-xl border border-line bg-surface-raised px-4 text-sm font-semibold text-ink transition hover:border-brand/40"
+        (click)="closeMemberModal()"
       >
-        <div class="flex items-start justify-between gap-3">
-          <div>
-            <h2 class="font-display text-xl font-semibold tracking-tight text-ink">
-              {{ i18n.t('teamDetail.drawerTitle') }}
-            </h2>
-            <p class="mt-1 text-xs leading-5 text-muted">{{ i18n.t('teamDetail.drawerHint') }}</p>
-          </div>
-          <button
-            type="button"
-            class="grid size-9 shrink-0 place-items-center rounded-xl border border-line bg-surface-raised text-muted transition hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60"
-            [attr.aria-label]="i18n.t('common.close')"
-            (click)="closeDrawer()"
-          >
-            <fa-icon [icon]="icons['close']" class="text-xs" aria-hidden="true" />
-          </button>
-        </div>
-
-        <div class="mt-5 grid grid-cols-2 gap-2">
-          <button
-            type="button"
-            data-testid="drawer-mode-account"
-            class="rounded-xl border p-3 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60"
-            [class]="drawerMode() === 'account' ? 'border-brand/40 bg-brand/10 text-ink' : 'border-line bg-surface-raised text-muted'"
-            [attr.aria-pressed]="drawerMode() === 'account'"
-            (click)="setDrawerMode('account')"
-          >
-            <fa-icon [icon]="icons['user']" class="text-xs" aria-hidden="true" />
-            <span class="mt-2 block text-xs font-semibold">{{ i18n.t('teamDetail.mode.account') }}</span>
-            <span class="mt-1 block text-[10px] leading-4 text-muted">
-              {{ i18n.t('teamDetail.mode.accountHint') }}
-            </span>
-          </button>
-          <button
-            type="button"
-            data-testid="drawer-mode-list"
-            class="rounded-xl border p-3 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60"
-            [class]="drawerMode() === 'list' ? 'border-brand/40 bg-brand/10 text-ink' : 'border-line bg-surface-raised text-muted'"
-            [attr.aria-pressed]="drawerMode() === 'list'"
-            (click)="setDrawerMode('list')"
-          >
-            <fa-icon [icon]="icons['envelope']" class="text-xs" aria-hidden="true" />
-            <span class="mt-2 block text-xs font-semibold">{{ i18n.t('teamDetail.mode.list') }}</span>
-            <span class="mt-1 block text-[10px] leading-4 text-muted">
-              {{ i18n.t('teamDetail.mode.listHint') }}
-            </span>
-          </button>
-        </div>
-
-        <label class="mt-5 block">
-          <span class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
-            {{ i18n.t(drawerMode() === 'account' ? 'teamDetail.fieldEmail' : 'teamDetail.fieldEmails') }}
-          </span>
-          @if (drawerMode() === 'account') {
-            <input
-              type="email"
-              data-testid="drawer-email"
-              class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink outline-none transition focus:border-brand/50 focus-visible:ring-2 focus-visible:ring-brand/60"
-              [value]="drawerEmail()"
-              (input)="drawerEmail.set($any($event.target).value)"
-            />
-          } @else {
-            <textarea
-              rows="10"
-              data-testid="drawer-emails"
-              class="w-full resize-none rounded-xl border border-line bg-surface-raised px-3 py-2 text-sm text-ink outline-none transition focus:border-brand/50 focus-visible:ring-2 focus-visible:ring-brand/60"
-              [value]="drawerEmailsText()"
-              (input)="drawerEmailsText.set($any($event.target).value)"
-            ></textarea>
-          }
-        </label>
-
-        <div class="mt-2 flex items-center justify-between gap-2">
-          <span
-            data-testid="drawer-count"
-            class="text-[10px] font-semibold text-muted"
-            [class.text-coral]="drawerCount() > 50"
-          >
-            {{ i18n.t('teamDetail.emailsCount', { count: drawerCount() }) }}
-          </span>
-          @if (drawerMessage()) {
-            <span data-testid="drawer-error" class="text-[10px] text-coral">{{ drawerMessage() }}</span>
-          }
-        </div>
-
-        <div class="mt-auto flex flex-col-reverse gap-2 pt-6 sm:flex-row sm:justify-end">
-          <button
-            type="button"
-            class="inline-flex h-11 items-center justify-center rounded-xl border border-line bg-surface-raised px-4 text-sm font-semibold text-ink transition hover:border-brand/40"
-            (click)="closeDrawer()"
-          >
-            {{ i18n.t('common.cancel') }}
-          </button>
-          <button
-            type="button"
-            data-testid="drawer-submit"
-            class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-brand px-4 text-sm font-semibold text-on-secondary transition hover:bg-secondary-hover disabled:cursor-not-allowed disabled:opacity-50"
-            [disabled]="drawerSaving() || !!drawerMessage()"
-            (click)="addMembers()"
-          >
-            <fa-icon
-              [icon]="drawerSaving() ? icons['spinner'] : icons['userPlus']"
-              class="text-[11px]"
-              [class.animate-spin]="drawerSaving()"
-              aria-hidden="true"
-            />
-            {{ drawerSaving() ? i18n.t('teamDetail.adding') : i18n.t('teamDetail.addMembers') }}
-          </button>
-        </div>
-      </aside>
+        {{ i18n.t('common.cancel') }}
+      </button>
+      <button
+        type="button"
+        data-testid="member-submit"
+        class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-brand px-4 text-sm font-semibold text-on-secondary transition hover:bg-secondary-hover disabled:cursor-not-allowed disabled:opacity-50"
+        [disabled]="memberModalSaving() || !!memberValidation()"
+        (click)="addMember()"
+      >
+        <fa-icon [icon]="memberModalSaving() ? icons['spinner'] : icons['userPlus']" class="text-[11px]" [class.animate-spin]="memberModalSaving()" aria-hidden="true" />
+        {{ memberModalSaving() ? i18n.t('teamDetail.adding') : i18n.t('teamDetail.addMembers') }}
+      </button>
     </div>
-  }
+  </app-modal>
+
+  <!-- Criar tarefa (modal) -->
+  <app-modal
+    [open]="taskModalOpen()"
+    [title]="i18n.t('teamDetail.taskFormTitle')"
+    size="md"
+    (closed)="closeTaskModal()"
+  >
+    <form id="task-form" [formGroup]="taskForm" (ngSubmit)="createTask()" class="flex flex-col gap-4">
+      <label class="block">
+        <span class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
+          {{ i18n.t('teamDetail.taskTitle') }}
+        </span>
+        <input
+          formControlName="title"
+          type="text"
+          maxlength="160"
+          data-testid="task-title"
+          class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink outline-none transition focus:border-brand/50 focus-visible:ring-2 focus-visible:ring-brand/60"
+        />
+      </label>
+      <label class="block">
+        <span class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
+          {{ i18n.t('teamDetail.taskDescription') }}
+        </span>
+        <textarea
+          formControlName="description"
+          rows="3"
+          class="w-full resize-none rounded-xl border border-line bg-surface-raised px-3 py-2 text-sm text-ink outline-none transition focus:border-brand/50"
+        ></textarea>
+      </label>
+      <div class="grid gap-3 sm:grid-cols-2">
+        <label class="block">
+          <span class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
+            {{ i18n.t('teamDetail.taskDue') }}
+          </span>
+          <input
+            formControlName="dueDate"
+            type="date"
+            class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink outline-none transition focus:border-brand/50"
+          />
+        </label>
+        <label class="block">
+          <span class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
+            {{ i18n.t('teamDetail.taskPriority') }}
+          </span>
+          <select
+            formControlName="priority"
+            class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink outline-none transition focus:border-brand/50"
+          >
+            <option value="baixa">{{ i18n.t('taskPriority.baixa') }}</option>
+            <option value="normal">{{ i18n.t('taskPriority.normal') }}</option>
+            <option value="alta">{{ i18n.t('taskPriority.alta') }}</option>
+          </select>
+        </label>
+      </div>
+      <label class="block">
+        <span class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
+          {{ i18n.t('teamDetail.reassignTask') }}
+        </span>
+        <select
+          formControlName="assigneeMemberId"
+          class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink outline-none transition focus:border-brand/50"
+        >
+          <option value="">{{ i18n.t('teamDetail.taskUnassigned') }}</option>
+          @for (member of members(); track member.id) {
+            <option [value]="member.id">{{ memberName(member) }}</option>
+          }
+        </select>
+      </label>
+    </form>
+    <div modal-footer class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+      <button
+        type="button"
+        class="inline-flex h-11 items-center justify-center rounded-xl border border-line bg-surface-raised px-4 text-sm font-semibold text-ink transition hover:border-brand/40"
+        (click)="closeTaskModal()"
+      >
+        {{ i18n.t('common.cancel') }}
+      </button>
+      <button
+        type="submit"
+        form="task-form"
+        data-testid="task-submit"
+        class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-brand px-4 text-sm font-semibold text-on-secondary transition hover:bg-secondary-hover disabled:cursor-not-allowed disabled:opacity-50"
+        [disabled]="taskSaving() || taskForm.invalid"
+      >
+        {{ i18n.t('teamDetail.taskCreate') }}
+      </button>
+    </div>
+  </app-modal>
+
+  <!-- Confirmções de gestor -->
+  <app-confirm-dialog
+    [open]="revokeTarget() !== null"
+    [title]="i18n.t('teamDetail.revokeTitle')"
+    [message]="i18n.t('teamDetail.revokeMessage', { name: revokeTarget() ? memberName(revokeTarget()!) : '' })"
+    [confirmLabel]="i18n.t('teamDetail.revokeConfirm')"
+    [cancelLabel]="i18n.t('common.cancel')"
+    (confirmed)="confirmRevoke()"
+    (cancelled)="closeManagerConfirm('revoke')"
+  />
+
+  <app-confirm-dialog
+    [open]="demoteTarget() !== null"
+    [title]="i18n.t('teamDetail.demoteTitle')"
+    [message]="i18n.t('teamDetail.demoteMessage', { name: demoteTarget() ? memberName(demoteTarget()!) : '' })"
+    [confirmLabel]="i18n.t('teamDetail.demoteConfirm')"
+    [cancelLabel]="i18n.t('common.cancel')"
+    (confirmed)="confirmDemote()"
+    (cancelled)="closeManagerConfirm('demote')"
+  />
+
+  <app-confirm-dialog
+    [open]="promoteTarget() !== null"
+    [title]="i18n.t('teamDetail.promoteTitle')"
+    [message]="i18n.t('teamDetail.promoteMessage', { name: promoteTarget() ? memberName(promoteTarget()!) : '' })"
+    [confirmLabel]="i18n.t('teamDetail.promoteConfirm')"
+    [cancelLabel]="i18n.t('common.cancel')"
+    (confirmed)="confirmPromote()"
+    (cancelled)="closeManagerConfirm('promote')"
+  />
+
+  <!-- Alterar validade do link -->
+  <app-modal
+    [open]="validityModalOpen()"
+    [title]="i18n.t('teamDetail.validityTitle')"
+    size="sm"
+    (closed)="closeValidity()"
+  >
+    <div class="flex flex-col gap-4">
+      <label class="block">
+        <span class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
+          {{ i18n.t('managerDialog.validity.customDate') }}
+        </span>
+        <input
+          type="date"
+          data-testid="validity-date"
+          class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink outline-none transition focus:border-brand/50"
+          [value]="validityDate()"
+          [max]="maxValidityDate()"
+          (input)="validityDate.set($any($event.target).value)"
+        />
+      </label>
+      <p class="text-xs text-muted">
+        {{ i18n.t('teamDetail.validityHint', { date: i18n.calendarDate(maxValidityDate()) }) }}
+      </p>
+    </div>
+    <div modal-footer class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+      <button
+        type="button"
+        class="inline-flex h-11 items-center justify-center rounded-xl border border-line bg-surface-raised px-4 text-sm font-semibold text-ink transition hover:border-brand/40"
+        (click)="closeValidity()"
+      >
+        {{ i18n.t('common.cancel') }}
+      </button>
+      <button
+        type="button"
+        data-testid="validity-save"
+        class="inline-flex h-11 items-center justify-center rounded-xl bg-brand px-4 text-sm font-semibold text-on-secondary transition hover:bg-secondary-hover disabled:opacity-50"
+        [disabled]="validityBusy() || !validityDate()"
+        (click)="saveValidity()"
+      >
+        {{ i18n.t('common.save') }}
+      </button>
+    </div>
+  </app-modal>
+
+  <app-manager-credentials-dialog
+    [open]="credentialsOpen()"
+    [link]="credentials()?.link ?? ''"
+    [code]="credentials()?.accessCode ?? ''"
+    [eventTitle]="team()?.eventTitle ?? ''"
+    [email]="credentials()?.manager.email ?? null"
+    [phone]="credentials()?.manager.phone ?? null"
+    [inviteStatus]="credentials()?.emailStatus ?? 'not_sent'"
+    (done)="closeCredentials()"
+  />
 
   <!-- Editar equipa -->
   <app-team-form-dialog
@@ -456,81 +557,67 @@
   />
 
   @if (deleteBlockedOpen()) {
-    <div class="fixed inset-0 z-[100] grid place-items-center p-4">
-      <button
-        type="button"
-        class="absolute inset-0 bg-canvas/70 backdrop-blur-md"
-        [attr.aria-label]="i18n.t('common.close')"
-        (click)="closeBlockedDelete()"
-      ></button>
-      <div
-        role="dialog"
-        aria-modal="true"
-        data-testid="delete-blocked"
-        [attr.aria-label]="i18n.t('teamDetail.openTasksTitle')"
-        class="relative w-full max-w-lg rounded-4xl border border-line bg-surface-solid/95 p-6 shadow-card backdrop-blur-2xl animate-rise"
-      >
-        <h2 class="font-display text-xl font-semibold tracking-tight text-ink">
-          {{ i18n.t('teamDetail.openTasksTitle') }}
-        </h2>
-        <p class="mt-2 text-sm leading-6 text-muted">
-          {{ i18n.t('teamDetail.openTasksMessage', { count: blockedTaskCount() }) }}
+    <app-modal
+      [open]="deleteBlockedOpen()"
+      [title]="i18n.t('teamDetail.openTasksTitle')"
+      size="md"
+      (closed)="closeBlockedDelete()"
+    >
+      <p class="text-sm leading-6 text-muted">
+        {{ i18n.t('teamDetail.openTasksMessage', { count: blockedTaskCount() }) }}
+      </p>
+      @if (targetTeamOptions().length > 0) {
+        <label class="mt-5 block">
+          <span class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
+            {{ i18n.t('teamDetail.reassignTargetTeam') }}
+          </span>
+          <select
+            data-testid="delete-target-team"
+            class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink outline-none transition focus:border-brand/50"
+            [value]="deleteTargetTeamId()"
+            (change)="deleteTargetTeamId.set($any($event.target).value)"
+          >
+            <option value="">{{ i18n.t('teamDetail.chooseTargetTeam') }}</option>
+            @for (option of targetTeamOptions(); track option.id) {
+              <option [value]="option.id">{{ option.name }}</option>
+            }
+          </select>
+        </label>
+      } @else {
+        <p class="mt-4 rounded-2xl border border-dashed border-line p-3 text-xs text-muted">
+          {{ i18n.t('teamDetail.noTargetTeam') }}
         </p>
-
+      }
+      <div modal-footer class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+        <button
+          type="button"
+          class="inline-flex h-11 items-center justify-center rounded-xl border border-line bg-surface-raised px-4 text-sm font-semibold text-ink"
+          (click)="closeBlockedDelete()"
+        >
+          {{ i18n.t('common.cancel') }}
+        </button>
         @if (targetTeamOptions().length > 0) {
-          <label class="mt-5 block">
-            <span class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
-              {{ i18n.t('teamDetail.reassignTargetTeam') }}
-            </span>
-            <select
-              data-testid="delete-target-team"
-              class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink outline-none transition focus:border-brand/50"
-              [value]="deleteTargetTeamId()"
-              (change)="deleteTargetTeamId.set($any($event.target).value)"
-            >
-              <option value="">{{ i18n.t('teamDetail.chooseTargetTeam') }}</option>
-              @for (option of targetTeamOptions(); track option.id) {
-                <option [value]="option.id">{{ option.name }}</option>
-              }
-            </select>
-          </label>
-        } @else {
-          <p class="mt-4 rounded-2xl border border-dashed border-line p-3 text-xs text-muted">
-            {{ i18n.t('teamDetail.noTargetTeam') }}
-          </p>
+          <button
+            type="button"
+            data-testid="delete-reassign"
+            class="inline-flex h-11 items-center justify-center rounded-xl bg-brand px-4 text-sm font-semibold text-on-secondary transition hover:bg-secondary-hover disabled:opacity-50"
+            [disabled]="deleteBusy() || !deleteTargetTeamId()"
+            (click)="deleteAndReassign()"
+          >
+            {{ i18n.t('teamDetail.reassignTeam') }}
+          </button>
         }
-
-        <div class="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-          <button
-            type="button"
-            class="inline-flex h-11 items-center justify-center rounded-xl border border-line bg-surface-raised px-4 text-sm font-semibold text-ink"
-            (click)="closeBlockedDelete()"
-          >
-            {{ i18n.t('common.cancel') }}
-          </button>
-          @if (targetTeamOptions().length > 0) {
-            <button
-              type="button"
-              data-testid="delete-reassign"
-              class="inline-flex h-11 items-center justify-center rounded-xl bg-brand px-4 text-sm font-semibold text-on-secondary transition hover:bg-secondary-hover disabled:opacity-50"
-              [disabled]="deleteBusy() || !deleteTargetTeamId()"
-              (click)="deleteAndReassign()"
-            >
-              {{ i18n.t('teamDetail.reassignTeam') }}
-            </button>
-          }
-          <button
-            type="button"
-            data-testid="delete-archive"
-            class="inline-flex h-11 items-center justify-center rounded-xl border border-coral/30 bg-coral/10 px-4 text-sm font-semibold text-coral transition hover:border-coral/60 disabled:opacity-50"
-            [disabled]="deleteBusy()"
-            (click)="deleteAndArchive()"
-          >
-            {{ i18n.t('teamDetail.archiveTasks') }}
-          </button>
-        </div>
+        <button
+          type="button"
+          data-testid="delete-archive"
+          class="inline-flex h-11 items-center justify-center rounded-xl border border-coral/30 bg-coral/10 px-4 text-sm font-semibold text-coral transition hover:border-coral/60 disabled:opacity-50"
+          [disabled]="deleteBusy()"
+          (click)="deleteAndArchive()"
+        >
+          {{ i18n.t('teamDetail.archiveTasks') }}
+        </button>
       </div>
-    </div>
+    </app-modal>
   }
 
   <!-- Remover membro -->
@@ -545,61 +632,50 @@
   />
 
   @if (removeReassignOpen()) {
-    <div class="fixed inset-0 z-[100] grid place-items-center p-4">
-      <button
-        type="button"
-        class="absolute inset-0 bg-canvas/70 backdrop-blur-md"
-        [attr.aria-label]="i18n.t('common.close')"
-        (click)="closeRemove()"
-      ></button>
-      <div
-        role="dialog"
-        aria-modal="true"
-        data-testid="remove-reassign"
-        [attr.aria-label]="i18n.t('teamDetail.removeReassignTitle', { name: removeTarget() ? memberName(removeTarget()!) : '' })"
-        class="relative w-full max-w-lg rounded-4xl border border-line bg-surface-solid/95 p-6 shadow-card backdrop-blur-2xl animate-rise"
-      >
-        <h2 class="font-display text-xl font-semibold tracking-tight text-ink">
-          {{ i18n.t('teamDetail.removeReassignTitle', { name: removeTarget() ? memberName(removeTarget()!) : '' }) }}
-        </h2>
-        <p class="mt-2 text-sm leading-6 text-muted">
-          {{ i18n.t('teamDetail.removeReassignMessage', { count: memberBlockedTaskCount() }) }}
-        </p>
-        <label class="mt-5 block">
-          <span class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
-            {{ i18n.t('teamDetail.reassignTargetMember') }}
-          </span>
-          <select
-            data-testid="remove-target-member"
-            class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink outline-none transition focus:border-brand/50"
-            [value]="removeTargetMemberId()"
-            (change)="removeTargetMemberId.set($any($event.target).value)"
-          >
-            <option value="">{{ i18n.t('teamDetail.chooseTargetMember') }}</option>
-            @for (member of reassignMemberOptions(); track member.id) {
-              <option [value]="member.id">{{ memberName(member) }}</option>
-            }
-          </select>
-        </label>
-        <div class="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-          <button
-            type="button"
-            class="inline-flex h-11 items-center justify-center rounded-xl border border-line bg-surface-raised px-4 text-sm font-semibold text-ink"
-            (click)="closeRemove()"
-          >
-            {{ i18n.t('common.cancel') }}
-          </button>
-          <button
-            type="button"
-            data-testid="remove-confirm-reassign"
-            class="inline-flex h-11 items-center justify-center rounded-xl bg-brand px-4 text-sm font-semibold text-on-secondary transition hover:bg-secondary-hover disabled:opacity-50"
-            [disabled]="busyId() !== null || !removeTargetMemberId()"
-            (click)="confirmRemoveReassign()"
-          >
-            {{ i18n.t('teamDetail.confirmRemoveReassign') }}
-          </button>
-        </div>
+    <app-modal
+      data-testid="remove-reassign"
+      [open]="removeReassignOpen()"
+      [title]="i18n.t('teamDetail.removeReassignTitle', { name: removeTarget() ? memberName(removeTarget()!) : '' })"
+      size="md"
+      (closed)="closeRemove()"
+    >
+      <p class="text-sm leading-6 text-muted">
+        {{ i18n.t('teamDetail.removeReassignMessage', { count: memberBlockedTaskCount() }) }}
+      </p>
+      <label class="mt-5 block">
+        <span class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
+          {{ i18n.t('teamDetail.reassignTargetMember') }}
+        </span>
+        <select
+          data-testid="remove-target-member"
+          class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink outline-none transition focus:border-brand/50"
+          [value]="removeTargetMemberId()"
+          (change)="removeTargetMemberId.set($any($event.target).value)"
+        >
+          <option value="">{{ i18n.t('teamDetail.chooseTargetMember') }}</option>
+          @for (member of reassignMemberOptions(); track member.id) {
+            <option [value]="member.id">{{ memberName(member) }}</option>
+          }
+        </select>
+      </label>
+      <div modal-footer class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+        <button
+          type="button"
+          class="inline-flex h-11 items-center justify-center rounded-xl border border-line bg-surface-raised px-4 text-sm font-semibold text-ink"
+          (click)="closeRemove()"
+        >
+          {{ i18n.t('common.cancel') }}
+        </button>
+        <button
+          type="button"
+          data-testid="remove-confirm-reassign"
+          class="inline-flex h-11 items-center justify-center rounded-xl bg-brand px-4 text-sm font-semibold text-on-secondary transition hover:bg-secondary-hover disabled:opacity-50"
+          [disabled]="busyId() !== null || !removeTargetMemberId()"
+          (click)="confirmRemoveReassign()"
+        >
+          {{ i18n.t('teamDetail.confirmRemoveReassign') }}
+        </button>
       </div>
-    </div>
+    </app-modal>
   }
 </section>

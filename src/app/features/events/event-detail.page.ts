@@ -47,6 +47,7 @@ import {
 import { SkeletonComponent } from '../../shared/components/skeleton.component';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
 import { TemplateArtworkComponent } from '../../shared/components/template-artwork.component';
+import { TeamManagerDialogComponent } from '../team/team-manager-dialog.component';
 
 type DetailTab = 'overview' | 'guests' | 'settings';
 type GuestFilter = 'all' | RsvpStatus;
@@ -77,6 +78,7 @@ function isoDaysAgo(days: number): string {
     SkeletonComponent,
     StatusBadgeComponent,
     TemplateArtworkComponent,
+    TeamManagerDialogComponent,
   ],
   templateUrl: './event-detail.page.html',
 })
@@ -117,6 +119,8 @@ export class EventDetailPage {
   protected readonly cancelOpen = signal(false);
   protected readonly managersLoading = signal(false);
   protected readonly managerBusyId = signal<string | null>(null);
+  /** Modal partilhado com `/equipas` para criar equipa + gestor (Bloco 2). */
+  protected readonly managerDialogOpen = signal(false);
   protected readonly taskBusyId = signal<string | null>(null);
   protected readonly creatingTask = signal(false);
   protected readonly activityItems = signal<EventActivity[]>([]);
@@ -126,28 +130,10 @@ export class EventDetailPage {
   protected readonly coverProgress = signal(0);
   private coverUploadHandle: { cancel: () => void } | null = null;
 
+  protected readonly events = this.store.events;
   protected readonly event = computed(() => this.store.eventById(this.eventId()));
   protected readonly stats = computed(() => this.store.eventStats(this.eventId()));
   protected readonly guests = computed(() => this.store.guestsFor(this.eventId()));
-  /**
-   * Emails dos convidados que ainda podem ser promovidos a gestor:
-   * sem duplicados, sem gestores actuais e sem o email do anfitrião.
-   */
-  protected readonly guestEmails = computed<string[]>(() => {
-    const managerEmails = new Set(this.managers().map((manager) => manager.email.toLowerCase()));
-    const hostEmail = this.event()?.hostEmail.toLowerCase() ?? '';
-    const emails: string[] = [];
-
-    for (const guest of this.guests()) {
-      const email = guest.email.trim().toLowerCase();
-      if (!email || email === hostEmail || managerEmails.has(email) || emails.includes(email)) {
-        continue;
-      }
-      emails.push(email);
-    }
-
-    return emails;
-  });
   protected readonly activity = this.activityItems.asReadonly();
   protected readonly tasks = computed(() => this.store.tasksFor(this.eventId()));
   protected readonly tasksDone = computed(() => this.tasks().filter((task) => task.done).length);
@@ -255,10 +241,6 @@ export class EventDetailPage {
     message: ['', [Validators.required, Validators.maxLength(1200)]],
     rules: ['', [Validators.maxLength(800)]],
     dressCode: ['', [Validators.maxLength(160)]],
-  });
-
-  protected readonly managerForm = this.fb.group({
-    email: ['', [Validators.required, Validators.email, Validators.maxLength(254)]],
   });
 
   protected readonly taskForm = this.fb.group({
@@ -655,33 +637,18 @@ export class EventDetailPage {
     this.tab.set('settings');
   }
 
-  protected async addManager(): Promise<void> {
-    if (this.managerForm.invalid) {
-      this.managerForm.markAllAsTouched();
-      return;
-    }
-    const email = this.managerForm.controls.email.value.trim();
-    try {
-      const result = await this.store.addManager(this.eventId(), email);
-      this.managerForm.reset({ email: '' });
-      if (result.emailStatus === 'queued') {
-        this.toasts.success(this.i18n.t('eventDetail.managerAdded', { email }));
-      } else {
-        this.toasts.error(this.i18n.t('eventDetail.managerAddedNoEmail', { email }));
-      }
-    } catch (error: unknown) {
-      this.toasts.error(toApiError(error).message);
-    }
+  /** Abre o modal partilhado de criação de equipa + gestor com o evento fixo. */
+  protected openManagerDialog(): void {
+    this.managerDialogOpen.set(true);
   }
 
-  /** Preenche o email do gestor a partir da lista de convidados. */
-  protected pickGuestEmail(event: Event): void {
-    const select = event.target as HTMLSelectElement;
-    if (select.value) {
-      this.managerForm.controls.email.setValue(select.value);
-      this.managerForm.controls.email.markAsTouched();
-    }
-    select.value = '';
+  protected closeManagerDialog(): void {
+    this.managerDialogOpen.set(false);
+  }
+
+  protected onManagerCreated(): void {
+    void this.refreshManagers();
+    void this.store.load();
   }
 
   protected openGuestCreate(): void {
@@ -790,7 +757,9 @@ export class EventDetailPage {
     this.managerBusyId.set(manager.id);
     try {
       await this.store.removeManager(this.eventId(), manager.id);
-      this.toasts.success(this.i18n.t('eventDetail.managerRemoved', { email: manager.email }));
+      this.toasts.success(
+        this.i18n.t('eventDetail.managerRemoved', { email: manager.email ?? manager.phone ?? manager.id }),
+      );
     } catch (error: unknown) {
       this.toasts.error(toApiError(error).message);
     } finally {
@@ -803,9 +772,15 @@ export class EventDetailPage {
     try {
       const result = await this.store.resendManagerInvite(this.eventId(), manager.id);
       if (result.emailStatus === 'queued') {
-        this.toasts.success(this.i18n.t('eventDetail.managerResent', { email: manager.email }));
+        this.toasts.success(
+          this.i18n.t('eventDetail.managerResent', { email: manager.email ?? manager.phone ?? manager.id }),
+        );
       } else {
-        this.toasts.error(this.i18n.t('eventDetail.managerResentFailed', { email: manager.email }));
+        this.toasts.error(
+          this.i18n.t('eventDetail.managerResentFailed', {
+            email: manager.email ?? manager.phone ?? manager.id,
+          }),
+        );
       }
     } catch (error: unknown) {
       this.toasts.error(toApiError(error).message);

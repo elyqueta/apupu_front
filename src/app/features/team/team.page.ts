@@ -21,6 +21,7 @@ import { I18nService } from '../../core/i18n/i18n.service';
 import { TranslationKey } from '../../core/i18n/translations';
 import {
   EventStatus,
+  ManagerCreationResult,
   Team,
   TeamCategory,
   TeamEventStatus,
@@ -38,6 +39,7 @@ import { StatusBadgeComponent } from '../../shared/components/status-badge.compo
 import { StatCardComponent } from '../../shared/components/stat-card.component';
 import { StatGridComponent } from '../../shared/components/stat-grid.component';
 import { TeamFormDialogComponent, TeamFormValue } from './team-form-dialog.component';
+import { TeamManagerDialogComponent } from './team-manager-dialog.component';
 
 const PAGE_SIZE = 12;
 const SEARCH_DEBOUNCE_MS = 300;
@@ -84,6 +86,7 @@ interface ManagerGroup {
     StatCardComponent,
     StatGridComponent,
     TeamFormDialogComponent,
+    TeamManagerDialogComponent,
   ],
   templateUrl: './team.page.html',
 })
@@ -106,6 +109,10 @@ export class TeamPage {
   protected readonly formOpen = signal(false);
   protected readonly formSaving = signal(false);
   protected readonly formTeam = signal<Team | null>(null);
+
+  /** Modal partilhado de criação de equipa + gestor (Bloco 2). */
+  protected readonly managerDialogOpen = signal(false);
+  protected readonly lastCreatedManager = signal<ManagerCreationResult | null>(null);
 
   protected readonly managerSearch = signal('');
   protected readonly managersLoading = signal(false);
@@ -283,7 +290,7 @@ export class TeamPage {
           startsAt: event?.startsAt ?? summary.startsAt,
           status: event?.status ?? summary.status,
           timezone: event?.timezone ?? 'Africa/Luanda',
-          members: [...members].sort((a, b) => a.email.localeCompare(b.email)),
+          members: [...members].sort((a, b) => this.managerContact(a).localeCompare(this.managerContact(b))),
         } satisfies ManagerGroup;
       })
       .filter(
@@ -291,7 +298,7 @@ export class TeamPage {
           !term ||
           group.title.toLocaleLowerCase(this.i18n.locale()).includes(term) ||
           group.members.some((member) =>
-            member.email.toLocaleLowerCase(this.i18n.locale()).includes(term),
+            this.managerContact(member).toLocaleLowerCase(this.i18n.locale()).includes(term),
           ),
       )
       .sort((a, b) => (a.startsAt ?? '').localeCompare(b.startsAt ?? ''));
@@ -448,8 +455,22 @@ export class TeamPage {
   }
 
   protected openCreate(): void {
-    this.formTeam.set(null);
-    this.formOpen.set(true);
+    this.managerDialogOpen.set(true);
+  }
+
+  protected closeManagerDialog(): void {
+    this.managerDialogOpen.set(false);
+  }
+
+  protected onManagerCreated(result: ManagerCreationResult): void {
+    this.lastCreatedManager.set(result);
+    this.store.upsert(result.team);
+    void this.store.refresh();
+    void this.workspace.reloadTeam();
+  }
+
+  protected managerContact(manager: TeamManager): string {
+    return manager.email ?? manager.phone ?? manager.displayName ?? '';
   }
 
   protected closeForm(): void {

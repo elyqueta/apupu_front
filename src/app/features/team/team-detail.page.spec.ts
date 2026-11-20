@@ -68,6 +68,7 @@ function memberFixture(overrides: Partial<ApiTeamMember> = {}): ApiTeamMember {
     id: ME,
     team_id: TEAM_ID,
     email: HOST_EMAIL,
+    phone: null,
     display_name: 'Ana Costa',
     role: 'membro',
     status: 'ativo',
@@ -215,6 +216,12 @@ async function flushInitial(context: Setup): Promise<void> {
   expect(taskRequest.request.params.get('team_id')).toBe(TEAM_ID);
   taskRequest.flush(pageOf(context.tasks));
   await tick();
+
+  const managers = context.http.expectOne(
+    (req) => req.url === `${BASE}/host/events/${EVENT_ID}/managers`,
+  );
+  managers.flush({ data: [] });
+  await tick();
 }
 
 async function flushReload(
@@ -232,6 +239,12 @@ async function flushReload(
   const taskRequest = context.http.expectOne((req) => req.url === `${BASE}/host/tasks`);
   expect(taskRequest.request.params.get('team_id')).toBe(TEAM_ID);
   taskRequest.flush(pageOf(tasks));
+  await tick();
+
+  const managers = context.http.expectOne(
+    (req) => req.url === `${BASE}/host/events/${EVENT_ID}/managers`,
+  );
+  managers.flush({ data: [] });
   await tick();
 }
 
@@ -252,6 +265,18 @@ function hasToast(toasts: ToastService, text: string): boolean {
   return toasts.messages().some((message) => message.message.includes(text));
 }
 
+function openMemberActions(native: HTMLElement, memberId: string): void {
+  const card = native.querySelector(`[data-testid="member-${memberId}"]`) as HTMLElement;
+  (card.querySelector('button[aria-haspopup="menu"]') as HTMLButtonElement).click();
+}
+
+function clickMenuItem(native: HTMLElement, label: string): void {
+  const item = Array.from(native.querySelectorAll('[role="menuitem"]')).find((button) =>
+    button.textContent?.includes(label),
+  ) as HTMLButtonElement;
+  item.click();
+}
+
 describe('TeamDetailPage', () => {
   let http: HttpTestingController;
 
@@ -260,7 +285,7 @@ describe('TeamDetailPage', () => {
     vi.restoreAllMocks();
   });
 
-  it('abre o drawer Adicionar membro com as duas opções e desativa ações para membro', async () => {
+  it('abre o modal Adicionar membro e desativa ações para membro', async () => {
     const context = setup();
     http = context.http;
     await flushInitial(context);
@@ -277,17 +302,12 @@ describe('TeamDetailPage', () => {
     addMember.click();
     context.fixture.detectChanges();
 
-    expect(native.querySelector('[data-testid="member-drawer"]')).toBeTruthy();
-    expect(native.querySelector('[data-testid="drawer-mode-account"]')).toBeTruthy();
-    expect(native.querySelector('[data-testid="drawer-mode-list"]')).toBeTruthy();
-
-    (native.querySelector('[data-testid="drawer-mode-list"]') as HTMLButtonElement).click();
-    context.fixture.detectChanges();
-    expect(native.querySelector('[data-testid="drawer-emails"]')).toBeTruthy();
-
-    (native.querySelector('[data-testid="drawer-mode-account"]') as HTMLButtonElement).click();
-    context.fixture.detectChanges();
-    expect(native.querySelector('[data-testid="drawer-email"]')).toBeTruthy();
+    const drawer = native.querySelector('[data-testid="member-drawer"]');
+    expect(drawer).toBeTruthy();
+    expect(native.querySelector('[data-testid="member-name"]')).toBeTruthy();
+    expect(native.querySelector('[data-testid="member-email"]')).toBeTruthy();
+    expect(native.querySelector('[data-testid="member-phone"]')).toBeTruthy();
+    expect(native.querySelector('[data-testid="drawer-mode-list"]')).toBeNull();
 
     setMyRole(context, 'membro');
     expect(addMember.disabled).toBe(true);
@@ -306,7 +326,7 @@ describe('TeamDetailPage', () => {
     expect(menuItems.every((item) => item.disabled)).toBe(true);
   });
 
-  it('valida o limite de 50 e-mails no drawer', async () => {
+  it('valida o contacto obrigatório no modal de membro', async () => {
     const context = setup();
     http = context.http;
     await flushInitial(context);
@@ -317,33 +337,29 @@ describe('TeamDetailPage', () => {
     context.fixture.detectChanges();
     (native.querySelector('[data-testid="add-member"]') as HTMLButtonElement).click();
     context.fixture.detectChanges();
-    (native.querySelector('[data-testid="drawer-mode-list"]') as HTMLButtonElement).click();
-    context.fixture.detectChanges();
 
-    const textarea = native.querySelector('[data-testid="drawer-emails"]') as HTMLTextAreaElement;
-    const submit = native.querySelector('[data-testid="drawer-submit"]') as HTMLButtonElement;
-    const i18n = TestBed.inject(I18nService);
-
-    textarea.value = Array.from({ length: 51 }, (_, index) => `user${index + 1}@exemplo.pt`).join('\n');
-    textarea.dispatchEvent(new Event('input'));
-    context.fixture.detectChanges();
-
-    expect((native.querySelector('[data-testid="drawer-count"]') as HTMLElement).textContent).toContain(
-      '51/50',
+    const submit = native.querySelector('[data-testid="member-submit"]') as HTMLButtonElement;
+    expect(submit.disabled).toBe(true);
+    expect((native.querySelector('[data-testid="member-validation"]') as HTMLElement).textContent).toContain(
+      TestBed.inject(I18nService).t('managerDialog.contactRequired'),
     );
-    expect((native.querySelector('[data-testid="drawer-error"]') as HTMLElement).textContent).toContain(
-      i18n.t('errors.tooManyEmails'),
-    );
+
+    const phone = native.querySelector('[data-testid="member-phone"]') as HTMLInputElement;
+    phone.value = '123';
+    phone.dispatchEvent(new Event('input'));
+    context.fixture.detectChanges();
     expect(submit.disabled).toBe(true);
 
-    textarea.value = Array.from({ length: 50 }, (_, index) => `user${index + 1}@exemplo.pt`).join('\n');
-    textarea.dispatchEvent(new Event('input'));
+    // Um telefone inválido continua a bloquear o formulário: limpá-lo antes
+    // de preencher o email deixa apenas um contacto válido.
+    phone.value = '';
+    phone.dispatchEvent(new Event('input'));
     context.fixture.detectChanges();
 
-    expect((native.querySelector('[data-testid="drawer-count"]') as HTMLElement).textContent).toContain(
-      '50/50',
-    );
-    expect(native.querySelector('[data-testid="drawer-error"]')).toBeNull();
+    const email = native.querySelector('[data-testid="member-email"]') as HTMLInputElement;
+    email.value = 'rui@exemplo.pt';
+    email.dispatchEvent(new Event('input'));
+    context.fixture.detectChanges();
     expect(submit.disabled).toBe(false);
   });
 
@@ -488,15 +504,15 @@ describe('TeamDetailPage', () => {
     const native = context.fixture.nativeElement as HTMLElement;
     (native.querySelector('[data-testid="detail-tab-members"]') as HTMLButtonElement).click();
     context.fixture.detectChanges();
-    (native.querySelector(`[data-testid="member-remove-${RUI}"]`) as HTMLButtonElement).click();
+    openMemberActions(native, RUI);
+    context.fixture.detectChanges();
+    clickMenuItem(native, TestBed.inject(I18nService).t('teamDetail.action.remove'));
     context.fixture.detectChanges();
 
-    const confirmDialog = native.querySelector(
-      '[role="dialog"][aria-label="Remover membro da equipa"]',
-    ) as HTMLElement;
+    const confirmDialog = native.querySelector('[role="dialog"]') as HTMLElement;
     expect(confirmDialog).toBeTruthy();
     const confirm = Array.from(confirmDialog.querySelectorAll('button')).find((button) =>
-      button.textContent?.includes('Remover'),
+      button.textContent?.includes(TestBed.inject(I18nService).t('common.remove')),
     ) as HTMLButtonElement;
     confirm.click();
 

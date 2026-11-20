@@ -1,5 +1,5 @@
 import { provideHttpClient } from '@angular/common/http';
-import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting, TestRequest } from '@angular/common/http/testing';
 import { PLATFORM_ID } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter, Router } from '@angular/router';
@@ -55,6 +55,11 @@ function managerFixture(): ApiHostEventManager {
     id: 'manager-1',
     event_id: EVENT_ID,
     email: 'gestor@exemplo.pt',
+    phone: null,
+    display_name: 'Gestor da Cozinha',
+    team_id: TEAM_ID,
+    link_expires_at: '2026-09-01T00:00:00Z',
+    link_revoked_at: null,
     has_account: true,
     last_used_at: null,
     created_at: '2026-01-01T00:00:00Z',
@@ -115,65 +120,118 @@ async function settle(fixture: ComponentFixture<TeamPage>): Promise<void> {
   fixture.detectChanges();
 }
 
+/**
+ * A página lança em paralelo a lista de equipas (`/host/teams`) e a lista
+ * global de gestores (`/host/managers`), mesmo quando o separador ativo é
+ * outro. Ambos precisam de resposta para não deixar pedidos pendentes.
+ */
+async function flushBootstrap(
+  context: Setup,
+  teams: ApiTeam[] = [teamFixture()],
+  managers: ApiHostEventManager[] = [managerFixture()],
+  preMatched: TestRequest[] = [],
+): Promise<void> {
+  // `expectOne`/`match` removem o pedido da fila; aceitamos pedidos já
+  // capturados para não deixar nenhum sem resposta.
+  const teamRequests = [
+    ...preMatched.filter((request) => request.request.url === `${BASE}/host/teams`),
+    ...context.http.match((req) => req.url === `${BASE}/host/teams`),
+  ];
+  const managerRequests = [
+    ...preMatched.filter((request) => request.request.url === `${BASE}/host/managers`),
+    ...context.http.match((req) => req.url === `${BASE}/host/managers`),
+  ];
+  for (const request of teamRequests) {
+    request.flush(pageOf(teams));
+  }
+  for (const request of managerRequests) {
+    request.flush({ data: managers });
+  }
+  await tick();
+  await settle(context.fixture);
+}
+
 describe('TeamPage', () => {
   let http: HttpTestingController;
 
   afterEach(() => {
+    TestBed.resetTestingModule();
     http?.verify();
     vi.restoreAllMocks();
   });
 
-  it('cria nova equipa pelo modal e navega para o detalhe', async () => {
+  it('cria equipa e gestor no modal partilhado e mostra o código uma vez', async () => {
     const context = setup({ evento: EVENT_ID });
     http = context.http;
 
-    const initial = http.expectOne((req) => req.url === `${BASE}/host/teams`);
-    expect(initial.request.params.get('event_id')).toBe(EVENT_ID);
-    initial.flush(pageOf([teamFixture({ name: 'Cozinha antiga' })]));
-    await tick();
-    await settle(context.fixture);
+    const initial = http.match((req) => req.url === `${BASE}/host/teams`);
+    expect(initial.length).toBe(1);
+    expect(initial[0].request.params.get('event_id')).toBe(EVENT_ID);
+    await flushBootstrap(context, [teamFixture({ name: 'Cozinha antiga' })], undefined, initial);
 
     const newButton = context.fixture.nativeElement.querySelector('[data-testid="new-team"]');
     newButton.click();
     context.fixture.detectChanges();
 
-    const name = context.fixture.nativeElement.querySelector('[data-testid="team-form-name"]');
+    const name = context.fixture.nativeElement.querySelector('[data-testid="team-manager-name"]');
     name.value = 'Cozinha nova';
     name.dispatchEvent(new Event('input'));
+    const email = context.fixture.nativeElement.querySelector('[data-testid="team-manager-email"]');
+    email.value = 'gestor@exemplo.pt';
+    email.dispatchEvent(new Event('input'));
     context.fixture.detectChanges();
 
-    const submit = context.fixture.nativeElement.querySelector('[data-testid="team-form-submit"]');
+    const submit = context.fixture.nativeElement.querySelector('[data-testid="team-manager-submit"]');
     expect(submit.disabled).toBe(false);
     submit.click();
 
-    const create = http.expectOne(`${BASE}/host/teams`);
+    const create = http.expectOne(`${BASE}/host/events/${EVENT_ID}/managers`);
     expect(create.request.method).toBe('POST');
     expect(create.request.body).toEqual({
-      event_id: EVENT_ID,
-      name: 'Cozinha nova',
-      category: 'outra',
-      description: null,
+      team_name: 'Cozinha nova',
+      team_category: 'outra',
+      team_description: null,
+      display_name: null,
+      email: 'gestor@exemplo.pt',
+      phone: null,
+      link_expires_at: null,
     });
-    create.flush({ data: teamFixture({ id: TEAM_ID, name: 'Cozinha nova' }) });
+    create.flush({
+      data: {
+        manager: managerFixture(),
+        team: teamFixture({ name: 'Cozinha nova' }),
+        link: `https://apupu.co/gerir/secret-token`,
+        access_code: 'ABC123',
+        invite_email_status: 'queued',
+      },
+    });
     await tick();
-    await settle(context.fixture);
+    // A criação recarrega a lista de equipas e a lista global de gestores.
+    await flushBootstrap(context, [teamFixture({ name: 'Cozinha nova' })]);
 
-    expect(context.navigate).toHaveBeenCalledWith(['/equipas', TEAM_ID]);
-    expect(context.toasts.messages().some((message) => message.message.includes('Equipa criada'))).toBe(
-      true,
+    expect(context.navigate).not.toHaveBeenCalled();
+    expect(context.fixture.nativeElement.querySelector('[data-testid="manager-code"]').textContent).toContain(
+      'ABC-123',
     );
+    expect(
+      context.fixture.nativeElement.querySelector('[data-testid="manager-credentials-done"]'),
+    ).toBeTruthy();
+
+    context.fixture.nativeElement
+      .querySelector('[data-testid="manager-credentials-done"]')
+      .click();
+    context.fixture.detectChanges();
   });
 
   it('filtra a lista por evento via ?evento=', async () => {
     const context = setup({ evento: EVENT_ID });
     http = context.http;
 
-    const request = http.expectOne((req) => req.url === `${BASE}/host/teams`);
-    expect(request.request.method).toBe('GET');
-    expect(request.request.params.get('event_id')).toBe(EVENT_ID);
-    request.flush(pageOf([teamFixture()]));
-    await tick();
-    await settle(context.fixture);
+    const request = http.match((req) => req.url === `${BASE}/host/teams`);
+    expect(request.length).toBe(1);
+    expect(request[0].request.method).toBe('GET');
+    expect(request[0].request.params.get('event_id')).toBe(EVENT_ID);
+    await flushBootstrap(context, undefined, undefined, request);
 
     expect(context.fixture.nativeElement.textContent).toContain('Cozinha');
     expect(context.fixture.nativeElement.textContent).toContain('Casamento da Ana');
@@ -183,10 +241,10 @@ describe('TeamPage', () => {
     const context = setup({ tab: 'gestores' });
     http = context.http;
 
-    const managers = http.expectOne(`${BASE}/host/managers`);
-    managers.flush({ data: [managerFixture()] });
-    await tick();
-    await settle(context.fixture);
+    const managers = http.match((req) => req.url === `${BASE}/host/managers`);
+    expect(managers.length).toBe(1);
+    expect(managers[0].request.method).toBe('GET');
+    await flushBootstrap(context, undefined, undefined, managers);
 
     const panel = context.fixture.nativeElement.querySelector('[data-testid="managers-panel"]');
     expect(panel).toBeTruthy();
@@ -204,10 +262,10 @@ describe('TeamPage', () => {
     const context = setup();
     http = context.http;
 
-    const request = http.expectOne((req) => req.url === `${BASE}/host/teams`);
-    request.flush(pageOf([teamFixture()]));
-    await tick();
-    await settle(context.fixture);
+    const request = http.match((req) => req.url === `${BASE}/host/teams`);
+    expect(request.length).toBe(1);
+    expect(request[0].request.method).toBe('GET');
+    await flushBootstrap(context, undefined, undefined, request);
 
     const progress = context.fixture.nativeElement.querySelector(
       `[data-testid="team-progress-${TEAM_ID}"]`,
@@ -221,11 +279,12 @@ describe('TeamPage', () => {
     );
     expect(avatars).toBeTruthy();
     expect(
-      context.fixture.debugElement.queryAll((debug) => debug.componentInstance instanceof AvatarStackComponent)
-        .length,
+      context.fixture.debugElement.queryAll(
+        (debug) => debug.componentInstance instanceof AvatarStackComponent,
+      ).length,
     ).toBeGreaterThan(0);
-    expect(context.fixture.nativeElement.querySelector(`[data-testid="team-card-${TEAM_ID}"]`).textContent).not.toContain(
-      '@',
-    );
+    expect(
+      context.fixture.nativeElement.querySelector(`[data-testid="team-card-${TEAM_ID}"]`).textContent,
+    ).not.toContain('@');
   });
 });

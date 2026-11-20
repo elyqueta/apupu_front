@@ -590,4 +590,12 @@
     (saved)="saveTeam($event)"
     (cancel)="closeForm()"
   />
+
+  <app-team-manager-dialog
+    [open]="managerDialogOpen()"
+    [events]="events()"
+    [eventId]="filters().eventId || null"
+    (created)="onManagerCreated($event)"
+    (cancel)="closeManagerDialog()"
+  />
 </section>

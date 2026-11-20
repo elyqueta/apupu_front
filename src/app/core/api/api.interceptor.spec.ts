@@ -56,6 +56,32 @@ describe('apiRequestInterceptor', () => {
     subscription.unsubscribe();
     controller.verify();
   });
+
+  it('forwards the auth cookie when API and request URLs are relative (Vercel)', () => {
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(withInterceptors([apiRequestInterceptor])),
+        provideHttpClientTesting(),
+        {
+          provide: REQUEST,
+          useValue: new Request('https://apupu-front.vercel.app/painel', {
+            headers: { cookie: 'apupu_auth=session-token' },
+          }),
+        },
+        { provide: API_BASE_URL, useValue: '/api/v1' },
+      ],
+    });
+
+    const http = TestBed.inject(HttpClient);
+    const controller = TestBed.inject(HttpTestingController);
+    const subscription = http.get('/api/v1/auth/session').subscribe();
+    const request = controller.expectOne('/api/v1/auth/session');
+
+    expect(request.request.headers.get('Cookie')).toBe('apupu_auth=session-token');
+    request.flush({ data: {} });
+    subscription.unsubscribe();
+    controller.verify();
+  });
 });
 
 describe('CsrfTokenStore · account session', () => {

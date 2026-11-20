@@ -129,10 +129,13 @@ function incomingAuthCookie(
   if (!incomingRequest) {
     return null;
   }
-  const apiHost = new URL(apiBaseUrl).hostname;
+  // Em produção as duas URLs são relativas (`/api/v1`), por isso precisam da
+  // URL do pedido recebido como base — `new URL('/api/v1')` sem base lança.
+  const incomingUrl = new URL(incomingRequest.url);
+  const apiHost = new URL(apiBaseUrl, incomingUrl).hostname;
   if (
-    new URL(incomingRequest.url).hostname !== apiHost ||
-    new URL(requestUrl).hostname !== apiHost
+    incomingUrl.hostname !== apiHost ||
+    new URL(requestUrl, incomingUrl).hostname !== apiHost
   ) {
     return null;
   }

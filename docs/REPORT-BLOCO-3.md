@@ -16,7 +16,7 @@ O mapeamento foi realizado antes de qualquer alteração de código e ficou regi
 
 | Componente | Ficheiro | Linhas | Responsabilidade |
 |---|---|---:|---|
-| `app-event-summary` | `features/events/detail/event-summary.component.ts` | 282 | Capa, título, tipo/contexto, data/hora, local, prazo, estado, estatísticas, progresso, cartão do convite, excerpt de mensagem/regras/vestuário e ações principais. |
+| `app-event-summary` | `features/events/detail/event-summary.component.ts` | 281 | Capa, título, tipo/contexto, data/hora, local, prazo, estado, estatísticas, progresso, cartão do convite, excerpt de mensagem/regras/vestuário e ações principais. |
 | `app-event-guests-section` | `features/events/detail/event-guests-section.component.ts` | 294 | `app-stat-grid`, pesquisa, filtro por estado, paginação de 10 no servidor e grelha de `app-person-card` idêntica a `/convidados`. |
 | `app-event-teams-section` | `features/events/detail/event-teams-section.component.ts` | 165 | Cards de equipa com membro/pré-visualizações, contagem de tarefas abertas e atalho para `/equipas/:id?evento=`. |
 | `app-event-tasks-section` | `features/events/detail/event-tasks-section.component.ts` | 179 | Lista de tarefas, filtro “só as minhas”, conclusão e remoção (esta última só com permissão). |
@@ -30,11 +30,11 @@ Todos são standalone, usam `input()`/`output()`, recebem `permissions` e escond
 
 ## Passo 3 — Layout e navegação
 
-- `event-detail.page.html`: **183 linhas**; cabeçalho `sticky` com “Voltar aos eventos” → `/eventos`, contexto “Evento”, título, papel e ações; barra de separadores com scroll horizontal; conteúdo carregado por separador com `@if`.
-- `management-event.page.html`: **221 linhas**; cabeçalho `sticky top-2` com “Voltar” → `/gestao`, contexto, título e badge de gestor; faixa/modal de criação de conta do Bloco 2 mantidos (`sem_conta` e `email` preservados na navegação dos separadores).
-- Separadores: `resumo`, `convidados`, `equipas`, `gestores`, `atividade`. `?separador=` é lido por `ActivatedRoute.queryParamMap` e escrito por `Router` com `queryParamsHandling: 'preserve'`; `resumo` não escreve o parâmetro. Recarregar mantém o separador.
+- `event-detail.page.html`: **181 linhas**; cabeçalho `sticky` com “Voltar aos eventos” → `/eventos`, contexto “Evento”, título, papel e ações; barra de separadores com scroll horizontal sem barra visível; conteúdo carregado por separador com `@if` e 16 px de afastamento do topo.
+- `management-event.page.html`: **219 linhas**; cabeçalho `sticky top-2` com “Voltar” → `/gestao`, contexto, título e badge de gestor; faixa/modal de criação de conta do Bloco 2 mantidos (`sem_conta` e `email` preservados na navegação dos separadores).
+- Separadores: `resumo`, `convidados`, `equipas`, `gestores`, `atividade`. `?separador=` é lido por `ActivatedRoute.queryParamMap` e escrito por `Router` com `queryParamsHandling: 'merge'`; `resumo` não escreve o parâmetro. Recarregar mantém o separador.
 - Dados lazy: convidados, equipas, gestores e atividade só carregam quando o separador correspondente é aberto; o resumo usa os dados já carregados pelo store/detalhe.
-- Desktop usa grelha de duas colunas no resumo; mobile mantém uma coluna e alvos de toque de pelo menos 44 px.
+- Desktop usa resumo a toda a largura e tarefas/equipas em duas colunas abaixo; a grelha de métricas ocupa a largura toda (2 colunas em mobile, 4 em desktop). Mobile mantém uma coluna e alvos de toque de pelo menos 44 px.
 
 ## Passo 4 — Separador Gestores
 
@@ -89,8 +89,24 @@ Comandos executados no frontend, todos verdes:
 
 Não foram adicionadas dependências, nem segredos, nem alterações ao backend. Todo o texto novo está em `pt-AO` e `en` em `core/i18n/translations.ts`. Nenhum ficheiro de secção ou template de painel ultrapassa 300 linhas.
 
+## Verificação visual na aplicação a correr (pós-entrega)
+
+A aplicação foi aberta em `http://localhost:4200` com a conta de teste fornecida e percorrida em larguras de 390 px, 976 px e 1440 px (iframe isolado com o viewport da página). Não foram encontrados erros de consola, nem overflow horizontal do documento, nem texto cortado nos cartões.
+
+Correções resultantes dessa verificação, mantidas nesta branch:
+
+| Problema observado | Correção |
+|---|---|
+| Os botões “Convidados”, “Equipas e tarefas”, “Gestores” e “Atividade” não navegavam. `Router.navigate()` devolvia `false` porque `queryParamsHandling: 'preserve'` ignorava o `queryParams` novo e mantinha o URL igual. | Passou a `queryParamsHandling: 'merge'` nos dois painéis; todos os separadores agora atualizam `?separador=` e preservam os restantes parâmetros. |
+| Barra horizontal visível e feia na barra de separadores em ecrãs pequenos. | Nova utilidade `.no-scrollbar` (Firefox/IE/Chrome) aplicada às duas barras de separadores; o scroll lateral continua disponível por toque. |
+| Pouco afastamento entre a barra de separadores e o cartão grande do evento. | `pt-4` no `<main>` do detalhe do anfitrião; gestor já tinha `mb-4` na barra. |
+| Cartões de métrica esmagados no desktop: a grelha de 4 colunas estava dentro de uma coluna estreita da grelha do resumo. | Resumo e tarefas/equipas passaram a blocos verticalmente independentes; `app-stat-grid` ocupa agora a largura toda e `progresso`/`convite` ficam lado a lado em `lg`. |
+| `id="event-guests-list"` duplicado no detalhe do anfitrião (wrapper da página + componente de convidados). | O `id` e o `scroll-mt-24` ficaram apenas no wrapper da página; o componente reutilizável ficou sem `id`. |
+
+[Auditoria de layout] As páginas `/eventos/:id`, `/gestao/evento/:id`, `/tarefas`, `/equipas/:id?evento=` e os modais de editar/capa/tarefa foram verificados nos três tamanhos. Em 390 px os modais ocupam a largura toda sem transbordo; em 1440 px os quatro cartões de métrica ficam com ~251 px cada. O cabeçalho de retorno continua `sticky` (`top: 0` no anfitrião, `top: 2` no gestor).
+
 ## Observações finais
 
-- A verificação visual de 360 px/claro-escuro foi feita por revisão das classes Tailwind e dos tokens; não existe captura automatizada no projeto.
+- A verificação visual de claro-escuro foi feita por revisão dos tokens; a verificação de layout em 390/976/1440 px passou a ser feita na aplicação a correr, conforme a secção anterior.
 - As quatro incertezas de contrato e a limitação do modal de edição estão em `docs/BLOCKERS.md`; as escolhas correspondentes estão em `docs/DECISIONS.md`.
 - Backend permanece em `feat/bloco-2-equipas-gestores`, limpo; o Bloco 4 será ramificado a partir daqui conforme as regras gerais.

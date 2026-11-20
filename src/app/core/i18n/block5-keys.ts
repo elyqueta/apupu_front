@@ -39,6 +39,9 @@ export const BLOCK5_KEYS_PT = {
   'messages.saved': 'Alteração guardada.',
   'invitation.hostReplyTitle': 'Resposta do anfitrião',
   'invitation.hostReplyDate': 'Enviada em',
+  'profile.avatarRemove': 'Remover foto',
+  'profile.avatarRemoved': 'Foto de perfil removida.',
+  'profile.avatarRemoveError': 'Não foi possível remover a foto. Tenta novamente.',
 } as const;
 
 export const BLOCK5_KEYS_EN: Record<keyof typeof BLOCK5_KEYS_PT, string> = {
@@ -75,4 +78,7 @@ export const BLOCK5_KEYS_EN: Record<keyof typeof BLOCK5_KEYS_PT, string> = {
   'messages.saved': 'Change saved.',
   'invitation.hostReplyTitle': 'Reply from the host',
   'invitation.hostReplyDate': 'Sent on',
+  'profile.avatarRemove': 'Remove photo',
+  'profile.avatarRemoved': 'Profile photo removed.',
+  'profile.avatarRemoveError': 'Could not remove the photo. Please try again.',
 };

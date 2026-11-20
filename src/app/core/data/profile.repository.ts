@@ -58,6 +58,14 @@ export class ProfileRepository extends CachedRepository<HostProfile> {
     return profile;
   }
 
+  /** Remove o avatar do perfil (operação idempotente). */
+  async removeAvatar(): Promise<HostProfile> {
+    const response = await this.api.deleteWithData<HostEnvelope>('/host/profile/avatar');
+    const profile = mapProfile(response.host);
+    this.setData(profile);
+    return profile;
+  }
+
   /** Define a capa a partir de um URL já existente no servidor. */
   async setCoverUrl(coverUrl: string): Promise<HostProfile> {
     const response = await this.api.post<HostEnvelope>('/host/profile/cover', {

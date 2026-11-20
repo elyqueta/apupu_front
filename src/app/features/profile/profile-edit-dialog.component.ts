@@ -144,6 +144,19 @@ import { PhoneMaskDirective } from '../../shared/directives/phone-mask.directive
                 <p class="mt-1.5 text-[10px] leading-4 text-muted">
                   {{ i18n.t('profile.photoHint') }}
                 </p>
+                @if (preview()) {
+                  <button
+                    type="button"
+                    data-testid="profile-avatar-remove"
+                    class="ui-btn-secondary mt-2"
+                    [disabled]="uploading()"
+                    [attr.aria-label]="i18n.t('profile.avatarRemove')"
+                    (click)="removeAvatar()"
+                  >
+                    <fa-icon [icon]="icons['trash']" aria-hidden="true" />
+                    {{ i18n.t('profile.avatarRemove') }}
+                  </button>
+                }
               </div>
             </div>
 
@@ -347,6 +360,24 @@ export class ProfileEditDialogComponent {
           ? this.i18n.t('profile.uploadUnavailable')
           : apiError.message,
       );
+    } finally {
+      this.uploading.set(false);
+    }
+  }
+
+  protected async removeAvatar(): Promise<void> {
+    if (this.uploading()) {
+      return;
+    }
+    this.uploading.set(true);
+    this.error.set('');
+    try {
+      await this.store.removeAvatar();
+      this.form.controls.avatarUrl.setValue('');
+      this.preview.set(null);
+      this.toasts.success(this.i18n.t('profile.avatarRemoved'));
+    } catch (caught: unknown) {
+      this.error.set(toApiError(caught).message || this.i18n.t('profile.avatarRemoveError'));
     } finally {
       this.uploading.set(false);
     }

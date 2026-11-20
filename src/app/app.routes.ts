@@ -7,8 +7,8 @@ import { PublicShellComponent } from './features/landing/public-shell.component'
 
 export const routes: Routes = [
   {
-    // Casca das páginas públicas: garante o aviso de protótipo sem editar as
-    // páginas de auth, recuperação ou convite. A landing mostra o aviso nela.
+    // Casca comum das páginas públicas: fundo e altura mínima partilhados
+    // entre autenticação, recuperação, gestão e convite.
     path: '',
     component: PublicShellComponent,
     children: [

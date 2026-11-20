@@ -7,8 +7,6 @@
  * mantida em `pt-AO`/`en`.
  */
 export const BLOCK6_KEYS_PT = {
-  'prototype.notice': 'Protótipo — versão em teste',
-
   'landing.skipToContent': 'Saltar para o conteúdo',
   'landing.nav.how': 'Como funciona',
   'landing.nav.about': 'Sobre',
@@ -251,8 +249,6 @@ export const BLOCK6_KEYS_PT = {
 } as const;
 
 export const BLOCK6_KEYS_EN: Record<keyof typeof BLOCK6_KEYS_PT, string> = {
-  'prototype.notice': 'Prototype — test version',
-
   'landing.skipToContent': 'Skip to content',
   'landing.nav.how': 'How it works',
   'landing.nav.about': 'About',

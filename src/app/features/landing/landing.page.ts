@@ -7,7 +7,6 @@ import { AuthService } from '../../core/api/auth.service';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { ICONS } from '../../core/ui/icons';
 import { LogoComponent } from '../../shared/components/logo.component';
-import { ProtectedNoticeComponent } from '../../shared/components/protected-notice.component';
 import { LandingAboutComponent } from './landing-about.component';
 import { LandingAudienceComponent } from './landing-audience.component';
 import { LandingBenefitsComponent } from './landing-benefits.component';
@@ -26,7 +25,6 @@ import { LandingStepsComponent } from './landing-steps.component';
     RouterLink,
     FaIconComponent,
     LogoComponent,
-    ProtectedNoticeComponent,
     LandingHeroComponent,
     LandingBenefitsComponent,
     LandingStepsComponent,

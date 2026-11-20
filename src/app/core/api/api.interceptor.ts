@@ -78,6 +78,11 @@ export class CsrfTokenStore {
     if (eventId) {
       return `host:${eventId}`;
     }
+    // A rota de registo do gestor não tem `eventId` no caminho: usa o
+    // cookie/CSRF da sessão de gestão guardado quando o gestor entrou.
+    if (path === '/host/manager/register/request-code') {
+      return [...this.values.keys()].find((key) => key.startsWith('host:')) ?? 'auth';
+    }
     return path.startsWith('/host/') ? 'auth' : null;
   }
 }

@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { ApiClient } from '../../core/api/api-client';
@@ -22,6 +22,7 @@ import { ICONS } from '../../core/ui/icons';
 import { ActivityPresenter } from '../../shared/services/activity.presenter';
 import { BrandComponent } from '../../shared/components/brand.component';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog.component';
+import { ModalComponent } from '../../shared/components/modal.component';
 import { PreferenceControlsComponent } from '../../shared/components/preference-controls.component';
 import { SkeletonComponent } from '../../shared/components/skeleton.component';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
@@ -41,6 +42,7 @@ interface EventDetailResponse {
     FaIconComponent,
     BrandComponent,
     ConfirmDialogComponent,
+    ModalComponent,
     PreferenceControlsComponent,
     SkeletonComponent,
     StatusBadgeComponent,
@@ -51,6 +53,7 @@ interface EventDetailResponse {
 export class ManagementEventPage {
   private readonly api = inject(ApiClient);
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly formBuilder = inject(FormBuilder);
   private readonly activityPresenter = inject(ActivityPresenter);
 
@@ -67,6 +70,10 @@ export class ManagementEventPage {
     null,
   );
   protected readonly role = signal<ApiEventAccessRole>('host');
+  /** Gestor sem conta: CTA repetido em faixa e cabeçalho. */
+  protected readonly needsAccount = signal(false);
+  protected readonly accountEmail = signal('');
+  protected readonly accountModalOpen = signal(false);
   protected readonly activityItems = signal<ApiActivity[]>([]);
   protected readonly activityPagination = signal<Pagination | null>(null);
   protected readonly activityLoading = signal(false);
@@ -99,6 +106,36 @@ export class ManagementEventPage {
       if (eventId) {
         void this.load(eventId);
       }
+    });
+    this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe((params) => {
+      this.needsAccount.set(params.get('sem_conta') === '1');
+      this.accountEmail.set(params.get('email') ?? '');
+    });
+  }
+
+  /** Ações que exigem conta abrem o modal em vez de falhar com 401/403. */
+  protected requireAccount(): boolean {
+    if (!this.needsAccount()) return false;
+    this.accountModalOpen.set(true);
+    return true;
+  }
+
+  protected openAccountModal(): void {
+    this.accountModalOpen.set(true);
+  }
+
+  protected closeAccountModal(): void {
+    this.accountModalOpen.set(false);
+  }
+
+  protected createAccount(): void {
+    const returnUrl = `/gestao/evento/${this.route.snapshot.paramMap.get('eventId') ?? ''}`;
+    this.accountModalOpen.set(false);
+    void this.router.navigate(['/criar-conta'], {
+      queryParams: {
+        ...(this.accountEmail() ? { email: this.accountEmail(), gestor: 1 } : {}),
+        returnUrl,
+      },
     });
   }
 

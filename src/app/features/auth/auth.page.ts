@@ -183,6 +183,7 @@ function passwordsMatch(group: AbstractControl): ValidationErrors | null {
                   inputmode="email"
                   required
                   [class]="inputClass"
+                  [attr.readonly]="managerShortcut() ? 'readonly' : null"
                   [attr.aria-invalid]="isInvalid(emailForm.controls.email)"
                 />
               </div>
@@ -463,6 +464,8 @@ export class AuthPage {
   readonly email = signal('');
   /** `true` quando o email veio de um convite e o OTP foi dispensado. */
   readonly guestFromInvite = signal(false);
+  /** Gestor com sessão válida: usa o atalho do Bloco 4 sem OTP. */
+  readonly managerShortcut = signal(false);
   readonly codeFromEmail = signal(false);
   readonly busy = signal(false);
   readonly resendSeconds = signal(0);
@@ -537,9 +540,18 @@ export class AuthPage {
     const email = query.get('email')?.trim() ?? '';
     const code = (query.get('codigo') ?? query.get('code') ?? '').replace(/\D/g, '').slice(0, 6);
     const autoSend = query.get('enviar') === '1' || query.get('send') === '1';
+    const managerShortcut = query.get('gestor') === '1';
     if (email) {
       this.email.set(email);
       this.emailForm.controls.email.setValue(email);
+    }
+    if (managerShortcut && email) {
+      // O contacto já foi validado pela sessão de gestão; o email fica só
+      // de leitura e o atalho dispensa o OTP quando é o mesmo contacto.
+      this.managerShortcut.set(true);
+      this.emailForm.controls.email.disable();
+      queueMicrotask(() => void this.requestCode());
+      return;
     }
     if (email && code.length === 6) {
       this.otp.set(this.otpIndexes.map((index) => code[index] ?? ''));
@@ -596,7 +608,7 @@ export class AuthPage {
     if (this.busy()) {
       return;
     }
-    const email = this.emailForm.controls.email.value.trim();
+    const email = this.emailForm.getRawValue().email.trim();
     if (!this.emailForm.controls.email.valid || !email) {
       this.emailForm.controls.email.markAsTouched();
       this.toasts.error('Este email não parece válido. Verifica se está bem escrito.');
@@ -604,7 +616,9 @@ export class AuthPage {
     }
     this.busy.set(true);
     try {
-      const result = await this.auth.requestRegistrationCode(email);
+      const result = this.managerShortcut()
+        ? await this.auth.requestManagerRegistrationCode(email)
+        : await this.auth.requestRegistrationCode(email);
       this.email.set(email);
 
       // O email já foi inscrito por um anfitrião: não há OTP. O nome do
@@ -635,7 +649,9 @@ export class AuthPage {
     }
     this.busy.set(true);
     try {
-      const result = await this.auth.requestRegistrationCode(this.email());
+      const result = this.managerShortcut()
+        ? await this.auth.requestManagerRegistrationCode(this.email())
+        : await this.auth.requestRegistrationCode(this.email());
 
       if (result.status === 'guest_verified') {
         this.guestFromInvite.set(true);

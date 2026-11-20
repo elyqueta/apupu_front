@@ -35,6 +35,7 @@ import {
   EventStats,
   Guest,
   HostEvent,
+  ManagerInviteResult,
   managerPermissions,
   Team,
   WorkspaceTask,
@@ -50,6 +51,7 @@ import { GuestDialogComponent } from '../../shared/components/guest-dialog.compo
 import { ModalComponent } from '../../shared/components/modal.component';
 import { PreferenceControlsComponent } from '../../shared/components/preference-controls.component';
 import { SkeletonComponent } from '../../shared/components/skeleton.component';
+import { ManagerCredentialsDialogComponent } from '../team/manager-credentials-dialog.component';
 import {
   EVENT_TABS,
   EventTab,
@@ -98,6 +100,7 @@ function isoDatePlusDays(value: string, days: number): string {
     EventActivitySectionComponent,
     EventGuestsSectionComponent,
     EventManagersSectionComponent,
+    ManagerCredentialsDialogComponent,
     EventSummaryComponent,
     EventTasksSectionComponent,
     EventTeamsSectionComponent,
@@ -257,6 +260,11 @@ export class ManagementEventPage {
   protected readonly accountEmail = signal('');
   protected readonly accountModalOpen = signal(false);
 
+  /** Troca de código pelo próprio gestor (sessão de gestão, sem conta). */
+  protected readonly accessResult = signal<ManagerInviteResult | null>(null);
+  protected readonly rotatingAccess = signal(false);
+  protected readonly accessError = signal('');
+
   protected readonly editModalOpen = signal(false);
   protected readonly coverModalOpen = signal(false);
   protected readonly coverUploading = signal(false);
@@ -380,6 +388,27 @@ export class ManagementEventPage {
         returnUrl,
       },
     });
+  }
+
+  protected async rotateOwnAccess(): Promise<void> {
+    if (this.rotatingAccess() || this.eventCancelled()) {
+      return;
+    }
+    this.rotatingAccess.set(true);
+    this.accessError.set('');
+    try {
+      const result = await this.eventsRepo.rotateOwnManagerAccess();
+      this.accessResult.set(result);
+      this.feedback.set(this.i18n.t('managerAccess.rotated'));
+    } catch (error: unknown) {
+      this.accessError.set(toApiError(error).message);
+    } finally {
+      this.rotatingAccess.set(false);
+    }
+  }
+
+  protected closeAccessDialog(): void {
+    this.accessResult.set(null);
   }
 
   protected async retry(): Promise<void> {

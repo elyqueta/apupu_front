@@ -1,6 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { ApiClient } from '../api/api-client';
 import {
+  ApiCreateManagerResult,
   ApiEvent,
   ApiEventManager,
   ApiManagerInviteResult,
@@ -12,8 +13,16 @@ import {
   locationFromView,
   mapEvent,
   mapEventManager,
+  mapTeam,
 } from '../api/mappers';
-import { CreateEventInput, EventManager, HostEvent, ManagerInviteResult } from '../models/models';
+import {
+  CreateEventInput,
+  CreateManagerInput,
+  EventManager,
+  HostEvent,
+  ManagerCreationResult,
+  ManagerInviteResult,
+} from '../models/models';
 import { CachedRepository } from './cached-repository';
 
 interface EventCreateEnvelope {
@@ -161,7 +170,71 @@ export class EventsRepository extends CachedRepository<HostEvent[]> {
     return {
       manager: mapEventManager(response.manager),
       emailStatus: response.invite_email_status,
+      link: response.link,
+      accessCode: response.access_code,
     };
+  }
+
+  /** Cria equipa + gestor na mesma transação (regra do Bloco 2). */
+  async createManagerWithTeam(
+    eventId: string,
+    input: CreateManagerInput
+  ): Promise<ManagerCreationResult> {
+    const response = await this.api.post<ApiCreateManagerResult>(
+      `/host/events/${encodeURIComponent(eventId)}/managers`,
+      {
+        team_name: input.teamName,
+        team_category: input.teamCategory,
+        team_description: input.teamDescription,
+        display_name: input.displayName,
+        email: input.email,
+        phone: input.phone,
+        link_expires_at: input.linkExpiresAt,
+      },
+    );
+    return {
+      manager: mapEventManager(response.manager),
+      team: mapTeam(response.team),
+      link: response.link,
+      accessCode: response.access_code,
+      emailStatus: response.invite_email_status,
+    };
+  }
+
+  async updateManagerLink(
+    eventId: string,
+    managerId: string,
+    linkExpiresAt: string
+  ): Promise<EventManager> {
+    const response = await this.api.patch<{ manager: ApiEventManager }>(
+      `/host/events/${encodeURIComponent(eventId)}/managers/${encodeURIComponent(managerId)}/link`,
+      { link_expires_at: linkExpiresAt },
+    );
+    return mapEventManager(response.manager);
+  }
+
+  async regenerateManagerAccess(
+    eventId: string,
+    managerId: string
+  ): Promise<ManagerCreationResult | ManagerInviteResult> {
+    const response = await this.api.post<ApiManagerInviteResult>(
+      `/host/events/${encodeURIComponent(eventId)}/managers/${encodeURIComponent(managerId)}/access-code`,
+      {},
+    );
+    return {
+      manager: mapEventManager(response.manager),
+      emailStatus: response.invite_email_status,
+      link: response.link,
+      accessCode: response.access_code,
+    };
+  }
+
+  async revokeManagerLink(eventId: string, managerId: string): Promise<EventManager> {
+    const response = await this.api.post<{ manager: ApiEventManager }>(
+      `/host/events/${encodeURIComponent(eventId)}/managers/${encodeURIComponent(managerId)}/revoke`,
+      {},
+    );
+    return mapEventManager(response.manager);
   }
 
   async removeManager(eventId: string, managerId: string): Promise<void> {

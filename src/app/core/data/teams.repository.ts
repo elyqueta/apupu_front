@@ -25,6 +25,7 @@ import {
   TeamCategory,
   TeamEventStatus,
   TeamMember,
+  TeamMemberContact,
   TeamMemberRole,
   TeamMemberStatus,
   TeamMyRole,
@@ -159,13 +160,36 @@ export class TeamsRepository {
     return { items: page.data.map(mapTeamMember), pagination: page.pagination };
   }
 
+  /** Formato novo: uma pessoa de cada vez, com email e/ou telefone. */
+  async addMember(teamId: string, contact: TeamMemberContact): Promise<AddTeamMembersResult> {
+    const result = await this.api.postRaw<ApiAddTeamMembersResult>(
+      `/host/teams/${encodeURIComponent(teamId)}/members`,
+      {
+        members: [
+          {
+            display_name: contact.displayName || null,
+            email: contact.email || null,
+            phone: contact.phone || null,
+          },
+        ],
+      },
+    );
+    return this.mapAddResult(result);
+  }
+
+  /** Formato legado, mantido para clientes antigos e testes existentes. */
   async addMembers(teamId: string, emails: string[]): Promise<AddTeamMembersResult> {
     const result = await this.api.postRaw<ApiAddTeamMembersResult>(
       `/host/teams/${encodeURIComponent(teamId)}/members`,
       { emails },
     );
+    return this.mapAddResult(result);
+  }
+
+  private mapAddResult(result: ApiAddTeamMembersResult): AddTeamMembersResult {
     const toRow = (row: ApiAddTeamMembersResult['added'][number]) => ({
       email: row.email,
+      phone: row.phone ?? null,
       memberId: row.member_id,
       status: row.status,
       reason: row.reason,
@@ -189,6 +213,8 @@ export class TeamsRepository {
     return {
       member: mapTeamMember(result.member),
       eventManagerId: result.event_manager_id,
+      accessCode: result.access_code,
+      accessLink: result.access_link,
     };
   }
 

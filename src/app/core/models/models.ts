@@ -52,10 +52,17 @@ export interface HostEvent {
  * Gestor de um evento, identificado pelo email. Pode não ter conta: nesse
  * caso usa o link enviado por email.
  */
+export type ManagerInviteStatus = 'queued' | 'failed' | 'not_sent';
+
 export interface EventManager {
   id: string;
   eventId: string;
-  email: string;
+  teamId: string;
+  email: string | null;
+  phone: string | null;
+  displayName: string | null;
+  linkExpiresAt: string | null;
+  linkRevokedAt: string | null;
   /** `true` quando já existe uma conta verificada com este email. */
   hasAccount: boolean;
   lastUsedAt: string | null;
@@ -64,7 +71,34 @@ export interface EventManager {
 
 export interface ManagerInviteResult {
   manager: EventManager;
-  emailStatus: 'queued' | 'failed';
+  emailStatus: ManagerInviteStatus;
+  link?: string;
+  accessCode?: string;
+}
+
+export interface CreateManagerInput {
+  teamName: string;
+  teamCategory: TeamCategory;
+  teamDescription: string | null;
+  displayName: string | null;
+  email: string | null;
+  phone: string | null;
+  /** `null` → validade por defeito de 7 dias. */
+  linkExpiresAt: string | null;
+}
+
+export interface ManagerCreationResult {
+  manager: EventManager;
+  team: Team;
+  link: string;
+  accessCode: string;
+  emailStatus: ManagerInviteStatus;
+}
+
+export interface TeamMemberContact {
+  displayName?: string | null;
+  email?: string | null;
+  phone?: string | null;
 }
 
 /** Evento a que um gestor pertence, na página global de equipas. */
@@ -263,8 +297,8 @@ export type TeamEventStatus =
   | 'rascunho';
 
 export type TeamMemberRole = 'gestor' | 'membro';
-export type TeamMemberStatus = 'ativo' | 'convite_pendente';
-export type TeamMemberOrigin = 'convidado' | 'email';
+export type TeamMemberStatus = 'ativo' | 'convite_pendente' | 'convite_telefone';
+export type TeamMemberOrigin = 'convidado' | 'email' | 'telefone';
 
 export type TaskStatus = 'por_fazer' | 'em_curso' | 'concluida';
 export type TaskPriority = 'baixa' | 'normal' | 'alta';
@@ -297,7 +331,8 @@ export interface Team {
 export interface TeamMember {
   id: string;
   teamId: string;
-  email: string;
+  email: string | null;
+  phone: string | null;
   displayName: string | null;
   role: TeamMemberRole;
   status: TeamMemberStatus;
@@ -311,7 +346,8 @@ export interface TeamMember {
 }
 
 export interface TeamMemberAddRow {
-  email: string;
+  email: string | null;
+  phone: string | null;
   memberId: string | null;
   status: TeamMemberStatus;
   reason?: string;
@@ -326,6 +362,8 @@ export interface AddTeamMembersResult {
 export interface UpdateTeamMemberRoleResult {
   member: TeamMember;
   eventManagerId: string | null;
+  accessCode?: string;
+  accessLink?: string;
 }
 
 export interface DeleteTeamResult {

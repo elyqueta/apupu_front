@@ -121,10 +121,17 @@ export interface ApiInvitation {
   event?: Pick<ApiEvent, 'id' | 'title' | 'starts_at' | 'status'>;
 }
 
+export type ApiManagerInviteStatus = 'queued' | 'failed' | 'not_sent';
+
 export interface ApiEventManager {
   id: string;
   event_id: string;
-  email: string;
+  email: string | null;
+  phone: string | null;
+  display_name: string | null;
+  team_id: string;
+  link_expires_at: string | null;
+  link_revoked_at: string | null;
   /** `true` quando já existe uma conta verificada com este email. */
   has_account: boolean;
   last_used_at: string | null;
@@ -134,7 +141,15 @@ export interface ApiEventManager {
 
 export interface ApiManagerInviteResult {
   manager: ApiEventManager;
-  invite_email_status: 'queued' | 'failed';
+  invite_email_status: ApiManagerInviteStatus;
+  link?: string;
+  access_code?: string;
+}
+
+export interface ApiCreateManagerResult extends ApiManagerInviteResult {
+  team: ApiTeam;
+  link: string;
+  access_code: string;
 }
 
 /** Gestor na listagem global de equipas (`GET /host/managers`). */
@@ -189,8 +204,8 @@ export type ApiTeamEventStatus =
   | 'cancelado'
   | 'rascunho';
 export type ApiTeamMemberRole = 'gestor' | 'membro';
-export type ApiTeamMemberStatus = 'ativo' | 'convite_pendente';
-export type ApiTeamMemberOrigin = 'convidado' | 'email';
+export type ApiTeamMemberStatus = 'ativo' | 'convite_pendente' | 'convite_telefone';
+export type ApiTeamMemberOrigin = 'convidado' | 'email' | 'telefone';
 export type ApiTaskStatus = 'por_fazer' | 'em_curso' | 'concluida';
 export type ApiTaskPriority = 'baixa' | 'normal' | 'alta';
 
@@ -223,7 +238,8 @@ export interface ApiTeam {
 export interface ApiTeamMember {
   id: string;
   team_id: string;
-  email: string;
+  email: string | null;
+  phone: string | null;
   display_name: string | null;
   role: ApiTeamMemberRole;
   status: ApiTeamMemberStatus;
@@ -237,7 +253,8 @@ export interface ApiTeamMember {
 }
 
 export interface ApiTeamMemberAddRow {
-  email: string;
+  email: string | null;
+  phone?: string | null;
   member_id: string | null;
   status: ApiTeamMemberStatus;
   reason?: string;
@@ -253,6 +270,8 @@ export interface ApiAddTeamMembersResult {
 export interface ApiUpdateTeamMemberRoleResult {
   member: ApiTeamMember;
   event_manager_id: string | null;
+  access_code?: string;
+  access_link?: string;
 }
 
 export interface ApiDeleteTeamResult {

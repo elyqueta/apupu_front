@@ -23,7 +23,7 @@ O bloco 6 executa a Parte E do bloco 5: uma landing pública em `/`, aviso de pr
 - Secções standalone: hero, benefícios, passos, para quem é, sobre, NS2 Innovation e rodapé.
 - `public-shell.component.ts`: casca das páginas públicas com o aviso “Protótipo — versão em teste”; a landing mostra o aviso nela própria para não duplicar.
 - Componentes reutilizáveis, mobile-first, tema claro/escuro, sem imagens novas nem dependências.
-- SEO básico (título, meta description e Open Graph) em `index.html` / metadados da rota.
+- SEO básico (título, meta description e Open Graph) aplicado via `Title`/`Meta` no `landing.page.ts`.
 
 ### Admin (`src/app/features/admin/**`)
 - `admin.page.ts` + `admin.page.html`: layout com abas (visão geral, eventos, utilizadores, auditoria).

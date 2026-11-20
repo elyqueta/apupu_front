@@ -34,5 +34,6 @@ export class AdminPage {
     { path: '/admin/auditoria', labelKey: 'admin.nav.audit', icon: ICONS['history'] },
     { path: '/admin/apoio', labelKey: 'admin.nav.support', icon: ICONS['envelope'] },
     { path: '/admin/novidades', labelKey: 'admin.nav.newsletter', icon: ICONS['paperPlane'] },
+    { path: '/admin/relatorios', labelKey: 'admin.nav.reports', icon: ICONS['download'] },
   ];
 }

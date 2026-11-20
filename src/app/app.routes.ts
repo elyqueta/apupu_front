@@ -164,6 +164,12 @@ export const routes: Routes = [
             (m) => m.AdminNewsletterComponent,
           ),
       },
+      {
+        path: 'relatorios',
+        title: pageTitle('route.admin.reports'),
+        loadComponent: () =>
+          import('./features/admin/admin-reports.component').then((m) => m.AdminReportsComponent),
+      },
     ],
   },
   {

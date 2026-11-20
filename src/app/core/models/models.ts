@@ -408,3 +408,79 @@ export interface TeamTask {
   createdAt: string;
   updatedAt: string;
 }
+
+/* ------------------------------------------------------------------ */
+
+/**
+ * Permissões do painel de um evento. Derivadas apenas de
+ * `apupu_back/docs/API-CONTRACT.md:573–585` e do middleware das rotas;
+ * nunca de uma suposição sobre o papel de quem está a ver a página.
+ */
+export interface EventPermissions {
+  /** Editar dados do evento (não inclui `status`/`host_email`). */
+  canEditEvent: boolean;
+  /** Adicionar convidados. */
+  canManageGuests: boolean;
+  /** Criar/editar equipas e tarefas. */
+  canManageTeams: boolean;
+  /** Criar/gerir gestores e os respetivos links/códigos. */
+  canManageManagers: boolean;
+  /** Exportar relatórios e documentos. */
+  canExport: boolean;
+  /** Cancelar ou apagar o evento. */
+  canCancelEvent: boolean;
+  /* Ações reservadas que o contrato não inclui nos booleanos acima. */
+  canChangeEventStatus: boolean;
+  canEditExistingGuests: boolean;
+  canDeleteActivity: boolean;
+  canManageTasks: boolean;
+  canResendManageLink: boolean;
+}
+
+/** Anfitrião: todas as ações do contrato. */
+export function hostPermissions(): EventPermissions {
+  return {
+    canEditEvent: true,
+    canManageGuests: true,
+    canManageTeams: true,
+    canManageManagers: true,
+    canExport: true,
+    canCancelEvent: true,
+    canChangeEventStatus: true,
+    canEditExistingGuests: true,
+    canDeleteActivity: true,
+    canManageTasks: true,
+    canResendManageLink: true,
+  };
+}
+
+/**
+ * Gestor por link: apenas o que o contrato e o middleware permitem.
+ * `contractData` é o dado devolvido pela API (`access_role`); quando ausente,
+ * assume-se o papel de gestor (o mais restritivo).
+ */
+export function managerPermissions(
+  contractData: { accessRole?: EventAccessRole | null } = { accessRole: 'manager' },
+): EventPermissions {
+  if (contractData.accessRole === 'host') {
+    return hostPermissions();
+  }
+  return {
+    canEditEvent: true,
+    canManageGuests: true,
+    canManageTeams: false,
+    canManageManagers: false,
+    canExport: false,
+    canCancelEvent: false,
+    canChangeEventStatus: false,
+    canEditExistingGuests: false,
+    canDeleteActivity: false,
+    canManageTasks: false,
+    canResendManageLink: false,
+  };
+}
+
+/** Fábrica única usada pelas duas páginas do painel do evento. */
+export function eventPermissionsFor(accessRole: EventAccessRole): EventPermissions {
+  return accessRole === 'host' ? hostPermissions() : managerPermissions({ accessRole });
+}

@@ -4,13 +4,8 @@
       <app-brand />
       <div class="flex items-center gap-2">
         @if (needsAccount()) {
-          <button
-            type="button"
-            data-testid="account-header-cta"
-            class="inline-flex h-10 items-center gap-2 rounded-xl bg-brand px-3.5 text-xs font-semibold text-on-secondary transition hover:bg-secondary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60"
-            (click)="openAccountModal()"
-          >
-            <fa-icon [icon]="icons['userPlus']" class="text-[10px]" aria-hidden="true" />
+          <button type="button" data-testid="account-header-cta" class="inline-flex h-11 items-center gap-2 rounded-xl bg-brand px-3.5 text-xs font-semibold text-on-secondary transition hover:bg-secondary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60" (click)="openAccountModal()">
+            <fa-icon [icon]="icons['userPlus']" aria-hidden="true" />
             {{ i18n.t('management.createAccount') }}
           </button>
         }
@@ -19,729 +14,208 @@
     </header>
 
     @if (needsAccount()) {
-      <div
-        data-testid="account-banner"
-        class="sticky top-2 z-20 mt-3 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-brand/25 bg-brand/10 px-4 py-3 text-xs text-ink backdrop-blur-xl"
-      >
+      <div data-testid="account-banner" class="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-brand/25 bg-brand/10 px-4 py-3 text-xs text-ink">
         <span class="inline-flex items-center gap-2">
           <fa-icon [icon]="icons['userPlus']" class="text-brand" aria-hidden="true" />
           {{ i18n.t('management.accountBanner') }}
         </span>
-        <button
-          type="button"
-          data-testid="account-banner-cta"
-          class="inline-flex h-9 items-center rounded-xl bg-brand px-3 text-[11px] font-semibold text-on-secondary transition hover:bg-secondary-hover"
-          (click)="openAccountModal()"
-        >
+        <button type="button" data-testid="account-banner-cta" class="inline-flex h-11 items-center rounded-xl bg-brand px-3 text-xs font-semibold text-on-secondary transition hover:bg-secondary-hover" (click)="openAccountModal()">
           {{ i18n.t('management.createAccount') }}
         </button>
       </div>
     }
 
-    <main class="flex-1 py-8 lg:py-12">
-      @if (loading()) {
-        <app-skeleton variant="detail" />
-      } @else if (error()) {
-        <section
-          role="alert"
-          class="mx-auto max-w-xl rounded-4xl border border-coral/25 bg-surface p-6 text-center shadow-card sm:p-8"
-        >
-          <span
-            class="mx-auto grid size-12 place-items-center rounded-2xl border border-coral/25 bg-coral/10 text-coral"
-          >
-            <fa-icon [icon]="icons['warning']" aria-hidden="true" />
-          </span>
-          <h1 class="mt-4 font-display text-xl font-semibold text-ink">
-            {{ i18n.t('management.eventTitle') }}
-          </h1>
-          <p class="mt-2 text-sm leading-6 text-muted">{{ error() }}</p>
-          <div class="mt-5 flex flex-wrap justify-center gap-2">
-            <button
-              type="button"
-              class="inline-flex h-10 items-center gap-2 rounded-xl bg-brand px-4 text-xs font-semibold text-on-secondary transition hover:bg-secondary-hover"
-              (click)="retry()"
-            >
-              <fa-icon [icon]="icons['refresh']" class="text-[10px]" aria-hidden="true" />
-              {{ i18n.t('common.retry') }}
-            </button>
-            <a
-              routerLink="/gestao"
-              class="inline-flex h-10 items-center gap-2 rounded-xl border border-line bg-surface-raised/70 px-4 text-xs font-semibold text-ink transition hover:border-brand/40"
-            >
-              {{ i18n.t('management.goToEntry') }}
-            </a>
-          </div>
-        </section>
-      } @else if (event(); as item) {
-        <div class="flex flex-col gap-4 md:gap-5">
-          <section
-            class="rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl sm:p-7"
-          >
-            <p class="text-[10px] font-semibold uppercase tracking-[0.24em] text-brand-strong">
-              {{ i18n.t('management.eyebrow') }}
-            </p>
-            <div class="mt-2 flex flex-wrap items-start justify-between gap-4">
-              <div class="min-w-0">
-                <h1 class="font-display text-2xl font-semibold tracking-tight text-ink sm:text-3xl">
-                  {{ item.title }}
-                </h1>
-                <p class="mt-2 text-sm leading-6 text-muted">
-                  {{ i18n.t('management.eventDate') }}:
-                  {{ eventDate(item) }}
-                  @if (item.location.name || item.location.address) {
-                    <span class="mx-1.5 text-line">·</span>
-                    {{ item.location.name || item.location.address }}
-                  }
-                </p>
-              </div>
-              <div class="flex flex-col items-end gap-2">
-                <app-status-badge
-                  [value]="item.status === 'scheduled' ? 'published' : item.status"
-                />
-                @if (!isHost()) {
-                  <span
-                    class="inline-flex items-center gap-1 rounded-full border border-aqua/30 bg-aqua/10 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.14em] text-aqua"
-                  >
-                    <fa-icon [icon]="icons['guestGroup']" class="text-[9px]" aria-hidden="true" />
-                    {{ i18n.t('eventDetail.roleManager') }}
-                  </span>
-                }
-              </div>
-            </div>
-
-            <div class="mt-5 grid gap-2 sm:grid-cols-4">
-              <div class="rounded-2xl border border-line bg-surface-raised/50 p-3">
-                <p class="text-[10px] uppercase tracking-[0.14em] text-muted">
-                  {{ i18n.t('management.guestsTitle') }}
-                </p>
-                <p class="mt-1 text-xl font-semibold text-ink">{{ invitations().length }}</p>
-              </div>
-              <div class="rounded-2xl border border-line bg-surface-raised/50 p-3">
-                <p class="text-[10px] uppercase tracking-[0.14em] text-muted">
-                  {{ i18n.t('management.accepted') }}
-                </p>
-                <p class="mt-1 text-xl font-semibold text-mint">
-                  {{ item.stats?.accepted ?? 0 }}
-                </p>
-              </div>
-              <div class="rounded-2xl border border-line bg-surface-raised/50 p-3">
-                <p class="text-[10px] uppercase tracking-[0.14em] text-muted">
-                  {{ i18n.t('management.pending') }}
-                </p>
-                <p class="mt-1 text-xl font-semibold text-amber">
-                  {{ item.stats?.pending ?? 0 }}
-                </p>
-              </div>
-              <div class="rounded-2xl border border-line bg-surface-raised/50 p-3">
-                <p class="text-[10px] uppercase tracking-[0.14em] text-muted">
-                  {{ i18n.t('management.declined') }}
-                </p>
-                <p class="mt-1 text-xl font-semibold text-muted">
-                  {{ item.stats?.declined ?? 0 }}
-                </p>
-              </div>
-            </div>
-          </section>
-
-          @if (actionError()) {
-            <p
-              role="alert"
-              class="rounded-2xl border border-coral/25 bg-coral/5 p-3 text-xs leading-5 text-coral"
-            >
-              {{ actionError() }}
-            </p>
-          }
-          @if (feedback()) {
-            <p
-              role="status"
-              class="rounded-2xl border border-mint/25 bg-mint/5 p-3 text-xs leading-5 text-mint"
-            >
-              {{ feedback() }}
-            </p>
-          }
-
-          <section
-            class="rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl sm:p-7"
-          >
-            <div class="flex items-start justify-between gap-3">
-              <div>
-                <h2 class="text-sm font-semibold text-ink">
-                  {{ i18n.t('management.detailsTitle') }}
-                </h2>
-                <p class="mt-1 text-xs text-muted">{{ i18n.t('management.detailsHint') }}</p>
-              </div>
-              <span
-                class="grid size-9 place-items-center rounded-xl border border-line bg-surface-raised text-brand-strong"
-              >
-                <fa-icon [icon]="icons['pen']" class="text-xs" aria-hidden="true" />
-              </span>
-            </div>
-
-            <form
-              class="mt-4 flex flex-col gap-3"
-              [formGroup]="editForm"
-              (ngSubmit)="saveDetails()"
-            >
-              <label class="block">
-                <span
-                  class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted"
-                >
-                  {{ i18n.t('eventDetail.fieldTitle') }}
-                </span>
-                <input
-                  formControlName="title"
-                  type="text"
-                  maxlength="150"
-                  class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink outline-none transition focus:border-brand/50"
-                />
-              </label>
-
-              @if (item.location.type === 'venue') {
-                <div class="grid gap-3 sm:grid-cols-2">
-                  <label class="block">
-                    <span
-                      class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted"
-                    >
-                      {{ i18n.t('eventDetail.fieldVenue') }}
-                    </span>
-                    <input
-                      formControlName="venue"
-                      type="text"
-                      maxlength="200"
-                      class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink outline-none transition focus:border-brand/50"
-                    />
-                    @if (editForm.controls.venue.touched && !editForm.controls.venue.value.trim()) {
-                      <span class="mt-1 block text-[11px] text-coral">
-                        {{ i18n.t('create.errors.required') }}
-                      </span>
-                    }
-                  </label>
-                  <label class="block">
-                    <span
-                      class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted"
-                    >
-                      {{ i18n.t('eventDetail.fieldCity') }}
-                    </span>
-                    <input
-                      formControlName="city"
-                      type="text"
-                      maxlength="300"
-                      class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink outline-none transition focus:border-brand/50"
-                    />
-                  </label>
-                </div>
-              } @else if (item.location.online_url) {
-                <p
-                  class="rounded-xl border border-line bg-surface-raised/60 p-3 text-[11px] leading-5 text-muted"
-                >
-                  {{ i18n.t('eventDetail.online') }}: {{ item.location.online_url }}
-                </p>
-              }
-
-              <label class="block">
-                <span
-                  class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted"
-                >
-                  {{ i18n.t('eventDetail.fieldMessage') }}
-                </span>
-                <textarea
-                  formControlName="message"
-                  rows="4"
-                  maxlength="4000"
-                  class="w-full rounded-xl border border-line bg-surface-raised px-3 py-2.5 text-sm leading-6 text-ink outline-none transition focus:border-brand/50"
-                ></textarea>
-              </label>
-
-              <div class="grid gap-3 sm:grid-cols-2">
-                <label class="block">
-                  <span
-                    class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted"
-                  >
-                    {{ i18n.t('eventDetail.fieldRules') }}
-                  </span>
-                  <textarea
-                    formControlName="rules"
-                    rows="3"
-                    maxlength="4000"
-                    class="w-full rounded-xl border border-line bg-surface-raised px-3 py-2.5 text-sm leading-6 text-ink outline-none transition focus:border-brand/50"
-                  ></textarea>
-                </label>
-                <label class="block">
-                  <span
-                    class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted"
-                  >
-                    {{ i18n.t('eventDetail.fieldDress') }}
-                  </span>
-                  <textarea
-                    formControlName="dressCode"
-                    rows="3"
-                    maxlength="200"
-                    class="w-full rounded-xl border border-line bg-surface-raised px-3 py-2.5 text-sm leading-6 text-ink outline-none transition focus:border-brand/50"
-                  ></textarea>
-                </label>
-              </div>
-
-              <div class="flex justify-end">
-                <button
-                  type="submit"
-                  [disabled]="editForm.invalid || pendingAction() !== null"
-                  class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-brand px-4 text-xs font-semibold text-on-secondary transition hover:bg-secondary-hover disabled:cursor-wait disabled:opacity-60"
-                >
-                  <fa-icon
-                    [icon]="icons[pendingAction() === 'details' ? 'spinner' : 'check']"
-                    [class.animate-spin]="pendingAction() === 'details'"
-                    class="text-[10px]"
-                    aria-hidden="true"
-                  />
-                  {{
-                    pendingAction() === 'details'
-                      ? i18n.t('common.saving')
-                      : i18n.t('eventDetail.saveChanges')
-                  }}
-                </button>
-              </div>
-            </form>
-          </section>
-
-          <section
-            class="rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl sm:p-7"
-          >
-            <div class="flex items-start justify-between gap-3">
-              <div>
-                <h2 class="text-sm font-semibold text-ink">
-                  {{ i18n.t('eventDetail.coverTitle') }}
-                </h2>
-                <p class="mt-1 text-xs text-muted">{{ i18n.t('eventDetail.coverHint') }}</p>
-              </div>
-              <span
-                class="grid size-9 place-items-center rounded-xl border border-line bg-surface-raised text-brand-strong"
-              >
-                <fa-icon [icon]="icons['image']" class="text-xs" aria-hidden="true" />
-              </span>
-            </div>
-
-            @if (item.cover_url) {
-              <div class="mt-4 overflow-hidden rounded-2xl border border-line">
-                <img
-                  [src]="item.cover_url"
-                  [alt]="item.title"
-                  class="aspect-video w-full object-cover"
-                />
-              </div>
-              <button
-                type="button"
-                [disabled]="pendingAction() !== null"
-                class="mt-2 inline-flex h-9 items-center gap-2 rounded-lg border border-coral/30 bg-coral/10 px-3 text-[11px] font-semibold text-coral transition hover:bg-coral/15 disabled:opacity-50"
-                (click)="removeCover()"
-              >
-                <fa-icon [icon]="icons['trash']" class="text-[10px]" aria-hidden="true" />
-                {{ i18n.t('eventDetail.coverRemove') }}
-              </button>
-            } @else {
-              <p class="mt-4 rounded-2xl border border-dashed border-line p-4 text-xs text-muted">
-                {{ i18n.t('eventDetail.coverEmpty') }}
-              </p>
-            }
-
-            <form
-              class="mt-4 flex flex-col gap-2"
-              [formGroup]="coverForm"
-              (ngSubmit)="setCoverUrl()"
-            >
-              <label class="block">
-                <span
-                  class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted"
-                >
-                  {{ i18n.t('eventDetail.coverUrl') }}
-                </span>
-                <input
-                  type="url"
-                  formControlName="url"
-                  class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink outline-none transition placeholder:text-muted/60 focus:border-brand/50"
-                  placeholder="https://…"
-                />
-              </label>
-              @if (coverForm.controls.url.touched && coverForm.controls.url.invalid) {
-                <span class="text-[11px] text-coral">{{
-                  i18n.t('eventDetail.coverUrlInvalid')
-                }}</span>
-              }
-              <button
-                type="submit"
-                [disabled]="pendingAction() !== null"
-                class="inline-flex h-10 w-fit items-center gap-2 rounded-xl bg-brand px-3.5 text-xs font-semibold text-on-secondary transition hover:bg-secondary-hover disabled:cursor-wait disabled:opacity-60"
-              >
-                <fa-icon [icon]="icons['link']" class="text-[10px]" aria-hidden="true" />
-                {{ i18n.t('eventDetail.coverUseUrl') }}
-              </button>
-            </form>
-
-            <div class="mt-4 border-t border-line pt-4">
-              <label
-                class="inline-flex h-10 cursor-pointer items-center gap-2 rounded-xl border border-line bg-surface-raised px-3.5 text-xs font-semibold text-ink transition hover:border-brand/40"
-              >
-                <fa-icon
-                  [icon]="icons['camera']"
-                  class="text-[11px] text-muted"
-                  aria-hidden="true"
-                />
-                {{ i18n.t('eventDetail.coverUpload') }}
-                <input
-                  type="file"
-                  accept="image/png,image/jpeg,image/webp"
-                  class="sr-only"
-                  [disabled]="coverUploading()"
-                  (change)="onCoverFile($event)"
-                />
-              </label>
-
-              @if (coverUploading()) {
-                <div class="mt-3">
-                  <div class="flex items-center justify-between text-[10px] text-muted">
-                    <span>{{ i18n.t('eventDetail.coverUploading') }}</span>
-                    <span class="font-semibold text-ink">{{ coverProgress() }}%</span>
-                  </div>
-                  <div class="mt-1.5 h-1.5 overflow-hidden rounded-full bg-line">
-                    <div
-                      class="h-full rounded-full bg-brand transition-all"
-                      [style.width.%]="coverProgress()"
-                    ></div>
-                  </div>
-                  <button
-                    type="button"
-                    class="mt-2 inline-flex h-8 items-center gap-1.5 rounded-lg border border-coral/30 bg-coral/10 px-2.5 text-[10px] font-semibold text-coral"
-                    (click)="cancelCoverUpload()"
-                  >
-                    {{ i18n.t('eventDetail.coverCancel') }}
-                  </button>
-                </div>
-              }
-            </div>
-          </section>
-
-          <div class="grid items-start gap-5 lg:grid-cols-[minmax(0,0.72fr)_minmax(0,1.28fr)]">
-            <section
-              class="rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl"
-            >
-              <div class="flex items-start justify-between gap-3">
-                <div>
-                  <h2 class="text-sm font-semibold text-ink">
-                    {{ i18n.t('management.addGuestTitle') }}
-                  </h2>
-                  <p class="mt-1 text-xs text-muted">{{ i18n.t('management.addGuestHint') }}</p>
-                </div>
-                <span
-                  class="grid size-9 place-items-center rounded-xl border border-line bg-surface-raised text-brand-strong"
-                >
-                  <fa-icon [icon]="icons['userPlus']" class="text-xs" aria-hidden="true" />
-                </span>
-              </div>
-
-              <form
-                class="mt-4 flex flex-col gap-3"
-                [formGroup]="guestForm"
-                (ngSubmit)="addGuest()"
-              >
-                <label class="block">
-                  <span
-                    class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted"
-                  >
-                    {{ i18n.t('common.name') }}
-                  </span>
-                  <input
-                    formControlName="name"
-                    type="text"
-                    autocomplete="name"
-                    required
-                    maxlength="160"
-                    class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink outline-none transition focus:border-brand/50"
-                  />
-                </label>
-                <label class="block">
-                  <span
-                    class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted"
-                  >
-                    {{ i18n.t('common.email') }}
-                  </span>
-                  <input
-                    formControlName="email"
-                    type="email"
-                    autocomplete="email"
-                    required
-                    maxlength="254"
-                    class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink outline-none transition focus:border-brand/50"
-                  />
-                </label>
-                <label class="block">
-                  <span
-                    class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted"
-                  >
-                    {{ i18n.t('common.phone') }} · {{ i18n.t('common.optional') }}
-                  </span>
-                  <input
-                    formControlName="phone"
-                    appPhoneMask
-                    type="tel"
-                    autocomplete="tel"
-                    maxlength="40"
-                    class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink outline-none transition focus:border-brand/50"
-                  />
-                  <span class="mt-1 block text-[10px] text-muted">{{
-                    i18n.t('common.phoneHint')
-                  }}</span>
-                </label>
-                <button
-                  type="submit"
-                  [disabled]="guestForm.invalid || pendingAction() !== null"
-                  class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-brand px-4 text-xs font-semibold text-on-secondary transition hover:bg-secondary-hover disabled:cursor-wait disabled:opacity-60"
-                >
-                  <fa-icon
-                    [icon]="icons[pendingAction() === 'add' ? 'spinner' : 'plus']"
-                    [class.animate-spin]="pendingAction() === 'add'"
-                    class="text-[10px]"
-                    aria-hidden="true"
-                  />
-                  {{ pendingAction() === 'add' ? i18n.t('common.saving') : i18n.t('common.add') }}
-                </button>
-              </form>
-            </section>
-
-            <section
-              class="rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl"
-            >
-              <div class="flex flex-wrap items-center justify-between gap-2">
-                <div>
-                  <h2 class="text-sm font-semibold text-ink">
-                    {{ i18n.t('management.guestsTitle') }}
-                  </h2>
-                  <p class="mt-1 text-xs text-muted">
-                    {{ invitations().length }} {{ i18n.t('management.guestCount') }}
-                  </p>
-                </div>
-                <fa-icon
-                  [icon]="icons['userPlus']"
-                  class="text-sm text-brand-strong"
-                  aria-hidden="true"
-                />
-              </div>
-
-              @if (invitations().length === 0) {
-                <div
-                  class="mt-4 rounded-2xl border border-dashed border-line bg-surface-raised/30 p-6 text-center"
-                >
-                  <p class="text-xs leading-5 text-muted">{{ i18n.t('management.emptyGuests') }}</p>
-                </div>
-              } @else {
-                <ul class="mt-4 flex flex-col gap-2">
-                  @for (guest of invitations(); track guest.id) {
-                    <li class="rounded-2xl border border-line bg-surface-raised/40 p-3">
-                      <div class="flex flex-wrap items-start justify-between gap-3">
-                        <div class="min-w-0">
-                          <p class="truncate text-xs font-semibold text-ink">
-                            {{ guest.guest_name }}
-                          </p>
-                          <p class="mt-0.5 break-all text-[10px] text-muted">
-                            {{ guest.guest_email }}
-                          </p>
-                          <span
-                            class="mt-2 inline-flex rounded-full border border-line bg-surface px-2 py-0.5 text-[9px] font-semibold text-muted"
-                          >
-                            {{ rsvpLabel(guest.rsvp_status) }}
-                          </span>
-                        </div>
-                        @if (isHost()) {
-                          <div class="flex shrink-0 gap-1.5">
-                            <button
-                              type="button"
-                              [disabled]="pendingAction() !== null"
-                              [attr.aria-label]="i18n.t('management.resend')"
-                              class="grid size-8 place-items-center rounded-lg border border-line bg-surface text-muted transition hover:border-brand/40 hover:text-brand-strong disabled:opacity-50"
-                              (click)="resend(guest)"
-                            >
-                              <fa-icon
-                                [icon]="
-                                  icons[pendingAction() === guest.id ? 'spinner' : 'envelope']
-                                "
-                                [class.animate-spin]="pendingAction() === guest.id"
-                                class="text-[10px]"
-                                aria-hidden="true"
-                              />
-                            </button>
-                            <button
-                              type="button"
-                              [disabled]="pendingAction() !== null"
-                              [attr.aria-label]="i18n.t('common.remove')"
-                              class="grid size-8 place-items-center rounded-lg border border-coral/20 bg-coral/5 text-coral transition hover:bg-coral/10 disabled:opacity-50"
-                              (click)="remove(guest)"
-                            >
-                              <fa-icon
-                                [icon]="icons['trash']"
-                                class="text-[10px]"
-                                aria-hidden="true"
-                              />
-                            </button>
-                          </div>
-                        } @else {
-                          <p class="text-right text-[10px] text-muted">
-                            {{ i18n.t('eventDetail.actionsHostOnly') }}
-                          </p>
-                        }
-                      </div>
-                    </li>
-                  }
-                </ul>
-              }
-            </section>
-          </div>
-
-          <section
-            class="rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl"
-          >
-            <div class="flex flex-wrap items-center justify-between gap-2">
-              <div>
-                <h2 class="text-sm font-semibold text-ink">
-                  {{ i18n.t('eventDetail.activityTitle') }}
-                </h2>
-                <p class="mt-1 text-xs text-muted">{{ i18n.t('management.eventSubtitle') }}</p>
-              </div>
-              <fa-icon
-                [icon]="icons['clock']"
-                class="text-sm text-brand-strong"
-                aria-hidden="true"
-              />
-            </div>
-
-            @if (activityLoading() && activityItems().length === 0) {
-              <p class="mt-4 text-xs text-muted">{{ i18n.t('common.loading') }}…</p>
-            } @else if (activityItems().length === 0) {
-              <div
-                class="mt-4 rounded-2xl border border-dashed border-line bg-surface-raised/30 p-6 text-center"
-              >
-                <p class="text-xs leading-5 text-muted">{{ i18n.t('eventDetail.noActivity') }}</p>
-              </div>
-            } @else {
-              <ol class="mt-4 flex flex-col gap-1">
-                @for (entry of activityItems(); track entry.id) {
-                  <li
-                    class="flex items-start gap-3 rounded-2xl p-2 transition hover:bg-surface-raised/60"
-                  >
-                    <span
-                      class="mt-0.5 grid size-8 shrink-0 place-items-center rounded-xl border"
-                      [class]="activityTone(entry.kind)"
-                    >
-                      <fa-icon
-                        [icon]="activityIcon(entry.kind)"
-                        class="text-[10px]"
-                        aria-hidden="true"
-                      />
-                    </span>
-                    <div class="min-w-0 flex-1">
-                      <p class="text-xs leading-5 text-ink">{{ activityText(entry) }}</p>
-                      <p class="mt-0.5 text-[10px] text-muted">{{ i18n.relative(entry.at) }}</p>
-                    </div>
-                    @if (isHost()) {
-                      <button
-                        type="button"
-                        [disabled]="pendingAction() !== null"
-                        [attr.aria-label]="i18n.t('common.remove')"
-                        class="grid size-7 shrink-0 place-items-center rounded-lg border border-coral/20 bg-coral/5 text-coral transition hover:bg-coral/10 disabled:opacity-50"
-                        (click)="removeActivity(entry)"
-                      >
-                        <fa-icon [icon]="icons['trash']" class="text-[9px]" aria-hidden="true" />
-                      </button>
-                    }
-                  </li>
-                }
-              </ol>
-
-              @if (activityPagination(); as page) {
-                @if (page.total_pages > 1) {
-                  <div
-                    class="mt-3 flex items-center justify-between gap-2 border-t border-line pt-3"
-                  >
-                    <button
-                      type="button"
-                      class="inline-flex h-8 items-center gap-1.5 rounded-lg border border-line bg-surface-raised/60 px-2.5 text-[10px] font-semibold text-ink transition hover:border-brand/40 disabled:opacity-50"
-                      [disabled]="page.page <= 1 || activityLoading()"
-                      (click)="goToActivityPage(page.page - 1)"
-                    >
-                      <fa-icon
-                        [icon]="icons['chevronLeft']"
-                        class="text-[8px]"
-                        aria-hidden="true"
-                      />
-                      {{ i18n.t('common.previous') }}
-                    </button>
-                    <span class="text-[10px] text-muted">
-                      {{
-                        i18n.t('eventDetail.activityPage', {
-                          page: page.page,
-                          total: page.total_pages,
-                        })
-                      }}
-                    </span>
-                    <button
-                      type="button"
-                      class="inline-flex h-8 items-center gap-1.5 rounded-lg border border-line bg-surface-raised/60 px-2.5 text-[10px] font-semibold text-ink transition hover:border-brand/40 disabled:opacity-50"
-                      [disabled]="page.page >= page.total_pages || activityLoading()"
-                      (click)="goToActivityPage(page.page + 1)"
-                    >
-                      {{ i18n.t('common.next') }}
-                      <fa-icon
-                        [icon]="icons['chevronRight']"
-                        class="text-[8px]"
-                        aria-hidden="true"
-                      />
-                    </button>
-                  </div>
-                }
-              }
-            }
-          </section>
+    @if (loading()) {
+      <app-skeleton variant="detail" />
+    } @else if (error()) {
+      <section role="alert" class="mx-auto max-w-xl rounded-4xl border border-coral/25 bg-surface p-6 text-center shadow-card sm:p-8">
+        <span class="mx-auto grid size-12 place-items-center rounded-2xl border border-coral/25 bg-coral/10 text-coral"><fa-icon [icon]="icons['warning']" aria-hidden="true" /></span>
+        <h1 class="mt-4 font-display text-xl font-semibold text-ink">{{ i18n.t('management.eventTitle') }}</h1>
+        <p class="mt-2 text-xs leading-6 text-muted">{{ error() }}</p>
+        <div class="mt-5 flex flex-wrap justify-center gap-2">
+          <button type="button" class="inline-flex h-11 items-center gap-2 rounded-xl bg-brand px-4 text-xs font-semibold text-on-secondary transition hover:bg-secondary-hover" (click)="retry()">
+            <fa-icon [icon]="icons['refresh']" aria-hidden="true" />
+            {{ i18n.t('common.retry') }}
+          </button>
+          <a routerLink="/gestao" class="inline-flex h-11 items-center gap-2 rounded-xl border border-line bg-surface-raised/70 px-4 text-xs font-semibold text-ink transition hover:border-brand/40">
+            {{ i18n.t('management.goToEntry') }}
+          </a>
         </div>
-      }
-    </main>
+      </section>
+    } @else if (event(); as item) {
+      <header class="sticky top-2 z-30 mb-4 rounded-3xl border border-line bg-surface/90 px-4 py-3 shadow-card backdrop-blur-xl sm:px-5">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <a routerLink="/gestao" class="inline-flex min-h-11 items-center gap-2 text-xs font-semibold text-muted transition hover:text-ink">
+            <fa-icon [icon]="icons['chevronLeft']" aria-hidden="true" />
+            {{ i18n.t('eventDetail.backToManagement') }}
+          </a>
+          <div class="flex flex-wrap items-center gap-2">
+            @if (permissions().canEditEvent) {
+              <button type="button" class="inline-flex h-11 items-center gap-2 rounded-xl border border-line bg-surface px-3 text-xs font-semibold text-ink transition hover:border-brand/40" (click)="openEditModal()">
+                <fa-icon [icon]="icons['pen']" aria-hidden="true" />
+                {{ i18n.t('eventDetail.editEvent') }}
+              </button>
+              <button type="button" class="inline-flex h-11 items-center gap-2 rounded-xl border border-line bg-surface px-3 text-xs font-semibold text-ink transition hover:border-brand/40" (click)="openCoverModal()">
+                <fa-icon [icon]="icons['camera']" aria-hidden="true" />
+                {{ i18n.t('eventDetail.coverTitle') }}
+              </button>
+            }
+          </div>
+        </div>
+        <div class="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted">
+          <span class="font-semibold uppercase tracking-wider text-brand">{{ i18n.t('eventDetail.contextEvent') }}</span>
+          <span aria-hidden="true">·</span>
+          <span>{{ item.venue }}, {{ item.city }}</span>
+          <span class="rounded-full border border-aqua/30 bg-aqua/10 px-2 py-0.5 text-xs font-semibold uppercase tracking-wider text-aqua">{{ i18n.t('eventDetail.roleManager') }}</span>
+        </div>
+        <h1 class="font-display text-xl font-semibold tracking-tight text-ink sm:text-2xl">{{ item.title }}</h1>
+      </header>
 
-    <footer class="flex flex-wrap items-center justify-between gap-2 text-[10px] text-muted/70">
-      <p>{{ i18n.t('footer.rights', { year: 2026 }) }}</p>
-      <span>{{ i18n.t('footer.made') }}</span>
-    </footer>
+      <nav class="mb-4 flex gap-1 overflow-x-auto border-b border-line pb-2" role="tablist" [attr.aria-label]="i18n.t('eventDetail.detailsTitle')">
+        @for (definition of tabs; track definition.id) {
+          <button type="button" role="tab" class="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-xl px-3 text-xs font-semibold transition" [class]="tab() === definition.id ? 'border border-brand/30 bg-brand/15 text-ink' : 'border border-line text-muted hover:bg-surface-raised/60 hover:text-ink'" [attr.aria-selected]="tab() === definition.id" (click)="setTab(definition.id)">
+            <fa-icon [icon]="icons[definition.icon]" aria-hidden="true" />
+            {{ i18n.t(definition.labelKey) }}
+            @if (definition.id === 'convidados') { <span class="rounded-full bg-surface-raised px-2 text-xs text-muted">{{ stats().total }}</span> }
+          </button>
+        }
+      </nav>
 
-    <app-confirm-dialog
-      [open]="confirmTarget() !== null"
-      [title]="i18n.t('common.remove')"
-      [message]="confirmMessage()"
-      [confirmLabel]="i18n.t('common.remove')"
-      [cancelLabel]="i18n.t('common.cancel')"
-      tone="danger"
-      (confirmed)="confirmRemoval()"
-      (cancelled)="confirmTarget.set(null)"
-    />
+      <main class="flex flex-1 flex-col gap-4">
+        @if (actionError()) { <p role="alert" class="rounded-2xl border border-coral/25 bg-coral/5 p-3 text-xs leading-5 text-coral">{{ actionError() }}</p> }
+        @if (feedback()) { <p role="status" class="rounded-2xl border border-mint/25 bg-mint/5 p-3 text-xs leading-5 text-mint">{{ feedback() }}</p> }
 
-    <app-modal
-      [open]="accountModalOpen()"
-      [title]="i18n.t('management.accountModalTitle')"
-      size="sm"
-      (closed)="closeAccountModal()"
-    >
-      <p class="text-sm leading-6 text-muted">{{ i18n.t('management.accountModalMessage') }}</p>
-      <div modal-footer class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-        <button
-          type="button"
-          class="inline-flex h-11 items-center justify-center rounded-xl border border-line bg-surface-raised px-4 text-sm font-semibold text-ink transition hover:border-brand/40"
-          (click)="closeAccountModal()"
-        >
-          {{ i18n.t('management.continueWithout') }}
-        </button>
-        <button
-          type="button"
-          data-testid="account-modal-create"
-          class="inline-flex h-11 items-center justify-center rounded-xl bg-brand px-4 text-sm font-semibold text-on-secondary transition hover:bg-secondary-hover"
-          (click)="createAccount()"
-        >
-          {{ i18n.t('management.createAccount') }}
-        </button>
-      </div>
-    </app-modal>
+        @if (tab() === 'resumo') {
+          <div class="grid gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
+            <app-event-summary [event]="item" [stats]="stats()" [typeLabel]="typeLabel()" [templateName]="templateName()" [permissions]="permissions()" [isManagement]="true" [deadlinePassed]="deadlinePassed()" (editEvent)="openEditModal()" (copyInvitation)="copyInvitation()" (openInvitation)="openInvitation()" />
+            <div class="flex flex-col gap-4">
+              <app-event-tasks-section [tasks]="tasks()" [doneCount]="tasksDone()" [permissions]="permissions()" (toggleTask)="onTaskToggle()" />
+              <app-event-teams-section [teams]="teams()" [loading]="teamsLoading()" [permissions]="permissions()" [eventId]="item.id" (openTeam)="openTeam($event)" />
+            </div>
+          </div>
+        }
+
+        @if (tab() === 'convidados') {
+          <div id="event-guests-list" class="scroll-mt-24">
+            <app-event-guests-section [entries]="guestItems()" [pagination]="guestPagination()" [stats]="stats()" [counts]="guestCounts()" [loading]="guestLoading()" [loaded]="guestListLoaded()" [search]="guestSearch()" [filter]="guestFilter()" [rangeLabel]="guestRangeLabel()" [permissions]="permissions()" (searchChange)="onGuestSearch($event)" (filterChange)="setGuestFilter($event)" (pageChange)="goToGuestPage($event)" (addGuest)="openGuestCreate()" />
+          </div>
+        }
+
+        @if (tab() === 'equipas') {
+          <app-event-teams-section [teams]="teams()" [loading]="teamsLoading()" [permissions]="permissions()" [eventId]="item.id" (openTeam)="openTeam($event)" />
+        }
+
+        @if (tab() === 'gestores') {
+          <app-event-managers-section [managers]="managers()" [teams]="teams()" [permissions]="permissions()" [loading]="managersLoading()" [maxValidityDate]="maxValidityDate()" />
+        }
+
+        @if (tab() === 'atividade') {
+          <app-event-activity-section [items]="activityItems()" [pagination]="activityPagination()" [loading]="activityLoading()" [eventTitle]="item.title" [permissions]="permissions()" (pageChange)="goToActivityPage($event)" />
+        }
+      </main>
+
+      <app-guest-dialog [open]="guestDialogOpen()" [fixedEventId]="item.id" (closed)="closeGuestDialog()" />
+
+      <app-modal [open]="editModalOpen()" [title]="i18n.t('eventDetail.settingsTitle')" size="lg" (closed)="closeEditModal()">
+        <form id="app-management-edit-form" class="flex flex-col gap-4" [formGroup]="editForm" (ngSubmit)="saveDetails()">
+          <label class="block">
+            <span class="mb-1.5 block text-xs font-semibold text-muted">{{ i18n.t('eventDetail.fieldTitle') }}</span>
+            <input type="text" formControlName="title" maxlength="150" class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink outline-none focus:border-brand/50" />
+          </label>
+          <div class="grid gap-4 sm:grid-cols-2">
+            <label class="block">
+              <span class="mb-1.5 block text-xs font-semibold text-muted">{{ i18n.t('eventDetail.fieldVenue') }}</span>
+              <input type="text" formControlName="venue" maxlength="200" class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink outline-none focus:border-brand/50" />
+            </label>
+            <label class="block">
+              <span class="mb-1.5 block text-xs font-semibold text-muted">{{ i18n.t('eventDetail.fieldCity') }}</span>
+              <input type="text" formControlName="city" maxlength="300" class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink outline-none focus:border-brand/50" />
+            </label>
+          </div>
+          <label class="block">
+            <span class="mb-1.5 block text-xs font-semibold text-muted">{{ i18n.t('eventDetail.fieldMessage') }}</span>
+            <textarea formControlName="message" rows="4" maxlength="4000" class="w-full rounded-xl border border-line bg-surface-raised px-3 py-2.5 text-sm leading-6 text-ink outline-none focus:border-brand/50"></textarea>
+          </label>
+          <div class="grid gap-4 sm:grid-cols-2">
+            <label class="block">
+              <span class="mb-1.5 block text-xs font-semibold text-muted">{{ i18n.t('eventDetail.fieldRules') }}</span>
+              <textarea formControlName="rules" rows="3" maxlength="4000" class="w-full rounded-xl border border-line bg-surface-raised px-3 py-2.5 text-sm leading-6 text-ink outline-none focus:border-brand/50"></textarea>
+            </label>
+            <label class="block">
+              <span class="mb-1.5 block text-xs font-semibold text-muted">{{ i18n.t('eventDetail.fieldDress') }}</span>
+              <textarea formControlName="dressCode" rows="3" maxlength="200" class="w-full rounded-xl border border-line bg-surface-raised px-3 py-2.5 text-sm leading-6 text-ink outline-none focus:border-brand/50"></textarea>
+            </label>
+          </div>
+        </form>
+        @if (actionError()) { <p role="alert" class="mt-3 rounded-xl border border-coral/25 bg-coral/5 p-3 text-xs leading-5 text-coral">{{ actionError() }}</p> }
+        @if (feedback()) { <p role="status" class="mt-3 rounded-xl border border-mint/25 bg-mint/5 p-3 text-xs leading-5 text-mint">{{ feedback() }}</p> }
+        <div modal-footer class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <button type="button" class="inline-flex h-11 items-center justify-center rounded-xl border border-line bg-surface-raised px-4 text-sm font-semibold text-ink transition hover:border-brand/40" (click)="closeEditModal()">{{ i18n.t('common.cancel') }}</button>
+          <button type="submit" form="app-management-edit-form" class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-brand px-4 text-sm font-semibold text-on-secondary transition hover:bg-secondary-hover" [disabled]="pendingAction() === 'details'">
+            <fa-icon [icon]="icons['check']" aria-hidden="true" />
+            {{ i18n.t('eventDetail.saveChanges') }}
+          </button>
+        </div>
+      </app-modal>
+
+      <app-modal [open]="coverModalOpen()" [title]="i18n.t('eventDetail.coverTitle')" (closed)="closeCoverModal()">
+        @if (item.coverUrl) {
+          <div class="overflow-hidden rounded-2xl border border-line"><img [src]="item.coverUrl" [alt]="item.title" class="aspect-video w-full object-cover" /></div>
+          <button type="button" class="mt-2 inline-flex h-11 items-center gap-2 rounded-xl border border-coral/30 bg-coral/10 px-3 text-xs font-semibold text-coral transition hover:bg-coral/15" (click)="removeCover()">
+            <fa-icon [icon]="icons['trash']" aria-hidden="true" />
+            {{ i18n.t('eventDetail.coverRemove') }}
+          </button>
+        } @else {
+          <p class="rounded-2xl border border-dashed border-line p-4 text-xs text-muted">{{ i18n.t('eventDetail.coverEmpty') }}</p>
+        }
+        <form id="app-management-cover-form" class="mt-4 flex flex-col gap-3" [formGroup]="coverForm" (ngSubmit)="setCoverUrl()">
+          <label class="block">
+            <span class="mb-1.5 block text-xs font-semibold text-muted">{{ i18n.t('eventDetail.coverUrl') }}</span>
+            <input type="url" formControlName="url" class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-xs text-ink outline-none focus:border-brand/50" />
+            @if (coverForm.controls.url.touched && coverForm.controls.url.invalid) { <span class="mt-1 block text-xs text-coral">{{ i18n.t('eventDetail.coverUrlInvalid') }}</span> }
+          </label>
+          <label class="inline-flex h-11 cursor-pointer items-center gap-2 rounded-xl border border-line bg-surface-raised px-3 text-xs font-semibold text-ink transition hover:border-brand/40">
+            <fa-icon [icon]="icons['camera']" aria-hidden="true" />
+            {{ i18n.t('eventDetail.coverUpload') }}
+            <input type="file" accept="image/png,image/jpeg,image/webp" class="sr-only" [disabled]="coverUploading()" (change)="onCoverFile($event)" />
+          </label>
+          @if (coverUploading()) {
+            <div>
+              <div class="flex items-center justify-between text-xs text-muted">
+                <span>{{ i18n.t('eventDetail.coverUploading') }}</span>
+                <span class="font-semibold text-ink">{{ coverProgress() }}%</span>
+              </div>
+              <div class="mt-1.5 h-1.5 overflow-hidden rounded-full bg-line" role="progressbar" aria-valuemin="0" aria-valuemax="100" [attr.aria-valuenow]="coverProgress()" [attr.aria-label]="i18n.t('eventDetail.coverUploading')">
+                <div class="h-full rounded-full bg-brand transition-all" [style.width.%]="coverProgress()"></div>
+              </div>
+              <button type="button" class="mt-2 inline-flex h-11 items-center gap-2 rounded-xl border border-coral/30 bg-coral/10 px-3 text-xs font-semibold text-coral" (click)="cancelCoverUpload()">
+                {{ i18n.t('eventDetail.coverCancel') }}
+              </button>
+            </div>
+          }
+        </form>
+        @if (actionError()) { <p role="alert" class="mt-3 rounded-xl border border-coral/25 bg-coral/5 p-3 text-xs leading-5 text-coral">{{ actionError() }}</p> }
+        @if (feedback()) { <p role="status" class="mt-3 rounded-xl border border-mint/25 bg-mint/5 p-3 text-xs leading-5 text-mint">{{ feedback() }}</p> }
+        <div modal-footer class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <button type="button" class="inline-flex h-11 items-center justify-center rounded-xl border border-line bg-surface-raised px-4 text-sm font-semibold text-ink transition hover:border-brand/40" (click)="closeCoverModal()">{{ i18n.t('common.cancel') }}</button>
+          <button type="submit" form="app-management-cover-form" class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-brand px-4 text-sm font-semibold text-on-secondary transition hover:bg-secondary-hover" [disabled]="pendingAction() === 'cover'">
+            <fa-icon [icon]="icons['link']" aria-hidden="true" />
+            {{ i18n.t('eventDetail.coverUseUrl') }}
+          </button>
+        </div>
+      </app-modal>
+    }
   </div>
+
+  <app-modal [open]="accountModalOpen()" [title]="i18n.t('management.accountModalTitle')" size="sm" (closed)="closeAccountModal()">
+    <p class="text-sm leading-6 text-muted">{{ i18n.t('management.accountModalMessage') }}</p>
+    <div modal-footer class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+      <button type="button" class="inline-flex h-11 items-center justify-center rounded-xl border border-line bg-surface-raised px-4 text-sm font-semibold text-ink transition hover:border-brand/40" (click)="continueWithoutAccount()">
+        {{ i18n.t('management.continueWithout') }}
+      </button>
+      <button type="button" data-testid="account-modal-create" class="inline-flex h-11 items-center justify-center rounded-xl bg-brand px-4 text-sm font-semibold text-on-secondary transition hover:bg-secondary-hover" (click)="createAccount()">
+        {{ i18n.t('management.createAccount') }}
+      </button>
+    </div>
+  </app-modal>
 </div>

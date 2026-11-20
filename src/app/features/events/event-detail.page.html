@@ -1,1550 +1,183 @@
 @if (event(); as event) {
-  <section class="flex flex-col gap-4 md:gap-5">
-    <header class="flex flex-col gap-4">
+  <header class="sticky top-0 z-40 border-b border-line bg-surface/80 backdrop-blur-xl">
+    <div class="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-3 sm:px-6">
       <div class="flex flex-wrap items-center justify-between gap-3">
-        <a
-          routerLink="/eventos"
-          class="inline-flex items-center gap-2 text-[11px] font-semibold text-muted transition hover:text-ink"
-        >
-          <fa-icon [icon]="icons['chevronLeft']" class="text-[10px]" aria-hidden="true" />
-          {{ i18n.t('eventDetail.backToEvents') }}
-        </a>
-
+        <a routerLink="/eventos" class="inline-flex min-h-11 items-center gap-2 text-xs font-semibold text-muted transition hover:text-ink"><fa-icon [icon]="icons['chevronLeft']" aria-hidden="true" /> {{ i18n.t('eventDetail.backToEvents') }}</a>
         <div class="flex flex-wrap items-center gap-2">
-          @if (isHost()) {
-            <button
-              type="button"
-              class="inline-flex h-10 items-center gap-2 rounded-xl border border-line bg-surface-raised/60 px-3 text-xs font-semibold text-ink backdrop-blur-xl transition hover:border-brand/40"
-              (click)="resendManagementLink()"
-            >
-              <fa-icon
-                [icon]="icons['envelope']"
-                class="text-[11px] text-muted"
-                aria-hidden="true"
-              />
-              {{ i18n.t('eventDetail.resendManageLink') }}
+          @if (permissions().canEditEvent) {
+            <button type="button" class="inline-flex h-11 items-center gap-2 rounded-xl border border-line bg-surface px-3 text-xs font-semibold text-ink transition hover:border-brand/40" (click)="openEditModal()">
+              <fa-icon [icon]="icons['pen']" aria-hidden="true" /> {{ i18n.t('eventDetail.editEvent') }}
+            </button>
+          }
+          @if (permissions().canChangeEventStatus && event.status === 'draft') {
+            <button type="button" class="inline-flex h-11 items-center gap-2 rounded-xl bg-brand px-3 text-xs font-semibold text-on-secondary transition hover:bg-secondary-hover" (click)="publish()">
+              <fa-icon [icon]="icons['paperPlane']" aria-hidden="true" /> {{ i18n.t('eventDetail.publish') }}
+            </button>
+          }
+          @if (permissions().canExport) {
+            <button type="button" class="grid h-11 w-11 place-items-center rounded-xl border border-line bg-surface text-ink transition hover:border-brand/40" [attr.aria-label]="i18n.t('eventDetail.copyInvitation')" [attr.title]="i18n.t('eventDetail.copyInvitation')" (click)="copyInvitation()">
+              <fa-icon [icon]="icons['copy']" aria-hidden="true" />
             </button>
           }
         </div>
       </div>
-
-      <div class="flex flex-wrap items-start justify-between gap-3">
-        <div class="min-w-0">
-          <div class="flex flex-wrap items-center gap-2">
-            <span
-              class="inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.22em] text-brand-strong"
-            >
-              <fa-icon [icon]="typeIcon()" class="text-[10px]" aria-hidden="true" />
-              {{ typeLabel() }}
-            </span>
-            <app-status-badge [value]="event.status" />
-            @if (!isHost()) {
-              <span
-                class="inline-flex items-center gap-1 rounded-full border border-aqua/30 bg-aqua/10 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.14em] text-aqua"
-              >
-                <fa-icon [icon]="icons['guestGroup']" class="text-[9px]" aria-hidden="true" />
-                {{ i18n.t('eventDetail.roleManager') }}
-              </span>
-            }
-          </div>
-          <h2 class="mt-2 font-display text-2xl font-semibold tracking-tight text-ink sm:text-3xl">
-            {{ event.title }}
-          </h2>
-          <p class="mt-1.5 text-sm text-muted">
-            {{ i18n.t('eventDetail.host') }} · {{ event.hostName }}
-          </p>
-        </div>
+      <div class="flex flex-wrap items-center gap-2 text-xs text-muted">
+        <span class="font-semibold uppercase tracking-wider text-brand">{{ i18n.t('eventDetail.contextEvent') }}</span>
+        <span aria-hidden="true">·</span><span>{{ event.venue }}, {{ event.city }}</span>
+        @if (isManagement()) { <span class="rounded-full border border-brand/30 bg-brand/10 px-2 py-0.5 text-xs font-semibold text-brand">{{ i18n.t('settings.active') }}</span> }
+        @if (!isHost()) { <span class="rounded-full border border-aqua/30 bg-aqua/10 px-2 py-0.5 text-xs font-semibold text-aqua">{{ i18n.t('eventDetail.roleManager') }}</span> }
       </div>
+      <h1 class="font-display text-xl font-semibold tracking-tight text-ink sm:text-2xl">{{ event.title }}</h1>
+    </div>
+  </header>
 
-      @if (isManagement()) {
-        <div
-          class="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-aqua/25 bg-aqua/10 p-3.5"
-        >
-          <div class="flex items-center gap-3">
-            <span
-              class="grid size-9 place-items-center rounded-xl border border-aqua/30 bg-aqua/15 text-aqua"
-            >
-              <fa-icon [icon]="icons['key']" class="text-xs" aria-hidden="true" />
-            </span>
-            <div>
-              <p class="text-xs font-semibold text-ink">{{ i18n.t('eventDetail.manageTitle') }}</p>
-              <p class="text-[11px] text-muted">{{ i18n.t('eventDetail.manageHint') }}</p>
-            </div>
-          </div>
-          <span class="text-[10px] font-semibold uppercase tracking-[0.16em] text-aqua">
-            {{ i18n.t('settings.active') }}
-          </span>
-        </div>
-      }
+  <nav class="mx-auto flex max-w-7xl gap-1 overflow-x-auto border-b border-line px-4 py-2 sm:px-6" role="tablist" [attr.aria-label]="i18n.t('eventDetail.detailsTitle')">
+    <button type="button" role="tab" class="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-xl px-3 text-xs font-semibold transition" [class]="tab() === 'resumo' ? 'border border-brand/30 bg-brand/15 text-ink' : 'border border-line text-muted hover:bg-surface-raised/60 hover:text-ink'" [attr.aria-selected]="tab() === 'resumo'" (click)="setTab('resumo')">
+      <fa-icon [icon]="icons['dashboardAlt']" aria-hidden="true" /> {{ i18n.t('eventDetail.tabs.overview') }}
+    </button>
+    <button type="button" role="tab" class="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-xl px-3 text-xs font-semibold transition" [class]="tab() === 'convidados' ? 'border border-brand/30 bg-brand/15 text-ink' : 'border border-line text-muted hover:bg-surface-raised/60 hover:text-ink'" [attr.aria-selected]="tab() === 'convidados'" (click)="setTab('convidados')">
+      <fa-icon [icon]="icons['guests']" aria-hidden="true" /> {{ i18n.t('eventDetail.tabs.guests') }}
+      <span class="rounded-full bg-surface-raised px-2 text-xs text-muted">{{ stats().total }}</span>
+    </button>
+    <button type="button" role="tab" class="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-xl px-3 text-xs font-semibold transition" [class]="tab() === 'equipas' ? 'border border-brand/30 bg-brand/15 text-ink' : 'border border-line text-muted hover:bg-surface-raised/60 hover:text-ink'" [attr.aria-selected]="tab() === 'equipas'" (click)="setTab('equipas')">
+      <fa-icon [icon]="icons['guestGroup']" aria-hidden="true" /> {{ i18n.t('eventDetail.tabs.teams') }}
+    </button>
+    <button type="button" role="tab" class="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-xl px-3 text-xs font-semibold transition" [class]="tab() === 'gestores' ? 'border border-brand/30 bg-brand/15 text-ink' : 'border border-line text-muted hover:bg-surface-raised/60 hover:text-ink'" [attr.aria-selected]="tab() === 'gestores'" (click)="setTab('gestores')">
+      <fa-icon [icon]="icons['user']" aria-hidden="true" /> {{ i18n.t('eventDetail.tabs.managers') }}
+    </button>
+    <button type="button" role="tab" class="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-xl px-3 text-xs font-semibold transition" [class]="tab() === 'atividade' ? 'border border-brand/30 bg-brand/15 text-ink' : 'border border-line text-muted hover:bg-surface-raised/60 hover:text-ink'" [attr.aria-selected]="tab() === 'atividade'" (click)="setTab('atividade')">
+      <fa-icon [icon]="icons['clock']" aria-hidden="true" /> {{ i18n.t('eventDetail.tabs.activity') }}
+    </button>
+  </nav>
 
-      @if (event.status === 'draft' && isHost()) {
-        <div
-          class="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-amber/25 bg-amber/10 p-3.5"
-        >
-          <p class="flex items-center gap-2 text-xs text-ink">
-            <fa-icon [icon]="icons['info']" class="text-amber" aria-hidden="true" />
-            {{ i18n.t('eventDetail.notPublished') }}
-          </p>
-          <button
-            type="button"
-            class="inline-flex h-9 items-center gap-2 rounded-lg bg-amber/15 px-3 text-[11px] font-semibold text-amber transition hover:bg-amber/15"
-            (click)="publish()"
-          >
-            <fa-icon [icon]="icons['paperPlane']" class="text-[10px]" aria-hidden="true" />
-            {{ i18n.t('eventDetail.publish') }}
-          </button>
-        </div>
-      }
-    </header>
-
-    <article
-      class="relative overflow-hidden rounded-4xl border border-line bg-surface shadow-card backdrop-blur-2xl"
-    >
-      <div class="grid lg:grid-cols-[minmax(0,1.45fr)_minmax(0,0.85fr)]">
-        <div class="relative min-h-64 overflow-hidden p-6 sm:p-7">
-          @if (event.coverUrl) {
-            <img
-              [src]="event.coverUrl"
-              [alt]="event.title"
-              class="absolute inset-0 size-full object-cover"
-            />
-            <div
-              class="absolute inset-0 bg-gradient-to-t from-canvas/90 via-canvas/50 to-canvas/10"
-              aria-hidden="true"
-            ></div>
-          } @else {
-            <app-template-artwork
-              [templateId]="event.templateId"
-              variant="hero"
-              [kicker]="typeLabel()"
-              class="absolute inset-0"
-            />
-          }
-
-          <div class="relative flex h-full flex-col justify-end gap-3 text-ink">
-            <div>
-              <h3
-                class="font-display text-2xl font-semibold leading-tight tracking-tight sm:text-3xl"
-              >
-                {{ event.title }}
-              </h3>
-              <p class="mt-1 text-xs text-muted">
-                {{ i18n.t('invitation.hostedBy', { name: event.hostName }) }}
-              </p>
-            </div>
-            <div class="flex flex-col gap-2">
-              <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted">
-                <span class="inline-flex items-center gap-1.5">
-                  <fa-icon
-                    [icon]="icons['calendar']"
-                    class="text-[11px] text-brand-strong"
-                    aria-hidden="true"
-                  />
-                  {{ i18n.fullDate(event.startsAt, event.timezone) }}
-                </span>
-                <span class="inline-flex items-center gap-1.5">
-                  <fa-icon
-                    [icon]="icons['clock']"
-                    class="text-[11px] text-brand-strong"
-                    aria-hidden="true"
-                  />
-                  {{ i18n.time(event.startsAt, event.timezone) }}
-                </span>
-              </div>
-              <div class="flex flex-wrap items-center gap-2">
-                <span
-                  class="inline-flex max-w-full items-center gap-1.5 rounded-full border border-line bg-surface px-2.5 py-1 text-[10px] font-semibold text-ink"
-                >
-                  <fa-icon
-                    [icon]="icons['location']"
-                    class="shrink-0 text-[9px]"
-                    aria-hidden="true"
-                  />
-                  <span class="min-w-0 break-words">{{ event.venue }}, {{ event.city }}</span>
-                </span>
-                <span
-                  class="inline-flex max-w-full items-center gap-1.5 rounded-full border border-line bg-surface px-2.5 py-1 text-[10px] font-semibold text-ink"
-                >
-                  <fa-icon
-                    [icon]="icons['palette']"
-                    class="shrink-0 text-[9px]"
-                    aria-hidden="true"
-                  />
-                  <span class="min-w-0 break-words">{{ templateName() }}</span>
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="flex flex-col gap-4 border-t border-line p-5 lg:border-l lg:border-t-0">
-          <div class="grid grid-cols-2 gap-2">
-            @for (
-              cell of [
-                { key: 'eventDetail.stats.guests', value: stats().total, tone: 'text-ink' },
-                { key: 'eventDetail.stats.confirmed', value: stats().confirmed, tone: 'text-mint' },
-                { key: 'eventDetail.stats.pending', value: stats().pending, tone: 'text-amber' },
-                { key: 'eventDetail.stats.declined', value: stats().declined, tone: 'text-coral' },
-              ];
-              track cell.key
-            ) {
-              <div class="rounded-2xl border border-line bg-surface-raised/60 p-3">
-                <p class="text-[9px] font-semibold uppercase tracking-[0.16em] text-muted">
-                  {{ i18n.t($any(cell.key)) }}
-                </p>
-                <p class="mt-1 font-display text-xl font-semibold" [class]="cell.tone">
-                  {{ cell.value }}
-                </p>
-              </div>
-            }
-          </div>
-
-          <div class="rounded-2xl border border-line bg-surface-raised/60 p-3.5">
-            <div class="flex items-center justify-between gap-2">
-              <p class="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
-                {{ i18n.t('eventDetail.progressTitle') }}
-              </p>
-              <span class="text-[11px] font-semibold text-ink">{{ stats().responseRate }}%</span>
-            </div>
-            <svg
-              viewBox="0 0 100 6"
-              preserveAspectRatio="none"
-              class="mt-2 h-1.5 w-full"
-              aria-hidden="true"
-            >
-              <rect width="100" height="6" rx="3" class="fill-line" />
-              <rect [attr.width]="stats().responseRate" height="6" rx="3" class="fill-brand" />
-            </svg>
-            <p class="mt-2 text-[10px] text-muted">
-              {{
-                i18n.t('eventDetail.progressHint', {
-                  responded: respondedCount(),
-                  total: stats().total,
-                })
-              }}
-            </p>
-          </div>
-
-          <p class="mt-auto text-center text-[10px] leading-5 text-muted">
-            Os convites individuais são enviados por email. O link de cada convidado não é exposto
-            nesta área.
-          </p>
-        </div>
-      </div>
-    </article>
-
-    <nav
-      class="flex flex-wrap items-center gap-1 rounded-2xl border border-line bg-surface/70 p-1.5 backdrop-blur-2xl"
-      role="tablist"
-    >
-      @for (
-        item of [
-          { id: 'overview', labelKey: 'eventDetail.tabs.overview', icon: icons['dashboardAlt'] },
-          { id: 'guests', labelKey: 'eventDetail.tabs.guests', icon: icons['guests'] },
-          { id: 'settings', labelKey: 'eventDetail.tabs.settings', icon: icons['sliders'] },
-        ];
-        track item.id
-      ) {
-        <button
-          type="button"
-          role="tab"
-          [attr.aria-selected]="tab() === item.id"
-          class="inline-flex h-9 items-center gap-2 rounded-xl px-3.5 text-xs font-semibold transition"
-          [class]="
-            tab() === item.id
-              ? 'border border-brand/30 bg-brand/15 text-ink'
-              : 'border border-transparent text-muted hover:bg-surface-raised/60 hover:text-ink'
-          "
-          (click)="setTab($any(item.id))"
-        >
-          <fa-icon [icon]="item.icon" class="text-[11px]" aria-hidden="true" />
-          {{ i18n.t($any(item.labelKey)) }}
-          @if (item.id === 'guests') {
-            <span class="rounded-full bg-surface-raised px-1.5 py-0.5 text-[9px] text-muted">
-              {{ stats().total }}
-            </span>
-          }
-        </button>
-      }
-    </nav>
-
-    @switch (tab()) {
-      @case ('overview') {
-        <div class="grid gap-4 xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
-          <div class="flex flex-col gap-4">
-            <article
-              class="rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl"
-            >
-              <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-brand-strong">
-                {{ i18n.t('eventDetail.detailsTitle') }}
-              </p>
-
-              <dl class="mt-4 grid gap-3 sm:grid-cols-2">
-                <div class="rounded-2xl border border-line bg-surface-raised/50 p-3.5">
-                  <dt
-                    class="flex items-center gap-1.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-muted"
-                  >
-                    <fa-icon [icon]="icons['user']" class="text-[9px]" aria-hidden="true" />
-                    {{ i18n.t('eventDetail.host') }}
-                  </dt>
-                  <dd class="mt-1 text-sm font-medium text-ink">{{ event.hostName }}</dd>
-                </div>
-                <div class="rounded-2xl border border-line bg-surface-raised/50 p-3.5">
-                  <dt
-                    class="flex items-center gap-1.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-muted"
-                  >
-                    <fa-icon [icon]="icons['calendar']" class="text-[9px]" aria-hidden="true" />
-                    {{ i18n.t('eventDetail.dateTime') }}
-                  </dt>
-                  <dd class="mt-1 text-sm font-medium text-ink">
-                    {{ i18n.longDate(event.startsAt, event.timezone) }} ·
-                    {{ i18n.time(event.startsAt, event.timezone) }}
-                  </dd>
-                </div>
-                <div class="rounded-2xl border border-line bg-surface-raised/50 p-3.5">
-                  <dt
-                    class="flex items-center gap-1.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-muted"
-                  >
-                    <fa-icon [icon]="icons['location']" class="text-[9px]" aria-hidden="true" />
-                    {{ i18n.t('eventDetail.location') }}
-                  </dt>
-                  <dd class="mt-1 text-sm font-medium text-ink">
-                    {{ event.venue }}, {{ event.city }}
-                  </dd>
-                </div>
-                <div class="rounded-2xl border border-line bg-surface-raised/50 p-3.5">
-                  <dt
-                    class="flex items-center gap-1.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-muted"
-                  >
-                    <fa-icon [icon]="icons['hourglass']" class="text-[9px]" aria-hidden="true" />
-                    {{ i18n.t('eventDetail.deadline') }}
-                  </dt>
-                  <dd
-                    class="mt-1 text-sm font-medium"
-                    [class]="deadlinePassed() ? 'text-coral' : 'text-ink'"
-                  >
-                    @if (event.rsvpDeadline) {
-                      {{ i18n.shortDate(event.rsvpDeadline, event.timezone) }}
-                    } @else {
-                      {{ i18n.t('create.review.noDeadline') }}
-                    }
-                  </dd>
-                </div>
-                <div class="rounded-2xl border border-line bg-surface-raised/50 p-3.5">
-                  <dt
-                    class="flex items-center gap-1.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-muted"
-                  >
-                    <fa-icon [icon]="icons['palette']" class="text-[9px]" aria-hidden="true" />
-                    {{ i18n.t('eventDetail.template') }}
-                  </dt>
-                  <dd class="mt-1 text-sm font-medium text-ink">{{ templateName() }}</dd>
-                </div>
-                <div class="rounded-2xl border border-line bg-surface-raised/50 p-3.5">
-                  <dt
-                    class="flex items-center gap-1.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-muted"
-                  >
-                    <fa-icon [icon]="icons['globe']" class="text-[9px]" aria-hidden="true" />
-                    {{ i18n.t('eventDetail.online') }}
-                  </dt>
-                  <dd class="mt-1 truncate text-sm font-medium text-ink">
-                    @if (event.onlineLink) {
-                      <a
-                        [href]="event.onlineLink"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="text-brand-strong hover:underline"
-                        >{{ event.onlineLink }}</a
-                      >
-                    } @else {
-                      <span class="text-muted">—</span>
-                    }
-                  </dd>
-                </div>
-              </dl>
-            </article>
-
-            <article
-              class="relative overflow-hidden rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl"
-            >
-              <fa-icon
-                [icon]="icons['quote']"
-                class="absolute right-5 top-5 text-2xl text-brand-strong/15"
-                aria-hidden="true"
-              />
-              <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-brand-strong">
-                {{ i18n.t('eventDetail.message') }}
-              </p>
-              <p class="mt-3 max-w-3xl text-sm leading-7 text-ink">{{ event.message }}</p>
-            </article>
-
-            <div class="grid gap-4 sm:grid-cols-2">
-              <article
-                class="rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl"
-              >
-                <p
-                  class="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-brand-strong"
-                >
-                  <fa-icon [icon]="icons['lines']" class="text-[10px]" aria-hidden="true" />
-                  {{ i18n.t('eventDetail.rules') }}
-                </p>
-                <p class="mt-3 text-sm leading-6 text-muted">{{ event.rules || '—' }}</p>
-              </article>
-              <article
-                class="rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl"
-              >
-                <p
-                  class="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-brand-strong"
-                >
-                  <fa-icon [icon]="icons['shirt']" class="text-[10px]" aria-hidden="true" />
-                  {{ i18n.t('eventDetail.dressCode') }}
-                </p>
-                <p class="mt-3 text-sm leading-6 text-muted">{{ event.dressCode || '—' }}</p>
-              </article>
-            </div>
-
-            <article
-              class="rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl"
-            >
-              <div class="flex items-center justify-between gap-3">
-                <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-brand-strong">
-                  {{ i18n.t('eventDetail.activityTitle') }}
-                </p>
-                <span
-                  class="grid size-8 place-items-center rounded-lg border border-line bg-surface-raised text-muted"
-                >
-                  <fa-icon [icon]="icons['history']" class="text-[11px]" aria-hidden="true" />
-                </span>
-              </div>
-
-              @if (activityLoading() && activity().length === 0) {
-                <p class="mt-5 text-sm text-muted">{{ i18n.t('common.loading') }}…</p>
-              } @else if (activity().length === 0) {
-                <p class="mt-5 text-sm text-muted">{{ i18n.t('eventDetail.noActivity') }}</p>
-              } @else {
-                <ol class="mt-3 flex flex-col gap-1">
-                  @for (item of activity(); track item.id) {
-                    <li
-                      class="flex items-start gap-3 rounded-2xl p-2 transition hover:bg-surface-raised/60"
-                    >
-                      <span
-                        class="mt-0.5 grid size-8 shrink-0 place-items-center rounded-xl border"
-                        [class]="activityTone(item.kind)"
-                      >
-                        <fa-icon
-                          [icon]="activityIcon(item.kind)"
-                          class="text-[10px]"
-                          aria-hidden="true"
-                        />
-                      </span>
-                      <div class="min-w-0 flex-1">
-                        <p class="text-xs leading-5 text-ink">{{ activityText(item) }}</p>
-                        <p class="mt-0.5 text-[10px] text-muted">{{ i18n.relative(item.at) }}</p>
-                      </div>
-                    </li>
-                  }
-                </ol>
-
-                @if (activityPagination(); as page) {
-                  @if (page.total_pages > 1) {
-                    <div
-                      class="mt-3 flex items-center justify-between gap-2 border-t border-line pt-3"
-                    >
-                      <button
-                        type="button"
-                        class="inline-flex h-8 items-center gap-1.5 rounded-lg border border-line bg-surface-raised/60 px-2.5 text-[10px] font-semibold text-ink transition hover:border-brand/40 disabled:opacity-50"
-                        [disabled]="page.page <= 1 || activityLoading()"
-                        (click)="goToActivityPage(page.page - 1)"
-                      >
-                        <fa-icon
-                          [icon]="icons['chevronLeft']"
-                          class="text-[8px]"
-                          aria-hidden="true"
-                        />
-                        {{ i18n.t('common.previous') }}
-                      </button>
-                      <span class="text-[10px] text-muted">
-                        {{
-                          i18n.t('eventDetail.activityPage', {
-                            page: page.page,
-                            total: page.total_pages,
-                          })
-                        }}
-                      </span>
-                      <button
-                        type="button"
-                        class="inline-flex h-8 items-center gap-1.5 rounded-lg border border-line bg-surface-raised/60 px-2.5 text-[10px] font-semibold text-ink transition hover:border-brand/40 disabled:opacity-50"
-                        [disabled]="page.page >= page.total_pages || activityLoading()"
-                        (click)="goToActivityPage(page.page + 1)"
-                      >
-                        {{ i18n.t('common.next') }}
-                        <fa-icon
-                          [icon]="icons['chevronRight']"
-                          class="text-[8px]"
-                          aria-hidden="true"
-                        />
-                      </button>
-                    </div>
-                  }
-                }
-              }
-            </article>
-          </div>
-
-          <div class="flex flex-col gap-4">
-            <article
-              class="rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl"
-            >
-              <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-brand-strong">
-                {{ i18n.t('eventDetail.progressTitle') }}
-              </p>
-              <p class="mt-1 text-xs text-muted">
-                {{
-                  i18n.t('eventDetail.progressHint', {
-                    responded: respondedCount(),
-                    total: stats().total,
-                  })
-                }}
-              </p>
-
-              <div class="mt-4 flex flex-col gap-3">
-                @for (row of breakdown(); track row.key) {
-                  <div>
-                    <div class="flex items-center justify-between text-[11px]">
-                      <span class="inline-flex items-center gap-2 text-muted">
-                        <span class="size-1.5 rounded-full" [class]="row.dot"></span>
-                        {{ i18n.t($any('status.' + row.key)) }}
-                      </span>
-                      <span class="font-semibold text-ink">{{ row.value }}</span>
-                    </div>
-                    <svg
-                      viewBox="0 0 100 5"
-                      preserveAspectRatio="none"
-                      class="mt-1.5 h-1.5 w-full"
-                      aria-hidden="true"
-                    >
-                      <rect width="100" height="5" rx="2.5" class="fill-line" />
-                      <rect [attr.width]="row.percent" height="5" rx="2.5" [class]="row.bar" />
-                    </svg>
-                  </div>
-                }
-              </div>
-
-              <div class="mt-4 rounded-2xl border border-line bg-surface-raised/50 p-3.5">
-                <p class="text-[10px] uppercase tracking-[0.16em] text-muted">
-                  {{ i18n.t('dashboard.responseRate') }}
-                </p>
-                <div class="mt-1 flex items-end justify-between gap-3">
-                  <p class="font-display text-3xl font-semibold text-ink">
-                    {{ stats().responseRate }}%
-                  </p>
-                  <span
-                    class="inline-flex items-center gap-1 rounded-full border border-mint/25 bg-mint/10 px-2 py-0.5 text-[10px] font-semibold text-mint"
-                  >
-                    <fa-icon [icon]="icons['trendUp']" class="text-[9px]" aria-hidden="true" />
-                    {{ respondedCount() }}/{{ stats().total }}
-                  </span>
-                </div>
-              </div>
-            </article>
-
-            <article
-              class="rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl"
-            >
-              <div class="flex items-center justify-between gap-3">
-                <div>
-                  <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-brand-strong">
-                    {{ i18n.t('eventDetail.tasksTitle') }}
-                  </p>
-                  <p class="mt-1 text-xs text-muted">{{ i18n.t('eventDetail.tasksHint') }}</p>
-                </div>
-                <span class="text-[10px] font-semibold text-muted">
-                  {{
-                    i18n.t('eventDetail.tasksDone', { done: tasksDone(), total: tasks().length })
-                  }}
-                </span>
-              </div>
-
-              @if (isHost()) {
-                <form
-                  class="mt-4 flex flex-col gap-2"
-                  [formGroup]="taskForm"
-                  (ngSubmit)="createTask()"
-                >
-                  <input
-                    type="text"
-                    formControlName="label"
-                    maxlength="200"
-                    class="h-10 w-full rounded-xl border border-line bg-surface-raised px-3 text-xs text-ink outline-none transition placeholder:text-muted/60 focus:border-brand/50"
-                    [placeholder]="i18n.t('eventDetail.taskPlaceholder')"
-                  />
-                  <div class="flex flex-col gap-2 sm:flex-row">
-                    <select
-                      formControlName="managerId"
-                      class="h-10 min-w-0 flex-1 rounded-xl border border-line bg-surface-raised px-3 text-xs text-ink outline-none transition focus:border-brand/50"
-                    >
-                      <option value="">{{ i18n.t('eventDetail.taskOwn') }}</option>
-                      @for (manager of managers(); track manager.id) {
-                        <option [value]="manager.id">{{ manager.email }}</option>
-                      }
-                    </select>
-                    <button
-                      type="submit"
-                      [disabled]="creatingTask()"
-                      class="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-brand px-3.5 text-xs font-semibold text-on-secondary transition hover:bg-secondary-hover disabled:cursor-wait disabled:opacity-60"
-                    >
-                      <fa-icon [icon]="icons['plus']" class="text-[10px]" aria-hidden="true" />
-                      {{ i18n.t('eventDetail.taskAdd') }}
-                    </button>
-                  </div>
-                  @if (taskForm.controls.label.touched && taskForm.controls.label.invalid) {
-                    <span class="text-[11px] text-coral">{{
-                      i18n.t('create.errors.required')
-                    }}</span>
-                  }
-                </form>
-              }
-
-              @if (tasks().length === 0) {
-                <p class="mt-5 text-sm text-muted">{{ i18n.t('dashboard.tasksEmpty') }}</p>
-              } @else {
-                <ul class="mt-3 flex flex-col gap-1">
-                  @for (task of tasks(); track task.id) {
-                    <li class="flex items-start gap-2">
-                      <button
-                        type="button"
-                        class="flex min-w-0 flex-1 items-start gap-3 rounded-2xl p-2 text-left transition hover:bg-surface-raised/60 disabled:opacity-60"
-                        [disabled]="taskBusyId() === task.id"
-                        (click)="toggleTask(task.id)"
-                      >
-                        <span
-                          class="mt-0.5 grid size-5 shrink-0 place-items-center rounded-md border transition"
-                          [class]="
-                            task.done
-                              ? 'border-mint/40 bg-mint/20 text-mint'
-                              : 'border-line bg-surface-raised text-transparent'
-                          "
-                        >
-                          <fa-icon [icon]="icons['check']" class="text-[9px]" aria-hidden="true" />
-                        </span>
-                        <span class="min-w-0 flex-1">
-                          <span
-                            class="block text-xs leading-5"
-                            [class]="task.done ? 'text-muted line-through' : 'text-ink'"
-                          >
-                            {{ taskLabel(task) }}
-                          </span>
-                          @if (task.managerEmail) {
-                            <span
-                              class="mt-1 inline-flex items-center gap-1 rounded-full border border-iris/30 bg-iris/10 px-2 py-0.5 text-[9px] text-iris"
-                            >
-                              <fa-icon
-                                [icon]="icons['user']"
-                                class="text-[8px]"
-                                aria-hidden="true"
-                              />
-                              {{ task.managerEmail }}
-                            </span>
-                          }
-                        </span>
-                      </button>
-                      @if (isHost()) {
-                        <button
-                          type="button"
-                          class="mt-1.5 grid size-7 shrink-0 place-items-center rounded-lg border border-line bg-surface text-muted transition hover:border-coral/40 hover:text-coral disabled:opacity-50"
-                          [disabled]="taskBusyId() === task.id"
-                          [attr.aria-label]="i18n.t('eventDetail.taskRemove')"
-                          [attr.title]="i18n.t('eventDetail.taskRemove')"
-                          (click)="removeTask(task)"
-                        >
-                          <fa-icon [icon]="icons['trash']" class="text-[9px]" aria-hidden="true" />
-                        </button>
-                      }
-                    </li>
-                  }
-                </ul>
-              }
-            </article>
-
-            @if (isHost()) {
-              <article
-                class="rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl"
-              >
-                <div class="flex items-start justify-between gap-3">
-                  <div>
-                    <p
-                      class="text-[10px] font-semibold uppercase tracking-[0.2em] text-brand-strong"
-                    >
-                      {{ i18n.t('eventDetail.managersTitle') }}
-                    </p>
-                    <p class="mt-1 text-xs text-muted">
-                      {{ i18n.t('eventDetail.managersHint') }}
-                    </p>
-                  </div>
-                  <span
-                    class="grid size-9 place-items-center rounded-xl border border-line bg-surface-raised text-muted"
-                  >
-                    <fa-icon [icon]="icons['guestGroup']" class="text-xs" aria-hidden="true" />
-                  </span>
-                </div>
-
-                @if (managersLoading() && managers().length === 0) {
-                  <p class="mt-4 text-xs text-muted">{{ i18n.t('common.loading') }}…</p>
-                } @else if (managers().length === 0) {
-                  <p
-                    class="mt-4 rounded-2xl border border-dashed border-line p-4 text-xs text-muted"
-                  >
-                    {{ i18n.t('eventDetail.managersEmpty') }}
-                  </p>
-                } @else {
-                  <ul class="mt-4 flex flex-col gap-1.5">
-                    @for (manager of managers(); track manager.id) {
-                      <li
-                        class="flex items-center gap-2 rounded-2xl border border-line bg-surface-raised/50 p-3"
-                      >
-                        <span
-                          class="grid size-7 shrink-0 place-items-center rounded-lg border border-iris/30 bg-iris/10 text-iris"
-                        >
-                          <fa-icon [icon]="icons['user']" class="text-[10px]" aria-hidden="true" />
-                        </span>
-                        <div class="min-w-0 flex-1">
-                          <p class="truncate text-xs font-semibold text-ink">
-                            {{ manager.email }}
-                          </p>
-                          <p class="mt-0.5 text-[10px] text-muted">
-                            {{
-                              manager.hasAccount
-                                ? i18n.t('eventDetail.teamHasAccount')
-                                : i18n.t('eventDetail.teamLinkOnly')
-                            }}
-                            @if (manager.lastUsedAt) {
-                              · {{ i18n.relative(manager.lastUsedAt) }}
-                            }
-                          </p>
-                        </div>
-                      </li>
-                    }
-                  </ul>
-                }
-
-                <button
-                  type="button"
-                  class="mt-4 inline-flex h-9 items-center gap-2 rounded-xl border border-line bg-surface-raised/60 px-3 text-[11px] font-semibold text-ink transition hover:border-brand/40"
-                  (click)="openSettings()"
-                >
-                  <fa-icon
-                    [icon]="icons['pen']"
-                    class="text-[10px] text-muted"
-                    aria-hidden="true"
-                  />
-                  {{ i18n.t('eventDetail.managersManage') }}
-                </button>
-              </article>
-            }
-
-            <article
-              class="rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl"
-            >
-              <p
-                class="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-brand-strong"
-              >
-                <fa-icon [icon]="icons['shield']" class="text-[10px]" aria-hidden="true" />
-                {{ i18n.t('eventDetail.managementNotice') }}
-              </p>
-              <p class="mt-2 text-xs leading-5 text-muted">
-                {{ i18n.t('eventDetail.managementNoticeText') }}
-              </p>
-              <p
-                class="mt-3 rounded-xl border border-line bg-surface-raised/60 p-2.5 text-[10px] leading-5 text-muted"
-              >
-                {{ i18n.t('eventDetail.shareWarning') }}
-              </p>
-            </article>
-          </div>
-        </div>
-      }
-
-      @case ('guests') {
+  <main class="mx-auto flex max-w-7xl flex-col gap-4 px-4 pb-10 sm:px-6">
+    @if (tab() === 'resumo') {
+      <div class="grid gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
+        <app-event-summary [event]="event" [stats]="stats()" [typeLabel]="typeLabel()" [templateName]="templateName()"
+          [permissions]="permissions()" [isManagement]="isManagement()" [exporting]="exporting()" [deadlinePassed]="deadlinePassed()"
+          [periodFrom]="periodFrom()" [periodTo]="periodTo()" [periodInvalid]="periodInvalid()"
+          (resendManageLink)="resendManagementLink()" (publish)="publish()" (editEvent)="openEditModal()" (cancelEvent)="cancelEvent()"
+          (exportDocument)="exportDocument($event.document, $event.format)" (exportPeriod)="exportPeriodReport($event)"
+          (periodFromChange)="setPeriodFrom($event)" (periodToChange)="setPeriodTo($event)"
+          (copyInvitation)="copyInvitation()" (openInvitation)="openInvitation()" />
         <div class="flex flex-col gap-4">
-          <article
-            class="rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl"
-          >
-            <div class="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-brand-strong">
-                  {{ i18n.t('eventDetail.guestList') }}
-                </p>
-                <p class="mt-1 text-xs text-muted">{{ i18n.t('eventDetail.guestListHint') }}</p>
-              </div>
-              <div class="flex flex-wrap items-center gap-2">
-                <div class="relative">
-                  <button
-                    type="button"
-                    class="inline-flex h-10 items-center gap-2 rounded-xl border border-line bg-surface-raised/60 px-3 text-xs font-semibold text-ink transition hover:border-brand/40 disabled:opacity-60"
-                    [attr.aria-expanded]="exportOpen()"
-                    aria-haspopup="menu"
-                    [disabled]="exporting() !== null"
-                    (click)="toggleExport()"
-                  >
-                    <fa-icon
-                      [icon]="exporting() ? icons['spinner'] : icons['download']"
-                      class="text-[11px] text-muted"
-                      [class.animate-spin]="exporting() !== null"
-                      aria-hidden="true"
-                    />
-                    {{
-                      exporting() ? i18n.t('eventDetail.exporting') : i18n.t('eventDetail.export')
-                    }}
-                    <fa-icon [icon]="icons['chevronDown']" class="text-[9px]" aria-hidden="true" />
-                  </button>
-
-                  @if (exportOpen()) {
-                    <button
-                      type="button"
-                      class="fixed inset-0 z-20 cursor-default"
-                      aria-label="{{ i18n.t('common.close') }}"
-                      (click)="toggleExport()"
-                    ></button>
-                    <div
-                      class="absolute right-0 z-30 mt-2 w-64 overflow-hidden rounded-2xl border border-line bg-surface p-1.5 shadow-card backdrop-blur-2xl"
-                      role="menu"
-                    >
-                      <div class="px-3 pb-2 pt-1.5">
-                        <p
-                          class="text-[10px] font-semibold uppercase tracking-[0.2em] text-brand-strong"
-                        >
-                          {{ i18n.t('eventDetail.exportPeriod') }}
-                        </p>
-                        <p class="mt-1 text-[10px] leading-4 text-muted">
-                          {{ i18n.t('eventDetail.exportPeriodHint') }}
-                        </p>
-                        <div class="mt-2 grid grid-cols-2 gap-2">
-                          <label class="flex flex-col gap-1">
-                            <span
-                              class="text-[9px] font-semibold uppercase tracking-wide text-muted"
-                            >
-                              {{ i18n.t('eventDetail.exportPeriodFrom') }}
-                            </span>
-                            <input
-                              type="date"
-                              class="h-8 w-full rounded-lg border border-line bg-surface-raised/70 px-2 text-[11px] text-ink outline-none transition focus:border-brand/60"
-                              [value]="periodFrom()"
-                              [max]="periodTo()"
-                              (input)="setPeriodFrom($event)"
-                            />
-                          </label>
-                          <label class="flex flex-col gap-1">
-                            <span
-                              class="text-[9px] font-semibold uppercase tracking-wide text-muted"
-                            >
-                              {{ i18n.t('eventDetail.exportPeriodTo') }}
-                            </span>
-                            <input
-                              type="date"
-                              class="h-8 w-full rounded-lg border border-line bg-surface-raised/70 px-2 text-[11px] text-ink outline-none transition focus:border-brand/60"
-                              [value]="periodTo()"
-                              [min]="periodFrom()"
-                              (input)="setPeriodTo($event)"
-                            />
-                          </label>
-                        </div>
-                        @if (periodInvalid()) {
-                          <p class="mt-1.5 text-[10px] leading-4 text-danger">
-                            {{ i18n.t('eventDetail.exportPeriodInvalid') }}
-                          </p>
-                        }
-                        <div class="mt-2 grid grid-cols-2 gap-2">
-                          <button
-                            type="button"
-                            class="inline-flex h-8 items-center justify-center gap-1.5 rounded-lg bg-brand px-2 text-[11px] font-semibold text-on-secondary transition hover:bg-secondary-hover disabled:opacity-50"
-                            [disabled]="periodInvalid() || exporting() !== null"
-                            (click)="exportPeriodReport('pdf')"
-                          >
-                            <fa-icon
-                              [icon]="icons['lines']"
-                              class="text-[10px]"
-                              aria-hidden="true"
-                            />
-                            {{ i18n.t('eventDetail.exportPeriodPdf') }}
-                          </button>
-                          <button
-                            type="button"
-                            class="inline-flex h-8 items-center justify-center gap-1.5 rounded-lg border border-line bg-surface-raised/70 px-2 text-[11px] font-semibold text-ink transition hover:border-brand/40 disabled:opacity-50"
-                            [disabled]="periodInvalid() || exporting() !== null"
-                            (click)="exportPeriodReport('csv')"
-                          >
-                            <fa-icon
-                              [icon]="icons['chartSimple']"
-                              class="text-[10px]"
-                              aria-hidden="true"
-                            />
-                            {{ i18n.t('eventDetail.exportPeriodCsv') }}
-                          </button>
-                        </div>
-                      </div>
-                      <div class="my-1 h-px bg-line"></div>
-                      <button
-                        type="button"
-                        role="menuitem"
-                        class="flex w-full items-start gap-3 rounded-xl px-3 py-2.5 text-left transition hover:bg-surface-raised/70"
-                        (click)="exportDocument('guests', 'pdf')"
-                      >
-                        <span
-                          class="mt-0.5 grid size-8 shrink-0 place-items-center rounded-lg border border-line bg-surface-raised text-brand-strong"
-                        >
-                          <fa-icon [icon]="icons['lines']" class="text-[11px]" aria-hidden="true" />
-                        </span>
-                        <span class="min-w-0">
-                          <span class="block text-xs font-semibold text-ink">{{
-                            i18n.t('eventDetail.exportGuestsPdf')
-                          }}</span>
-                          <span class="mt-0.5 block text-[10px] leading-4 text-muted">{{
-                            i18n.t('eventDetail.exportGuestsPdfHint')
-                          }}</span>
-                        </span>
-                      </button>
-                      <button
-                        type="button"
-                        role="menuitem"
-                        class="flex w-full items-start gap-3 rounded-xl px-3 py-2.5 text-left transition hover:bg-surface-raised/70"
-                        (click)="exportDocument('guests', 'csv')"
-                      >
-                        <span
-                          class="mt-0.5 grid size-8 shrink-0 place-items-center rounded-lg border border-line bg-surface-raised text-brand-strong"
-                        >
-                          <fa-icon
-                            [icon]="icons['chartSimple']"
-                            class="text-[11px]"
-                            aria-hidden="true"
-                          />
-                        </span>
-                        <span class="min-w-0">
-                          <span class="block text-xs font-semibold text-ink">{{
-                            i18n.t('eventDetail.exportGuestsCsv')
-                          }}</span>
-                          <span class="mt-0.5 block text-[10px] leading-4 text-muted">{{
-                            i18n.t('eventDetail.exportGuestsCsvHint')
-                          }}</span>
-                        </span>
-                      </button>
-                      <button
-                        type="button"
-                        role="menuitem"
-                        class="flex w-full items-start gap-3 rounded-xl px-3 py-2.5 text-left transition hover:bg-surface-raised/70"
-                        (click)="exportDocument('summary', 'pdf')"
-                      >
-                        <span
-                          class="mt-0.5 grid size-8 shrink-0 place-items-center rounded-lg border border-line bg-surface-raised text-brand-strong"
-                        >
-                          <fa-icon
-                            [icon]="icons['chartPie']"
-                            class="text-[11px]"
-                            aria-hidden="true"
-                          />
-                        </span>
-                        <span class="min-w-0">
-                          <span class="block text-xs font-semibold text-ink">{{
-                            i18n.t('eventDetail.exportSummaryPdf')
-                          }}</span>
-                          <span class="mt-0.5 block text-[10px] leading-4 text-muted">{{
-                            i18n.t('eventDetail.exportSummaryPdfHint')
-                          }}</span>
-                        </span>
-                      </button>
-                      <button
-                        type="button"
-                        role="menuitem"
-                        class="flex w-full items-start gap-3 rounded-xl px-3 py-2.5 text-left transition hover:bg-surface-raised/70"
-                        (click)="exportDocument('attendance', 'pdf')"
-                      >
-                        <span
-                          class="mt-0.5 grid size-8 shrink-0 place-items-center rounded-lg border border-line bg-surface-raised text-brand-strong"
-                        >
-                          <fa-icon
-                            [icon]="icons['userCheck']"
-                            class="text-[11px]"
-                            aria-hidden="true"
-                          />
-                        </span>
-                        <span class="min-w-0">
-                          <span class="block text-xs font-semibold text-ink">{{
-                            i18n.t('eventDetail.exportAttendancePdf')
-                          }}</span>
-                          <span class="mt-0.5 block text-[10px] leading-4 text-muted">{{
-                            i18n.t('eventDetail.exportAttendancePdfHint')
-                          }}</span>
-                        </span>
-                      </button>
-                    </div>
-                  }
-                </div>
-
-                <button
-                  type="button"
-                  class="inline-flex h-10 items-center gap-2 rounded-xl bg-brand hover:bg-secondary-hover px-3.5 text-xs font-semibold text-on-secondary transition"
-                  (click)="openGuestCreate()"
-                >
-                  <fa-icon [icon]="icons['userPlus']" class="text-[11px]" aria-hidden="true" />
-                  {{ i18n.t('eventDetail.addGuest') }}
-                </button>
-              </div>
-            </div>
-
-            <div class="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <div class="flex flex-wrap items-center gap-1.5">
-                @for (filter of guestFilters; track filter.id) {
-                  <button
-                    type="button"
-                    class="inline-flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-[11px] font-semibold transition"
-                    [class]="
-                      guestFilter() === filter.id
-                        ? 'border border-brand/30 bg-brand/15 text-ink'
-                        : 'border border-transparent text-muted hover:bg-surface-raised/60 hover:text-ink'
-                    "
-                    (click)="setGuestFilter(filter.id)"
-                  >
-                    {{ i18n.t(filter.labelKey) }}
-                    <span class="text-[9px] text-muted/70">{{ countFor(filter.id) }}</span>
-                  </button>
-                }
-              </div>
-
-              <label class="relative flex items-center sm:w-64">
-                <fa-icon
-                  [icon]="icons['search']"
-                  class="pointer-events-none absolute left-3 text-[11px] text-muted"
-                  aria-hidden="true"
-                />
-                <input
-                  type="search"
-                  [value]="guestSearch()"
-                  (input)="onGuestSearch($any($event.target).value)"
-                  class="h-9 w-full rounded-lg border border-line bg-surface-raised/70 pl-8 pr-3 text-[11px] text-ink outline-none transition placeholder:text-muted/60 focus:border-brand/50"
-                  [placeholder]="i18n.t('eventDetail.searchGuests')"
-                  [attr.aria-label]="i18n.t('eventDetail.searchGuests')"
-                />
-              </label>
-            </div>
-
-            <div id="event-guests-list" class="scroll-mt-24">
-              @if (guestListLoading()) {
-                <app-skeleton variant="cards" />
-              } @else if (guestItems().length === 0) {
-                <div
-                  class="mt-6 flex flex-col items-center rounded-3xl border border-dashed border-line p-6 text-center sm:p-10"
-                >
-                  <span
-                    class="grid size-12 place-items-center rounded-2xl border border-brand/25 bg-brand/15 text-brand-strong"
-                  >
-                    <fa-icon
-                      [icon]="guestSearch() || guestFilter() !== 'all' ? icons['search'] : icons['userPlus']"
-                      class="text-lg"
-                      aria-hidden="true"
-                    />
-                  </span>
-                  @if (guestSearch() || guestFilter() !== 'all') {
-                    <p class="mt-3 text-sm font-semibold text-ink">
-                      {{ i18n.t('guests.searchEmpty', { term: guestSearch() }) }}
-                    </p>
-                    <p class="mt-1 text-xs text-muted">{{ i18n.t('eventDetail.noResults') }}</p>
-                  } @else {
-                    <p class="mt-3 text-sm font-semibold text-ink">
-                      {{ i18n.t('eventDetail.noGuests') }}
-                    </p>
-                    <p class="mt-1 text-xs text-muted">{{ i18n.t('eventDetail.noGuestsHint') }}</p>
-                  }
-                </div>
-              } @else {
-                <ul class="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                  @for (entry of guestItems(); track entry.guest.id) {
-                    <li class="min-w-0">
-                      <app-person-card
-                        [name]="entry.guest.name"
-                        [subtitle]="entry.guest.email + (entry.guest.phone ? ' · ' + entry.guest.phone : '')"
-                        [status]="entry.guest.status"
-                        [meta]="guestMeta(entry)"
-                        [actions]="guestActions()"
-                        [primaryAction]="guestPrimary(entry)"
-                        [actionsLabel]="i18n.t('eventDetail.table.actions')"
-                        (actionSelected)="onGuestAction($event, entry)"
-                        (primaryTriggered)="onGuestPrimary($event, entry)"
-                      />
-                    </li>
-                  }
-                </ul>
-
-                <nav
-                  class="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4"
-                  [attr.aria-label]="i18n.t('guests.pagination')"
-                >
-                  <span class="text-[11px] text-muted">{{ guestRangeLabel() }}</span>
-                  <div class="flex items-center gap-2">
-                    <button
-                      type="button"
-                      class="inline-flex h-10 items-center gap-1.5 rounded-xl border border-line bg-surface px-3 text-xs font-semibold text-ink transition hover:border-brand/40 disabled:cursor-not-allowed disabled:opacity-40"
-                      [disabled]="!guestPagination() || guestPage() <= 1"
-                      (click)="goToGuestPage(guestPage() - 1)"
-                    >
-                      <fa-icon [icon]="icons['chevronLeft']" aria-hidden="true" />
-                      {{ i18n.t('guests.previous') }}
-                    </button>
-                    <span class="text-[11px] text-muted">
-                      {{ i18n.t('guests.page', { page: guestPage(), total: guestPagination()?.total_pages ?? 1 }) }}
-                    </span>
-                    <button
-                      type="button"
-                      class="inline-flex h-10 items-center gap-1.5 rounded-xl border border-line bg-surface px-3 text-xs font-semibold text-ink transition hover:border-brand/40 disabled:cursor-not-allowed disabled:opacity-40"
-                      [disabled]="!guestPagination() || guestPage() >= (guestPagination()?.total_pages ?? 1)"
-                      (click)="goToGuestPage(guestPage() + 1)"
-                    >
-                      {{ i18n.t('guests.next') }}
-                      <fa-icon [icon]="icons['chevronRight']" aria-hidden="true" />
-                    </button>
-                  </div>
-                </nav>
-              }
-            </div>
-
-            <p
-              class="mt-4 flex items-start gap-2 rounded-xl border border-line bg-surface-raised/40 p-3 text-[10px] leading-5 text-muted"
-            >
-              <fa-icon [icon]="icons['lock']" class="mt-0.5 text-brand-strong" aria-hidden="true" />
-              {{ i18n.t('guests.shareText') }}
-            </p>
-          </article>
+          <app-event-tasks-section [tasks]="tasks()" [doneCount]="tasksDone()" [permissions]="permissions()" [busyId]="taskBusyId()"
+            [onlyMine]="onlyMine()" [loading]="false" (createTask)="openTaskDialog()" (toggleTask)="toggleTask($event.id)"
+            (removeTask)="removeTask($event)" (onlyMineChange)="onOnlyMineChange($event)" />
+          @if (teamsLoading()) { <app-skeleton variant="cards" /> } @else {
+            <app-event-teams-section [teams]="teams()" [loading]="false" [permissions]="permissions()" [eventId]="eventId()"
+              (openTeam)="openTeam($event)" (createTeam)="openManagerDialog()" />
+          }
         </div>
-      }
-
-      @case ('settings') {
-        <div class="grid gap-4 xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
-          <article
-            class="rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl"
-          >
-            <div class="flex items-start justify-between gap-3">
-              <div>
-                <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-brand-strong">
-                  {{ i18n.t('eventDetail.settingsTitle') }}
-                </p>
-                <p class="mt-1 text-xs text-muted">{{ i18n.t('eventDetail.settingsHint') }}</p>
-              </div>
-              <span
-                class="grid size-9 place-items-center rounded-xl border border-line bg-surface-raised text-muted"
-              >
-                <fa-icon [icon]="icons['pen']" class="text-xs" aria-hidden="true" />
-              </span>
-            </div>
-
-            <form
-              class="mt-5 flex flex-col gap-4"
-              [formGroup]="settingsForm"
-              (ngSubmit)="saveSettings()"
-            >
-              <label class="block">
-                <span
-                  class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted"
-                >
-                  {{ i18n.t('eventDetail.fieldTitle') }}
-                </span>
-                <input
-                  type="text"
-                  formControlName="title"
-                  class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink outline-none transition focus:border-brand/50"
-                />
-                @if (settingsForm.controls.title.touched && settingsForm.controls.title.invalid) {
-                  <span class="mt-1 block text-[11px] text-coral">{{
-                    i18n.t('create.errors.required')
-                  }}</span>
-                }
-              </label>
-
-              <div class="grid gap-4 sm:grid-cols-2">
-                <label class="block">
-                  <span
-                    class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted"
-                  >
-                    {{ i18n.t('eventDetail.fieldVenue') }}
-                  </span>
-                  <input
-                    type="text"
-                    formControlName="venue"
-                    class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink outline-none transition focus:border-brand/50"
-                  />
-                </label>
-                <label class="block">
-                  <span
-                    class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted"
-                  >
-                    {{ i18n.t('eventDetail.fieldCity') }}
-                  </span>
-                  <input
-                    type="text"
-                    formControlName="city"
-                    class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink outline-none transition focus:border-brand/50"
-                  />
-                </label>
-              </div>
-
-              <label class="block">
-                <span
-                  class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted"
-                >
-                  {{ i18n.t('eventDetail.fieldMessage') }}
-                </span>
-                <textarea
-                  formControlName="message"
-                  rows="5"
-                  class="w-full rounded-xl border border-line bg-surface-raised px-3 py-2.5 text-sm leading-6 text-ink outline-none transition focus:border-brand/50"
-                ></textarea>
-              </label>
-
-              <div class="grid gap-4 sm:grid-cols-2">
-                <label class="block">
-                  <span
-                    class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted"
-                  >
-                    {{ i18n.t('eventDetail.fieldRules') }}
-                  </span>
-                  <textarea
-                    formControlName="rules"
-                    rows="3"
-                    class="w-full rounded-xl border border-line bg-surface-raised px-3 py-2.5 text-sm leading-6 text-ink outline-none transition focus:border-brand/50"
-                  ></textarea>
-                </label>
-                <label class="block">
-                  <span
-                    class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted"
-                  >
-                    {{ i18n.t('eventDetail.fieldDress') }}
-                  </span>
-                  <textarea
-                    formControlName="dressCode"
-                    rows="3"
-                    class="w-full rounded-xl border border-line bg-surface-raised px-3 py-2.5 text-sm leading-6 text-ink outline-none transition focus:border-brand/50"
-                  ></textarea>
-                </label>
-              </div>
-
-              <div class="flex justify-end">
-                <button
-                  type="submit"
-                  class="inline-flex h-11 items-center gap-2 rounded-xl bg-brand hover:bg-secondary-hover px-4 text-sm font-semibold text-on-secondary transition"
-                >
-                  <fa-icon [icon]="icons['check']" class="text-xs" aria-hidden="true" />
-                  {{ i18n.t('eventDetail.saveChanges') }}
-                </button>
-              </div>
-            </form>
-          </article>
-
-          <div class="flex flex-col gap-4">
-            <article
-              class="rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl"
-            >
-              <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-brand-strong">
-                {{ i18n.t('eventDetail.invitationCard') }}
-              </p>
-              <p class="mt-1 text-xs text-muted">{{ i18n.t('eventDetail.invitationHint') }}</p>
-
-              <div class="mt-4 overflow-hidden rounded-2xl border border-line">
-                <app-template-artwork
-                  [templateId]="event.templateId"
-                  variant="thumb"
-                  [kicker]="typeLabel()"
-                  [title]="event.title"
-                  class="block"
-                />
-              </div>
-
-              <p class="mt-3 text-[10px] leading-5 text-muted/80">
-                Cada convidado recebe um link individual por email. O link não pode ser copiado
-                desta página.
-              </p>
-            </article>
-
-            @if (isHost()) {
-              <article
-                class="rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl"
-              >
-                <div class="flex items-start justify-between gap-3">
-                  <div>
-                    <p
-                      class="text-[10px] font-semibold uppercase tracking-[0.2em] text-brand-strong"
-                    >
-                      {{ i18n.t('eventDetail.coverTitle') }}
-                    </p>
-                    <p class="mt-1 text-xs text-muted">{{ i18n.t('eventDetail.coverHint') }}</p>
-                  </div>
-                  <span
-                    class="grid size-9 place-items-center rounded-xl border border-line bg-surface-raised text-muted"
-                  >
-                    <fa-icon [icon]="icons['image']" class="text-xs" aria-hidden="true" />
-                  </span>
-                </div>
-
-                @if (event.coverUrl) {
-                  <div class="mt-4 overflow-hidden rounded-2xl border border-line">
-                    <img
-                      [src]="event.coverUrl"
-                      [alt]="event.title"
-                      class="aspect-video w-full object-cover"
-                    />
-                  </div>
-                  <button
-                    type="button"
-                    class="mt-2 inline-flex h-9 items-center gap-2 rounded-lg border border-coral/30 bg-coral/10 px-3 text-[11px] font-semibold text-coral transition hover:bg-coral/15"
-                    (click)="removeCover()"
-                  >
-                    <fa-icon [icon]="icons['trash']" class="text-[10px]" aria-hidden="true" />
-                    {{ i18n.t('eventDetail.coverRemove') }}
-                  </button>
-                } @else {
-                  <p
-                    class="mt-4 rounded-2xl border border-dashed border-line p-4 text-xs text-muted"
-                  >
-                    {{ i18n.t('eventDetail.coverEmpty') }}
-                  </p>
-                }
-
-                <form
-                  class="mt-4 flex flex-col gap-2"
-                  [formGroup]="coverForm"
-                  (ngSubmit)="setCoverUrl()"
-                >
-                  <label class="block">
-                    <span
-                      class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted"
-                    >
-                      {{ i18n.t('eventDetail.coverUrl') }}
-                    </span>
-                    <input
-                      type="url"
-                      formControlName="url"
-                      class="h-10 w-full rounded-xl border border-line bg-surface-raised px-3 text-xs text-ink outline-none transition placeholder:text-muted/60 focus:border-brand/50"
-                      placeholder="https://…"
-                    />
-                  </label>
-                  @if (coverForm.controls.url.touched && coverForm.controls.url.invalid) {
-                    <span class="text-[11px] text-coral">{{
-                      i18n.t('eventDetail.coverUrlInvalid')
-                    }}</span>
-                  }
-                  <button
-                    type="submit"
-                    class="inline-flex h-10 w-fit items-center gap-2 rounded-xl bg-brand px-3.5 text-xs font-semibold text-on-secondary transition hover:bg-secondary-hover"
-                  >
-                    <fa-icon [icon]="icons['link']" class="text-[10px]" aria-hidden="true" />
-                    {{ i18n.t('eventDetail.coverUseUrl') }}
-                  </button>
-                </form>
-
-                <div class="mt-4 border-t border-line pt-4">
-                  <label
-                    class="inline-flex h-10 cursor-pointer items-center gap-2 rounded-xl border border-line bg-surface-raised px-3.5 text-xs font-semibold text-ink transition hover:border-brand/40"
-                  >
-                    <fa-icon
-                      [icon]="icons['camera']"
-                      class="text-[11px] text-muted"
-                      aria-hidden="true"
-                    />
-                    {{ i18n.t('eventDetail.coverUpload') }}
-                    <input
-                      type="file"
-                      accept="image/png,image/jpeg,image/webp"
-                      class="sr-only"
-                      [disabled]="coverUploading()"
-                      (change)="onCoverFile($event)"
-                    />
-                  </label>
-
-                  @if (coverUploading()) {
-                    <div class="mt-3">
-                      <div class="flex items-center justify-between text-[10px] text-muted">
-                        <span>{{ i18n.t('eventDetail.coverUploading') }}</span>
-                        <span class="font-semibold text-ink">{{ coverProgress() }}%</span>
-                      </div>
-                      <div class="mt-1.5 h-1.5 overflow-hidden rounded-full bg-line">
-                        <div
-                          class="h-full rounded-full bg-brand transition-all"
-                          [style.width.%]="coverProgress()"
-                        ></div>
-                      </div>
-                      <button
-                        type="button"
-                        class="mt-2 inline-flex h-8 items-center gap-1.5 rounded-lg border border-coral/30 bg-coral/10 px-2.5 text-[10px] font-semibold text-coral"
-                        (click)="cancelCoverUpload()"
-                      >
-                        {{ i18n.t('eventDetail.coverCancel') }}
-                      </button>
-                    </div>
-                  }
-                </div>
-              </article>
-            }
-
-            @if (isHost()) {
-              <article
-                class="rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl"
-              >
-                <div class="flex items-start justify-between gap-3">
-                  <div>
-                    <p
-                      class="text-[10px] font-semibold uppercase tracking-[0.2em] text-brand-strong"
-                    >
-                      {{ i18n.t('eventDetail.teamTitle') }}
-                    </p>
-                    <p class="mt-1 text-xs text-muted">{{ i18n.t('eventDetail.teamHint') }}</p>
-                  </div>
-                  <span
-                    class="grid size-9 place-items-center rounded-xl border border-line bg-surface-raised text-muted"
-                  >
-                    <fa-icon [icon]="icons['guestGroup']" class="text-xs" aria-hidden="true" />
-                  </span>
-                </div>
-
-                <button
-                  type="button"
-                  data-testid="add-manager"
-                  class="mt-4 inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-brand px-3.5 text-xs font-semibold text-on-secondary transition hover:bg-secondary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60"
-                  (click)="openManagerDialog()"
-                >
-                  <fa-icon [icon]="icons['plus']" class="text-[10px]" aria-hidden="true" />
-                  {{ i18n.t('eventDetail.addManager') }}
-                </button>
-
-                @if (managersLoading() && managers().length === 0) {
-                  <p class="mt-4 text-xs text-muted">{{ i18n.t('common.loading') }}…</p>
-                } @else if (managers().length === 0) {
-                  <p
-                    class="mt-4 rounded-2xl border border-dashed border-line p-4 text-xs text-muted"
-                  >
-                    {{ i18n.t('eventDetail.teamEmpty') }}
-                  </p>
-                } @else {
-                  <ul class="mt-4 flex flex-col gap-1.5">
-                    @for (manager of managers(); track manager.id) {
-                      <li
-                        class="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-line bg-surface-raised/50 p-3"
-                      >
-                        <div class="min-w-0">
-                          <p class="truncate text-xs font-semibold text-ink">
-                            {{ manager.displayName ?? manager.email ?? manager.phone ?? manager.id }}
-                          </p>
-                          <p class="mt-0.5 text-[10px] text-muted">
-                            {{
-                              manager.hasAccount
-                                ? i18n.t('eventDetail.teamHasAccount')
-                                : i18n.t('eventDetail.teamLinkOnly')
-                            }}
-                            @if (manager.lastUsedAt) {
-                              · {{ i18n.relative(manager.lastUsedAt) }}
-                            }
-                          </p>
-                        </div>
-                        <div class="flex items-center gap-1">
-                          <button
-                            type="button"
-                            class="grid size-8 place-items-center rounded-lg border border-line bg-surface text-muted transition hover:border-brand/40 hover:text-brand-strong disabled:cursor-not-allowed disabled:opacity-40"
-                            [disabled]="managerBusyId() === manager.id"
-                            [attr.aria-label]="i18n.t('eventDetail.teamResend')"
-                            [attr.title]="i18n.t('eventDetail.teamResend')"
-                            (click)="resendManagerInvite(manager)"
-                          >
-                            <fa-icon [icon]="icons['paperPlane']" class="text-[10px]" />
-                          </button>
-                          <button
-                            type="button"
-                            class="grid size-8 place-items-center rounded-lg border border-line bg-surface text-muted transition hover:border-coral/40 hover:text-coral disabled:cursor-not-allowed disabled:opacity-40"
-                            [disabled]="managerBusyId() === manager.id"
-                            [attr.aria-label]="i18n.t('eventDetail.teamRemove')"
-                            [attr.title]="i18n.t('eventDetail.teamRemove')"
-                            (click)="removeManager(manager)"
-                          >
-                            <fa-icon [icon]="icons['trash']" class="text-[10px]" />
-                          </button>
-                        </div>
-                      </li>
-                    }
-                  </ul>
-                }
-
-                <p class="mt-3 text-[10px] leading-5 text-muted">
-                  {{ i18n.t('eventDetail.teamPermissions') }}
-                </p>
-              </article>
-            }
-
-            @if (isHost()) {
-              <article
-                class="rounded-4xl border border-coral/25 bg-coral/5 p-5 shadow-card backdrop-blur-2xl"
-              >
-                <p
-                  class="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-coral"
-                >
-                  <fa-icon [icon]="icons['warning']" class="text-[10px]" aria-hidden="true" />
-                  {{ i18n.t('eventDetail.cancelEvent') }}
-                </p>
-                <p class="mt-2 text-xs leading-5 text-muted">
-                  {{ i18n.t('eventDetail.cancelEventHint') }}
-                </p>
-                <button
-                  type="button"
-                  class="mt-4 inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-coral/30 bg-coral/10 px-3.5 text-xs font-semibold text-coral transition hover:bg-coral/10"
-                  (click)="cancelOpen.set(true)"
-                >
-                  <fa-icon [icon]="icons['cancelled']" class="text-[11px]" aria-hidden="true" />
-                  {{ i18n.t('eventDetail.cancelEvent') }}
-                </button>
-              </article>
-            }
-          </div>
-        </div>
-      }
+      </div>
     }
 
-    <app-guest-dialog
-      [open]="guestDialogOpen() || guestEditTarget() !== null"
-      [fixedEventId]="event.id"
-      [guest]="guestEditTarget()"
-      (closed)="closeGuestDialog()"
-    />
+    @if (tab() === 'convidados') {
+      <div id="event-guests-list" class="scroll-mt-24">
+        <app-event-guests-section [entries]="guestItems()" [pagination]="guestPagination()" [stats]="stats()" [counts]="guestCounts()"
+          [loading]="guestListLoading()" [loaded]="guestListLoaded()" [search]="guestSearch()" [filter]="guestFilter()"
+          [rangeLabel]="guestRangeLabel()" [permissions]="permissions()" (searchChange)="onGuestSearch($event)"
+          (filterChange)="setGuestFilter($event)" (pageChange)="goToGuestPage($event)" (addGuest)="openGuestCreate()"
+          (editGuest)="openGuestEdit($event)" (resendGuest)="resend($event)" (removeGuest)="removeGuest($event)"
+          (ticketGuest)="downloadTicket($event)" (whatsappGuest)="forwardWhatsApp($event)" />
+      </div>
+    }
 
-    <app-confirm-dialog
-      [open]="cancelOpen()"
-      [title]="i18n.t('eventDetail.cancelEventTitle')"
-      [message]="i18n.t('eventDetail.cancelEventText')"
-      [confirmLabel]="i18n.t('eventDetail.cancelEventConfirm')"
-      [cancelLabel]="i18n.t('common.cancel')"
-      tone="danger"
-      (confirmed)="cancelEvent()"
-      (cancelled)="cancelOpen.set(false)"
-    />
-  </section>
+    @if (tab() === 'equipas') {
+      <app-event-teams-section [teams]="teams()" [loading]="teamsLoading()" [permissions]="permissions()" [eventId]="eventId()"
+        (openTeam)="openTeam($event)" (createTeam)="openManagerDialog()" />
+    }
+
+    @if (tab() === 'gestores') {
+      <app-event-managers-section [managers]="managers()" [teams]="teams()" [permissions]="permissions()" [loading]="managersLoading()"
+        [busyId]="managerBusyId()" [maxValidityDate]="maxValidityDate()" [credentials]="credentials()" [credentialsOpen]="credentialsOpen()"
+        (newManager)="openManagerDialog()" (newCodeConfirmed)="regenerateManagerCode($event)"
+        (validityConfirmed)="changeManagerValidity($event)" (revokeConfirmed)="revokeManagerAccess($event)"
+        (removeConfirmed)="removeManagerFromEvent($event)" (credentialsDone)="closeCredentials()" />
+    }
+
+    @if (tab() === 'atividade') {
+      <app-event-activity-section [items]="activityItems()" [pagination]="activityPagination()" [loading]="activityLoading()"
+        [eventTitle]="event.title" [permissions]="permissions()" [busyId]="activityBusyId()"
+        (remove)="removeActivity($event)" (pageChange)="goToActivityPage($event)" />
+    }
+  </main>
+
+  <app-guest-dialog [open]="guestDialogOpen() || guestEditTarget() !== null" [fixedEventId]="event.id" [guest]="guestEditTarget()" (closed)="closeGuestDialog()" />
+
+  <app-task-form-dialog [open]="taskDialogOpen()" [events]="events()" [teams]="teams()" [assignees]="taskAssignees()"
+    [saving]="creatingTask()" context="event" [eventId]="eventId()" (closed)="taskDialogOpen.set(false)" (submitted)="submitTask($event)" />
+
+  <app-team-manager-dialog [open]="managerDialogOpen()" [events]="events()" [eventId]="eventId()"
+    (created)="onManagerCreated()" (cancel)="closeManagerDialog()" />
+
+  <app-modal [open]="editModalOpen()" [title]="i18n.t('eventDetail.settingsTitle')" size="lg" (closed)="closeEditModal()">
+    <form id="app-event-settings-form" class="flex flex-col gap-4" [formGroup]="settingsForm" (ngSubmit)="saveSettings()">
+      <label class="block">
+        <span class="mb-1.5 block text-xs font-semibold text-muted">{{ i18n.t('eventDetail.fieldTitle') }}</span>
+        <input type="text" formControlName="title" class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink outline-none focus:border-brand/50" />
+      </label>
+      <div class="grid gap-4 sm:grid-cols-2">
+        <label class="block">
+          <span class="mb-1.5 block text-xs font-semibold text-muted">{{ i18n.t('eventDetail.fieldVenue') }}</span>
+          <input type="text" formControlName="venue" class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink outline-none focus:border-brand/50" />
+        </label>
+        <label class="block">
+          <span class="mb-1.5 block text-xs font-semibold text-muted">{{ i18n.t('eventDetail.fieldCity') }}</span>
+          <input type="text" formControlName="city" class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink outline-none focus:border-brand/50" />
+        </label>
+      </div>
+      <label class="block">
+        <span class="mb-1.5 block text-xs font-semibold text-muted">{{ i18n.t('eventDetail.fieldMessage') }}</span>
+        <textarea formControlName="message" rows="5" class="w-full rounded-xl border border-line bg-surface-raised px-3 py-2.5 text-sm leading-6 text-ink outline-none focus:border-brand/50"></textarea>
+      </label>
+      <div class="grid gap-4 sm:grid-cols-2">
+        <label class="block">
+          <span class="mb-1.5 block text-xs font-semibold text-muted">{{ i18n.t('eventDetail.fieldRules') }}</span>
+          <textarea formControlName="rules" rows="3" class="w-full rounded-xl border border-line bg-surface-raised px-3 py-2.5 text-sm leading-6 text-ink outline-none focus:border-brand/50"></textarea>
+        </label>
+        <label class="block">
+          <span class="mb-1.5 block text-xs font-semibold text-muted">{{ i18n.t('eventDetail.fieldDress') }}</span>
+          <textarea formControlName="dressCode" rows="3" class="w-full rounded-xl border border-line bg-surface-raised px-3 py-2.5 text-sm leading-6 text-ink outline-none focus:border-brand/50"></textarea>
+        </label>
+      </div>
+    </form>
+    <div modal-footer class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+      <button type="button" class="inline-flex h-11 items-center justify-center rounded-xl border border-line bg-surface-raised px-4 text-sm font-semibold text-ink transition hover:border-brand/40" (click)="closeEditModal()">{{ i18n.t('common.cancel') }}</button>
+      <button type="submit" form="app-event-settings-form" class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-brand px-4 text-sm font-semibold text-on-secondary transition hover:bg-secondary-hover"><fa-icon [icon]="icons['check']" aria-hidden="true" /> {{ i18n.t('eventDetail.saveChanges') }}</button>
+    </div>
+  </app-modal>
+
+  <app-modal [open]="coverModalOpen()" [title]="i18n.t('eventDetail.coverTitle')" (closed)="closeCoverModal()">
+    @if (event.coverUrl) {
+      <div class="overflow-hidden rounded-2xl border border-line"><img [src]="event.coverUrl" [alt]="event.title" class="aspect-video w-full object-cover" /></div>
+      <button type="button" class="mt-2 inline-flex h-11 items-center gap-2 rounded-xl border border-coral/30 bg-coral/10 px-3 text-xs font-semibold text-coral transition hover:bg-coral/15" (click)="removeCover()"><fa-icon [icon]="icons['trash']" aria-hidden="true" /> {{ i18n.t('eventDetail.coverRemove') }}</button>
+    } @else {
+      <p class="rounded-2xl border border-dashed border-line p-4 text-xs text-muted">{{ i18n.t('eventDetail.coverEmpty') }}</p>
+    }
+    <form id="app-event-cover-form" class="mt-4 flex flex-col gap-3" [formGroup]="coverForm" (ngSubmit)="setCoverUrl()">
+      <label class="block"><span class="mb-1.5 block text-xs font-semibold text-muted">{{ i18n.t('eventDetail.coverUrl') }}</span>
+        <input type="url" formControlName="url" class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-xs text-ink outline-none focus:border-brand/50" /></label>
+      <label class="inline-flex h-11 cursor-pointer items-center gap-2 rounded-xl border border-line bg-surface-raised px-3 text-xs font-semibold text-ink transition hover:border-brand/40"><fa-icon [icon]="icons['camera']" aria-hidden="true" /> {{ i18n.t('eventDetail.coverUpload') }}
+        <input type="file" accept="image/png,image/jpeg,image/webp" class="sr-only" [disabled]="coverUploading()" (change)="onCoverFile($event)" /></label>
+      @if (coverUploading()) {
+        <div>
+          <div class="flex items-center justify-between text-xs text-muted"><span>{{ i18n.t('eventDetail.coverUploading') }}</span><span class="font-semibold text-ink">{{ coverProgress() }}%</span></div>
+          <div class="mt-1.5 h-1.5 overflow-hidden rounded-full bg-line"><div class="h-full rounded-full bg-brand transition-all" [style.width.%]="coverProgress()"></div></div>
+          <button type="button" class="mt-2 inline-flex h-11 items-center gap-2 rounded-xl border border-coral/30 bg-coral/10 px-3 text-xs font-semibold text-coral" (click)="cancelCoverUpload()">{{ i18n.t('eventDetail.coverCancel') }}</button>
+        </div>
+      }
+    </form>
+    <div modal-footer class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+      <button type="button" class="inline-flex h-11 items-center justify-center rounded-xl border border-line bg-surface-raised px-4 text-sm font-semibold text-ink transition hover:border-brand/40" (click)="closeCoverModal()">{{ i18n.t('common.cancel') }}</button>
+      <button type="submit" form="app-event-cover-form" class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-brand px-4 text-sm font-semibold text-on-secondary transition hover:bg-secondary-hover"><fa-icon [icon]="icons['link']" aria-hidden="true" /> {{ i18n.t('eventDetail.coverUseUrl') }}</button>
+    </div>
+  </app-modal>
 } @else {
-  <section
-    class="mx-auto flex max-w-xl flex-col items-center rounded-4xl border border-line bg-surface p-10 text-center shadow-card backdrop-blur-2xl"
-  >
-    <span
-      class="grid size-16 place-items-center rounded-3xl border border-coral/25 bg-coral/10 text-coral"
-    >
-      <fa-icon [icon]="icons['warning']" class="text-2xl" aria-hidden="true" />
-    </span>
-    <h2 class="mt-5 font-display text-2xl font-semibold text-ink">
-      {{ i18n.t('eventDetail.notFound') }}
-    </h2>
+  <section class="mx-auto flex max-w-xl flex-col items-center rounded-4xl border border-line bg-surface p-10 text-center shadow-card backdrop-blur-2xl">
+    <span class="grid size-16 place-items-center rounded-3xl border border-coral/25 bg-coral/10 text-coral"><fa-icon [icon]="icons['warning']" class="text-2xl" aria-hidden="true" /></span>
+    <h2 class="mt-5 font-display text-2xl font-semibold text-ink">{{ i18n.t('eventDetail.notFound') }}</h2>
     <p class="mt-2 text-sm leading-6 text-muted">{{ i18n.t('eventDetail.notFoundHint') }}</p>
-    <a
-      routerLink="/eventos"
-      class="mt-6 inline-flex h-11 items-center gap-2 rounded-xl bg-brand hover:bg-secondary-hover px-4 text-sm font-semibold text-on-secondary"
-    >
-      <fa-icon [icon]="icons['chevronLeft']" class="text-xs" aria-hidden="true" />
-      {{ i18n.t('eventDetail.backToEvents') }}
-    </a>
+    <a routerLink="/eventos" class="mt-6 inline-flex h-11 items-center gap-2 rounded-xl bg-brand px-4 text-sm font-semibold text-on-secondary transition hover:bg-secondary-hover"><fa-icon [icon]="icons['chevronLeft']" aria-hidden="true" /> {{ i18n.t('eventDetail.backToEvents') }}</a>
   </section>
 }
-
-<app-team-manager-dialog
-  [open]="managerDialogOpen()"
-  [events]="events()"
-  [eventId]="eventId()"
-  (created)="onManagerCreated()"
-  (cancel)="closeManagerDialog()"
-/>

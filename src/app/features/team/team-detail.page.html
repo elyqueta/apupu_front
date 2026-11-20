@@ -1,12 +1,4 @@
 <section class="flex flex-col gap-4 md:gap-5">
-  <a
-    routerLink="/equipas"
-    class="inline-flex w-fit items-center gap-1.5 text-[11px] font-semibold text-muted transition hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60"
-  >
-    <fa-icon [icon]="icons['chevronLeft']" class="text-[9px]" aria-hidden="true" />
-    {{ i18n.t('teamDetail.back') }}
-  </a>
-
   @if (loading()) {
     <app-skeleton variant="cards" />
   } @else if (errorMessage()) {
@@ -21,35 +13,14 @@
       <h2 class="mt-4 font-display text-lg font-semibold text-ink">{{ errorMessage() }}</h2>
     </div>
   } @else if (team(); as currentTeam) {
-    <header class="flex flex-wrap items-start justify-between gap-4">
-      <div class="min-w-0">
-        <p class="text-[10px] font-semibold uppercase tracking-[0.26em] text-brand-strong">
-          {{ i18n.t('teamDetail.eyebrow') }}
-        </p>
-        <h1 class="mt-1.5 font-display text-2xl font-semibold tracking-tight text-ink sm:text-3xl">
-          {{ currentTeam.name }}
-        </h1>
-        <div class="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-muted">
-          <span class="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface px-2.5 py-1">
-            <fa-icon [icon]="icons['guestGroup']" class="text-[9px]" aria-hidden="true" />
-            {{ categoryLabel() }}
-          </span>
-          <span class="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface px-2.5 py-1">
-            <fa-icon [icon]="icons['calendar']" class="text-[9px]" aria-hidden="true" />
-            {{ currentTeam.eventTitle }}
-          </span>
-          <app-status-badge [value]="currentTeam.eventStatus" />
-          <span class="inline-flex items-center gap-1.5 rounded-full border border-brand/25 bg-brand/10 px-2.5 py-1 text-brand-strong">
-            <fa-icon [icon]="icons['userCheck']" class="text-[9px]" aria-hidden="true" />
-            {{ i18n.t('teamDetail.role') }}: {{ myRoleLabel() }}
-          </span>
-        </div>
-        @if (currentTeam.description) {
-          <p class="mt-3 max-w-2xl text-sm leading-6 text-muted">{{ currentTeam.description }}</p>
-        }
-      </div>
-
-      <div data-testid="team-menu" class="relative">
+    <app-page-header
+      [eyebrow]="i18n.t('teamDetail.eyebrow')"
+      [title]="currentTeam.name"
+      [backLink]="backLink()"
+      [backLabel]="backLabel()"
+      [hasActions]="true"
+    >
+      <div header-actions data-testid="team-menu" class="relative">
         <app-action-menu
           [items]="menuItems()"
           [triggerLabel]="i18n.t('common.moreActions')"
@@ -57,7 +28,26 @@
           (selected)="onMenu($event)"
         />
       </div>
-    </header>
+    </app-page-header>
+
+    <div class="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-muted">
+      <span class="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface px-2.5 py-1">
+        <fa-icon [icon]="icons['guestGroup']" class="text-[9px]" aria-hidden="true" />
+        {{ categoryLabel() }}
+      </span>
+      <span class="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface px-2.5 py-1">
+        <fa-icon [icon]="icons['calendar']" class="text-[9px]" aria-hidden="true" />
+        {{ currentTeam.eventTitle }}
+      </span>
+      <app-status-badge [value]="currentTeam.eventStatus" />
+      <span class="inline-flex items-center gap-1.5 rounded-full border border-brand/25 bg-brand/10 px-2.5 py-1 text-brand-strong">
+        <fa-icon [icon]="icons['userCheck']" class="text-[9px]" aria-hidden="true" />
+        {{ i18n.t('teamDetail.role') }}: {{ myRoleLabel() }}
+      </span>
+    </div>
+    @if (currentTeam.description) {
+      <p class="mt-3 max-w-2xl text-sm leading-6 text-muted">{{ currentTeam.description }}</p>
+    }
 
     <app-stat-grid [columns]="4">
       @for (stat of stats(); track stat.label) {
@@ -117,7 +107,7 @@
           <button
             type="button"
             data-testid="add-task"
-            class="inline-flex h-10 items-center gap-2 rounded-xl bg-brand px-4 text-xs font-semibold text-on-secondary transition hover:bg-secondary-hover disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60"
+            class="inline-flex h-11 items-center gap-2 rounded-xl bg-brand px-4 text-xs font-semibold text-on-secondary transition hover:bg-secondary-hover disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60"
             [disabled]="!canManage()"
             [attr.aria-disabled]="!canManage() ? 'true' : null"
             [attr.title]="!canManage() ? i18n.t('teamDetail.permissionHint') : null"
@@ -358,95 +348,17 @@
     </div>
   </app-modal>
 
-  <!-- Criar tarefa (modal) -->
-  <app-modal
+  <!-- Criar tarefa (modal partilhado) -->
+  <app-task-form-dialog
     [open]="taskModalOpen()"
-    [title]="i18n.t('teamDetail.taskFormTitle')"
-    size="md"
+    context="team"
+    [eventId]="team()?.eventId ?? ''"
+    [teams]="dialogTeams()"
+    [assignees]="taskAssignees()"
+    [saving]="taskSaving()"
     (closed)="closeTaskModal()"
-  >
-    <form id="task-form" [formGroup]="taskForm" (ngSubmit)="createTask()" class="flex flex-col gap-4">
-      <label class="block">
-        <span class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
-          {{ i18n.t('teamDetail.taskTitle') }}
-        </span>
-        <input
-          formControlName="title"
-          type="text"
-          maxlength="160"
-          data-testid="task-title"
-          class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink outline-none transition focus:border-brand/50 focus-visible:ring-2 focus-visible:ring-brand/60"
-        />
-      </label>
-      <label class="block">
-        <span class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
-          {{ i18n.t('teamDetail.taskDescription') }}
-        </span>
-        <textarea
-          formControlName="description"
-          rows="3"
-          class="w-full resize-none rounded-xl border border-line bg-surface-raised px-3 py-2 text-sm text-ink outline-none transition focus:border-brand/50"
-        ></textarea>
-      </label>
-      <div class="grid gap-3 sm:grid-cols-2">
-        <label class="block">
-          <span class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
-            {{ i18n.t('teamDetail.taskDue') }}
-          </span>
-          <input
-            formControlName="dueDate"
-            type="date"
-            class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink outline-none transition focus:border-brand/50"
-          />
-        </label>
-        <label class="block">
-          <span class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
-            {{ i18n.t('teamDetail.taskPriority') }}
-          </span>
-          <select
-            formControlName="priority"
-            class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink outline-none transition focus:border-brand/50"
-          >
-            <option value="baixa">{{ i18n.t('taskPriority.baixa') }}</option>
-            <option value="normal">{{ i18n.t('taskPriority.normal') }}</option>
-            <option value="alta">{{ i18n.t('taskPriority.alta') }}</option>
-          </select>
-        </label>
-      </div>
-      <label class="block">
-        <span class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
-          {{ i18n.t('teamDetail.reassignTask') }}
-        </span>
-        <select
-          formControlName="assigneeMemberId"
-          class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink outline-none transition focus:border-brand/50"
-        >
-          <option value="">{{ i18n.t('teamDetail.taskUnassigned') }}</option>
-          @for (member of members(); track member.id) {
-            <option [value]="member.id">{{ memberName(member) }}</option>
-          }
-        </select>
-      </label>
-    </form>
-    <div modal-footer class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-      <button
-        type="button"
-        class="inline-flex h-11 items-center justify-center rounded-xl border border-line bg-surface-raised px-4 text-sm font-semibold text-ink transition hover:border-brand/40"
-        (click)="closeTaskModal()"
-      >
-        {{ i18n.t('common.cancel') }}
-      </button>
-      <button
-        type="submit"
-        form="task-form"
-        data-testid="task-submit"
-        class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-brand px-4 text-sm font-semibold text-on-secondary transition hover:bg-secondary-hover disabled:cursor-not-allowed disabled:opacity-50"
-        [disabled]="taskSaving() || taskForm.invalid"
-      >
-        {{ i18n.t('teamDetail.taskCreate') }}
-      </button>
-    </div>
-  </app-modal>
+    (submitted)="createTask($event)"
+  />
 
   <!-- Confirmções de gestor -->
   <app-confirm-dialog

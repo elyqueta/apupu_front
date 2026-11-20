@@ -9,15 +9,19 @@ import {
   signal,
   untracked,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DOCUMENT, isPlatformBrowser } from '@angular/common';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { TranslationKey } from '../../core/i18n/translations';
+import { ApiClient } from '../../core/api/api-client';
 import { Pagination } from '../../core/api/api.models';
+import { EventsRepository } from '../../core/data/events.repository';
 import { GuestListEntry, GuestsQuery } from '../../core/data/guests.repository';
+import { TeamsRepository } from '../../core/data/teams.repository';
 import {
   EventExportDocument,
   ReportExportFormat,
@@ -26,8 +30,12 @@ import {
 import {
   EventActivity,
   EventManager,
+  EventPermissions,
+  eventPermissionsFor,
   Guest,
-  RsvpStatus,
+  ManagerCreationResult,
+  ManagerInviteResult,
+  Team,
   WorkspaceTask,
 } from '../../core/models/models';
 import { ShareService } from '../../core/services/share.service';
@@ -37,20 +45,22 @@ import { WorkspaceStore } from '../../core/services/workspace.store';
 import { EVENT_TYPE_ICONS, ICONS } from '../../core/ui/icons';
 import { ActivityPresenter } from '../../shared/services/activity.presenter';
 import { toApiError } from '../../core/api/api-error';
-import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog.component';
 import { GuestDialogComponent } from '../../shared/components/guest-dialog.component';
-import {
-  PersonCardComponent,
+import { ModalComponent } from '../../shared/components/modal.component';
+import { SkeletonComponent } from '../../shared/components/skeleton.component';
+import type {
   PersonMetaItem,
   PersonPrimaryAction,
 } from '../../shared/components/person-card.component';
-import { SkeletonComponent } from '../../shared/components/skeleton.component';
-import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
-import { TemplateArtworkComponent } from '../../shared/components/template-artwork.component';
+import { TaskFormDialogComponent } from '../../shared/components/task-form-dialog.component';
 import { TeamManagerDialogComponent } from '../team/team-manager-dialog.component';
-
-type DetailTab = 'overview' | 'guests' | 'settings';
-type GuestFilter = 'all' | RsvpStatus;
+import { eventTabQuery, EventTab, GuestFilter, parseEventTab } from './detail/detail.models';
+import { EventActivitySectionComponent } from './detail/event-activity-section.component';
+import { EventGuestsSectionComponent } from './detail/event-guests-section.component';
+import { EventManagersSectionComponent } from './detail/event-managers-section.component';
+import { EventSummaryComponent } from './detail/event-summary.component';
+import { EventTasksSectionComponent } from './detail/event-tasks-section.component';
+import { EventTeamsSectionComponent } from './detail/event-teams-section.component';
 
 function toIsoDate(date: Date): string {
   return date.toISOString().slice(0, 10);
@@ -58,6 +68,16 @@ function toIsoDate(date: Date): string {
 
 function todayIso(): string {
   return toIsoDate(new Date());
+}
+
+/** Data `YYYY-MM-DD` some dias depois da data indicada. */
+function isoDatePlusDays(value: string, days: number): string {
+  const base = new Date(`${value.slice(0, 10)}T00:00:00Z`);
+  if (Number.isNaN(base.getTime())) {
+    return todayIso();
+  }
+  base.setUTCDate(base.getUTCDate() + days);
+  return toIsoDate(base);
 }
 
 function isoDaysAgo(days: number): string {
@@ -72,13 +92,17 @@ function isoDaysAgo(days: number): string {
     RouterLink,
     ReactiveFormsModule,
     FaIconComponent,
-    ConfirmDialogComponent,
     GuestDialogComponent,
-    PersonCardComponent,
+    ModalComponent,
     SkeletonComponent,
-    StatusBadgeComponent,
-    TemplateArtworkComponent,
+    TaskFormDialogComponent,
     TeamManagerDialogComponent,
+    EventActivitySectionComponent,
+    EventGuestsSectionComponent,
+    EventManagersSectionComponent,
+    EventSummaryComponent,
+    EventTasksSectionComponent,
+    EventTeamsSectionComponent,
   ],
   templateUrl: './event-detail.page.html',
 })
@@ -87,7 +111,12 @@ export class EventDetailPage {
   private readonly toasts = inject(ToastService);
   private readonly activityPresenter = inject(ActivityPresenter);
   private readonly share = inject(ShareService);
+  private readonly api = inject(ApiClient);
   private readonly reports = inject(ReportsRepository);
+  private readonly eventsRepository = inject(EventsRepository);
+  private readonly teamsRepository = inject(TeamsRepository);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly downloads = inject(DownloadService);
   private readonly document = inject(DOCUMENT);
   private readonly platformId = inject(PLATFORM_ID);
@@ -99,7 +128,7 @@ export class EventDetailPage {
 
   readonly eventId = input.required<string>();
 
-  protected readonly tab = signal<DetailTab>('overview');
+  protected readonly tab = signal<EventTab>('resumo');
   protected readonly guestSearch = signal('');
   protected readonly guestFilter = signal<GuestFilter>('all');
   protected readonly guestPage = signal(1);
@@ -119,13 +148,22 @@ export class EventDetailPage {
   protected readonly cancelOpen = signal(false);
   protected readonly managersLoading = signal(false);
   protected readonly managerBusyId = signal<string | null>(null);
+  protected readonly teams = signal<Team[]>([]);
+  protected readonly teamsLoading = signal(false);
   /** Modal partilhado com `/equipas` para criar equipa + gestor (Bloco 2). */
   protected readonly managerDialogOpen = signal(false);
+  protected readonly credentials = signal<ManagerCreationResult | null>(null);
+  protected readonly credentialsOpen = signal(false);
+  protected readonly editModalOpen = signal(false);
+  protected readonly coverModalOpen = signal(false);
+  protected readonly taskDialogOpen = signal(false);
+  protected readonly onlyMine = signal(false);
   protected readonly taskBusyId = signal<string | null>(null);
   protected readonly creatingTask = signal(false);
   protected readonly activityItems = signal<EventActivity[]>([]);
   protected readonly activityPagination = signal<Pagination | null>(null);
   protected readonly activityLoading = signal(false);
+  protected readonly activityBusyId = signal<string | null>(null);
   protected readonly coverUploading = signal(false);
   protected readonly coverProgress = signal(0);
   private coverUploadHandle: { cancel: () => void } | null = null;
@@ -142,7 +180,45 @@ export class EventDetailPage {
   );
   protected readonly accessRole = computed(() => this.store.accessRoleFor(this.eventId()));
   protected readonly isHost = computed(() => this.accessRole() === 'host');
+  protected readonly permissions = computed<EventPermissions>(() =>
+    eventPermissionsFor(this.accessRole()),
+  );
   protected readonly managers = computed(() => this.store.managersFor(this.eventId()));
+  protected readonly guestCounts = computed(() => {
+    const stats = this.stats();
+    return {
+      all: stats.total,
+      confirmed: stats.confirmed,
+      pending: stats.pending,
+      declined: stats.declined,
+    };
+  });
+  protected readonly visibleTasks = computed(() => {
+    const tasks = this.tasks();
+    if (!this.onlyMine()) {
+      return tasks;
+    }
+    const email = this.store.profile().email;
+    return tasks.filter((task) =>
+      this.accessRole() === 'host'
+        ? task.managerEmail === null
+        : !!email && task.managerEmail === email,
+    );
+  });
+  protected readonly taskAssignees = computed(() =>
+    this.managers().map((manager) => ({
+      id: manager.id,
+      label: manager.displayName ?? manager.email ?? manager.phone ?? manager.id,
+    })),
+  );
+  /**
+   * O backend usa o fim do dia de `starts_at` no fuso do evento quando não
+   * existe `ends_at`; o limite apresentado é conservador (data + 1 dia).
+   */
+  protected readonly maxValidityDate = computed(() => {
+    const event = this.event();
+    return event ? isoDatePlusDays(event.startsAt, 1) : '';
+  });
 
   protected readonly typeLabel = computed(() => {
     const event = this.event();
@@ -253,6 +329,14 @@ export class EventDetailPage {
   });
 
   constructor() {
+    this.tab.set(parseEventTab(this.route.snapshot.queryParamMap.get('separador')));
+    this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe((params) => {
+      const next = parseEventTab(params.get('separador'));
+      if (next !== this.tab()) {
+        this.tab.set(next);
+      }
+    });
+
     this.store.load({
       events: true,
       guests: true,
@@ -291,15 +375,14 @@ export class EventDetailPage {
       this.periodTo.set(todayIso());
     });
     effect(() => {
-      if (this.tab() === 'settings' && this.isHost()) {
+      if (this.tab() === 'gestores' && this.permissions().canManageManagers) {
         untracked(() => void this.refreshManagers());
       }
     });
     effect(() => {
-      if (!this.isHost() || this.managers().length > 0) {
-        return;
+      if (this.tab() === 'equipas' && this.teams().length === 0) {
+        untracked(() => void this.loadTeams());
       }
-      untracked(() => void this.refreshManagers());
     });
     effect(() => {
       const event = this.event();
@@ -316,11 +399,15 @@ export class EventDetailPage {
     });
   }
 
-  protected setTab(tab: DetailTab): void {
-    this.tab.set(tab);
-    if (tab === 'guests' && !this.guestListLoaded()) {
-      void this.loadGuests();
+  protected setTab(tab: EventTab): void {
+    if (tab === this.tab()) {
+      return;
     }
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { separador: eventTabQuery(tab) },
+      queryParamsHandling: 'preserve',
+    });
   }
 
   /** Pesquisa/filtro/paginação de convidados, sempre no servidor. */
@@ -501,6 +588,24 @@ export class EventDetailPage {
     void this.loadActivity(page);
   }
 
+  protected async removeActivity(item: EventActivity): Promise<void> {
+    if (this.activityBusyId()) {
+      return;
+    }
+    this.activityBusyId.set(item.id);
+    try {
+      await this.api.delete(
+        `/host/events/${encodeURIComponent(this.eventId())}/activity/${encodeURIComponent(item.id)}`,
+      );
+      this.toasts.success(this.i18n.t('management.activityRemoved'));
+      await this.loadActivity(this.activityPagination()?.page ?? 1);
+    } catch (error: unknown) {
+      this.toasts.error(toApiError(error).message);
+    } finally {
+      this.activityBusyId.set(null);
+    }
+  }
+
   protected async createTask(): Promise<void> {
     if (this.taskForm.invalid) {
       this.taskForm.markAllAsTouched();
@@ -609,9 +714,9 @@ export class EventDetailPage {
     try {
       const status = await this.store.resendManageLink(this.eventId());
       if (status === 'queued') {
-        this.toasts.success('O link de gestão ficou em fila para envio para o email do anfitrião.');
+        this.toasts.success(this.i18n.t('eventDetail.manageLinkQueued'));
       } else {
-        this.toasts.error('O evento mantém-se disponível, mas não foi possível enfileirar o link.');
+        this.toasts.error(this.i18n.t('eventDetail.manageLinkFailed'));
       }
     } catch (error: unknown) {
       this.toasts.error(toApiError(error).message);
@@ -633,8 +738,78 @@ export class EventDetailPage {
   }
 
   /** Leva o anfitrião ao separador onde pode gerir a equipa. */
-  protected openSettings(): void {
-    this.tab.set('settings');
+  protected openManagersTab(): void {
+    this.setTab('gestores');
+  }
+
+  protected async loadTeams(): Promise<void> {
+    if (this.teamsLoading()) {
+      return;
+    }
+    this.teamsLoading.set(true);
+    try {
+      const page = await this.teamsRepository.list({ eventId: this.eventId(), pageSize: 100 });
+      this.teams.set(page.items);
+    } catch (error: unknown) {
+      this.toasts.error(toApiError(error).message);
+    } finally {
+      this.teamsLoading.set(false);
+    }
+  }
+
+  protected openTeam(team: Team): void {
+    void this.router.navigate(['/equipas', team.id], {
+      queryParams: { evento: this.eventId() },
+    });
+  }
+
+  protected async openTaskDialog(): Promise<void> {
+    if (this.teams().length === 0) {
+      await this.loadTeams();
+    }
+    this.taskDialogOpen.set(true);
+  }
+
+  protected async submitTask(value: {
+    label: string;
+    eventId: string;
+    teamId: string | null;
+    assigneeMemberId: string | null;
+  }): Promise<void> {
+    if (this.creatingTask()) {
+      return;
+    }
+    this.creatingTask.set(true);
+    try {
+      await this.store.createTask(
+        value.label.trim(),
+        value.eventId || this.eventId(),
+        value.assigneeMemberId,
+      );
+      this.taskDialogOpen.set(false);
+      this.toasts.success(this.i18n.t('eventDetail.taskCreated'));
+    } catch (error: unknown) {
+      this.toasts.error(toApiError(error).message);
+    } finally {
+      this.creatingTask.set(false);
+    }
+  }
+
+  protected openEditModal(): void {
+    this.editModalOpen.set(true);
+  }
+
+  protected closeEditModal(): void {
+    this.editModalOpen.set(false);
+  }
+
+  protected openCoverModal(): void {
+    this.coverModalOpen.set(true);
+  }
+
+  protected closeCoverModal(): void {
+    this.cancelCoverUpload();
+    this.coverModalOpen.set(false);
   }
 
   /** Abre o modal partilhado de criação de equipa + gestor com o evento fixo. */
@@ -647,8 +822,128 @@ export class EventDetailPage {
   }
 
   protected onManagerCreated(): void {
+    this.managerDialogOpen.set(false);
     void this.refreshManagers();
+    void this.loadTeams();
     void this.store.load();
+  }
+
+  protected async regenerateManagerCode(manager: EventManager): Promise<void> {
+    if (this.managerBusyId()) {
+      return;
+    }
+    this.managerBusyId.set(manager.id);
+    try {
+      const result = await this.eventsRepository.regenerateManagerAccess(this.eventId(), manager.id);
+      this.showCredentials(result);
+      this.toasts.success(this.i18n.t('eventDetail.managerCodeRegenerated'));
+      await this.refreshManagers();
+    } catch (error: unknown) {
+      this.toasts.error(toApiError(error).message);
+    } finally {
+      this.managerBusyId.set(null);
+    }
+  }
+
+  protected async changeManagerValidity(value: {
+    manager: EventManager;
+    date: string;
+  }): Promise<void> {
+    if (this.managerBusyId()) {
+      return;
+    }
+    this.managerBusyId.set(value.manager.id);
+    try {
+      await this.eventsRepository.updateManagerLink(
+        this.eventId(),
+        value.manager.id,
+        `${value.date}T23:59:59.000Z`,
+      );
+      this.toasts.success(this.i18n.t('eventDetail.managerValiditySaved'));
+      await this.refreshManagers();
+    } catch (error: unknown) {
+      this.toasts.error(toApiError(error).message);
+    } finally {
+      this.managerBusyId.set(null);
+    }
+  }
+
+  protected async revokeManagerAccess(manager: EventManager): Promise<void> {
+    if (this.managerBusyId()) {
+      return;
+    }
+    this.managerBusyId.set(manager.id);
+    try {
+      await this.eventsRepository.revokeManagerLink(this.eventId(), manager.id);
+      this.toasts.success(this.i18n.t('eventDetail.managerAccessRevoked'));
+      await this.refreshManagers();
+    } catch (error: unknown) {
+      this.toasts.error(toApiError(error).message);
+    } finally {
+      this.managerBusyId.set(null);
+    }
+  }
+
+  protected async removeManagerFromEvent(manager: EventManager): Promise<void> {
+    if (this.managerBusyId()) {
+      return;
+    }
+    this.managerBusyId.set(manager.id);
+    try {
+      await this.store.removeManager(this.eventId(), manager.id);
+      this.toasts.success(
+        this.i18n.t('eventDetail.managerRemoved', {
+          email: manager.email ?? manager.phone ?? manager.id,
+        }),
+      );
+      await this.refreshManagers();
+      await this.loadTeams();
+    } catch (error: unknown) {
+      this.toasts.error(toApiError(error).message);
+    } finally {
+      this.managerBusyId.set(null);
+    }
+  }
+
+  protected closeCredentials(): void {
+    this.credentialsOpen.set(false);
+    this.credentials.set(null);
+  }
+
+  protected async copyInvitation(): Promise<void> {
+    const url = this.share.absoluteUrl(`/convite/${this.eventId()}`);
+    this.toasts.success(
+      (await this.share.copy(url))
+        ? this.i18n.t('common.copied')
+        : this.i18n.t('common.copyError'),
+    );
+  }
+
+  protected openInvitation(): void {
+    this.share.openExternal(this.share.absoluteUrl(`/convite/${this.eventId()}`));
+  }
+
+  protected onOnlyMineChange(value: boolean): void {
+    this.onlyMine.set(value);
+  }
+
+  private showCredentials(result: ManagerCreationResult | ManagerInviteResult): void {
+    const team =
+      'team' in result
+        ? result.team
+        : this.teams().find((item) => item.id === result.manager.teamId);
+    if (!team || !result.link || !result.accessCode) {
+      this.toasts.error(this.i18n.t('eventDetail.permissionsHint'));
+      return;
+    }
+    this.credentials.set({
+      manager: result.manager,
+      team,
+      link: result.link,
+      accessCode: result.accessCode,
+      emailStatus: result.emailStatus,
+    });
+    this.credentialsOpen.set(true);
   }
 
   protected openGuestCreate(): void {
@@ -694,12 +989,12 @@ export class EventDetailPage {
     }
   }
 
-  protected setPeriodFrom(event: Event): void {
-    this.periodFrom.set((event.target as HTMLInputElement).value);
+  protected setPeriodFrom(value: string): void {
+    this.periodFrom.set(value);
   }
 
-  protected setPeriodTo(event: Event): void {
-    this.periodTo.set((event.target as HTMLInputElement).value);
+  protected setPeriodTo(value: string): void {
+    this.periodTo.set(value);
   }
 
   /**

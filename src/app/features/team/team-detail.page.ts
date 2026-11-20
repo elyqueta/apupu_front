@@ -1,6 +1,6 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, ParamMap, Router, RouterLink } from '@angular/router';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ApiError, toApiError } from '../../core/api/api-error';
@@ -21,7 +21,6 @@ import {
   Team,
   TeamMember,
   TeamTask,
-  TaskPriority,
   TaskStatus,
 } from '../../core/models/models';
 import { AuthService } from '../../core/api/auth.service';
@@ -34,16 +33,25 @@ import { ICONS } from '../../core/ui/icons';
 import { ActionMenuComponent, ActionMenuItem } from '../../shared/components/action-menu.component';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog.component';
 import { ModalComponent } from '../../shared/components/modal.component';
+import { PageHeaderComponent } from '../../shared/components/page-header.component';
 import { PersonCardComponent, PersonMetaItem } from '../../shared/components/person-card.component';
 import { SkeletonComponent } from '../../shared/components/skeleton.component';
 import { StatCardComponent } from '../../shared/components/stat-card.component';
 import { StatGridComponent } from '../../shared/components/stat-grid.component';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
+import { TaskFormDialogComponent } from '../../shared/components/task-form-dialog.component';
 import { PhoneMaskDirective } from '../../shared/directives/phone-mask.directive';
 import { ManagerCredentialsDialogComponent } from './manager-credentials-dialog.component';
 import { TeamFormDialogComponent, TeamFormValue } from './team-form-dialog.component';
 
 type DetailTab = 'tarefas' | 'membros';
+
+interface TaskFormValue {
+  label: string;
+  eventId: string;
+  teamId: string | null;
+  assigneeMemberId: string | null;
+}
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -57,7 +65,6 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 @Component({
   selector: 'app-team-detail-page',
   imports: [
-    RouterLink,
     FaIconComponent,
     ReactiveFormsModule,
     SkeletonComponent,
@@ -65,11 +72,13 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     StatCardComponent,
     StatGridComponent,
     ActionMenuComponent,
+    PageHeaderComponent,
     PersonCardComponent,
     ConfirmDialogComponent,
     ModalComponent,
     PhoneMaskDirective,
     ManagerCredentialsDialogComponent,
+    TaskFormDialogComponent,
     TeamFormDialogComponent,
   ],
   templateUrl: './team-detail.page.html',
@@ -90,6 +99,20 @@ export class TeamDetailPage {
   protected readonly icons = ICONS;
 
   private readonly teamId = this.route.snapshot.paramMap.get('teamId') ?? '';
+  private readonly queryParams = toSignal(this.route.queryParamMap, {
+    initialValue: this.route.snapshot.queryParamMap,
+  });
+
+  protected readonly backEventId = computed(() => this.queryParams().get('evento')?.trim() ?? '');
+  protected readonly backLink = computed(() => {
+    const eventId = this.backEventId();
+    return eventId ? `/eventos/${eventId}` : '/equipas';
+  });
+  protected readonly backLabel = computed(() =>
+    this.backEventId()
+      ? this.i18n.t('eventDetail.backToEvent')
+      : this.i18n.t('teamDetail.back'),
+  );
 
   protected readonly team = signal<Team | null>(null);
   protected readonly members = signal<TeamMember[]>([]);
@@ -120,13 +143,13 @@ export class TeamDetailPage {
   /* Criar tarefa */
   protected readonly taskModalOpen = signal(false);
   protected readonly taskSaving = signal(false);
-  protected readonly taskForm = this.fb.group({
-    title: ['', [Validators.required, Validators.maxLength(160)]],
-    description: [''],
-    dueDate: [''],
-    priority: ['normal' as TaskPriority],
-    assigneeMemberId: [''],
+  protected readonly dialogTeams = computed(() => {
+    const team = this.team();
+    return team ? [team] : [];
   });
+  protected readonly taskAssignees = computed(() =>
+    this.members().map((member) => ({ id: member.id, label: this.memberName(member) })),
+  );
 
   /* Confirmações e diálogos de gestor */
   protected readonly deleteConfirmOpen = signal(false);
@@ -345,13 +368,6 @@ export class TeamDetailPage {
 
   protected openTaskModal(): void {
     if (!this.canManage()) return;
-    this.taskForm.reset({
-      title: '',
-      description: '',
-      dueDate: '',
-      priority: 'normal',
-      assigneeMemberId: this.currentMemberId(),
-    });
     this.taskModalOpen.set(true);
   }
 
@@ -359,21 +375,17 @@ export class TeamDetailPage {
     if (!this.taskSaving()) this.taskModalOpen.set(false);
   }
 
-  protected async createTask(): Promise<void> {
-    if (!this.canManage() || this.taskSaving() || this.taskForm.invalid) {
-      this.taskForm.markAllAsTouched();
-      return;
-    }
+  protected async createTask(value: TaskFormValue): Promise<void> {
+    if (!this.canManage() || this.taskSaving()) return;
     this.taskSaving.set(true);
     try {
-      const value = this.taskForm.getRawValue();
       const input: CreateTeamTaskInput = {
-        teamId: this.teamId,
-        title: value.title.trim(),
-        description: value.description.trim() || null,
-        dueDate: value.dueDate || null,
-        priority: value.priority,
-        assigneeMemberId: value.assigneeMemberId || null,
+        teamId: value.teamId ?? this.teamId,
+        title: value.label.trim(),
+        description: null,
+        dueDate: null,
+        priority: 'normal',
+        assigneeMemberId: value.assigneeMemberId,
       };
       await this.tasksStore.create(input);
       this.taskModalOpen.set(false);

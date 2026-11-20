@@ -133,3 +133,18 @@ Mapeamento feito antes de alterar código. O frontend parte de `feat/bloco-3-det
 | 2026-11-20 | Branch do Bloco 6. | Integrar landing/admin na branch `feat/ajustes-fase-4` em vez de criar `feat/landing-super-admin`. | As regras de trabalho proíbem merge; uma branch separada deixaria as duas metades do front desalinhadas. |
 | 2026-11-20 | Precedência documental. | `docs/bloco-6-landing-e-super-admin.md` prevalece sobre a Parte E do Bloco 5; plano próprio em `docs/PLANO-BLOCO-6.md`. | Determinação explícita do utilizador. |
 | 2026-11-20 | Faixa “Protótipo — versão em teste” no topo das páginas públicas. | Removida da landing e da casca pública; `ProtectedNoticeComponent`, as chaves `prototype.notice` e o respetivo teste foram eliminados. O texto da secção “Sobre” mantém-se. | Pedido explícito do utilizador; a faixa ocupava espaço no topo sem acrescentar informação útil. |
+
+## Bloco 7 — Controlos públicos, apoio e novidades
+
+| Data | Dúvida / ponto ambíguo | Escolha | Motivo |
+|---|---|---|---|
+| 2026-11-20 | Acesso ao painel `/admin`. | Continuar apenas por URL direta; promoção de `hosts.is_super_admin` exclusivamente por SQL documentado em `docs/GUIA-ACESSO-ADMIN.md`. Não criar rota, botão nem script de promoção. | Decisão do utilizador; evita expor uma operação privilegiada na interface. |
+| 2026-11-20 | O que fazer com uma mensagem de apoio. | Ver lista, detalhe e marcar como resolvida no admin; **sem resposta por email**. | Decisão do utilizador; o estado `open`/`resolved` é suficiente para o acompanhamento. |
+| 2026-11-20 | Confirmação das subscrições de novidades. | Subscrição direta, sem email de confirmação; idempotente por email normalizado. | Decisão do utilizador; reduz fricção no rodapé da landing. |
+| 2026-11-20 | Onde colocar o formulário de novidades e que operações permitir no admin. | Input no rodapé da landing; admin lista, pesquisa, remove (com confirmação) e exporta CSV. | Decisão do utilizador; cobre gestão completa sem sair do painel. |
+| 2026-11-20 | Textos visíveis nas novas áreas. | pt-PT em todas as mensagens e erros, com chaves `pt-AO`/`en` em `block7-keys.ts`. | Mantém a convenção dos blocos 5/6 sem duplicar o motor i18n. |
+| 2026-11-20 | Mudança de idioma no fluxo de login. | O botão de `auth-layout` usa o mesmo `I18nService` dos controlos da landing; `auth.page.ts` e `password.page.ts` passaram a ler todas as strings e toasts das chaves `auth.*`/`password.*`. | O botão estava sem `(click)` e as páginas tinham literais PT; trocar só o botão não mudaria nada. |
+| 2026-11-20 | `<html lang>` e metadados. | `I18nService` aplica o locale lido no bootstrap e a cada troca; `effect()` na landing atualiza título/descrição/OG; títulos das rotas usam `TranslationKey`. | Evita idioma declarado incorreto para leitores de ecrã e SEO desatualizado. |
+| 2026-11-20 | Ligações de apoio. | `mailto:` da landing e de Definições substituído pelo mesmo `app-support-dialog`, que envia `POST /public/support`. | Uma única mensagem guardada no backend e visível no admin, sem depender do cliente de email do utilizador. |
+| 2026-11-20 | Localização do componente do modal. | `SupportDialogComponent` vive em `features/landing/` e é reutilizado por Definições. | Evita duplicar formulário e validação; mudá-lo para `shared/` acrescentaria alterações sem benefício funcional neste bloco. |
+| 2026-11-20 | Formatação de datas nas novas abas. | `i18n.dateTime(iso, 'Africa/Luanda')`, o mesmo helper já usado nas abas do bloco 6. | Consistência de fuso horário e formatação em todo o painel. |

@@ -61,7 +61,7 @@ O bloco 6 executa a Parte E do bloco 5: uma landing pública em `/` e uma área 
 
 - O guard depende de `is_super_admin` (ou `isSuperAdmin`) na resposta de sessão; o backend expõe agora essa flag em `GET /auth/session` → `data.host.is_super_admin` (commit `d974746` no backend).
 - Os contratos `/admin/*` seguem o plano e os mapeadores aceitam `snake_case`/`camel_case`, alinhados com a implementação final do backend.
-- `landing.ns2.supportUrl` usa `mailto:apoio@ns2innovation.ao` como placeholder a validar.
+- O botão de apoio da landing usa o modal do Bloco 7 (`POST /api/v1/public/support`); `landing.ns2.supportUrl` deixou de ser usado. O mesmo modal é usado em Definições — ver `docs/REPORT-BLOCO-7.md`.
 
 ## Notas
 

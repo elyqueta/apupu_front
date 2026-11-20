@@ -20,6 +20,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { interval } from 'rxjs';
 import { AuthService, SocialProvider } from '../../core/api/auth.service';
 import { toApiError } from '../../core/api/api-error';
+import { I18nService } from '../../core/i18n/i18n.service';
 import { ToastService } from '../../core/services/toast.service';
 import { ICONS } from '../../core/ui/icons';
 import { distributeOtpDigits } from '../../core/utils/otp.util';
@@ -51,13 +52,15 @@ function passwordsMatch(group: AbstractControl): ValidationErrors | null {
     >
       @if (mode() === 'login') {
         <div class="animate-screen">
-          <p class="text-sm text-muted">Espaço do anfitrião</p>
-          <h1 [class]="titleClass">Bem-vindo de volta</h1>
-          <p [class]="leadClass">Entra para gerir os teus eventos e convidados.</p>
+          <p class="text-sm text-muted">{{ i18n.t('auth.hostSpace') }}</p>
+          <h1 [class]="titleClass">{{ i18n.t('auth.welcomeBack') }}</h1>
+          <p [class]="leadClass">{{ i18n.t('auth.loginLead') }}</p>
 
           <form class="space-y-4" [formGroup]="loginForm" (ngSubmit)="login()" novalidate>
             <div class="grid gap-1.5">
-              <label for="login-email" class="text-sm font-semibold text-ink">Email</label>
+              <label for="login-email" class="text-sm font-semibold text-ink">
+                {{ i18n.t('auth.email') }}
+              </label>
               <input
                 id="login-email"
                 formControlName="email"
@@ -71,7 +74,9 @@ function passwordsMatch(group: AbstractControl): ValidationErrors | null {
             </div>
 
             <div class="grid gap-1.5">
-              <label for="login-password" class="text-sm font-semibold text-ink">Senha</label>
+              <label for="login-password" class="text-sm font-semibold text-ink">
+                {{ i18n.t('auth.password') }}
+              </label>
               <div class="relative">
                 <input
                   id="login-password"
@@ -85,7 +90,9 @@ function passwordsMatch(group: AbstractControl): ValidationErrors | null {
                 <button
                   type="button"
                   class="absolute right-1 top-1 grid size-11 place-items-center rounded-xl text-muted transition hover:text-ink"
-                  [attr.aria-label]="showLoginPassword() ? 'Esconder senha' : 'Mostrar senha'"
+                  [attr.aria-label]="
+                    showLoginPassword() ? i18n.t('auth.hidePassword') : i18n.t('auth.showPassword')
+                  "
                   [attr.aria-pressed]="showLoginPassword()"
                   (click)="togglePassword('login')"
                 >
@@ -104,24 +111,24 @@ function passwordsMatch(group: AbstractControl): ValidationErrors | null {
                   formControlName="remember"
                   class="size-[18px] accent-brand"
                 />
-                Lembrar-me
+                {{ i18n.t('auth.remember') }}
               </label>
               <a
                 routerLink="/recuperar-senha"
                 class="inline-flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 font-semibold text-ink transition hover:bg-brand/10 hover:text-brand"
               >
-                Esqueceste a senha?
+                {{ i18n.t('auth.forgotPassword') }}
               </a>
             </div>
 
             <button type="submit" [disabled]="busy()" [class]="submitClass">
-              {{ busy() ? 'A entrar…' : 'Entrar' }}
+              {{ busy() ? i18n.t('auth.signingIn') : i18n.t('auth.signIn') }}
             </button>
           </form>
 
           <div class="my-5 flex items-center gap-3 text-sm text-muted">
             <span class="h-px flex-1 bg-line" aria-hidden="true"></span>
-            <span>ou entra com</span>
+            <span>{{ i18n.t('auth.orSignInWith') }}</span>
             <span class="h-px flex-1 bg-line" aria-hidden="true"></span>
           </div>
 
@@ -148,10 +155,12 @@ function passwordsMatch(group: AbstractControl): ValidationErrors | null {
 
           <div class="mt-6">
             <a routerLink="/criar-conta" [class]="secondaryButtonClass">
-              Criar conta
+              {{ i18n.t('auth.createAccount') }}
               <fa-icon [icon]="icons['arrowRight']" class="text-sm" aria-hidden="true" />
             </a>
-            <p class="mt-2 text-center text-[13px] text-muted">Leva menos de um minuto.</p>
+            <p class="mt-2 text-center text-[13px] text-muted">
+              {{ i18n.t('auth.createAccountHint') }}
+            </p>
           </div>
         </div>
       } @else {
@@ -167,14 +176,14 @@ function passwordsMatch(group: AbstractControl): ValidationErrors | null {
 
         @if (step() === 'email') {
           <div class="animate-screen">
-            <h1 [class]="titleClass">Cria a tua conta</h1>
-            <p [class]="leadClass">
-              Começa pelo teu email. Enviamos-te um código para confirmar que é teu.
-            </p>
+            <h1 [class]="titleClass">{{ i18n.t('auth.registerTitle') }}</h1>
+            <p [class]="leadClass">{{ i18n.t('auth.registerLead') }}</p>
 
             <form class="space-y-4" [formGroup]="emailForm" (ngSubmit)="requestCode()" novalidate>
               <div class="grid gap-1.5">
-                <label for="register-email" class="text-sm font-semibold text-ink">Email</label>
+                <label for="register-email" class="text-sm font-semibold text-ink">
+                  {{ i18n.t('auth.email') }}
+                </label>
                 <input
                   id="register-email"
                   formControlName="email"
@@ -189,13 +198,13 @@ function passwordsMatch(group: AbstractControl): ValidationErrors | null {
               </div>
 
               <button type="submit" [disabled]="busy()" [class]="submitClass">
-                {{ busy() ? 'A enviar…' : 'Enviar código' }}
+                {{ busy() ? i18n.t('auth.sending') : i18n.t('auth.sendCode') }}
               </button>
             </form>
 
             <div class="my-5 flex items-center gap-3 text-sm text-muted">
               <span class="h-px flex-1 bg-line" aria-hidden="true"></span>
-              <span>ou cria com</span>
+              <span>{{ i18n.t('auth.orSignUpWith') }}</span>
               <span class="h-px flex-1 bg-line" aria-hidden="true"></span>
             </div>
 
@@ -221,7 +230,9 @@ function passwordsMatch(group: AbstractControl): ValidationErrors | null {
             </div>
 
             <div class="mt-6">
-              <a routerLink="/entrar" [class]="secondaryButtonClass"> Já tens conta? Entrar </a>
+              <a routerLink="/entrar" [class]="secondaryButtonClass">
+                {{ i18n.t('auth.alreadyHaveAccount') }}
+              </a>
             </div>
           </div>
         } @else if (step() === 'sent') {
@@ -232,16 +243,14 @@ function passwordsMatch(group: AbstractControl): ValidationErrors | null {
             >
               <fa-icon [icon]="icons['envelopeOpen']" class="text-2xl" />
             </div>
-            <h1 [class]="titleClass">Código enviado</h1>
+            <h1 [class]="titleClass">{{ i18n.t('auth.codeSent') }}</h1>
             <p [class]="leadClass">
-              Enviámos um código de 6 dígitos para
-              <b class="font-semibold text-ink">{{ email() }}</b>. Abre a caixa de entrada e
-              confirma o teu email.
+              {{ i18n.t('auth.codeSentLead', { email: email() }) }}
             </p>
 
             <div class="space-y-3">
               <button type="button" [class]="submitClass" (click)="openCodeStep()">
-                Introduzir código
+                {{ i18n.t('auth.enterCode') }}
                 <fa-icon [icon]="icons['arrowRight']" class="ml-1 text-sm" aria-hidden="true" />
               </button>
               <button
@@ -252,37 +261,40 @@ function passwordsMatch(group: AbstractControl): ValidationErrors | null {
               >
                 {{
                   resendSeconds() > 0
-                    ? 'Reenviar código (' + resendSeconds() + 's)'
-                    : 'Reenviar código'
+                    ? i18n.t('auth.resendCodeIn', { seconds: resendSeconds() })
+                    : i18n.t('auth.resendCode')
                 }}
               </button>
             </div>
 
             <div class="mt-4 flex items-center justify-center gap-2 text-sm text-muted">
-              <span>Email errado?</span>
+              <span>{{ i18n.t('auth.wrongEmail') }}</span>
               <button type="button" [class]="ghostButtonClass" (click)="changeEmail()">
-                Mudar email
+                {{ i18n.t('auth.changeEmail') }}
               </button>
             </div>
           </div>
         } @else if (step() === 'code') {
           <div class="animate-screen">
-            <h1 [class]="titleClass">Confirma o teu email</h1>
+            <h1 [class]="titleClass">{{ i18n.t('auth.confirmEmail') }}</h1>
             <p [class]="leadClass">
-              Enviámos um código de 6 dígitos para
-              <b class="font-semibold text-ink">{{ email() }}</b>.
+              {{ i18n.t('auth.confirmEmailLead', { email: email() }) }}
             </p>
 
             @if (codeFromEmail()) {
               <p
                 class="mb-4 rounded-[14px] border border-mint/25 bg-mint/10 p-3 text-[13px] leading-5 text-mint"
               >
-                Preenchemos o código do email. Confirma os dígitos e continua.
+                {{ i18n.t('auth.codeAutofilled') }}
               </p>
             }
 
             <form class="space-y-4" [formGroup]="otpForm" (ngSubmit)="verifyCode()" novalidate>
-              <div class="flex gap-2.5" role="group" aria-label="Código de 6 dígitos">
+              <div
+                class="flex gap-2.5"
+                role="group"
+                [attr.aria-label]="i18n.t('auth.otpGroup')"
+              >
                 @for (i of otpIndexes; track i) {
                   <input
                     #otpBox
@@ -294,14 +306,14 @@ function passwordsMatch(group: AbstractControl): ValidationErrors | null {
                     inputmode="numeric"
                     maxlength="6"
                     [attr.autocomplete]="i === 0 ? 'one-time-code' : 'off'"
-                    [attr.aria-label]="'Dígito ' + (i + 1)"
+                    [attr.aria-label]="i18n.t('auth.otpDigit', { number: i + 1 })"
                     [class]="otpClass"
                   />
                 }
               </div>
 
               <button type="submit" [disabled]="busy()" [class]="submitClass">
-                {{ busy() ? 'A confirmar…' : 'Confirmar código' }}
+                {{ busy() ? i18n.t('auth.confirming') : i18n.t('auth.confirmCode') }}
               </button>
             </form>
 
@@ -314,32 +326,33 @@ function passwordsMatch(group: AbstractControl): ValidationErrors | null {
               >
                 {{
                   resendSeconds() > 0
-                    ? 'Reenviar código (' + resendSeconds() + 's)'
-                    : 'Reenviar código'
+                    ? i18n.t('auth.resendCodeIn', { seconds: resendSeconds() })
+                    : i18n.t('auth.resendCode')
                 }}
               </button>
               <button type="button" [class]="ghostButtonClass" (click)="changeEmail()">
-                Mudar email
+                {{ i18n.t('auth.changeEmail') }}
               </button>
             </div>
           </div>
         } @else {
           <div class="animate-screen">
-            <h1 [class]="titleClass">Quase lá</h1>
-            <p [class]="leadClass">Diz-nos o teu nome e define a tua senha.</p>
+            <h1 [class]="titleClass">{{ i18n.t('auth.almostThere') }}</h1>
+            <p [class]="leadClass">{{ i18n.t('auth.detailsLead') }}</p>
 
             @if (guestFromInvite()) {
               <p
                 class="mb-4 rounded-[14px] border border-mint/25 bg-mint/10 p-3 text-[13px] leading-5 text-mint"
               >
-                O teu email já está confirmado pelo convite do anfitrião. Só falta definires a
-                senha.
+                {{ i18n.t('auth.guestVerified') }}
               </p>
             }
 
             <form class="space-y-4" [formGroup]="detailsForm" (ngSubmit)="register()" novalidate>
               <div class="grid gap-1.5">
-                <label for="register-name" class="text-sm font-semibold text-ink">Nome</label>
+                <label for="register-name" class="text-sm font-semibold text-ink">
+                  {{ i18n.t('auth.name') }}
+                </label>
                 <input
                   id="register-name"
                   formControlName="displayName"
@@ -351,7 +364,9 @@ function passwordsMatch(group: AbstractControl): ValidationErrors | null {
               </div>
 
               <div class="grid gap-1.5">
-                <label for="register-password" class="text-sm font-semibold text-ink">Senha</label>
+                <label for="register-password" class="text-sm font-semibold text-ink">
+                  {{ i18n.t('auth.password') }}
+                </label>
                 <div class="relative">
                   <input
                     id="register-password"
@@ -366,7 +381,11 @@ function passwordsMatch(group: AbstractControl): ValidationErrors | null {
                   <button
                     type="button"
                     class="absolute right-1 top-1 grid size-11 place-items-center rounded-xl text-muted transition hover:text-ink"
-                    [attr.aria-label]="showRegisterPassword() ? 'Esconder senha' : 'Mostrar senha'"
+                    [attr.aria-label]="
+                      showRegisterPassword()
+                        ? i18n.t('auth.hidePassword')
+                        : i18n.t('auth.showPassword')
+                    "
                     [attr.aria-pressed]="showRegisterPassword()"
                     (click)="togglePassword('register')"
                   >
@@ -376,12 +395,12 @@ function passwordsMatch(group: AbstractControl): ValidationErrors | null {
                     />
                   </button>
                 </div>
-                <span class="text-[13px] text-muted">Mínimo de 8 caracteres.</span>
+                <span class="text-[13px] text-muted">{{ i18n.t('auth.minPassword') }}</span>
               </div>
 
               <div class="grid gap-1.5">
                 <label for="register-confirm-password" class="text-sm font-semibold text-ink">
-                  Confirmar senha
+                  {{ i18n.t('auth.confirmPassword') }}
                 </label>
                 <input
                   id="register-confirm-password"
@@ -400,22 +419,26 @@ function passwordsMatch(group: AbstractControl): ValidationErrors | null {
                   detailsForm.hasError('passwordMismatch') &&
                   detailsForm.controls.confirmPassword.touched
                 ) {
-                  <span class="text-[13px] text-coral">As senhas não coincidem.</span>
+                  <span class="text-[13px] text-coral">{{
+                    i18n.t('auth.passwordsMismatch')
+                  }}</span>
                 }
               </div>
 
               <button type="submit" [disabled]="busy()" [class]="submitClass">
-                {{ busy() ? 'A criar conta…' : 'Criar conta' }}
+                {{ busy() ? i18n.t('auth.creatingAccount') : i18n.t('auth.createAccount') }}
               </button>
 
               <p class="text-center text-[13px] text-muted">
-                Ao criar conta aceitas os
+                {{ i18n.t('auth.termsIntro') }}
                 <!-- TODO: contrato não confirmado — URL dos Termos. -->
-                <a routerLink="/termos" class="font-semibold text-ink underline">Termos</a>
-                e a
+                <a routerLink="/termos" class="font-semibold text-ink underline">{{
+                  i18n.t('auth.terms')
+                }}</a>
+                ·
                 <!-- TODO: contrato não confirmado — URL da Política de privacidade. -->
                 <a routerLink="/privacidade" class="font-semibold text-ink underline">
-                  Política de privacidade
+                  {{ i18n.t('auth.privacy') }}
                 </a>
                 .
               </p>
@@ -433,6 +456,7 @@ export class AuthPage {
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
   private readonly toasts = inject(ToastService);
+  private readonly i18n = inject(I18nService);
 
   protected readonly icons = ICONS;
 
@@ -490,8 +514,8 @@ export class AuthPage {
   );
   protected readonly heroAlt = computed(() =>
     this.mode() === 'register'
-      ? 'Amigos a fazer um brinde numa mesa ao pôr do sol'
-      : 'Amigos de costas a celebrar ao pôr do sol na baía de Luanda',
+      ? this.i18n.t('auth.hero.alt.register')
+      : this.i18n.t('auth.hero.alt.login'),
   );
 
   private readonly otpBoxes = viewChildren<ElementRef<HTMLInputElement>>('otpBox');
@@ -584,18 +608,18 @@ export class AuthPage {
     const password = this.loginForm.controls.password.value;
     if (!this.loginForm.controls.email.valid || !email) {
       this.loginForm.controls.email.markAsTouched();
-      this.toasts.error('Indica um email válido.');
+      this.toasts.error(this.i18n.t('auth.error.invalidEmail'));
       return;
     }
     if (!password) {
       this.loginForm.controls.password.markAsTouched();
-      this.toasts.error('Indica a tua senha.');
+      this.toasts.error(this.i18n.t('auth.error.enterPassword'));
       return;
     }
     this.busy.set(true);
     try {
       await this.auth.login(email, password, this.loginForm.controls.remember.value);
-      this.toasts.success('Sessão iniciada. Bem-vindo de volta!');
+      this.toasts.success(this.i18n.t('auth.error.loginSuccess'));
       await this.router.navigateByUrl(this.resolveDestination());
     } catch (error: unknown) {
       this.toasts.error(toApiError(error).message);
@@ -611,7 +635,7 @@ export class AuthPage {
     const email = this.emailForm.getRawValue().email.trim();
     if (!this.emailForm.controls.email.valid || !email) {
       this.emailForm.controls.email.markAsTouched();
-      this.toasts.error('Este email não parece válido. Verifica se está bem escrito.');
+      this.toasts.error(this.i18n.t('auth.error.registrationEmail'));
       return;
     }
     this.busy.set(true);
@@ -628,14 +652,14 @@ export class AuthPage {
         this.codeFromEmail.set(false);
         this.detailsForm.controls.displayName.setValue(result.display_name ?? '');
         this.step.set('details');
-        this.toasts.success('Encontrámos o teu convite. Define a senha para entrares.');
+        this.toasts.success(this.i18n.t('auth.error.guestFound'));
         return;
       }
 
       this.guestFromInvite.set(false);
       this.resendSeconds.set(secondsUntil(result.resend_available_at));
       this.step.set('sent');
-      this.toasts.success(`Enviámos um código de 6 dígitos para ${email}.`);
+      this.toasts.success(this.i18n.t('auth.error.codeSent', { email }));
     } catch (error: unknown) {
       this.toasts.error(toApiError(error).message);
     } finally {
@@ -657,14 +681,14 @@ export class AuthPage {
         this.guestFromInvite.set(true);
         this.detailsForm.controls.displayName.setValue(result.display_name ?? '');
         this.step.set('details');
-        this.toasts.success('Encontrámos o teu convite. Define a senha para entrares.');
+        this.toasts.success(this.i18n.t('auth.error.guestFound'));
         return;
       }
 
       this.resendSeconds.set(secondsUntil(result.resend_available_at));
       this.otp.set(['', '', '', '', '', '']);
       this.codeFromEmail.set(false);
-      this.toasts.success(`Enviámos um novo código para ${this.email()}.`);
+      this.toasts.success(this.i18n.t('auth.error.codeResent', { email: this.email() }));
     } catch (error: unknown) {
       this.toasts.error(toApiError(error).message);
     } finally {
@@ -687,7 +711,7 @@ export class AuthPage {
     }
     const code = this.otp().join('');
     if (code.length < 6) {
-      this.toasts.error('Escreve os 6 dígitos do código.');
+      this.toasts.error(this.i18n.t('auth.error.enterSixDigits'));
       return;
     }
     this.busy.set(true);
@@ -709,24 +733,24 @@ export class AuthPage {
     const password = this.detailsForm.controls.password.value;
     if (!displayName) {
       this.detailsForm.controls.displayName.markAsTouched();
-      this.toasts.error('Indica o teu nome.');
+      this.toasts.error(this.i18n.t('auth.error.enterName'));
       return;
     }
     if (password.length < 8) {
       this.detailsForm.controls.password.markAsTouched();
-      this.toasts.error('A senha precisa de pelo menos 8 caracteres.');
+      this.toasts.error(this.i18n.t('auth.error.passwordMin'));
       return;
     }
     if (this.detailsForm.hasError('passwordMismatch')) {
       this.detailsForm.controls.confirmPassword.markAsTouched();
-      this.toasts.error('As senhas não coincidem.');
+      this.toasts.error(this.i18n.t('auth.passwordsMismatch'));
       return;
     }
     this.busy.set(true);
     try {
       // O contrato atual inicia a sessão no próprio registo: não há login separado.
       await this.auth.register(this.email(), password, displayName);
-      this.toasts.success('Conta criada com sucesso. Bem-vindo!');
+      this.toasts.success(this.i18n.t('auth.error.accountCreated'));
       await this.router.navigateByUrl(this.resolveDestination());
     } catch (error: unknown) {
       this.toasts.error(toApiError(error).message);

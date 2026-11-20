@@ -44,7 +44,10 @@ O Bloco 5 reorganiza o convite público e as páginas de evento, cria a caixa de
 ### Parte D — Partilha e acesso do gestor
 - Já existia: `manager-credentials-dialog.component.ts` com link + código `XXX-XXX`, mensagem pronta, WhatsApp e cópia; aviso de alternativa menos segura ao e-mail.
 - Já existia: formulário de código em `management-entry.page.html` para gestor sem conta (aceita maiúsculas, espaços e hífens).
-- Não foi acrescentado código duplicado; a configs de validade de link dependem dos endpoints backend correspondentes.
+- `events.repository.ts`: `rotateOwnManagerAccess()` → `POST /host/manager/access-code` (o gestor troca o próprio código numa sessão sem conta) e `updateInvitationLink()` → `PATCH /host/events/:eventId/invitations/:invitationId/link` com `expires_at`.
+- `invitation-link-dialog.component.ts` (novo): escolha da validade do link individual do convite, com limite de `fim do evento + 30 dias` e envio como `${data}T23:59:59.000Z`; ligado à ação “Alterar validade” no menu de cada convidado.
+- `management-event.page.html`/`.ts`: cartão “Acesso ao evento” no painel do gestor com ação “Alterar código de acesso”; as novas credenciais são mostradas no diálogo existente e há aviso de que o código anterior e as sessões antigas deixam de ser válidos.
+- Testes: pedidos PATCH/POST com o corpo esperado e diálogo de validade (emite a data em ISO e bloqueia datas além do limite do backend).
 
 ### Parte F — Caixa de entrada
 - `messages.repository.ts`: `GET /host/inbox`, `POST /host/inbox/:id/read`, `POST /host/inbox/:id/answer` (contrato final do backend). O filtro por evento é aplicado no cliente porque a API devolve todos os eventos da conta.
@@ -68,7 +71,7 @@ O Bloco 5 reorganiza o convite público e as páginas de evento, cria a caixa de
 
 - `npm run build` — concluído.
 - `npx tsc --noEmit` — 0 erros.
-- `npm test -- --watch=false` — 34 ficheiros / 157 testes aprovados.
+- `npm test -- --watch=false` — 36 ficheiros / 161 testes aprovados.
 - `npm run lint` — 0 erros; 24 avisos legados (pré-existentes).
 
 ## Testes manuais sugeridos
@@ -79,6 +82,8 @@ O Bloco 5 reorganiza o convite público e as páginas de evento, cria a caixa de
 4. Em `/mensagens`, filtrar por não lidas/respondidas e responder a uma mensagem.
 5. Num evento cancelado, confirmar banner, ações desativadas e convite público apenas com “Evento cancelado”.
 6. Em “Definições → Perfil”, carregar e remover o avatar; confirmar que o asset antigo é apagado no Cloudinary (backend).
+7. Num convite, usar “Alterar validade” e confirmar que a data máxima é o fim do evento + 30 dias e que o link volta a funcionar até essa data.
+8. No painel do gestor, gerar um novo código e confirmar que o anterior e as sessões antigas deixam de funcionar e que o novo link/código aparecem uma vez.
 
 ## Notas
 

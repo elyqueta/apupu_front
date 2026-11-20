@@ -59,8 +59,8 @@ O bloco 6 executa a Parte E do bloco 5: uma landing pública em `/`, aviso de pr
 
 ## Alinhamento com o backend
 
-- O guard depende de `is_super_admin` (ou `isSuperAdmin`) na resposta de sessão; o backend deve expor essa flag no DTO de sessão.
-- Os contratos `/admin/*` seguem o plano e os mapeadores aceitam `snake_case`/`camel_case`; confirmar contra a implementação final do backend.
+- O guard depende de `is_super_admin` (ou `isSuperAdmin`) na resposta de sessão; o backend expõe agora essa flag em `GET /auth/session` → `data.host.is_super_admin` (commit `d974746` no backend).
+- Os contratos `/admin/*` seguem o plano e os mapeadores aceitam `snake_case`/`camel_case`, alinhados com a implementação final do backend.
 - `landing.ns2.supportUrl` usa `mailto:apoio@ns2innovation.ao` como placeholder a validar.
 
 ## Notas

@@ -1,10 +1,12 @@
 import { Locale } from '../models/models';
 import { BLOCK5_KEYS_EN, BLOCK5_KEYS_PT } from './block5-keys';
 import { BLOCK6_KEYS_EN, BLOCK6_KEYS_PT } from './block6-keys';
+import { BLOCK7_KEYS_EN, BLOCK7_KEYS_PT } from './block7-keys';
 
 const PT_AO = {
   ...BLOCK5_KEYS_PT,
   ...BLOCK6_KEYS_PT,
+  ...BLOCK7_KEYS_PT,
 
   'app.name': 'Conto Contigo',
   'app.tagline': 'Eventos & convites',
@@ -1504,6 +1506,7 @@ export type TranslationKey = keyof typeof PT_AO;
 const EN: Record<TranslationKey, string> = {
   ...BLOCK5_KEYS_EN,
   ...BLOCK6_KEYS_EN,
+  ...BLOCK7_KEYS_EN,
 
   'app.name': 'Conto Contigo',
   'app.tagline': 'Events & invitations',

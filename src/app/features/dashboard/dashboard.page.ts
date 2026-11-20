@@ -10,9 +10,12 @@ import { ToastService } from '../../core/services/toast.service';
 import { WorkspaceStore } from '../../core/services/workspace.store';
 import { EVENT_TYPE_ICONS, ICONS } from '../../core/ui/icons';
 import { ActivityPresenter } from '../../shared/services/activity.presenter';
+import { ActionMenuItem } from '../../shared/components/action-menu.component';
 import { AvatarComponent } from '../../shared/components/avatar.component';
 import { EventCardComponent } from '../../shared/components/event-card.component';
+import { PersonCardComponent } from '../../shared/components/person-card.component';
 import { StatCardComponent } from '../../shared/components/stat-card.component';
+import { StatGridComponent } from '../../shared/components/stat-grid.component';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
 import { TemplateArtworkComponent } from '../../shared/components/template-artwork.component';
 
@@ -29,7 +32,9 @@ interface ChartDay {
     FaIconComponent,
     AvatarComponent,
     EventCardComponent,
+    PersonCardComponent,
     StatCardComponent,
+    StatGridComponent,
     StatusBadgeComponent,
     TemplateArtworkComponent,
   ],
@@ -156,6 +161,29 @@ export class DashboardPage {
 
   protected activityTone(kind: EventActivity['kind']): string {
     return this.activityPresenter.tone(kind);
+  }
+
+  /** Menu compacto da lista de convidados por responder do painel. */
+  protected pendingActions(entry: { guest: Guest; event: HostEvent }): ActionMenuItem[] {
+    const items: ActionMenuItem[] = [
+      { id: 'view', label: this.i18n.t('guests.viewEvent'), icon: ICONS['arrowUpRight'] },
+    ];
+    if (this.store.isEventHost(entry.event.id)) {
+      items.unshift({
+        id: 'resend',
+        label: this.i18n.t('dashboard.resendEmail'),
+        icon: ICONS['envelope'],
+      });
+    }
+    return items;
+  }
+
+  protected onPendingAction(action: string, entry: { guest: Guest; event: HostEvent }): void {
+    if (action === 'resend') {
+      void this.resendEmail(entry.guest);
+    } else if (action === 'view') {
+      void this.router.navigate(['/eventos', entry.event.id]);
+    }
   }
 
   protected async resendEmail(guest: Guest): Promise<void> {

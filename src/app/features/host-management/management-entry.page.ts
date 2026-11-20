@@ -3,11 +3,11 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ApiClient } from '../../core/api/api-client';
-import { toApiError } from '../../core/api/api-error';
 import { ApiEvent } from '../../core/api/api.models';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { ICONS } from '../../core/ui/icons';
 import { BrandComponent } from '../../shared/components/brand.component';
+import { ModalComponent } from '../../shared/components/modal.component';
 import { PreferenceControlsComponent } from '../../shared/components/preference-controls.component';
 
 interface HostSessionResponse {
@@ -26,9 +26,11 @@ interface AccountPrompt {
   step: 'options' | 'choose-email';
 }
 
+const ACCESS_CODE_LENGTH = 6;
+
 @Component({
   selector: 'app-management-entry-page',
-  imports: [FaIconComponent, BrandComponent, PreferenceControlsComponent],
+  imports: [FaIconComponent, BrandComponent, PreferenceControlsComponent, ModalComponent],
   templateUrl: './management-entry.page.html',
 })
 export class ManagementEntryPage {
@@ -38,9 +40,10 @@ export class ManagementEntryPage {
 
   protected readonly i18n = inject(I18nService);
   protected readonly icons = ICONS;
-  protected readonly link = signal('');
+  /** Segredo do link, lido da rota; nunca é mostrado no ecrã. */
+  protected readonly token = signal('');
+  protected readonly code = signal('');
   protected readonly error = signal('');
-  protected readonly invalidLink = signal(false);
   protected readonly busy = signal(false);
   protected readonly accountPrompt = signal<AccountPrompt | null>(null);
 
@@ -67,39 +70,31 @@ export class ManagementEntryPage {
 
   constructor() {
     this.route.paramMap.pipe(takeUntilDestroyed()).subscribe((params) => {
-      const token = params.get('token');
-      if (token) {
-        void this.open(token);
-      }
+      this.token.set(params.get('token') ?? '');
     });
   }
 
-  protected updateLink(value: string): void {
-    this.link.set(value);
+  protected updateCode(value: string): void {
+    this.code.set(normalizeAccessCode(value));
     this.error.set('');
-    this.invalidLink.set(false);
   }
 
   protected async submit(): Promise<void> {
-    const token = extractManagementToken(this.link());
-    if (!token || this.busy()) {
-      this.invalidLink.set(true);
-      this.error.set(this.i18n.t('management.invalidHint'));
-      return;
-    }
-    await this.open(token);
-  }
-
-  private async open(token: string): Promise<void> {
-    if (this.busy()) {
+    const token = this.token();
+    const code = this.code();
+    if (this.busy() || !token || code.length !== ACCESS_CODE_LENGTH) {
+      // Todas as falhas, incluindo formato inválido, partilham o mesmo texto.
+      this.error.set(this.i18n.t('management.accessFailed'));
       return;
     }
     this.busy.set(true);
     this.error.set('');
-    this.invalidLink.set(false);
     try {
-      const response = await this.api.post<HostSessionResponse>('/host/session', { token });
-      this.link.set('');
+      const response = await this.api.post<HostSessionResponse>('/public/manage/access', {
+        token,
+        code,
+      });
+      this.code.set('');
       if (!response.email_has_account && response.email) {
         this.accountPrompt.set({
           eventId: response.event.id,
@@ -109,12 +104,10 @@ export class ManagementEntryPage {
         return;
       }
       await this.router.navigate(['/gestao/evento', response.event.id], { replaceUrl: true });
-    } catch (error: unknown) {
-      this.link.set('');
-      const apiError = toApiError(error);
-      const unavailable = apiError.status === 401 || apiError.status === 404;
-      this.invalidLink.set(unavailable);
-      this.error.set(unavailable ? this.i18n.t('management.invalidHint') : apiError.message);
+    } catch {
+      // Nunca distingue link inválido, código errado, bloqueio ou erro de rede.
+      this.code.set('');
+      this.error.set(this.i18n.t('management.accessFailed'));
     } finally {
       this.busy.set(false);
     }
@@ -138,7 +131,7 @@ export class ManagementEntryPage {
     void this.router.navigate(['/criar-conta'], {
       queryParams: {
         email: prompt.email,
-        enviar: 1,
+        gestor: 1,
         returnUrl: this.returnUrl(prompt.eventId),
       },
     });
@@ -169,7 +162,10 @@ export class ManagementEntryPage {
     if (!prompt) {
       return;
     }
-    void this.router.navigate(['/gestao/evento', prompt.eventId], { replaceUrl: true });
+    void this.router.navigate(['/gestao/evento', prompt.eventId], {
+      queryParams: { sem_conta: 1, email: prompt.email },
+      replaceUrl: true,
+    });
   }
 
   private returnUrl(eventId: string): string {
@@ -177,16 +173,10 @@ export class ManagementEntryPage {
   }
 }
 
-function extractManagementToken(value: string): string {
-  const trimmed = value.trim();
-  if (!trimmed) {
-    return '';
-  }
-  try {
-    const url = new URL(trimmed);
-    const segments = url.pathname.split('/').filter(Boolean);
-    return segments.at(-1) ?? '';
-  } catch {
-    return trimmed.split(/[/?#]/).filter(Boolean).at(-1) ?? '';
-  }
+/** Maiúsculas automáticas, sem espaços nem hífenes, no máximo 6 caracteres. */
+export function normalizeAccessCode(value: string): string {
+  return value
+    .toLocaleUpperCase()
+    .replace(/[^A-Z0-9]/g, '')
+    .slice(0, ACCESS_CODE_LENGTH);
 }

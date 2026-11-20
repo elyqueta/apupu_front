@@ -272,3 +272,14 @@
     }
   }
 </section>
+
+<app-confirm-dialog
+  [open]="removeAllOpen()"
+  [title]="i18n.t('notifications.clearAll')"
+  [message]="i18n.t('notifications.removeAllConfirm')"
+  [confirmLabel]="i18n.t('common.remove')"
+  [cancelLabel]="i18n.t('common.cancel')"
+  tone="danger"
+  (confirmed)="confirmRemoveAll()"
+  (cancelled)="removeAllOpen.set(false)"
+/>

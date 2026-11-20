@@ -14,6 +14,7 @@ import {
 import { ToastService } from '../../core/services/toast.service';
 import { WorkspaceStore } from '../../core/services/workspace.store';
 import { ICONS } from '../../core/ui/icons';
+import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog.component';
 import { SkeletonComponent } from '../../shared/components/skeleton.component';
 import { NotificationPresenter } from '../../shared/services/notification.presenter';
 
@@ -21,7 +22,7 @@ const PAGE_SIZE = 12;
 
 @Component({
   selector: 'app-notifications-page',
-  imports: [FormsModule, RouterLink, FaIconComponent, SkeletonComponent],
+  imports: [FormsModule, RouterLink, FaIconComponent, SkeletonComponent, ConfirmDialogComponent],
   templateUrl: './notifications.page.html',
 })
 export class NotificationsPage {
@@ -36,6 +37,7 @@ export class NotificationsPage {
   protected readonly loading = signal(true);
   protected readonly error = signal('');
   protected readonly busy = signal(false);
+  protected readonly removeAllOpen = signal(false);
 
   protected readonly status = signal<NotificationStatus>('all');
   protected readonly kind = signal<NotificationKind | ''>('');
@@ -221,10 +223,14 @@ export class NotificationsPage {
     }
   }
 
-  protected async removeAll(): Promise<void> {
-    if (this.busy() || !window.confirm(this.i18n.t('notifications.removeAllConfirm'))) {
-      return;
+  protected removeAll(): void {
+    if (!this.busy()) {
+      this.removeAllOpen.set(true);
     }
+  }
+
+  protected async confirmRemoveAll(): Promise<void> {
+    this.removeAllOpen.set(false);
     this.busy.set(true);
     try {
       await this.store.removeAllNotifications();

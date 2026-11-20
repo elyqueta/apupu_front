@@ -8,57 +8,70 @@
     ></button>
   }
 
-  @if (mobileSearchOpen()) {
-    <div class="fixed inset-0 z-[60] md:hidden" data-search-root>
-      <button
-        type="button"
-        class="absolute inset-0 bg-canvas/70 backdrop-blur-md"
-        [attr.aria-label]="i18n.t('common.close')"
-        (click)="closeSearch(); mobileSearchOpen.set(false)"
-      ></button>
-      <div
-        class="absolute inset-x-0 top-0 border-b border-line bg-surface-solid/95 p-3 shadow-card backdrop-blur-2xl animate-rise"
-      >
-        <form class="flex items-center gap-2" role="search" (submit)="submitMobileSearch($event)">
-          <fa-icon
-            [icon]="icons['search']"
-            class="shrink-0 text-sm text-muted"
-            aria-hidden="true"
-          />
-          <input
-            type="search"
-            autofocus
-            [value]="searchTerm()"
-            (input)="onSearchInput($any($event.target).value)"
-            (keydown)="onSearchKeydown($event)"
-            class="h-11 w-full flex-1 rounded-xl border border-line bg-surface-raised/70 px-3 text-sm text-ink outline-none transition placeholder:text-muted/60 focus:border-brand/50"
-            [placeholder]="i18n.t('shell.searchPlaceholder')"
-            [attr.aria-label]="i18n.t('shell.searchPlaceholder')"
-          />
-          <button
-            type="button"
-            class="grid size-11 shrink-0 place-items-center rounded-xl border border-line bg-surface-raised text-muted transition hover:text-ink"
-            [attr.aria-label]="i18n.t('common.close')"
-            (click)="closeSearch(); mobileSearchOpen.set(false)"
-          >
-            <fa-icon [icon]="icons['close']" class="text-sm" />
-          </button>
-        </form>
+  <!--
+    O campo mobile existe sempre no DOM: a camada só alterna a classe `hidden`.
+    Assim o `focus()` no gesto de toque funciona também no iOS/Safari.
+  -->
+  <div
+    #mobileSearchRoot
+    class="fixed inset-0 z-[60] md:hidden"
+    [class.hidden]="!mobileSearchOpen()"
+    data-search-root
+  >
+    <button
+      type="button"
+      class="absolute inset-0 bg-canvas/70 backdrop-blur-md"
+      [attr.aria-label]="i18n.t('common.close')"
+      (click)="closeMobileSearch()"
+    ></button>
+    <div
+      class="absolute inset-x-0 top-0 max-h-[92dvh] overflow-y-auto border-b border-line bg-surface-solid/95 p-3 shadow-card backdrop-blur-2xl animate-rise"
+    >
+      <form class="flex items-center gap-2" role="search" (submit)="submitMobileSearch($event)">
+        <fa-icon
+          [icon]="icons['search']"
+          class="shrink-0 text-sm text-muted"
+          aria-hidden="true"
+        />
+        <input
+          #mobileSearchInput
+          type="search"
+          role="combobox"
+          aria-autocomplete="list"
+          aria-controls="search-suggestions-mobile"
+          [attr.aria-expanded]="mobileSearchOpen()"
+          [attr.aria-activedescendant]="activeDescendant('mobile-')"
+          [value]="searchTerm()"
+          (input)="onSearchInput($any($event.target).value)"
+          (keydown)="onSearchKeydown($event)"
+          class="h-11 w-full flex-1 rounded-xl border border-line bg-surface-raised/70 px-3 text-sm text-ink outline-none transition placeholder:text-muted/60 focus:border-brand/50"
+          [placeholder]="i18n.t('shell.searchPlaceholder')"
+          [attr.aria-label]="i18n.t('shell.searchPlaceholder')"
+        />
+        <button
+          type="button"
+          class="grid size-11 shrink-0 place-items-center rounded-xl border border-line bg-surface-raised text-muted transition hover:text-ink"
+          [attr.aria-label]="i18n.t('common.close')"
+          (click)="closeMobileSearch()"
+        >
+          <fa-icon [icon]="icons['close']" class="text-sm" aria-hidden="true" />
+        </button>
+      </form>
 
-        @if (searchTerm().trim()) {
-          <div class="mt-3">
-            <app-search-suggestions
-              [groups]="suggestions()"
-              [term]="searchTerm()"
-              [activeId]="activeSuggestionId()"
-              (picked)="pickSuggestion($event)"
-              (hovered)="hoverSuggestion($event)"
-            />
-          </div>
-        }
+      <div class="mt-3">
+        <app-search-suggestions
+          [groups]="suggestions()"
+          [term]="searchTerm()"
+          [activeId]="activeSuggestionId()"
+          listId="search-suggestions-mobile"
+          idPrefix="mobile-"
+          (picked)="pickSuggestion($event)"
+          (hovered)="hoverSuggestion($event)"
+          (clearRecents)="clearRecents()"
+        />
       </div>
     </div>
-  }
+  </div>
 
   <div class="mx-auto flex w-full max-w-[1800px] items-start lg:gap-4 lg:px-4 lg:py-4">
     <aside
@@ -227,7 +240,13 @@
                 aria-hidden="true"
               />
               <input
+                #desktopSearchInput
                 type="search"
+                role="combobox"
+                aria-autocomplete="list"
+                aria-controls="search-suggestions-desktop"
+                [attr.aria-expanded]="searchOpen()"
+                [attr.aria-activedescendant]="activeDescendant('desktop-')"
                 [value]="searchTerm()"
                 (input)="onSearchInput($any($event.target).value)"
                 (keydown)="onSearchKeydown($event)"
@@ -238,14 +257,17 @@
               />
             </form>
 
-            @if (searchOpen() && searchTerm().trim()) {
+            @if (searchOpen()) {
               <div class="absolute right-0 top-full z-50 mt-2 w-[min(calc(100vw-1.5rem),22rem)]">
                 <app-search-suggestions
                   [groups]="suggestions()"
                   [term]="searchTerm()"
                   [activeId]="activeSuggestionId()"
+                  listId="search-suggestions-desktop"
+                  idPrefix="desktop-"
                   (picked)="pickSuggestion($event)"
                   (hovered)="hoverSuggestion($event)"
+                  (clearRecents)="clearRecents()"
                 />
               </div>
             }
@@ -253,7 +275,9 @@
 
           <div class="flex items-center gap-2">
             <button
+              #mobileSearchTrigger
               type="button"
+              data-search-trigger
               class="grid size-9 shrink-0 place-items-center rounded-xl border border-line bg-surface-raised/60 text-muted transition hover:border-brand/40 hover:text-ink md:hidden"
               [attr.aria-label]="i18n.t('common.search')"
               (click)="openMobileSearch()"

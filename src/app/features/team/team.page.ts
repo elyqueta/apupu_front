@@ -21,6 +21,7 @@ import { I18nService } from '../../core/i18n/i18n.service';
 import { TranslationKey } from '../../core/i18n/translations';
 import {
   EventStatus,
+  ManagerCreationResult,
   Team,
   TeamCategory,
   TeamEventStatus,
@@ -32,10 +33,13 @@ import { ToastService } from '../../core/services/toast.service';
 import { WorkspaceStore } from '../../core/services/workspace.store';
 import { ICONS } from '../../core/ui/icons';
 import { AvatarStackComponent } from '../../shared/components/avatar-stack.component';
+import { PageHeaderComponent } from '../../shared/components/page-header.component';
 import { SkeletonComponent } from '../../shared/components/skeleton.component';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
 import { StatCardComponent } from '../../shared/components/stat-card.component';
+import { StatGridComponent } from '../../shared/components/stat-grid.component';
 import { TeamFormDialogComponent, TeamFormValue } from './team-form-dialog.component';
+import { TeamManagerDialogComponent } from './team-manager-dialog.component';
 
 const PAGE_SIZE = 12;
 const SEARCH_DEBOUNCE_MS = 300;
@@ -78,8 +82,11 @@ interface ManagerGroup {
     SkeletonComponent,
     StatusBadgeComponent,
     AvatarStackComponent,
+    PageHeaderComponent,
     StatCardComponent,
+    StatGridComponent,
     TeamFormDialogComponent,
+    TeamManagerDialogComponent,
   ],
   templateUrl: './team.page.html',
 })
@@ -102,6 +109,10 @@ export class TeamPage {
   protected readonly formOpen = signal(false);
   protected readonly formSaving = signal(false);
   protected readonly formTeam = signal<Team | null>(null);
+
+  /** Modal partilhado de criação de equipa + gestor (Bloco 2). */
+  protected readonly managerDialogOpen = signal(false);
+  protected readonly lastCreatedManager = signal<ManagerCreationResult | null>(null);
 
   protected readonly managerSearch = signal('');
   protected readonly managersLoading = signal(false);
@@ -138,6 +149,18 @@ export class TeamPage {
   protected readonly loading = this.store.loading;
   protected readonly error = this.store.error;
   protected readonly pagination = this.store.pagination;
+
+  protected readonly teamStats = computed(() => {
+    const teams = this.items();
+    const total = this.pagination()?.total;
+    return {
+      teams: total ?? teams.length,
+      members: teams.reduce((sum, team) => sum + team.memberCount, 0),
+      openTasks: teams.reduce((sum, team) => sum + team.openTaskCount, 0),
+      doneTasks: teams.reduce((sum, team) => sum + team.completedTaskCount, 0),
+      pageHint: total === undefined ? this.i18n.t('teams.statCurrentPageHint') : '',
+    };
+  });
 
   private debounce: ReturnType<typeof setTimeout> | null = null;
 
@@ -267,7 +290,7 @@ export class TeamPage {
           startsAt: event?.startsAt ?? summary.startsAt,
           status: event?.status ?? summary.status,
           timezone: event?.timezone ?? 'Africa/Luanda',
-          members: [...members].sort((a, b) => a.email.localeCompare(b.email)),
+          members: [...members].sort((a, b) => this.managerContact(a).localeCompare(this.managerContact(b))),
         } satisfies ManagerGroup;
       })
       .filter(
@@ -275,7 +298,7 @@ export class TeamPage {
           !term ||
           group.title.toLocaleLowerCase(this.i18n.locale()).includes(term) ||
           group.members.some((member) =>
-            member.email.toLocaleLowerCase(this.i18n.locale()).includes(term),
+            this.managerContact(member).toLocaleLowerCase(this.i18n.locale()).includes(term),
           ),
       )
       .sort((a, b) => (a.startsAt ?? '').localeCompare(b.startsAt ?? ''));
@@ -432,8 +455,22 @@ export class TeamPage {
   }
 
   protected openCreate(): void {
-    this.formTeam.set(null);
-    this.formOpen.set(true);
+    this.managerDialogOpen.set(true);
+  }
+
+  protected closeManagerDialog(): void {
+    this.managerDialogOpen.set(false);
+  }
+
+  protected onManagerCreated(result: ManagerCreationResult): void {
+    this.lastCreatedManager.set(result);
+    this.store.upsert(result.team);
+    void this.store.refresh();
+    void this.workspace.reloadTeam();
+  }
+
+  protected managerContact(manager: TeamManager): string {
+    return manager.email ?? manager.phone ?? manager.displayName ?? '';
   }
 
   protected closeForm(): void {

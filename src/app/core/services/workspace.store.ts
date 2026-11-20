@@ -23,7 +23,7 @@ import { ActivityRepository } from '../data/activity.repository';
 import { CachedRepository, LoadOptions } from '../data/cached-repository';
 import { DashboardRepository } from '../data/dashboard.repository';
 import { EventsRepository } from '../data/events.repository';
-import { GuestsRepository } from '../data/guests.repository';
+import { GuestPage, GuestsQuery, GuestsRepository } from '../data/guests.repository';
 import { ManagementStore } from '../data/management.store';
 import {
   NotificationPage,
@@ -403,6 +403,11 @@ export class WorkspaceStore implements Resettable {
 
   private setManagers(eventId: string, managers: EventManager[]): void {
     this.managersState.update((state) => ({ ...state, [eventId]: managers }));
+  }
+
+  /** Listagem paginada e filtrada no servidor, usada por convidados e detalhe do evento. */
+  guestsPage(query: GuestsQuery = {}): Promise<GuestPage> {
+    return this.guestsRepo.listPage(query);
   }
 
   async addGuest(eventId: string, input: GuestInput): Promise<AddGuestResult> {

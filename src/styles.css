@@ -89,6 +89,7 @@
 
   --animate-rise: rise 0.55s cubic-bezier(0.22, 0.85, 0.3, 1) both;
   --animate-screen: screen-in 0.25s ease-out both;
+  --animate-sheet: sheet-up 0.25s ease-out both;
 }
 
 :root {
@@ -203,6 +204,16 @@
     animation-timing-function: ease-out, ease-in-out;
     animation-iteration-count: 1, infinite;
     animation-fill-mode: forwards, none;
+  }
+
+  /* Navegação por separadores: mantém o scroll sem barra horizontal visível. */
+  .no-scrollbar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
   }
 }
 
@@ -333,6 +344,18 @@ svg.svg-inline--fa.fa-beat {
   from {
     opacity: 0;
     transform: translate3d(0, 16px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+/* app-modal · bottom sheet em mobile (respeita prefers-reduced-motion). */
+@keyframes sheet-up {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 24px, 0);
   }
   to {
     opacity: 1;

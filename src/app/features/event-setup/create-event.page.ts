@@ -4,7 +4,6 @@ import {
   AbstractControl,
   NonNullableFormBuilder,
   ReactiveFormsModule,
-  ValidationErrors,
   Validators,
 } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -90,6 +89,7 @@ export class CreateEventPage {
     ],
     date: ['', Validators.required],
     time: ['18:00', Validators.required],
+    endsAt: [''],
     timezone: ['Africa/Luanda', Validators.required],
     venue: ['', [Validators.required, Validators.maxLength(120)]],
     city: ['Luanda', [Validators.required, Validators.maxLength(80)]],
@@ -277,6 +277,9 @@ export class CreateEventPage {
     if (control.hasError('future')) {
       return this.i18n.t('create.errors.future');
     }
+    if (control.hasError('afterStart')) {
+      return this.i18n.t('create.errors.afterStart');
+    }
     if (control.hasError('invalidLink')) {
       return this.i18n.t('create.errors.invalidLink');
     }
@@ -432,6 +435,12 @@ export class CreateEventPage {
         return false;
       }
       this.form.controls.date.updateValueAndValidity({ onlySelf: true });
+      const endsAt = this.endsAtIso();
+      if (endsAt && new Date(endsAt).getTime() <= new Date(iso).getTime()) {
+        this.form.controls.endsAt.setErrors({ afterStart: true });
+        return false;
+      }
+      this.form.controls.endsAt.updateValueAndValidity({ onlySelf: true });
       const link = this.form.controls.onlineLink.value.trim();
       if (link && !link.startsWith('https://')) {
         this.form.controls.onlineLink.setErrors({ invalidLink: true });
@@ -508,6 +517,7 @@ export class CreateEventPage {
       hostName: value.hostName.trim(),
       hostEmail: value.hostEmail.trim(),
       startsAt: this.zonedIso(value.date, value.time, value.timezone),
+      endsAt: this.endsAtIso(),
       timezone: value.timezone,
       venue: value.venue.trim(),
       city: value.city.trim(),
@@ -544,6 +554,15 @@ export class CreateEventPage {
       URL.revokeObjectURL(objectUrl);
     }
     this.coverObjectUrl.set(null);
+  }
+
+  /** Converte o campo opcional `datetime-local` para ISO no fuso do evento. */
+  private endsAtIso(): string | null {
+    const value = this.form.controls.endsAt.value.trim();
+    if (!value || value.length < 16) {
+      return null;
+    }
+    return this.zonedIso(value.slice(0, 10), value.slice(11, 16), this.form.controls.timezone.value);
   }
 
   private zonedIso(dateValue: string, timeValue: string, timezone: string): string {

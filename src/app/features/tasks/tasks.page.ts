@@ -1,6 +1,5 @@
-import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, ParamMap } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { skip } from 'rxjs';
@@ -9,23 +8,42 @@ import { Pagination } from '../../core/api/api.models';
 import { TaskAssigneeFilter, TaskQuery, TaskStatusFilter } from '../../core/data/tasks.repository';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { TranslationKey } from '../../core/i18n/translations';
-import { EventManager, WorkspaceTask } from '../../core/models/models';
+import { WorkspaceTask } from '../../core/models/models';
+import { TeamsStore } from '../../core/services/teams.store';
 import { ToastService } from '../../core/services/toast.service';
 import { WorkspaceStore } from '../../core/services/workspace.store';
 import { ICONS } from '../../core/ui/icons';
+import { PageHeaderComponent } from '../../shared/components/page-header.component';
 import { SkeletonComponent } from '../../shared/components/skeleton.component';
+import { StatCardComponent } from '../../shared/components/stat-card.component';
+import { StatGridComponent } from '../../shared/components/stat-grid.component';
+import { TaskFormDialogComponent } from '../../shared/components/task-form-dialog.component';
+
+interface TaskFormValue {
+  label: string;
+  eventId: string;
+  teamId: string | null;
+  assigneeMemberId: string | null;
+}
 
 const PAGE_SIZE = 12;
 
 @Component({
   selector: 'app-tasks-page',
-  imports: [ReactiveFormsModule, FaIconComponent, SkeletonComponent],
+  imports: [
+    FaIconComponent,
+    PageHeaderComponent,
+    SkeletonComponent,
+    StatCardComponent,
+    StatGridComponent,
+    TaskFormDialogComponent,
+  ],
   templateUrl: './tasks.page.html',
 })
 export class TasksPage {
   private readonly store = inject(WorkspaceStore);
+  private readonly teamsStore = inject(TeamsStore);
   private readonly toasts = inject(ToastService);
-  private readonly fb = inject(NonNullableFormBuilder);
   private readonly route = inject(ActivatedRoute);
   protected readonly i18n = inject(I18nService);
   protected readonly icons = ICONS;
@@ -36,7 +54,7 @@ export class TasksPage {
   protected readonly error = signal('');
   protected readonly busyId = signal<string | null>(null);
   protected readonly creating = signal(false);
-  protected readonly managersLoading = signal(false);
+  protected readonly taskDialogOpen = signal(false);
 
   protected readonly status = signal<TaskStatusFilter>('all');
   protected readonly assignee = signal<TaskAssigneeFilter>('all');
@@ -46,7 +64,27 @@ export class TasksPage {
   protected readonly page = signal(1);
 
   protected readonly events = this.store.events;
-  protected readonly managers = signal<EventManager[]>([]);
+  protected readonly teams = this.teamsStore.items;
+  protected readonly assignees = computed(() =>
+    this.store
+      .teamMembers()
+      .map((manager) => ({
+        id: manager.id,
+        label: manager.email ?? manager.displayName ?? manager.phone ?? '',
+      }))
+      .filter((assignee) => assignee.label !== ''),
+  );
+  protected readonly allTasks = this.store.tasks;
+  protected readonly allTasksLoading = this.store.loading;
+
+  protected readonly taskStats = computed(() => {
+    const tasks = this.allTasks();
+    return {
+      total: tasks.length,
+      pending: tasks.filter((task) => !task.done).length,
+      done: tasks.filter((task) => task.done).length,
+    };
+  });
 
   protected readonly statusOptions: Array<{ id: TaskStatusFilter; labelKey: TranslationKey }> = [
     { id: 'all', labelKey: 'tasks.status.all' },
@@ -60,12 +98,6 @@ export class TasksPage {
       { id: 'host', labelKey: 'tasks.assignee.host' },
       { id: 'manager', labelKey: 'tasks.assignee.manager' },
     ];
-
-  protected readonly createForm = this.fb.group({
-    label: ['', [Validators.required, Validators.maxLength(200)]],
-    eventId: [''],
-    managerId: [''],
-  });
 
   protected readonly hasFilters = computed(
     () =>
@@ -100,7 +132,8 @@ export class TasksPage {
   });
 
   constructor() {
-    this.store.load({ tasks: true, events: true });
+    this.store.load({ tasks: true, events: true, team: true });
+    void this.teamsStore.load({ pageSize: 100 });
 
     // Abre já filtrado quando se chega de uma sugestão de pesquisa (`?q=`)
     // ou do filtro por evento (`?evento=` / `?event_id=`).
@@ -120,15 +153,6 @@ export class TasksPage {
     });
 
     void this.load();
-    effect(() => {
-      const eventId = this.createForm.controls.eventId.value;
-      untracked(() => this.createForm.controls.managerId.setValue(''));
-      if (eventId) {
-        untracked(() => void this.loadManagers(eventId));
-      } else {
-        this.managers.set([]);
-      }
-    });
   }
 
   protected async load(): Promise<void> {
@@ -178,20 +202,21 @@ export class TasksPage {
     void this.load();
   }
 
-  protected async create(): Promise<void> {
-    if (this.createForm.invalid) {
-      this.createForm.markAllAsTouched();
-      return;
-    }
-    const value = this.createForm.getRawValue();
+  protected openTaskDialog(): void {
+    this.taskDialogOpen.set(true);
+  }
+
+  protected closeTaskDialog(): void {
+    if (!this.creating()) this.taskDialogOpen.set(false);
+  }
+
+  protected async submitTask(value: TaskFormValue): Promise<void> {
+    if (this.creating()) return;
     this.creating.set(true);
     try {
-      await this.store.createTask(
-        value.label.trim(),
-        value.eventId || null,
-        value.managerId || null,
-      );
-      this.createForm.reset({ label: '', eventId: '', managerId: '' });
+      // O repositório de tarefas globais ainda só aceita (label, evento, gestor).
+      await this.store.createTask(value.label.trim(), value.eventId || null, value.assigneeMemberId);
+      this.taskDialogOpen.set(false);
       this.page.set(1);
       await this.load();
       this.toasts.success(this.i18n.t('tasks.created'));
@@ -238,17 +263,5 @@ export class TasksPage {
       q: params.get('q')?.trim() ?? '',
       eventId: (params.get('evento') ?? params.get('event_id') ?? '').trim(),
     };
-  }
-
-  private async loadManagers(eventId: string): Promise<void> {
-    this.managersLoading.set(true);
-    try {
-      this.managers.set(await this.store.loadManagers(eventId));
-    } catch (error: unknown) {
-      this.managers.set([]);
-      this.toasts.error(toApiError(error).message);
-    } finally {
-      this.managersLoading.set(false);
-    }
   }
 }

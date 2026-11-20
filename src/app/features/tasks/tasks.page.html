@@ -1,82 +1,48 @@
 <section class="flex flex-col gap-4 md:gap-5">
-  <header class="flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
-    <div class="min-w-0">
-      <p
-        class="hidden text-[10px] font-semibold uppercase tracking-[0.26em] text-brand-strong md:block"
-      >
-        {{ i18n.t('tasks.eyebrow') }}
-      </p>
-      <h2
-        class="mt-1.5 hidden font-display text-2xl font-semibold tracking-tight text-ink sm:text-3xl md:block"
-      >
-        {{ i18n.t('tasks.title') }}
-      </h2>
-      <p class="text-[13px] leading-5 text-muted md:mt-1.5 md:max-w-2xl md:text-sm md:leading-6">
-        {{ i18n.t('tasks.subtitle') }}
-      </p>
-    </div>
-  </header>
-
-  <form
-    class="grid gap-2 rounded-3xl border border-line bg-surface/70 p-3 shadow-card backdrop-blur-2xl sm:grid-cols-2 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)_minmax(0,1fr)]"
-    [formGroup]="createForm"
-    (ngSubmit)="create()"
+  <app-page-header
+    [eyebrow]="i18n.t('tasks.eyebrow')"
+    [title]="i18n.t('tasks.title')"
+    [subtitle]="i18n.t('tasks.subtitle')"
+    [hasActions]="true"
   >
-    <label class="block sm:col-span-2 lg:col-span-1">
-      <span class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
-        {{ i18n.t('tasks.newLabel') }}
-      </span>
-      <input
-        formControlName="label"
-        type="text"
-        maxlength="200"
-        class="h-10 w-full rounded-xl border border-line bg-surface-raised/70 px-3 text-xs text-ink outline-none transition placeholder:text-muted/60 focus:border-brand/50"
-        [placeholder]="i18n.t('tasks.newPlaceholder')"
+    <button
+      header-actions
+      type="button"
+      data-testid="create-task"
+      class="inline-flex h-11 items-center gap-2 rounded-xl bg-brand px-4 text-xs font-semibold text-on-secondary transition hover:bg-secondary-hover disabled:cursor-wait disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60"
+      [disabled]="creating()"
+      [attr.aria-label]="i18n.t('tasks.create')"
+      (click)="openTaskDialog()"
+    >
+      <fa-icon [icon]="icons['plus']" class="text-[10px]" aria-hidden="true" />
+      {{ creating() ? i18n.t('common.saving') : i18n.t('tasks.create') }}
+    </button>
+  </app-page-header>
+
+  @if (allTasksLoading()) {
+    <app-skeleton variant="cards" />
+  } @else {
+    <app-stat-grid [columns]="3">
+      <app-stat-card
+        [label]="i18n.t('tasks.statTotal')"
+        [value]="i18n.number(taskStats().total)"
+        [icon]="icons['checklist']"
+        tone="brand"
       />
-    </label>
-
-    <label class="block min-w-0">
-      <span class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
-        {{ i18n.t('tasks.event') }}
-      </span>
-      <select
-        formControlName="eventId"
-        class="h-10 w-full min-w-0 max-w-full rounded-xl border border-line bg-surface-raised/70 px-3 text-xs text-ink outline-none transition focus:border-brand/50"
-      >
-        <option value="">{{ i18n.t('tasks.noEvent') }}</option>
-        @for (event of events(); track event.id) {
-          <option [value]="event.id">{{ event.title }}</option>
-        }
-      </select>
-    </label>
-
-    <label class="block min-w-0">
-      <span class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
-        {{ i18n.t('tasks.manager') }}
-      </span>
-      <select
-        formControlName="managerId"
-        [disabled]="!createForm.controls.eventId.value || managersLoading()"
-        class="h-10 w-full min-w-0 max-w-full rounded-xl border border-line bg-surface-raised/70 px-3 text-xs text-ink outline-none transition focus:border-brand/50 disabled:opacity-60"
-      >
-        <option value="">{{ i18n.t('tasks.ownTask') }}</option>
-        @for (manager of managers(); track manager.id) {
-          <option [value]="manager.id">{{ manager.email }}</option>
-        }
-      </select>
-    </label>
-
-    <div class="flex justify-end sm:col-span-2 lg:col-span-3">
-      <button
-        type="submit"
-        [disabled]="creating()"
-        class="inline-flex h-10 items-center gap-2 rounded-xl bg-brand px-4 text-xs font-semibold text-on-secondary transition hover:bg-secondary-hover disabled:cursor-wait disabled:opacity-60"
-      >
-        <fa-icon [icon]="icons['plus']" class="text-[10px]" aria-hidden="true" />
-        {{ creating() ? i18n.t('common.saving') : i18n.t('tasks.create') }}
-      </button>
-    </div>
-  </form>
+      <app-stat-card
+        [label]="i18n.t('tasks.statPending')"
+        [value]="i18n.number(taskStats().pending)"
+        [icon]="icons['hourglass']"
+        tone="amber"
+      />
+      <app-stat-card
+        [label]="i18n.t('tasks.statDone')"
+        [value]="i18n.number(taskStats().done)"
+        [icon]="icons['checkDouble']"
+        tone="mint"
+      />
+    </app-stat-grid>
+  }
 
   <form
     class="flex flex-col gap-3 rounded-3xl border border-line bg-surface/70 p-3 shadow-card backdrop-blur-2xl"
@@ -339,4 +305,15 @@
       }
     }
   }
+
+  <app-task-form-dialog
+    [open]="taskDialogOpen()"
+    context="tasks"
+    [events]="events()"
+    [teams]="teams()"
+    [assignees]="assignees()"
+    [saving]="creating()"
+    (closed)="closeTaskDialog()"
+    (submitted)="submitTask($event)"
+  />
 </section>

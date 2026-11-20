@@ -121,6 +121,21 @@ export class AuthService {
     return response;
   }
 
+  /**
+   * Atalho do Bloco 2: gestor com sessão de gestão válida e o mesmo contacto
+   * não precisa de OTP. O CSRF da sessão é enviado pelo interceptor.
+   */
+  async requestManagerRegistrationCode(email: string): Promise<RegistrationCodeResponse> {
+    const response = await this.api.post<RegistrationCodeResponse>(
+      '/host/manager/register/request-code',
+      { email: email.trim() },
+    );
+    if (response.status === 'guest_verified') {
+      this.verificationToken.set(response.verification_token);
+    }
+    return response;
+  }
+
   /** Passo 2 do registo: troca o código por um `verification_token` de uso único. */
   async verifyRegistrationCode(email: string, code: string): Promise<void> {
     const response = await this.api.post<RegistrationVerificationResponse>(

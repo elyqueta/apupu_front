@@ -1,7 +1,7 @@
-import { Component, computed, HostListener, inject, signal } from '@angular/core';
+import { Component, computed, ElementRef, HostListener, inject, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
-import { filter } from 'rxjs';
+import { debounceTime, distinctUntilChanged, filter, Subject } from 'rxjs';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { AuthService } from '../../core/api/auth.service';
@@ -64,6 +64,17 @@ export class ShellComponent {
   protected readonly pageTitle = signal<TranslationKey>('nav.dashboard');
   protected readonly skeletonVariant = signal<SkeletonVariant>('dashboard');
 
+  /** Termo já debounceado; o campo mostra `searchTerm` sem esperar. */
+  private readonly debouncedTerm = signal('');
+  private readonly remoteGroups = signal<SearchGroup[]>([]);
+  private readonly searchInput$ = new Subject<string>();
+  private searchSequence = 0;
+
+  private readonly desktopSearchInput = viewChild<ElementRef<HTMLInputElement>>('desktopSearchInput');
+  private readonly mobileSearchInput = viewChild<ElementRef<HTMLInputElement>>('mobileSearchInput');
+  private readonly mobileSearchRoot = viewChild<ElementRef<HTMLElement>>('mobileSearchRoot');
+  private readonly mobileSearchTrigger = viewChild<ElementRef<HTMLButtonElement>>('mobileSearchTrigger');
+
   protected readonly navItems: NavItem[] = [
     { path: '/painel', labelKey: 'nav.dashboard', icon: ICONS['dashboard'], exact: true },
     { path: '/eventos', labelKey: 'nav.events', icon: ICONS['events'], exact: false },
@@ -95,10 +106,23 @@ export class ShellComponent {
   protected readonly notifications = computed(() => this.store.notifications());
   protected readonly unreadNotifications = this.store.unreadNotifications;
 
-  /** Grupos de sugestões para o termo atual (vazio sem termo). */
+  /** Grupos de sugestões: dados locais com o campo vazio, API quando escreve. */
   protected readonly suggestions = computed<SearchGroup[]>(() => {
-    const term = this.searchTerm().trim();
-    return term ? this.searchService.suggest(term) : [];
+    // Reage a "Limpar"/guardar pesquisas recentes sem novos pedidos.
+    void this.searchService.recentRevision();
+    const term = this.debouncedTerm().trim();
+    if (!term) {
+      return this.searchService.browse();
+    }
+    const local = this.searchService.suggest(term);
+    const remote = this.remoteGroups();
+    if (!remote.length) {
+      return local;
+    }
+    return [
+      ...remote,
+      ...local.filter((group) => group.key !== 'guests' && group.key !== 'events'),
+    ];
   });
 
   /** Lista achatada, para navegação por teclado com as setas. */
@@ -111,6 +135,29 @@ export class ShellComponent {
     // `resetAll()` da autenticação. Cada página pede depois os domínios que
     // precisa via `store.load(...)`.
     this.store.load({});
+    this.searchInput$
+      .pipe(debounceTime(250), distinctUntilChanged(), takeUntilDestroyed())
+      .subscribe((value) => {
+        this.debouncedTerm.set(value);
+        const query = value.trim();
+        if (!query) {
+          this.remoteGroups.set([]);
+          return;
+        }
+        const sequence = ++this.searchSequence;
+        void this.searchService
+          .searchRemote(query)
+          .then((groups) => {
+            if (sequence === this.searchSequence) {
+              this.remoteGroups.set(groups);
+            }
+          })
+          .catch(() => {
+            if (sequence === this.searchSequence) {
+              this.remoteGroups.set([]);
+            }
+          });
+      });
     this.router.events
       .pipe(
         filter((event): event is NavigationEnd => event instanceof NavigationEnd),
@@ -126,21 +173,47 @@ export class ShellComponent {
     this.updatePageTitle();
   }
 
-  /** Abre a barra de pesquisa (desktop) e aquece convidados/tarefas em fundo. */
+  /** Abre a barra de pesquisa (desktop) e foca o campo no mesmo gesto. */
   protected openSearch(): void {
     this.searchService.warm();
     this.searchOpen.set(true);
+    this.desktopSearchInput()?.nativeElement.focus();
   }
 
-  /** Abre a pesquisa sobreposta do mobile e aquece os dados das sugestões. */
+  /**
+   * Abre a pesquisa sobreposta do mobile. O campo já está no DOM (a camada só
+   * usa a classe `hidden`), pelo que o `focus()` acontece ainda dentro do toque
+   * — necessário para o teclado abrir no iOS/Safari.
+   */
   protected openMobileSearch(): void {
     this.searchService.warm();
     this.mobileSearchOpen.set(true);
+    this.searchTerm.set('');
+    this.debouncedTerm.set('');
+    this.activeSuggestionId.set(null);
+    this.remoteGroups.set([]);
+    this.searchSequence += 1;
+    // A binding `[class.hidden]` só é aplicada na mudança de deteção seguinte.
+    this.mobileSearchRoot()?.nativeElement.classList.remove('hidden');
+    this.mobileSearchInput()?.nativeElement.focus();
   }
 
   protected onSearchInput(value: string): void {
     this.searchTerm.set(value);
     this.activeSuggestionId.set(null);
+    this.searchInput$.next(value);
+    if (!value.trim()) {
+      this.remoteGroups.set([]);
+    }
+  }
+
+  protected activeDescendant(prefix: string): string | null {
+    const id = this.activeSuggestionId();
+    return id ? `${prefix}${id}` : null;
+  }
+
+  protected clearRecents(): void {
+    this.searchService.clearRecentSearches();
   }
 
   /** Setas para navegar, Enter para escolher, Escape para fechar. */
@@ -171,7 +244,11 @@ export class ShellComponent {
       return;
     }
     if (event.key === 'Escape') {
-      this.closeSearch();
+      if (this.mobileSearchOpen()) {
+        this.closeMobileSearch();
+      } else {
+        this.closeSearch('desktop');
+      }
     }
   }
 
@@ -181,7 +258,12 @@ export class ShellComponent {
 
   /** Navega para o destino da sugestão e marca a notificação como lida. */
   protected async pickSuggestion(suggestion: SearchSuggestion): Promise<void> {
-    this.closeSearch();
+    this.rememberCurrentTerm(suggestion.label);
+    if (this.mobileSearchOpen()) {
+      this.closeMobileSearch();
+    } else {
+      this.closeSearch('desktop');
+    }
     if (suggestion.notificationId) {
       try {
         await this.store.markNotificationRead(suggestion.notificationId);
@@ -192,21 +274,39 @@ export class ShellComponent {
     await this.router.navigate(suggestion.route, { queryParams: suggestion.queryParams });
   }
 
-  protected closeSearch(): void {
+  protected closeSearch(restoreFocus: 'desktop' | 'mobile' | null = null): void {
     this.searchOpen.set(false);
     this.activeSuggestionId.set(null);
     this.searchTerm.set('');
+    this.debouncedTerm.set('');
+    this.remoteGroups.set([]);
+    this.searchSequence += 1;
+    if (restoreFocus) {
+      const input =
+        restoreFocus === 'mobile'
+          ? this.mobileSearchTrigger()?.nativeElement
+          : this.desktopSearchInput()?.nativeElement;
+      queueMicrotask(() => input?.focus());
+    }
+  }
+
+  /** Fecha a sobreposição mobile e devolve o foco à lupa. */
+  protected closeMobileSearch(): void {
+    this.mobileSearchOpen.set(false);
+    this.closeSearch('mobile');
   }
 
   /** Fecha o painel de sugestões ao clicar fora da pesquisa. */
   @HostListener('document:click', ['$event'])
   protected onDocumentClick(event: MouseEvent): void {
     const target = event.target as HTMLElement | null;
-    if (target?.closest('[data-search-root]')) {
+    if (target?.closest('[data-search-root], [data-search-trigger]')) {
       return;
     }
-    if (this.searchOpen()) {
-      this.searchOpen.set(false);
+    if (this.mobileSearchOpen()) {
+      this.closeMobileSearch();
+    } else if (this.searchOpen()) {
+      this.closeSearch('desktop');
     }
   }
 
@@ -215,6 +315,7 @@ export class ShellComponent {
     if (!term) {
       return;
     }
+    this.rememberCurrentTerm(term);
     void this.router.navigate(['/convidados'], { queryParams: { q: term } });
     this.searchTerm.set('');
   }
@@ -223,7 +324,11 @@ export class ShellComponent {
   protected submitMobileSearch(event: Event): void {
     event.preventDefault();
     this.search();
-    this.mobileSearchOpen.set(false);
+    this.closeMobileSearch();
+  }
+
+  private rememberCurrentTerm(fallback: string): void {
+    this.searchService.rememberSearch(this.searchTerm().trim() || fallback);
   }
 
   protected notificationIcon(kind: HostNotification['kind']): IconDefinition {

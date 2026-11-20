@@ -28,6 +28,8 @@ export interface HostEvent {
   hostName: string;
   hostEmail: string;
   startsAt: string;
+  /** Fim do evento, quando definido. */
+  endsAt?: string | null;
   timezone: string;
   venue: string;
   city: string;
@@ -52,10 +54,17 @@ export interface HostEvent {
  * Gestor de um evento, identificado pelo email. Pode não ter conta: nesse
  * caso usa o link enviado por email.
  */
+export type ManagerInviteStatus = 'queued' | 'failed' | 'not_sent';
+
 export interface EventManager {
   id: string;
   eventId: string;
-  email: string;
+  teamId: string;
+  email: string | null;
+  phone: string | null;
+  displayName: string | null;
+  linkExpiresAt: string | null;
+  linkRevokedAt: string | null;
   /** `true` quando já existe uma conta verificada com este email. */
   hasAccount: boolean;
   lastUsedAt: string | null;
@@ -64,7 +73,34 @@ export interface EventManager {
 
 export interface ManagerInviteResult {
   manager: EventManager;
-  emailStatus: 'queued' | 'failed';
+  emailStatus: ManagerInviteStatus;
+  link?: string;
+  accessCode?: string;
+}
+
+export interface CreateManagerInput {
+  teamName: string;
+  teamCategory: TeamCategory;
+  teamDescription: string | null;
+  displayName: string | null;
+  email: string | null;
+  phone: string | null;
+  /** `null` → validade por defeito de 7 dias. */
+  linkExpiresAt: string | null;
+}
+
+export interface ManagerCreationResult {
+  manager: EventManager;
+  team: Team;
+  link: string;
+  accessCode: string;
+  emailStatus: ManagerInviteStatus;
+}
+
+export interface TeamMemberContact {
+  displayName?: string | null;
+  email?: string | null;
+  phone?: string | null;
 }
 
 /** Evento a que um gestor pertence, na página global de equipas. */
@@ -92,6 +128,8 @@ export interface Guest {
   invitationUrl: string | null;
   /** Primeira abertura do link do convite; `null` se nunca foi aberto. */
   openedAt: string | null;
+  /** Mensagem opcional deixada ao responder ao convite. */
+  message?: string | null;
   invitedAt: string;
   respondedAt: string | null;
 }
@@ -205,6 +243,8 @@ export interface CreateEventInput {
   hostName: string;
   hostEmail: string;
   startsAt: string;
+  /** Fim opcional do evento (deve ser posterior a `startsAt`). */
+  endsAt?: string | null;
   timezone: string;
   venue: string;
   city: string;
@@ -263,8 +303,8 @@ export type TeamEventStatus =
   | 'rascunho';
 
 export type TeamMemberRole = 'gestor' | 'membro';
-export type TeamMemberStatus = 'ativo' | 'convite_pendente';
-export type TeamMemberOrigin = 'convidado' | 'email';
+export type TeamMemberStatus = 'ativo' | 'convite_pendente' | 'convite_telefone';
+export type TeamMemberOrigin = 'convidado' | 'email' | 'telefone';
 
 export type TaskStatus = 'por_fazer' | 'em_curso' | 'concluida';
 export type TaskPriority = 'baixa' | 'normal' | 'alta';
@@ -297,7 +337,8 @@ export interface Team {
 export interface TeamMember {
   id: string;
   teamId: string;
-  email: string;
+  email: string | null;
+  phone: string | null;
   displayName: string | null;
   role: TeamMemberRole;
   status: TeamMemberStatus;
@@ -311,7 +352,8 @@ export interface TeamMember {
 }
 
 export interface TeamMemberAddRow {
-  email: string;
+  email: string | null;
+  phone: string | null;
   memberId: string | null;
   status: TeamMemberStatus;
   reason?: string;
@@ -326,6 +368,8 @@ export interface AddTeamMembersResult {
 export interface UpdateTeamMemberRoleResult {
   member: TeamMember;
   eventManagerId: string | null;
+  accessCode?: string;
+  accessLink?: string;
 }
 
 export interface DeleteTeamResult {
@@ -369,4 +413,80 @@ export interface TeamTask {
   archivedAt: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+/* ------------------------------------------------------------------ */
+
+/**
+ * Permissões do painel de um evento. Derivadas apenas de
+ * `apupu_back/docs/API-CONTRACT.md:573–585` e do middleware das rotas;
+ * nunca de uma suposição sobre o papel de quem está a ver a página.
+ */
+export interface EventPermissions {
+  /** Editar dados do evento (não inclui `status`/`host_email`). */
+  canEditEvent: boolean;
+  /** Adicionar convidados. */
+  canManageGuests: boolean;
+  /** Criar/editar equipas e tarefas. */
+  canManageTeams: boolean;
+  /** Criar/gerir gestores e os respetivos links/códigos. */
+  canManageManagers: boolean;
+  /** Exportar relatórios e documentos. */
+  canExport: boolean;
+  /** Cancelar ou apagar o evento. */
+  canCancelEvent: boolean;
+  /* Ações reservadas que o contrato não inclui nos booleanos acima. */
+  canChangeEventStatus: boolean;
+  canEditExistingGuests: boolean;
+  canDeleteActivity: boolean;
+  canManageTasks: boolean;
+  canResendManageLink: boolean;
+}
+
+/** Anfitrião: todas as ações do contrato. */
+export function hostPermissions(): EventPermissions {
+  return {
+    canEditEvent: true,
+    canManageGuests: true,
+    canManageTeams: true,
+    canManageManagers: true,
+    canExport: true,
+    canCancelEvent: true,
+    canChangeEventStatus: true,
+    canEditExistingGuests: true,
+    canDeleteActivity: true,
+    canManageTasks: true,
+    canResendManageLink: true,
+  };
+}
+
+/**
+ * Gestor por link: apenas o que o contrato e o middleware permitem.
+ * `contractData` é o dado devolvido pela API (`access_role`); quando ausente,
+ * assume-se o papel de gestor (o mais restritivo).
+ */
+export function managerPermissions(
+  contractData: { accessRole?: EventAccessRole | null } = { accessRole: 'manager' },
+): EventPermissions {
+  if (contractData.accessRole === 'host') {
+    return hostPermissions();
+  }
+  return {
+    canEditEvent: true,
+    canManageGuests: true,
+    canManageTeams: false,
+    canManageManagers: false,
+    canExport: false,
+    canCancelEvent: false,
+    canChangeEventStatus: false,
+    canEditExistingGuests: false,
+    canDeleteActivity: false,
+    canManageTasks: false,
+    canResendManageLink: false,
+  };
+}
+
+/** Fábrica única usada pelas duas páginas do painel do evento. */
+export function eventPermissionsFor(accessRole: EventAccessRole): EventPermissions {
+  return accessRole === 'host' ? hostPermissions() : managerPermissions({ accessRole });
 }

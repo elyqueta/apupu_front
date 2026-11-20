@@ -185,8 +185,9 @@ export class ApiClient {
       'csrf_token' in data &&
       typeof data.csrf_token === 'string'
     ) {
+      const withEvent = path === '/host/session' || path === '/public/manage/access';
       const eventId =
-        path === '/host/session' &&
+        withEvent &&
         'event' in data &&
         typeof data.event === 'object' &&
         data.event !== null &&

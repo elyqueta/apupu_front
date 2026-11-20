@@ -1,37 +1,51 @@
 import { Component, computed, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { I18nService } from '../../core/i18n/i18n.service';
+import { Pagination } from '../../core/api/api.models';
 import { toApiError } from '../../core/api/api-error';
+import { GuestListEntry, GuestsQuery } from '../../core/data/guests.repository';
 import { ReportsRepository } from '../../core/data/reports.repository';
-import { Guest, HostEvent, RsvpStatus } from '../../core/models/models';
+import { Guest, RsvpStatus } from '../../core/models/models';
+import { I18nService } from '../../core/i18n/i18n.service';
 import { DownloadService } from '../../core/services/download.service';
 import { ShareService } from '../../core/services/share.service';
 import { ToastService } from '../../core/services/toast.service';
 import { WorkspaceStore } from '../../core/services/workspace.store';
 import { ICONS } from '../../core/ui/icons';
-import { ActionMenuComponent, ActionMenuItem } from '../../shared/components/action-menu.component';
-import { AvatarComponent } from '../../shared/components/avatar.component';
+import { ActionMenuItem } from '../../shared/components/action-menu.component';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog.component';
 import { GuestDialogComponent } from '../../shared/components/guest-dialog.component';
+import { PageHeaderComponent } from '../../shared/components/page-header.component';
+import { PersonCardComponent, PersonMetaItem, PersonPrimaryAction } from '../../shared/components/person-card.component';
+import { SkeletonComponent } from '../../shared/components/skeleton.component';
 import { StatCardComponent } from '../../shared/components/stat-card.component';
-import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
+import { StatGridComponent } from '../../shared/components/stat-grid.component';
 
 type StatusFilter = 'all' | RsvpStatus;
-type GuestEntry = { guest: Guest; event: HostEvent };
 
+const PAGE_SIZE = 10;
+const SEARCH_DEBOUNCE_MS = 300;
+
+/**
+ * Lista global de convidados.
+ *
+ * A pesquisa, o filtro de estado, o filtro de evento e a paginação são feitos
+ * no servidor (`GET /host/guests`), para que a página nunca mostre apenas os
+ * 10 registos já carregados. Pedidos antigos são ignorados por número de
+ * sequência quando o utilizador escreve rapidamente.
+ */
 @Component({
   selector: 'app-guests-page',
   imports: [
-    RouterLink,
     FaIconComponent,
-    ActionMenuComponent,
-    AvatarComponent,
     ConfirmDialogComponent,
     GuestDialogComponent,
+    PageHeaderComponent,
+    PersonCardComponent,
+    SkeletonComponent,
     StatCardComponent,
-    StatusBadgeComponent,
+    StatGridComponent,
   ],
   templateUrl: './guests.page.html',
 })
@@ -50,6 +64,11 @@ export class GuestsPage {
   protected readonly search = signal('');
   protected readonly eventFilter = signal('all');
   protected readonly statusFilter = signal<StatusFilter>('all');
+  protected readonly page = signal(1);
+  protected readonly items = signal<GuestListEntry[]>([]);
+  protected readonly pagination = signal<Pagination | null>(null);
+  protected readonly listLoading = signal(true);
+  protected readonly listError = signal('');
   protected readonly dialogOpen = signal(false);
   protected readonly editTarget = signal<Guest | null>(null);
   protected readonly removeTarget = signal<Guest | null>(null);
@@ -58,31 +77,30 @@ export class GuestsPage {
   protected readonly filtersOpen = signal(false);
 
   protected readonly stats = this.store.globalStats;
-  protected readonly entries = this.store.guestsWithEvent;
+
+  private requestSeq = 0;
+  private debounce: ReturnType<typeof setTimeout> | null = null;
 
   /** Quantos filtros (evento/estado) estão ativos, para o badge do botão mobile. */
   protected readonly activeFilterCount = computed(
     () => (this.eventFilter() !== 'all' ? 1 : 0) + (this.statusFilter() !== 'all' ? 1 : 0),
   );
 
-  protected readonly filtered = computed(() => {
-    const term = this.search().trim().toLocaleLowerCase(this.i18n.locale());
-    const eventId = this.eventFilter();
-    const status = this.statusFilter();
-    return this.entries()
-      .filter((entry) => eventId === 'all' || entry.event.id === eventId)
-      .filter((entry) => status === 'all' || entry.guest.status === status)
-      .filter((entry) => {
-        if (!term) {
-          return true;
-        }
-        return `${entry.guest.name} ${entry.guest.email} ${entry.event.title}`
-          .toLocaleLowerCase(this.i18n.locale())
-          .includes(term);
-      })
-      .sort(
-        (a, b) => new Date(b.guest.invitedAt).getTime() - new Date(a.guest.invitedAt).getTime(),
-      );
+  protected readonly hasFilters = computed(
+    () =>
+      this.search().trim() !== '' ||
+      this.eventFilter() !== 'all' ||
+      this.statusFilter() !== 'all',
+  );
+
+  protected readonly rangeLabel = computed(() => {
+    const pagination = this.pagination();
+    if (!pagination || pagination.total === 0) {
+      return '';
+    }
+    const start = (pagination.page - 1) * pagination.page_size + 1;
+    const end = Math.min(pagination.page * pagination.page_size, pagination.total);
+    return `${start}–${end} / ${pagination.total}`;
   });
 
   protected readonly statusOptions: Array<{
@@ -98,11 +116,85 @@ export class GuestsPage {
   constructor() {
     this.store.load({ guests: true, events: true, dashboard: true });
     this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
-      const term = params.get('q');
-      if (term) {
+      const term = params.get('q')?.trim() ?? '';
+      if (term && term !== this.search()) {
         this.search.set(term);
+        this.page.set(1);
+        void this.load();
       }
     });
+    void this.load();
+    this.destroyRef.onDestroy(() => {
+      if (this.debounce) {
+        clearTimeout(this.debounce);
+      }
+    });
+  }
+
+  protected async load(): Promise<void> {
+    const seq = ++this.requestSeq;
+    this.listLoading.set(true);
+    this.listError.set('');
+    const query: GuestsQuery = {
+      event_id: this.eventFilter() === 'all' ? undefined : this.eventFilter(),
+      status: this.statusFilter(),
+      q: this.search().trim() || undefined,
+      page: this.page(),
+      page_size: PAGE_SIZE,
+    };
+    try {
+      const result = await this.store.guestsPage(query);
+      if (seq !== this.requestSeq) {
+        return;
+      }
+      const timezoneByEvent = new Map(this.store.events().map((event) => [event.id, event.timezone]));
+      this.items.set(
+        result.items.map((entry) => ({
+          ...entry,
+          event: { ...entry.event, timezone: timezoneByEvent.get(entry.event.id) ?? 'Africa/Luanda' },
+        })),
+      );
+      this.pagination.set(result.pagination);
+    } catch (error: unknown) {
+      if (seq === this.requestSeq) {
+        this.items.set([]);
+        this.listError.set(toApiError(error).message);
+      }
+    } finally {
+      if (seq === this.requestSeq) {
+        this.listLoading.set(false);
+      }
+    }
+  }
+
+  protected onSearch(value: string): void {
+    this.search.set(value);
+    this.page.set(1);
+    if (this.debounce) {
+      clearTimeout(this.debounce);
+    }
+    this.debounce = setTimeout(() => void this.load(), SEARCH_DEBOUNCE_MS);
+  }
+
+  protected setEventFilter(value: string): void {
+    this.eventFilter.set(value);
+    this.page.set(1);
+    void this.load();
+  }
+
+  protected setStatusFilter(value: StatusFilter): void {
+    this.statusFilter.set(value);
+    this.page.set(1);
+    void this.load();
+  }
+
+  protected goToPage(value: number): void {
+    const pagination = this.pagination();
+    if (!pagination || value < 1 || value > pagination.total_pages || value === this.page()) {
+      return;
+    }
+    this.page.set(value);
+    void this.load();
   }
 
   protected async resend(guest: Guest): Promise<void> {
@@ -154,17 +246,43 @@ export class GuestsPage {
     this.editTarget.set(null);
   }
 
-  /**
-   * Ações secundárias do menu "⋯" no cartão mobile. `Editar` e `Remover` só
-   * existem para o anfitrião; `Ver evento` está sempre disponível.
-   */
-  protected menuItems(entry: GuestEntry): ActionMenuItem[] {
+  /** Linhas curtas do cartão: mensagem do convidado, evento, abertura, convite e resposta. */
+  protected metaFor(entry: GuestListEntry): PersonMetaItem[] {
+    const meta: PersonMetaItem[] = [
+      { icon: 'calendar', label: `${entry.event.title} · ${i18nDate(this.i18n, entry.event.startsAt, entry.event.timezone)}` },
+      {
+        icon: 'envelopeOpen',
+        label: entry.guest.openedAt
+          ? `${this.i18n.t('guests.opened')} · ${this.i18n.relative(entry.guest.openedAt)}`
+          : this.i18n.t('guests.notOpened'),
+      },
+      { icon: 'clock', label: `${this.i18n.t('guests.tableInvited')}: ${this.i18n.shortDate(entry.guest.invitedAt, entry.event.timezone)}` },
+      {
+        icon: 'check',
+        label: entry.guest.respondedAt
+          ? `${this.i18n.t('guests.responded')}: ${this.i18n.relative(entry.guest.respondedAt)}`
+          : this.i18n.t('guests.notResponded'),
+      },
+    ];
+    const message = entry.guest.message?.trim();
+    if (message) {
+      const short = message.length > 120 ? `${message.slice(0, 117)}…` : message;
+      meta.unshift({
+        icon: 'quote',
+        label: this.i18n.t('guests.guestMessage', { message: short }),
+      });
+    }
+    return meta;
+  }
+
+  protected actionsFor(entry: GuestListEntry): ActionMenuItem[] {
     const items: ActionMenuItem[] = [
       { id: 'view', label: this.i18n.t('guests.viewEvent'), icon: ICONS['arrowUpRight'] },
     ];
     if (this.isHostFor(entry.event.id)) {
       items.push(
         { id: 'edit', label: this.i18n.t('guests.editAction'), icon: ICONS['pen'] },
+        { id: 'resend', label: this.i18n.t('eventDetail.resend'), icon: ICONS['paperPlane'] },
         {
           id: 'remove',
           label: this.i18n.t('guests.remove'),
@@ -176,13 +294,34 @@ export class GuestsPage {
     return items;
   }
 
-  protected onMenuAction(action: string, entry: GuestEntry): void {
+  protected primaryFor(entry: GuestListEntry): PersonPrimaryAction | null {
+    if (!this.isHostFor(entry.event.id) || !entry.guest.phone) {
+      return null;
+    }
+    return {
+      id: 'whatsapp',
+      label: this.i18n.t('guests.whatsappShort'),
+      icon: ICONS['whatsapp'],
+      hint: this.i18n.t('guests.whatsapp'),
+    };
+  }
+
+  protected onPrimary(action: string, entry: GuestListEntry): void {
+    if (action === 'whatsapp') {
+      this.forwardWhatsApp(entry.guest, entry.event.title);
+    }
+  }
+
+  protected onMenuAction(action: string, entry: GuestListEntry): void {
     switch (action) {
       case 'view':
         void this.router.navigate(['/eventos', entry.event.id]);
         break;
       case 'edit':
         this.openEdit(entry.guest);
+        break;
+      case 'resend':
+        void this.resend(entry.guest);
         break;
       case 'remove':
         this.removeTarget.set(entry.guest);
@@ -220,8 +359,13 @@ export class GuestsPage {
       await this.store.removeGuest(guest.id);
       this.removeTarget.set(null);
       this.toasts.success(this.i18n.t('guests.removed'));
+      await this.load();
     } catch (error: unknown) {
       this.toasts.error(toApiError(error).message);
     }
   }
+}
+
+function i18nDate(i18n: I18nService, value: string | null, timezone: string): string {
+  return value ? i18n.shortDate(value, timezone) : '—';
 }

@@ -7,13 +7,22 @@ import { EventStatus, HostEvent } from '../../core/models/models';
 import { WorkspaceStore } from '../../core/services/workspace.store';
 import { ICONS } from '../../core/ui/icons';
 import { EventCardComponent } from '../../shared/components/event-card.component';
+import { PageHeaderComponent } from '../../shared/components/page-header.component';
 import { StatCardComponent } from '../../shared/components/stat-card.component';
+import { StatGridComponent } from '../../shared/components/stat-grid.component';
 
 type EventFilter = 'all' | 'published' | 'draft' | 'completed';
 
 @Component({
   selector: 'app-events-page',
-  imports: [RouterLink, FaIconComponent, EventCardComponent, StatCardComponent],
+  imports: [
+    RouterLink,
+    FaIconComponent,
+    EventCardComponent,
+    PageHeaderComponent,
+    StatCardComponent,
+    StatGridComponent,
+  ],
   templateUrl: './events.page.html',
 })
 export class EventsPage {

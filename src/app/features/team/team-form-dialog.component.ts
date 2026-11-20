@@ -1,10 +1,11 @@
-import { Component, effect, HostListener, inject, input, output, signal } from '@angular/core';
+import { Component, effect, inject, input, output } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { TranslationKey } from '../../core/i18n/translations';
 import { HostEvent, Team, TeamCategory } from '../../core/models/models';
 import { ICONS } from '../../core/ui/icons';
+import { ModalComponent } from '../../shared/components/modal.component';
 
 export interface TeamFormValue {
   eventId: string;
@@ -26,44 +27,17 @@ interface CategoryOption {
  */
 @Component({
   selector: 'app-team-form-dialog',
-  imports: [ReactiveFormsModule, FaIconComponent],
+  imports: [ReactiveFormsModule, FaIconComponent, ModalComponent],
   template: `
-    @if (open()) {
-      <div class="fixed inset-0 z-[100] grid place-items-center overflow-y-auto p-4">
-        <button
-          type="button"
-          class="absolute inset-0 bg-canvas/70 backdrop-blur-md"
-          [attr.aria-label]="i18n.t('common.close')"
-          (click)="cancel.emit()"
-        ></button>
+    <app-modal [open]="open()" [title]="title()" (closed)="cancel.emit()">
+      <form
+        data-testid="team-form-dialog"
+        [formGroup]="form"
+        (ngSubmit)="submit()"
+      >
+        <p class="text-xs leading-5 text-muted">{{ i18n.t('teams.form.hint') }}</p>
 
-        <form
-          role="dialog"
-          aria-modal="true"
-          data-testid="team-form-dialog"
-          [attr.aria-label]="title()"
-          class="relative w-full max-w-lg rounded-4xl border border-line bg-surface-solid/95 p-5 shadow-card backdrop-blur-2xl animate-rise sm:p-6"
-          [formGroup]="form"
-          (ngSubmit)="submit()"
-        >
-          <div class="flex items-start justify-between gap-3">
-            <div class="min-w-0">
-              <h2 class="font-display text-xl font-semibold tracking-tight text-ink">
-                {{ title() }}
-              </h2>
-              <p class="mt-1 text-xs leading-5 text-muted">{{ i18n.t('teams.form.hint') }}</p>
-            </div>
-            <button
-              type="button"
-              class="grid size-9 shrink-0 place-items-center rounded-xl border border-line bg-surface-raised text-muted transition hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60"
-              [attr.aria-label]="i18n.t('common.close')"
-              (click)="cancel.emit()"
-            >
-              <fa-icon [icon]="icons['close']" class="text-xs" aria-hidden="true" />
-            </button>
-          </div>
-
-          <div class="mt-5 flex flex-col gap-3">
+        <div class="mt-5 flex flex-col gap-3">
             <label class="block">
               <span class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
                 {{ i18n.t('teams.form.event') }}
@@ -153,10 +127,9 @@ interface CategoryOption {
               <fa-icon [icon]="icons['check']" class="text-[10px]" aria-hidden="true" />
               {{ team() ? i18n.t('teams.form.save') : i18n.t('teams.form.create') }}
             </button>
-          </div>
-        </form>
-      </div>
-    }
+        </div>
+      </form>
+    </app-modal>
   `,
 })
 export class TeamFormDialogComponent {
@@ -233,12 +206,5 @@ export class TeamFormDialogComponent {
     }
     this.form.markAsPristine();
     this.form.markAsUntouched();
-  }
-
-  @HostListener('document:keydown.escape')
-  protected onEscape(): void {
-    if (this.open()) {
-      this.cancel.emit();
-    }
   }
 }

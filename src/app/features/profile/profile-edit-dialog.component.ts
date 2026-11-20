@@ -7,6 +7,7 @@ import { ToastService } from '../../core/services/toast.service';
 import { WorkspaceStore } from '../../core/services/workspace.store';
 import { ICONS } from '../../core/ui/icons';
 import { AvatarComponent } from '../../shared/components/avatar.component';
+import { ModalComponent } from '../../shared/components/modal.component';
 import { PhoneMaskDirective } from '../../shared/directives/phone-mask.directive';
 
 /**
@@ -18,48 +19,24 @@ import { PhoneMaskDirective } from '../../shared/directives/phone-mask.directive
  */
 @Component({
   selector: 'app-profile-edit-dialog',
-  imports: [ReactiveFormsModule, FaIconComponent, AvatarComponent, PhoneMaskDirective],
+  imports: [ReactiveFormsModule, FaIconComponent, AvatarComponent, PhoneMaskDirective, ModalComponent],
   template: `
-    @if (open()) {
-      <div class="fixed inset-0 z-[100] grid place-items-center overflow-y-auto p-4">
-        <button
-          type="button"
-          class="fixed inset-0 bg-canvas/70 backdrop-blur-md"
-          [attr.aria-label]="i18n.t('common.close')"
-          (click)="close()"
-        ></button>
-
-        <div
-          role="dialog"
-          aria-modal="true"
-          [attr.aria-label]="i18n.t('profile.editTitle')"
-          class="relative my-8 w-full max-w-2xl rounded-4xl border border-line bg-surface-solid/95 p-6 shadow-card backdrop-blur-2xl animate-rise sm:p-7"
+    <app-modal
+      [open]="open()"
+      size="lg"
+      [title]="i18n.t('profile.editTitle')"
+      (closed)="close()"
+    >
+      <div class="flex items-start gap-3">
+        <span
+          class="grid size-11 shrink-0 place-items-center rounded-2xl border border-brand/25 bg-brand/15 text-brand-strong"
         >
-          <div class="flex items-start justify-between gap-4">
-            <div class="flex items-start gap-3">
-              <span
-                class="grid size-11 shrink-0 place-items-center rounded-2xl border border-brand/25 bg-brand/15 text-brand-strong"
-              >
-                <fa-icon [icon]="icons['pen']" aria-hidden="true" />
-              </span>
-              <div>
-                <h2 class="font-display text-xl font-semibold tracking-tight text-ink">
-                  {{ i18n.t('profile.editTitle') }}
-                </h2>
-                <p class="mt-1 text-xs leading-5 text-muted">{{ i18n.t('profile.editHint') }}</p>
-              </div>
-            </div>
-            <button
-              type="button"
-              class="grid size-8 place-items-center rounded-lg text-muted transition hover:bg-surface-raised hover:text-ink"
-              [attr.aria-label]="i18n.t('common.close')"
-              (click)="close()"
-            >
-              <fa-icon [icon]="icons['close']" class="text-sm" />
-            </button>
-          </div>
+          <fa-icon [icon]="icons['pen']" aria-hidden="true" />
+        </span>
+        <p class="mt-2 text-xs leading-5 text-muted">{{ i18n.t('profile.editHint') }}</p>
+      </div>
 
-          <form class="mt-6 flex flex-col gap-4" [formGroup]="form" (ngSubmit)="submit()">
+      <form class="mt-6 flex flex-col gap-4" [formGroup]="form" (ngSubmit)="submit()">
             <div class="overflow-hidden rounded-2xl border border-line bg-surface-raised/40">
               <div
                 class="relative h-28 bg-gradient-to-r from-brand/50 via-aqua/30 to-secondary/50 sm:h-32"
@@ -296,10 +273,8 @@ import { PhoneMaskDirective } from '../../shared/directives/phone-mask.directive
                 {{ saving() ? i18n.t('common.saving') : i18n.t('common.save') }}
               </button>
             </div>
-          </form>
-        </div>
-      </div>
-    }
+      </form>
+    </app-modal>
   `,
 })
 export class ProfileEditDialogComponent {

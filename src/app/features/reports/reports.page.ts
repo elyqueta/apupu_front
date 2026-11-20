@@ -9,6 +9,7 @@ import { ToastService } from '../../core/services/toast.service';
 import { WorkspaceStore } from '../../core/services/workspace.store';
 import { ICONS } from '../../core/ui/icons';
 import { StatCardComponent } from '../../shared/components/stat-card.component';
+import { StatGridComponent } from '../../shared/components/stat-grid.component';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
 
 interface EventReportRow {
@@ -27,7 +28,7 @@ interface DistributionSlice {
 
 @Component({
   selector: 'app-reports-page',
-  imports: [FaIconComponent, StatCardComponent, StatusBadgeComponent],
+  imports: [FaIconComponent, StatCardComponent, StatGridComponent, StatusBadgeComponent],
   templateUrl: './reports.page.html',
 })
 export class ReportsPage {

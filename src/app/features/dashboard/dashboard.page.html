@@ -34,7 +34,7 @@
     </div>
   </header>
 
-  <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+  <app-stat-grid>
     <app-stat-card
       [label]="i18n.t('dashboard.stats.events')"
       [value]="stats().events"
@@ -69,7 +69,7 @@
       [trend]="'+6%'"
       [sparkline]="[38, 42, 48, 52, 58, 61, stats().responseRate]"
     />
-  </div>
+  </app-stat-grid>
 
   <div
     class="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-4 xl:grid-cols-[minmax(0,1.75fr)_minmax(0,1fr)]"
@@ -519,33 +519,22 @@
       @if (pending().length === 0) {
         <p class="mt-6 text-sm text-muted">{{ i18n.t('dashboard.pendingEmpty') }}</p>
       } @else {
-        <ul class="mt-4 flex flex-col gap-1">
+        <ul class="mt-4 grid gap-2 sm:grid-cols-2">
           @for (entry of pending(); track entry.guest.id) {
-            <li
-              class="flex items-center gap-3 rounded-2xl p-2 transition hover:bg-surface-raised/60"
-            >
-              <app-avatar [name]="entry.guest.name" size="sm" />
-              <div class="min-w-0 flex-1">
-                <p class="truncate text-sm font-semibold text-ink">{{ entry.guest.name }}</p>
-                <p class="truncate text-[11px] text-muted">{{ entry.event.title }}</p>
-              </div>
-              <div class="flex shrink-0 items-center gap-1.5">
-                @if (store.isEventHost(entry.event.id)) {
-                  <button
-                    type="button"
-                    class="grid size-8 place-items-center rounded-lg border border-line bg-surface-raised text-muted transition hover:border-brand/40 hover:text-brand-strong"
-                    [attr.aria-label]="i18n.t('dashboard.resendEmail')"
-                    [attr.title]="i18n.t('dashboard.resendEmail')"
-                    (click)="resendEmail(entry.guest)"
-                  >
-                    <fa-icon [icon]="icons['envelope']" class="text-[10px]" aria-hidden="true" />
-                  </button>
-                }
-              </div>
+            <li class="min-w-0">
+              <app-person-card
+                [name]="entry.guest.name"
+                [status]="entry.guest.status"
+                [actions]="pendingActions(entry)"
+                [actionsLabel]="i18n.t('guests.tableActions')"
+                [compact]="true"
+                (actionSelected)="onPendingAction($event, entry)"
+              />
             </li>
           }
         </ul>
       }
+
     </section>
   </div>
 </section>

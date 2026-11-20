@@ -1,21 +1,11 @@
 <section class="flex flex-col gap-4 md:gap-5">
-  <header class="flex flex-wrap items-end justify-between gap-4">
-    <div class="min-w-0">
-      <p
-        class="hidden text-[10px] font-semibold uppercase tracking-[0.26em] text-brand-strong md:block"
-      >
-        {{ i18n.t('teams.eyebrow') }}
-      </p>
-      <h2
-        class="mt-1.5 hidden font-display text-2xl font-semibold tracking-tight text-ink sm:text-3xl md:block"
-      >
-        {{ i18n.t('teams.title') }}
-      </h2>
-      <p class="text-[13px] leading-5 text-muted md:mt-1.5 md:max-w-2xl md:text-sm md:leading-6">
-        {{ i18n.t('teams.subtitle') }}
-      </p>
-    </div>
-    <div class="flex flex-wrap items-center gap-2">
+  <app-page-header
+    [eyebrow]="i18n.t('teams.eyebrow')"
+    [title]="i18n.t('teams.title')"
+    [subtitle]="i18n.t('teams.subtitle')"
+    [hasActions]="true"
+  >
+    <div header-actions class="flex flex-wrap items-center gap-2">
       @if (tab() === 'teams') {
         <button
           type="button"
@@ -35,7 +25,7 @@
         {{ i18n.t('teams.viewEvents') }}
       </a>
     </div>
-  </header>
+  </app-page-header>
 
   <nav
     role="tablist"
@@ -67,6 +57,41 @@
       {{ i18n.t('teams.tabs.managers') }}
     </button>
   </nav>
+
+  @if (loading()) {
+    <app-skeleton variant="cards" />
+  } @else {
+    <app-stat-grid>
+      <app-stat-card
+        [label]="i18n.t('teams.statTeams')"
+        [value]="i18n.number(teamStats().teams)"
+        [hint]="teamStats().pageHint"
+        [icon]="icons['guestGroup']"
+        tone="brand"
+      />
+      <app-stat-card
+        [label]="i18n.t('teams.statMembers')"
+        [value]="i18n.number(teamStats().members)"
+        [hint]="teamStats().pageHint"
+        [icon]="icons['user']"
+        tone="iris"
+      />
+      <app-stat-card
+        [label]="i18n.t('teams.statOpenTasks')"
+        [value]="i18n.number(teamStats().openTasks)"
+        [hint]="teamStats().pageHint"
+        [icon]="icons['hourglass']"
+        tone="amber"
+      />
+      <app-stat-card
+        [label]="i18n.t('teams.statDoneTasks')"
+        [value]="i18n.number(teamStats().doneTasks)"
+        [hint]="teamStats().pageHint"
+        [icon]="icons['checkDouble']"
+        tone="mint"
+      />
+    </app-stat-grid>
+  }
 
   @switch (tab()) {
     @case ('teams') {
@@ -451,7 +476,7 @@
           </div>
         }
 
-        <div class="grid gap-3 sm:grid-cols-3">
+        <app-stat-grid [columns]="3">
           <app-stat-card
             [label]="i18n.t('team.statManagers')"
             [value]="managerStats().managers"
@@ -473,7 +498,7 @@
             [icon]="icons['user']"
             tone="mint"
           />
-        </div>
+        </app-stat-grid>
 
         <label class="relative block">
           <span class="sr-only">{{ i18n.t('team.searchPlaceholder') }}</span>
@@ -564,5 +589,13 @@
     [saving]="formSaving()"
     (saved)="saveTeam($event)"
     (cancel)="closeForm()"
+  />
+
+  <app-team-manager-dialog
+    [open]="managerDialogOpen()"
+    [events]="events()"
+    [eventId]="filters().eventId || null"
+    (created)="onManagerCreated($event)"
+    (cancel)="closeManagerDialog()"
   />
 </section>

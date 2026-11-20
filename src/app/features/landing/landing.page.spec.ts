@@ -53,13 +53,13 @@ describe('LandingPage', () => {
     vi.restoreAllMocks();
   });
 
-  it('mostra as secções públicas e o aviso de protótipo por ordem', async () => {
+  it('mostra as secções públicas por ordem, sem faixa de protótipo', async () => {
     const fixture = setup();
     await fixture.whenStable();
     fixture.detectChanges();
 
     const root: HTMLElement = fixture.nativeElement;
-    expect(root.querySelector('[data-testid="prototype-notice"]')).toBeTruthy();
+    expect(root.querySelector('[data-testid="prototype-notice"]')).toBeFalsy();
     for (const testId of [
       'landing-hero',
       'landing-benefits',

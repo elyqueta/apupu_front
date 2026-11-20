@@ -97,6 +97,20 @@ describe('ModalComponent', () => {
     expect(dialog()).not.toBeNull();
   });
 
+  it('mantém o corpo com scroll interno e o rodapé fixo fora do corpo', async () => {
+    await open();
+    const panel = dialog() as HTMLElement;
+    const body = panel.querySelector('[data-testid="app-modal-body"]') as HTMLElement;
+    const footer = panel.querySelector('[data-testid="app-modal-footer"]') as HTMLElement;
+    const save = panel.querySelector('button.last') as HTMLButtonElement;
+
+    expect(body.className).toContain('overflow-y-auto');
+    expect(body.className).toContain('min-h-0');
+    expect(footer.className).toContain('sticky');
+    expect(footer.contains(save)).toBe(true);
+    expect(body.contains(save)).toBe(false);
+  });
+
   it('circula o foco com Tab dentro do modal', async () => {
     await open();
     const last: HTMLButtonElement = fixture.nativeElement.querySelector('button.last');

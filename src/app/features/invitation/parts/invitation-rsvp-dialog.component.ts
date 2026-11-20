@@ -43,11 +43,11 @@ const MAX_MESSAGE_LENGTH = 500;
         </p>
       }
 
-      <div class="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+      <div modal-footer class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
         <button
           type="button"
           data-testid="invitation-rsvp-cancel"
-          class="inline-flex h-12 items-center justify-center rounded-xl border border-line bg-surface px-4 text-sm font-semibold text-ink transition hover:border-brand/40 disabled:opacity-60"
+          class="ui-btn-secondary"
           [disabled]="saving()"
           (click)="cancelled.emit()"
         >
@@ -56,7 +56,7 @@ const MAX_MESSAGE_LENGTH = 500;
         <button
           type="button"
           data-testid="invitation-rsvp-confirm"
-          class="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-brand px-5 text-sm font-semibold text-on-secondary transition hover:bg-secondary-hover disabled:cursor-wait disabled:opacity-70"
+          class="ui-btn"
           [disabled]="saving()"
           (click)="confirm()"
         >

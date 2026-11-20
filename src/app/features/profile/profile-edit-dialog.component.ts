@@ -36,7 +36,7 @@ import { PhoneMaskDirective } from '../../shared/directives/phone-mask.directive
         <p class="mt-2 text-xs leading-5 text-muted">{{ i18n.t('profile.editHint') }}</p>
       </div>
 
-      <form class="mt-6 flex flex-col gap-4" [formGroup]="form" (ngSubmit)="submit()">
+      <form id="app-profile-form" class="mt-6 flex flex-col gap-4" [formGroup]="form" (ngSubmit)="submit()">
             <div class="overflow-hidden rounded-2xl border border-line bg-surface-raised/40">
               <div
                 class="relative h-28 bg-gradient-to-r from-brand/50 via-aqua/30 to-secondary/50 sm:h-32"
@@ -256,24 +256,17 @@ import { PhoneMaskDirective } from '../../shared/directives/phone-mask.directive
               </p>
             }
 
-            <div class="mt-2 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-              <button
-                type="button"
-                class="inline-flex h-11 items-center justify-center rounded-xl border border-line bg-surface-raised px-4 text-sm font-semibold text-ink transition hover:border-brand/40"
-                (click)="close()"
-              >
-                {{ i18n.t('common.cancel') }}
-              </button>
-              <button
-                type="submit"
-                [disabled]="saving()"
-                class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-brand px-4 text-sm font-semibold text-on-secondary transition hover:bg-secondary-hover disabled:cursor-wait disabled:opacity-60"
-              >
-                <fa-icon [icon]="icons['check']" class="text-xs" aria-hidden="true" />
-                {{ saving() ? i18n.t('common.saving') : i18n.t('common.save') }}
-              </button>
-            </div>
       </form>
+
+      <div modal-footer class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+        <button type="button" class="ui-btn-secondary" (click)="close()">
+          {{ i18n.t('common.cancel') }}
+        </button>
+        <button type="submit" form="app-profile-form" class="ui-btn" [disabled]="saving()">
+          <fa-icon [icon]="icons['check']" class="text-xs" aria-hidden="true" />
+          {{ saving() ? i18n.t('common.saving') : i18n.t('common.save') }}
+        </button>
+      </div>
     </app-modal>
   `,
 })

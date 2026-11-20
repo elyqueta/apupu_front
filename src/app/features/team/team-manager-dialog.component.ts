@@ -46,7 +46,7 @@ interface CategoryOption {
       size="lg"
       (closed)="cancel.emit()"
     >
-      <form data-testid="team-manager-form" [formGroup]="form" (ngSubmit)="submit()">
+      <form id="app-team-manager-form" data-testid="team-manager-form" [formGroup]="form" (ngSubmit)="submit()">
         <fieldset class="min-w-0">
           <legend class="mb-3 text-xs font-bold uppercase tracking-[0.14em] text-brand">
             {{ i18n.t('managerDialog.teamSection') }}
@@ -208,25 +208,23 @@ interface CategoryOption {
           </p>
         </fieldset>
 
-        <div class="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-          <button
-            type="button"
-            class="inline-flex h-11 items-center justify-center rounded-xl border border-line bg-surface-raised px-4 text-sm font-semibold text-ink transition hover:border-brand/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60"
-            (click)="cancel.emit()"
-          >
-            {{ i18n.t('common.cancel') }}
-          </button>
-          <button
-            type="submit"
-            data-testid="team-manager-submit"
-            [disabled]="saving() || form.invalid"
-            class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-brand px-4 text-sm font-semibold text-on-secondary transition hover:bg-secondary-hover disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60"
-          >
-            <fa-icon [icon]="icons['check']" aria-hidden="true" />
-            {{ saving() ? i18n.t('managerDialog.creating') : i18n.t('managerDialog.create') }}
-          </button>
-        </div>
       </form>
+
+      <div modal-footer class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+        <button type="button" class="ui-btn-secondary" (click)="cancel.emit()">
+          {{ i18n.t('common.cancel') }}
+        </button>
+        <button
+          type="submit"
+          form="app-team-manager-form"
+          data-testid="team-manager-submit"
+          class="ui-btn"
+          [disabled]="saving() || form.invalid"
+        >
+          <fa-icon [icon]="icons['check']" aria-hidden="true" />
+          {{ saving() ? i18n.t('managerDialog.creating') : i18n.t('managerDialog.create') }}
+        </button>
+      </div>
     </app-modal>
 
     <app-manager-credentials-dialog

@@ -67,12 +67,17 @@ let titleCounter = 0;
             </header>
           }
 
-          <div class="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-4 sm:px-6">
+          <div
+            data-testid="app-modal-body"
+            class="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-4 sm:px-6"
+            style="scrollbar-gutter: stable"
+          >
             <ng-content />
           </div>
 
           <div
-            class="flex shrink-0 flex-col-reverse gap-2 border-t border-line px-5 py-4 empty:hidden sm:flex-row sm:justify-end sm:px-6"
+            data-testid="app-modal-footer"
+            class="sticky bottom-0 z-10 flex shrink-0 flex-col-reverse gap-2 border-t border-line bg-surface-solid/95 px-5 py-4 backdrop-blur-xl empty:hidden sm:flex-row sm:justify-end sm:px-6"
             style="padding-bottom: max(1rem, env(safe-area-inset-bottom))"
           >
             <ng-content select="[modal-footer]" />
@@ -120,7 +125,7 @@ export class ModalComponent {
         : this.size() === 'lg'
           ? 'sm:max-w-[44rem]'
           : 'sm:max-w-[32rem]';
-    return `relative flex max-h-[92dvh] w-full flex-col overflow-hidden rounded-t-4xl border border-line bg-surface-solid/95 shadow-card backdrop-blur-2xl motion-safe:animate-sheet sm:rounded-4xl sm:motion-safe:animate-rise ${width}`;
+    return `relative flex max-h-[calc(100dvh-0.5rem)] w-full flex-col overflow-hidden rounded-t-4xl border border-line bg-surface-solid/95 shadow-card backdrop-blur-2xl motion-safe:animate-sheet sm:max-h-[min(92dvh,52rem)] sm:rounded-4xl sm:motion-safe:animate-rise ${width}`;
   }
 
   protected requestClose(): void {

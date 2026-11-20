@@ -68,10 +68,18 @@ function initialList(http: HttpTestingController, data: unknown[] = [subscriptio
 describe('AdminNewsletterComponent', () => {
   let http: HttpTestingController;
 
-  afterEach(() => {
-    http?.verify();
+  beforeEach(() => {
+    // Outros specs podem ter deixado o TestBed instanciado se falharem antes do reset.
     TestBed.resetTestingModule();
-    vi.restoreAllMocks();
+  });
+
+  afterEach(() => {
+    try {
+      http?.verify();
+    } finally {
+      TestBed.resetTestingModule();
+      vi.restoreAllMocks();
+    }
   });
 
   it('pesquisa e filtra na API', async () => {

@@ -48,6 +48,21 @@ export class EventsRepository extends CachedRepository<HostEvent[]> {
     return this.data()?.find((event) => event.id === id) ?? null;
   }
 
+  /**
+   * Pesquisa remota para a shell (`GET /host/events?q=`). Não altera o cache:
+   * a lista principal continua a usar a página completa carregada por `fetch()`.
+   */
+  async search(term: string): Promise<HostEvent[]> {
+    const page = await this.api.getPage<ApiEvent>('/host/events', {
+      q: term,
+      page: 1,
+      page_size: 5,
+      sort: 'starts_at',
+      order: 'asc',
+    });
+    return page.data.map(mapEvent);
+  }
+
   /** Insere ou substitui um evento no cache em memória. */
   upsert(event: HostEvent): void {
     this.mutate((events) => {

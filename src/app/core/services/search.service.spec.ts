@@ -3,9 +3,10 @@ import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { PLATFORM_ID } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { AuthService } from '../api/auth.service';
 import { API_BASE_URL } from '../api/api-config';
 import { apiRequestInterceptor } from '../api/api.interceptor';
-import { ApiEvent, ApiInvitation, ApiNotification, ApiTask } from '../api/api.models';
+import { ApiEvent, ApiInvitation, ApiNotification, ApiTask, Host } from '../api/api.models';
 import { SearchService } from './search.service';
 import { SessionCache } from './session-cache';
 import { WorkspaceStore } from './workspace.store';
@@ -156,6 +157,10 @@ describe('SearchService · suggestions', () => {
     });
     http = TestBed.inject(HttpTestingController);
     const store = TestBed.inject(WorkspaceStore);
+    vi.spyOn(TestBed.inject(AuthService), 'host').mockReturnValue({
+      id: 'host-1',
+    } as Host);
+    localStorage.clear();
     search = TestBed.inject(SearchService);
 
     // "Chrome" carregado pela shell: perfil, atividade, eventos e notificações.
@@ -177,7 +182,11 @@ describe('SearchService · suggestions', () => {
     await new Promise((resolve) => setTimeout(resolve));
   });
 
-  afterEach(() => http.verify());
+  afterEach(() => {
+    http.verify();
+    localStorage.clear();
+    vi.restoreAllMocks();
+  });
 
   it('finds guests by name, ignoring case and accents', () => {
     const group = search.suggest('joao').find((item) => item.key === 'guests');
@@ -227,5 +236,70 @@ describe('SearchService · suggestions', () => {
     search.warm();
     http.expectOne((request) => request.url.endsWith('/host/guests')).flush(page([guestFixture()]));
     http.expectOne((request) => request.url.endsWith('/host/tasks')).flush(page([taskFixture()]));
+  });
+
+  it('browses recents, upcoming events, recent guests and shortcuts without a term', () => {
+    search.rememberSearch('João');
+    const groups = search.browse();
+
+    expect(groups.find((group) => group.key === 'recents')?.items[0]?.label).toBe('João');
+    expect(groups.find((group) => group.key === 'events')?.items[0]?.label).toBe('Festa QA Um');
+    expect(groups.find((group) => group.key === 'guests')?.items[0]?.label).toBe('João Silva');
+    expect(groups.find((group) => group.key === 'shortcuts')?.items.map((item) => item.route[0])).toEqual([
+      '/convidados',
+      '/equipas',
+      '/tarefas',
+      '/criar-evento',
+    ]);
+  });
+
+  it('keeps at most five recent searches per host and clears them', () => {
+    for (let index = 0; index < 7; index += 1) {
+      search.rememberSearch(`termo ${index}`);
+    }
+    const key = 'apupu.search.recents.host-1';
+    const stored = JSON.parse(localStorage.getItem(key) ?? '[]') as string[];
+
+    expect(stored.length).toBe(5);
+    expect(stored[0]).toBe('termo 6');
+    search.clearRecentSearches();
+    expect(localStorage.getItem(key)).toBeNull();
+  });
+
+  it('fetches up to five guests and events per group from the API', async () => {
+    const promise = search.searchRemote('festa');
+
+    http
+      .expectOne(
+        (request) =>
+          request.url.endsWith('/host/guests') &&
+          request.params.get('q') === 'festa' &&
+          request.params.get('page_size') === '5',
+      )
+      .flush(
+        page([
+          {
+            ...guestFixture(),
+            event: {
+              id: 'evt-1',
+              title: 'Festa QA Um',
+              starts_at: '2026-06-01T18:00:00Z',
+              status: 'scheduled',
+            },
+          },
+        ]),
+      );
+    http
+      .expectOne(
+        (request) =>
+          request.url.endsWith('/host/events') &&
+          request.params.get('q') === 'festa' &&
+          request.params.get('page_size') === '5',
+      )
+      .flush(page([eventFixture()]));
+
+    const groups = await promise;
+    expect(groups.find((group) => group.key === 'remote-guests')?.items[0]?.label).toBe('João Silva');
+    expect(groups.find((group) => group.key === 'remote-events')?.items[0]?.label).toBe('Festa QA Um');
   });
 });

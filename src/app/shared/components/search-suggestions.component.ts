@@ -14,6 +14,7 @@ import { ICONS } from '../../core/ui/icons';
   imports: [FaIconComponent],
   template: `
     <div
+      [attr.id]="listId()"
       role="listbox"
       [attr.aria-label]="i18n.t('search.hint')"
       class="max-h-[min(70dvh,26rem)] overflow-y-auto rounded-3xl border border-line bg-surface-solid/95 p-2 shadow-card backdrop-blur-2xl animate-rise"
@@ -25,13 +26,26 @@ import { ICONS } from '../../core/ui/icons';
       } @else {
         @for (group of groups(); track group.key) {
           <div role="group" class="py-1" [attr.aria-label]="i18n.t(group.labelKey)">
-            <p class="px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted">
-              {{ i18n.t(group.labelKey) }}
-            </p>
+            <div class="flex items-center justify-between gap-2 px-2.5 py-1">
+              <p class="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted">
+                {{ i18n.t(group.labelKey) }}
+              </p>
+              @if (group.key === 'recents') {
+                <button
+                  type="button"
+                  class="text-[10px] font-semibold text-brand-strong transition hover:text-ink"
+                  (mousedown)="$event.preventDefault()"
+                  (click)="clearRecents.emit()"
+                >
+                  {{ i18n.t('search.clearRecent') }}
+                </button>
+              }
+            </div>
             @for (item of group.items; track item.id) {
               <button
                 type="button"
                 role="option"
+                [attr.id]="optionId(item.id)"
                 [attr.aria-selected]="item.id === activeId()"
                 [class]="item.id === activeId() ? activeClass : idleClass"
                 (mousedown)="$event.preventDefault()"
@@ -71,9 +85,18 @@ export class SearchSuggestionsComponent {
   readonly groups = input.required<SearchGroup[]>();
   readonly term = input('');
   readonly activeId = input<string | null>(null);
+  /** ID do `role="listbox"` para `aria-controls`. */
+  readonly listId = input('search-suggestions');
+  /** Prefixo único por instância, para os IDs das opções não colidirem. */
+  readonly idPrefix = input('');
 
   readonly picked = output<SearchSuggestion>();
   readonly hovered = output<string>();
+  readonly clearRecents = output<void>();
+
+  protected optionId(id: string): string {
+    return `${this.idPrefix()}${id}`;
+  }
 
   protected readonly activeClass =
     'flex w-full items-center gap-3 rounded-2xl bg-brand/10 px-2.5 py-2 text-left transition';

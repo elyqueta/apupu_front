@@ -33,6 +33,13 @@ download no painel.
   escopo CSRF `auth`, o mesmo da sessão de conta (`apupu_auth`). Sem esta
   alteração, o `X-CSRF-Token` não era enviado nas escritas administrativas e o
   backend respondia `403 csrf_invalid`.
+- Atividade explícita: “Atividade recente” e “Auditoria” deixaram de mostrar
+  chaves cruas (`admin_users_listed`, …) e o ator “Sistema”. Um mapa único em
+  `admin.models.ts` (`ADMIN_ACTION_KEYS`, `adminActionLabel()`,
+  `adminTargetLabel()`) descreve todas as acções escritas pelo backend, em PT e
+  EN, incluindo as legadas. Acções desconhecidas são identificadas pelo código
+  em vez de escondidas. O ator vem de `admin_name`/`admin_email`, com fallback
+  explícito para “Super admin”.
 
 ## Ficheiros alterados
 
@@ -44,7 +51,7 @@ download no painel.
 | Utilizadores | `src/app/features/admin/admin-users.component.ts`, `src/app/features/admin/admin-user-detail-dialog.component.ts` |
 | Relatórios | `src/app/features/admin/admin-reports.component.ts` |
 | Navegação | `src/app/app.routes.ts`, `src/app/features/admin/admin.page.ts` |
-| Testes | `api.interceptor.spec.ts`, `admin-users.component.spec.ts`, `admin-user-detail-dialog.component.spec.ts`, `admin-reports.component.spec.ts` |
+| Testes | `api.interceptor.spec.ts`, `admin-users.component.spec.ts`, `admin-user-detail-dialog.component.spec.ts`, `admin-reports.component.spec.ts`, `admin-overview.component.spec.ts`, `admin-audit.component.spec.ts` |
 | Docs | `docs/PLANO-BLOCO-8.md`, `docs/REPORT-BLOCO-8.md`, `docs/GUIA-ACESSO-ADMIN.md` |
 
 ## Dados e segurança
@@ -64,7 +71,7 @@ download no painel.
 | --- | --- |
 | `npx tsc --noEmit` | OK |
 | `npm run lint` | OK — 0 erros, 24 avisos preexistentes |
-| `npm test -- --watch=false` | 45 ficheiros, 185 testes passados |
+| `npm test -- --watch=false` | 47 ficheiros, 191 testes passados |
 | `npm run build` | OK |
 
 ## Fora de âmbito
@@ -73,3 +80,13 @@ download no painel.
 - Alteração da página pública de perfil do anfitrião; apenas se replicou o
   estilo no modal.
 - Promoção de utilizadores a super admin pela UI (continua a ser só por SQL).
+
+## Commits locais (sem push)
+
+- `685f1be` — CSRF da conta nas escritas administrativas
+- `e64494e` — modal de detalhe do perfil
+- `ca7a22e` — lista de relatórios semanais e download
+- `8dd8f0d` — plano, relatório e guia de acesso admin
+- `bca3b16` — rótulos legíveis centralizados para as acções de auditoria
+- `3378c1a` — ator e alvo explícitos na atividade e na auditoria
+

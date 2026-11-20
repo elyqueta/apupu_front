@@ -1,7 +1,8 @@
+import { DOCUMENT } from '@angular/common';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { API_BASE_URL } from './api-config';
+import { API_BASE_URL, OAUTH_BASE_URL } from './api-config';
 import { ApiError } from './api-error';
 import { apiErrorInterceptor, apiRequestInterceptor } from './api.interceptor';
 import { Host } from './api.models';
@@ -43,6 +44,7 @@ describe('AuthService', () => {
         provideHttpClient(withInterceptors([apiRequestInterceptor, apiErrorInterceptor])),
         provideHttpClientTesting(),
         { provide: API_BASE_URL, useValue: BASE },
+        { provide: OAUTH_BASE_URL, useValue: 'http://localhost:3000' },
       ],
     });
     service = TestBed.inject(AuthService);
@@ -279,5 +281,88 @@ describe('AuthService', () => {
     request.flush(null, { status: 204, statusText: 'No Content' });
 
     await expect(promise).resolves.toBeUndefined();
+  });
+
+  it('expõe o URL do Google a partir da raiz do backend', () => {
+    expect(service.googleAuthHref()).toBe('http://localhost:3000/auth/google');
+  });
+
+  it('mantém o Facebook desativado', async () => {
+    await expect(service.loginWithProvider('facebook')).rejects.toMatchObject({
+      status: 501,
+      code: 'provider_not_configured',
+    });
+  });
+
+  it('só fica autenticado depois de confirmar a sessão pelo cookie HttpOnly', async () => {
+    expect(service.isAuthenticated()).toBe(false);
+
+    const restore = service.restoreSession();
+    const request = http.expectOne(`${BASE}/auth/session`);
+    expect(request.request.withCredentials).toBe(true);
+    expect(request.request.headers.has('Authorization')).toBe(false);
+    request.flush({ data: { host: hostFixture(), csrf_token: 'csrf-1' } });
+
+    expect(await restore).not.toBeNull();
+    expect(service.isAuthenticated()).toBe(true);
+  });
+
+  it('volta a ficar não autenticado depois do logout', async () => {
+    const login = service.login('ana@exemplo.pt', 'segredo123');
+    http.expectOne(`${BASE}/auth/login`).flush({
+      data: { host: hostFixture(), csrf_token: 'csrf-1', expires_at: '2026-02-01T00:00:00Z' },
+    });
+    await login;
+    expect(service.isAuthenticated()).toBe(true);
+
+    const logout = service.logout();
+    http.expectOne(`${BASE}/auth/logout`).flush(null, { status: 204, statusText: 'No Content' });
+    await logout;
+
+    expect(service.isAuthenticated()).toBe(false);
+  });
+});
+
+describe('AuthService (redirecionamento Google)', () => {
+  const location = { href: '' };
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(withInterceptors([apiRequestInterceptor, apiErrorInterceptor])),
+        provideHttpClientTesting(),
+        { provide: API_BASE_URL, useValue: BASE },
+        { provide: OAUTH_BASE_URL, useValue: 'http://localhost:3000/' },
+        { provide: DOCUMENT, useValue: { defaultView: { location } } },
+      ],
+    });
+    location.href = '';
+  });
+
+  it('redireciona a página inteira para /auth/google', async () => {
+    await TestBed.inject(AuthService).loginWithProvider('google');
+    expect(location.href).toBe('http://localhost:3000/auth/google');
+  });
+});
+
+describe('AuthService (OAuth em produção)', () => {
+  const location = { href: '' };
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(withInterceptors([apiRequestInterceptor, apiErrorInterceptor])),
+        provideHttpClientTesting(),
+        { provide: API_BASE_URL, useValue: '/api/v1' },
+        { provide: OAUTH_BASE_URL, useValue: '' },
+        { provide: DOCUMENT, useValue: { defaultView: { location } } },
+      ],
+    });
+    location.href = '';
+  });
+
+  it('usa o rewrite do Vercel para manter o cookie na mesma origem', async () => {
+    await TestBed.inject(AuthService).loginWithProvider('google');
+    expect(location.href).toBe('/auth/google');
   });
 });

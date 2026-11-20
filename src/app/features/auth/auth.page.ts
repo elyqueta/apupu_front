@@ -132,15 +132,16 @@ function passwordsMatch(group: AbstractControl): ValidationErrors | null {
             <span class="h-px flex-1 bg-line" aria-hidden="true"></span>
           </div>
 
-          <div class="grid grid-cols-2 gap-3">
+          <div class="grid gap-3">
             <button
               type="button"
               [disabled]="busy()"
               [class]="socialClass"
+              aria-label="Entrar com o Google"
               (click)="social('google')"
             >
               <fa-icon [icon]="icons['google']" class="text-[20px]" aria-hidden="true" />
-              Google
+              Entrar com o Google
             </button>
             <button
               type="button"
@@ -208,15 +209,16 @@ function passwordsMatch(group: AbstractControl): ValidationErrors | null {
               <span class="h-px flex-1 bg-line" aria-hidden="true"></span>
             </div>
 
-            <div class="grid grid-cols-2 gap-3">
+            <div class="grid gap-3">
               <button
                 type="button"
                 [disabled]="busy()"
                 [class]="socialClass"
+                aria-label="Entrar com o Google"
                 (click)="social('google')"
               >
                 <fa-icon [icon]="icons['google']" class="text-[20px]" aria-hidden="true" />
-                Google
+                Entrar com o Google
               </button>
               <button
                 type="button"

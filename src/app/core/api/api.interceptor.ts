@@ -104,6 +104,8 @@ export const apiRequestInterceptor: HttpInterceptorFn = (request, next) => {
     headers = headers.set('Cookie', authCookie);
   }
 
+  // A autorização é o cookie HttpOnly `apupu_auth`. Não existe token no
+  // browser: o interceptor apenas garante `credentials: include` e o CSRF.
   return next(request.clone({ withCredentials: true, headers }));
 };
 

@@ -32,6 +32,19 @@ export const routes: Routes = [
         data: { mode: 'login' },
       },
       {
+        // Alias para o URL pedido pelo fluxo Google.
+        path: 'login',
+        pathMatch: 'full',
+        redirectTo: 'entrar',
+      },
+      {
+        // Callback do login Google: lê `?token=` e redireciona para o painel.
+        path: 'login-success',
+        title: 'Conto Contigo · Entrar',
+        loadComponent: () =>
+          import('./features/auth/login-success.page').then((m) => m.LoginSuccessComponent),
+      },
+      {
         path: 'criar-conta',
         title: pageTitle('route.signup'),
         loadComponent: () => import('./features/auth/auth.page').then((m) => m.AuthPage),
@@ -179,6 +192,12 @@ export const routes: Routes = [
     children: [
       {
         path: '',
+        pathMatch: 'full',
+        redirectTo: 'painel',
+      },
+      {
+        // Alias para o URL pedido pelo fluxo Google.
+        path: 'dashboard',
         pathMatch: 'full',
         redirectTo: 'painel',
       },

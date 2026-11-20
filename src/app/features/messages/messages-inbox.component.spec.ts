@@ -10,13 +10,13 @@ const BASE = 'http://localhost:3000/api/v1';
 const EVENT_ID = 'event-1';
 
 const MESSAGE_ROW = {
-  invitation_id: 'inv-1',
+  id: 'inv-1',
   event_id: EVENT_ID,
   event: { id: EVENT_ID, title: 'Casamento da Ana' },
   guest_name: 'João',
   guest_email: 'joao@example.com',
   guest_message: 'Posso levar um amigo?',
-  guest_message_at: '2026-11-20T10:00:00.000Z',
+  rsvp_responded_at: '2026-11-20T10:00:00.000Z',
   message_read_at: null,
   message_answered_at: null,
   message_answer: null,
@@ -61,7 +61,7 @@ describe('MessagesInboxComponent', () => {
   }
 
   function path(): string {
-    return `${BASE}/host/events/${EVENT_ID}/messages`;
+    return `${BASE}/host/inbox`;
   }
 
   it('carrega mensagens com os filtros por defeito', async () => {
@@ -116,8 +116,8 @@ describe('MessagesInboxComponent', () => {
       button.textContent?.includes('Marcar como lida'),
     ) as HTMLButtonElement;
     mark.click();
-    const readRequest = http.expectOne(`${BASE}/host/messages/inv-1/read`);
-    expect(readRequest.request.method).toBe('PATCH');
+    const readRequest = http.expectOne(`${BASE}/host/inbox/inv-1/read`);
+    expect(readRequest.request.method).toBe('POST');
     expect(readRequest.request.body).toEqual({ read: true });
     readRequest.flush({});
     await settle();
@@ -135,7 +135,8 @@ describe('MessagesInboxComponent', () => {
       button.textContent?.includes('Enviar resposta'),
     ) as HTMLButtonElement;
     submit.click();
-    const answerRequest = http.expectOne(`${BASE}/host/messages/inv-1/answer`);
+    const answerRequest = http.expectOne(`${BASE}/host/inbox/inv-1/answer`);
+    expect(answerRequest.request.method).toBe('POST');
     expect(answerRequest.request.body).toEqual({ answer: 'Sim, é bem-vindo!' });
     answerRequest.flush({});
     await settle();

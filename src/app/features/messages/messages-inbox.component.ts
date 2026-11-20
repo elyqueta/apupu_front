@@ -322,7 +322,10 @@ export class MessagesInboxComponent {
         page: this.page(),
         page_size: 10,
       });
-      this.items.set(page.items);
+      // A API devolve mensagens de todos os eventos da conta; quando a secção
+      // fixa um evento, filtramos localmente sem perder os restantes filtros.
+      const visible = eventId ? page.items.filter((item) => item.eventId === eventId) : page.items;
+      this.items.set(visible);
       this.pagination.set(page.pagination);
     } catch {
       this.error.set(this.i18n.t('messages.error'));

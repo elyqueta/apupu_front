@@ -18,6 +18,7 @@ export interface GuestMessage {
 }
 
 export interface MessagesQuery {
+  /** Filtro local quando a secção do evento fixa o evento. */
   event_id?: string;
   q?: string;
   read?: 'all' | 'read' | 'unread';
@@ -34,28 +35,35 @@ export interface MessagesPage {
 }
 
 interface ApiMessageRow {
-  invitation_id?: string;
   id?: string;
+  invitation_id?: string;
   event_id?: string;
   event?: { id?: string; title?: string };
   guest_name?: string;
   guest_email?: string | null;
   guest_message?: string | null;
+  rsvp_responded_at?: string | null;
   guest_message_at?: string | null;
   message_read_at?: string | null;
   message_answered_at?: string | null;
   message_answer?: string | null;
 }
 
+/**
+ * Mapa do `HostGuestDto` devolvido por `GET /host/inbox`.
+ *
+ * Mantemos `invitation_id`/`guest_message_at` como aliases para tolerar uma
+ * versão anterior do contrato; o backend atual usa `id`/`rsvp_responded_at`.
+ */
 function mapMessage(row: ApiMessageRow): GuestMessage {
   return {
-    invitationId: row.invitation_id ?? row.id ?? '',
+    invitationId: row.id ?? row.invitation_id ?? '',
     eventId: row.event_id ?? row.event?.id ?? '',
     eventTitle: row.event?.title ?? '',
     guestName: row.guest_name ?? '',
     guestEmail: row.guest_email ?? null,
     guestMessage: row.guest_message ?? '',
-    sentAt: row.guest_message_at ?? null,
+    sentAt: row.guest_message_at ?? row.rsvp_responded_at ?? null,
     read: !!row.message_read_at,
     answered: !!row.message_answered_at,
     answer: row.message_answer ?? null,
@@ -64,33 +72,26 @@ function mapMessage(row: ApiMessageRow): GuestMessage {
 }
 
 /**
- * Caixa de entrada de mensagens dos convites (`/host/events/:id/messages`).
- * Maçãs de leitura/resposta atualizam o item em memória para feedback imediato.
+ * Caixa de entrada de mensagens dos convites (`/host/inbox`).
+ *
+ * As atualizações de leitura/resposta são refletidas no item em memória para
+ * feedback imediato. O filtro por evento é aplicado no cliente porque a API
+ * devolve todos os eventos da conta e dos eventos geridos.
  */
 @Injectable({ providedIn: 'root' })
 export class MessagesRepository {
   private readonly api = inject(ApiClient);
 
   async list(query: MessagesQuery): Promise<MessagesPage> {
-    const eventId = query.event_id;
-    if (!eventId) {
-      return {
-        items: [],
-        pagination: { page: 1, page_size: 10, total: 0, total_pages: 0 },
-      };
-    }
-    const page = await this.api.getPage<ApiMessageRow>(
-      `/host/events/${encodeURIComponent(eventId)}/messages`,
-      {
-        q: query.q,
-        read: query.read === 'all' ? undefined : query.read,
-        answered: query.answered === 'all' ? undefined : query.answered,
-        from: query.from,
-        to: query.to,
-        page: query.page,
-        page_size: query.page_size,
-      },
-    );
+    const page = await this.api.getPage<ApiMessageRow>('/host/inbox', {
+      q: query.q,
+      read: query.read === 'all' ? undefined : query.read,
+      answered: query.answered === 'all' ? undefined : query.answered,
+      from: query.from,
+      to: query.to,
+      page: query.page,
+      page_size: query.page_size,
+    });
     return {
       items: page.data.map(mapMessage),
       pagination: page.pagination,
@@ -98,10 +99,10 @@ export class MessagesRepository {
   }
 
   async setRead(invitationId: string, read: boolean): Promise<void> {
-    await this.api.patch(`/host/messages/${encodeURIComponent(invitationId)}/read`, { read });
+    await this.api.post(`/host/inbox/${encodeURIComponent(invitationId)}/read`, { read });
   }
 
   async answer(invitationId: string, answer: string): Promise<void> {
-    await this.api.patch(`/host/messages/${encodeURIComponent(invitationId)}/answer`, { answer });
+    await this.api.post(`/host/inbox/${encodeURIComponent(invitationId)}/answer`, { answer });
   }
 }

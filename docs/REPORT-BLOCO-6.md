@@ -1,0 +1,70 @@
+# Relatório — Bloco 6: Landing page e painel Super Admin (frontend)
+
+**Data:** 2026-11-20  
+**Branch:** `feat/ajustes-fase-4` (sem push, merge, rebase ou eliminação de branches).  
+**Fontes:** `docs/bloco-6-landing-e-super-admin.md` (especificação), `docs/PLANO-BLOCO-6.md` (plano escrito antes do código) e `docs/DECISIONS.md`.
+
+## Resumo
+
+O bloco 6 executa a Parte E do bloco 5: uma landing pública em `/`, aviso de protótipo nas páginas públicas e uma área `/admin` protegida por guard, com visão geral, eventos, utilizadores e auditoria. O cancelamento de evento exige motivo e OTP por e-mail.
+
+## Commits
+
+| Commit | Conteúdo |
+|---|---|
+| `8caae35` | Especificação da landing e do super admin |
+| `6ee2160` | Chaves i18n do bloco 6 em ficheiro próprio |
+| `1056029` | Landing, área de administração e rotas (inclui a rota `/mensagens`) |
+
+## O que foi implementado
+
+### Landing (`src/app/features/landing/**`)
+- `landing.page.ts` + `landing.page.html`: rota `/`, primeira tela pública.
+- Secções standalone: hero, benefícios, passos, para quem é, sobre, NS2 Innovation e rodapé.
+- `public-shell.component.ts`: casca das páginas públicas com o aviso “Protótipo — versão em teste”; a landing mostra o aviso nela própria para não duplicar.
+- Componentes reutilizáveis, mobile-first, tema claro/escuro, sem imagens novas nem dependências.
+- SEO básico (título, meta description e Open Graph) em `index.html` / metadados da rota.
+
+### Admin (`src/app/features/admin/**`)
+- `admin.page.ts` + `admin.page.html`: layout com abas (visão geral, eventos, utilizadores, auditoria).
+- `admin.guard.ts` + `admin.guard.spec.ts`: `superAdminGuard` lê a sessão e redireciona quem não é super admin; respostas de acesso negado genéricas.
+- `admin.repository.ts` + `admin.models.ts`: chamadas paginadas a `/admin/*` com pesquisa na API.
+- `admin-overview.component.ts`: 4 cards de estatísticas e atividade recente.
+- `admin-events.component.ts`: lista paginada, detalhe só de leitura e ação “Cancelar evento”.
+- `admin-cancel-dialog.component.ts`: motivo obrigatório + OTP de 6 dígitos por e-mail, reenvio e erros formatados em pt-PT.
+- `admin-users.component.ts` + `admin-user-detail-dialog.component.ts`: lista, detalhe, suspender/reativar e revogar sessões; bloqueio de auto-suspensão e de remoção do próprio papel.
+- `admin-audit.component.ts`: registo de auditoria só de leitura (quem, o quê, quando, motivo).
+- `admin-pagination.component.ts`: paginação partilhada (10 por página).
+- Mapeadores tolerantes a `snake_case`/`camel_case` para alinhar com o DTO final do backend.
+
+### Rotas e infraestrutura
+- `app.routes.ts`: `/` → landing dentro da casca pública; `/entrar`, `/criar-conta`, recuperação, gestão e convites públicos na mesma casca; `/admin` com `superAdminGuard`; `/mensagens` na casca autenticada.
+- `block6-keys.ts`: 216 chaves PT e 216 EN, resolvidas por `translations.ts`.
+- `protected-notice.component.ts`: aviso de protótipo reutilizável.
+
+## Verificação
+
+- `npx tsc --noEmit` — 0 erros.
+- `npm test -- --watch=false` — suíte completa aprovada (landing, guard, admin e restante app).
+- `npm run lint` — 0 erros; avisos legados pré-existentes.
+- `npx eslint src/app/features/landing src/app/features/admin src/app/shared/components/protected-notice.component.ts src/app/core/i18n/block6-keys.ts src/app/app.routes.ts` — 0 erros e 0 avisos.
+
+## Testes manuais sugeridos
+
+1. Abrir `/` em 360 px e 1440 px: hero, benefícios, passos, para quem, sobre, NS2, CTA e rodapé; verificar contraste, foco e aviso de protótipo.
+2. Com sessão ativa, confirmar que `/` encaminha para `/painel` e que `/admin` abre a área de administração.
+3. Sem papel de super admin, confirmar redirecionamento genérico para `/painel` em todas as rotas `/admin/*`.
+4. Em `/admin/eventos`, cancelar um evento: motivo obrigatório, OTP por e-mail, reenvio, erro genérico em código inválido e auditoria gravada.
+5. Em `/admin/utilizadores`, confirmar que não é possível suspender a própria conta nem remover o próprio papel.
+
+## Alinhamento com o backend
+
+- O guard depende de `is_super_admin` (ou `isSuperAdmin`) na resposta de sessão; o backend deve expor essa flag no DTO de sessão.
+- Os contratos `/admin/*` seguem o plano e os mapeadores aceitam `snake_case`/`camel_case`; confirmar contra a implementação final do backend.
+- `landing.ns2.supportUrl` usa `mailto:apoio@ns2innovation.ao` como placeholder a validar.
+
+## Notas
+
+- Nenhuma dependência nova; nenhum segredo acrescentado.
+- Promoção a super admin apenas por SQL direto, sem UI: ver `apupu_back/docs/PLANO-BLOCO-5.md`.
+- Decisões em `docs/DECISIONS.md`; bloqueios e limitações em `docs/BLOCKERS.md`.

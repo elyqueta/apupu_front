@@ -1,5 +1,5 @@
 import { DOCUMENT, isPlatformBrowser } from '@angular/common';
-import { Component, inject, PLATFORM_ID, signal } from '@angular/core';
+import { Component, effect, inject, PLATFORM_ID, signal } from '@angular/core';
 import { Meta, Title } from '@angular/platform-browser';
 import { Router, RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -7,6 +7,7 @@ import { AuthService } from '../../core/api/auth.service';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { ICONS } from '../../core/ui/icons';
 import { LogoComponent } from '../../shared/components/logo.component';
+import { PreferenceControlsComponent } from '../../shared/components/preference-controls.component';
 import { LandingAboutComponent } from './landing-about.component';
 import { LandingAudienceComponent } from './landing-audience.component';
 import { LandingBenefitsComponent } from './landing-benefits.component';
@@ -25,6 +26,7 @@ import { LandingStepsComponent } from './landing-steps.component';
     RouterLink,
     FaIconComponent,
     LogoComponent,
+    PreferenceControlsComponent,
     LandingHeroComponent,
     LandingBenefitsComponent,
     LandingStepsComponent,
@@ -48,7 +50,9 @@ export class LandingPage {
   private readonly platformId = inject(PLATFORM_ID);
 
   constructor() {
-    this.applySeo();
+    // Os metadados dependem do idioma: o effect volta a correr sempre que o
+    // utilizador troca PT/EN na própria landing.
+    effect(() => this.applySeo());
 
     // Em SSR não existe sessão de browser; a verificação só corre no cliente.
     if (isPlatformBrowser(this.platformId)) {

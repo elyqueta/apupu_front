@@ -11,7 +11,7 @@ import { ICONS } from '../../core/ui/icons';
     <div class="flex items-center gap-2">
       <button
         type="button"
-        class="inline-flex h-10 items-center gap-2 rounded-xl border border-line bg-surface-raised/60 px-3 text-xs font-semibold text-muted backdrop-blur-xl transition hover:border-brand/40 hover:text-ink"
+        class="inline-flex min-h-11 items-center gap-2 rounded-xl border border-line bg-surface-raised/60 px-3 text-xs font-semibold text-muted backdrop-blur-xl transition hover:border-brand/40 hover:text-ink"
         [attr.aria-label]="i18n.t('common.language')"
         [attr.title]="i18n.t('common.language')"
         (click)="toggleLocale()"
@@ -22,9 +22,10 @@ import { ICONS } from '../../core/ui/icons';
 
       <button
         type="button"
-        class="grid size-10 place-items-center rounded-xl border border-line bg-surface-raised/60 text-muted backdrop-blur-xl transition hover:border-brand/40 hover:text-ink"
+        class="grid min-h-11 min-w-11 place-items-center rounded-xl border border-line bg-surface-raised/60 px-2 text-muted backdrop-blur-xl transition hover:border-brand/40 hover:text-ink"
         [attr.aria-label]="i18n.t('common.theme')"
         [attr.title]="i18n.t('common.theme')"
+        [attr.aria-pressed]="theme.isDark()"
         (click)="theme.toggle()"
       >
         <fa-icon

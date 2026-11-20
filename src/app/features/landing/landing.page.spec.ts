@@ -6,6 +6,7 @@ import { Meta, Title } from '@angular/platform-browser';
 import { provideRouter, Router } from '@angular/router';
 import { Host } from '../../core/api/api.models';
 import { AuthService } from '../../core/api/auth.service';
+import { I18nService } from '../../core/i18n/i18n.service';
 import { LandingPage } from './landing.page';
 
 function hostFixture(): Host {
@@ -47,10 +48,34 @@ function setup(session: Host | null = null): ComponentFixture<LandingPage> {
   return fixture;
 }
 
+function mediaQuery(matches: boolean): MediaQueryList {
+  return {
+    matches,
+    media: '(prefers-color-scheme: dark)',
+    onchange: null,
+    addEventListener: () => undefined,
+    removeEventListener: () => undefined,
+    addListener: () => undefined,
+    removeListener: () => undefined,
+    dispatchEvent: () => false,
+  } as MediaQueryList;
+}
+
 describe('LandingPage', () => {
+  beforeEach(() => {
+    localStorage.setItem('contacomigo.locale', 'pt-AO');
+    Object.defineProperty(window, 'matchMedia', {
+      configurable: true,
+      writable: true,
+      value: vi.fn().mockReturnValue(mediaQuery(false)),
+    });
+  });
+
   afterEach(() => {
     TestBed.resetTestingModule();
     vi.restoreAllMocks();
+    Reflect.deleteProperty(window, 'matchMedia');
+    localStorage.removeItem('contacomigo.locale');
   });
 
   it('mostra as secções públicas por ordem, sem faixa de protótipo', async () => {
@@ -104,6 +129,25 @@ describe('LandingPage', () => {
     expect(TestBed.inject(Title).getTitle()).toContain('Conto Contigo');
     expect(TestBed.inject(Meta).getTag('name="description"')?.getAttribute('content')).toContain(
       'Cria eventos',
+    );
+  });
+
+  it('actualiza título e descrição SEO quando o idioma muda na landing', async () => {
+    const fixture = setup();
+    const i18n = TestBed.inject(I18nService);
+    expect(TestBed.inject(Title).getTitle()).toContain('sem complicações');
+
+    i18n.setLocale('en');
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(TestBed.inject(Title).getTitle()).toContain('Effortless events');
+    expect(TestBed.inject(Meta).getTag('name="description"')?.getAttribute('content')).toContain(
+      'Create events',
+    );
+    expect(TestBed.inject(Meta).getTag('property="og:title"')?.getAttribute('content')).toContain(
+      'Effortless events',
     );
   });
 

@@ -108,3 +108,14 @@ Mapeamento feito antes de alterar código. O frontend parte de `feat/bloco-3-det
 | 2026-11-20 | Estrutura da página pública. | `invitation.page.html` fica como casca com menos de 250 linhas; secções em `features/invitation/parts/`; todos os diálogos usam `app-modal`, já com bottom sheet, foco e Escape. | A auditoria diz que não existe bottom sheet, mas o código do Bloco 1 já o implementa; reutilizar evita duplicação. |
 | 2026-11-20 | Ação de localização. | Abrir `https://www.google.com/maps/search/?api=1&query={endereço codificado}` em novo separador, sem SDK, chave ou geolocalização; “Copiar endereço” usa `ShareService`. | Fora de âmbito: integração com API do Google Maps fica para blocos futuros. |
 | 2026-11-20 | Barra de resposta em mobile. | Botões “Vou”/“Não vou” fixos no fundo com `env(safe-area-inset-bottom)`; no desktop permanecem no cartão lateral. | Padrão de app familiar e exigência do Passo 2 sem duplicar ações. |
+
+### Decisões de implementação (Passos 2–5)
+
+| Data | Ponto | Escolha | Motivo |
+|---|---|---|---|
+| 2026-11-20 | Componentes do convite. | `invitation.page.html` ficou com 148 linhas; capa, cartões de informação, RSVP, menu de detalhes e os quatro modais vivem em `features/invitation/parts/`. | Cumpre o limite de 250 linhas sem criar um componente "mestra" acoplado ao carregamento da página. |
+| 2026-11-20 | Modais. | Reutilização integral de `app-modal` para localização, anfitrião, detalhes e confirmação de resposta; nenhum primitivo novo. | O componente do Bloco 1 já tem bottom sheet em mobile, foco, Escape, clique fora e devolução de foco. |
+| 2026-11-20 | Corpo do RSVP. | `{ status, message }`; a mensagem é aparada, limitada a 500 caracteres e enviada como `null` quando o campo fica vazio. | O backend mantém a mensagem anterior se o campo estiver ausente e limpa com `null`; enviar `null` explicitamente evita estado ambíguo. |
+| 2026-11-20 | Estado inativo. | Link inválido, expirado ou revogado usa apenas `invitation.inactiveText`; não há ação “Falar com o anfitrião” nesse estado. | A resposta genérica do backend não devolve contacto; não há dados para a ação e o motivo nunca é diferenciado. Ver `BLOCKERS.md`. |
+| 2026-11-20 | Mensagem na lista do anfitrião. | `guests.guestMessage` com truncamento a 120 caracteres na primeira linha de `app-person-card`; texto integral continua no convite. | Evita cartões longos em `/convidados`, no detalhe do evento e no painel do gestor sem perder a mensagem. |
+| 2026-11-20 | Testes do carregamento. | `settle()` nos testes da página espera duas estabilizações antes de verificar o DOM. | O carregamento é disparado por um `effect()`; com deteção zoneless o resultado só reflete no DOM após o ciclo seguinte. |

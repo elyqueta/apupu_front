@@ -1,13 +1,14 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { ICONS } from '../../core/ui/icons';
 import { LogoComponent } from '../../shared/components/logo.component';
+import { SupportDialogComponent } from './support-dialog.component';
 
 /** Bloco de identidade do produto: NS2 Innovation e apoio. */
 @Component({
   selector: 'app-landing-ns2',
-  imports: [FaIconComponent, LogoComponent],
+  imports: [FaIconComponent, LogoComponent, SupportDialogComponent],
   template: `
     <section
       id="ns2"
@@ -27,18 +28,22 @@ import { LogoComponent } from '../../shared/components/logo.component';
         <p class="mx-auto mt-4 max-w-2xl text-sm leading-7 text-muted sm:text-base">
           {{ i18n.t('landing.ns2.text') }}
         </p>
-        <a
-          [href]="i18n.t('landing.ns2.supportUrl')"
+        <button
+          type="button"
+          data-testid="landing-support-open"
           class="mt-6 inline-flex min-h-12 items-center gap-2 rounded-2xl border border-line bg-surface px-5 text-sm font-semibold text-ink transition hover:border-brand/40"
+          (click)="supportOpen.set(true)"
         >
           <fa-icon [icon]="icons['envelope']" class="text-brand" aria-hidden="true" />
           {{ i18n.t('landing.ns2.support') }}
-        </a>
+        </button>
       </div>
+      <app-support-dialog [open]="supportOpen()" (closed)="supportOpen.set(false)" />
     </section>
   `,
 })
 export class LandingNs2Component {
   protected readonly i18n = inject(I18nService);
   protected readonly icons = ICONS;
+  protected readonly supportOpen = signal(false);
 }

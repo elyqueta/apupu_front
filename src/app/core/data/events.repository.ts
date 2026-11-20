@@ -92,6 +92,7 @@ export class EventsRepository extends CachedRepository<HostEvent[]> {
         host_email: input.hostEmail,
         category: input.type,
         starts_at: input.startsAt,
+        ends_at: input.endsAt ?? undefined,
         timezone: input.timezone,
         location: locationFromInput(input),
         message: input.message,

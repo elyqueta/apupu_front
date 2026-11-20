@@ -28,6 +28,8 @@ export interface HostEvent {
   hostName: string;
   hostEmail: string;
   startsAt: string;
+  /** Fim do evento, quando definido. */
+  endsAt?: string | null;
   timezone: string;
   venue: string;
   city: string;
@@ -126,6 +128,8 @@ export interface Guest {
   invitationUrl: string | null;
   /** Primeira abertura do link do convite; `null` se nunca foi aberto. */
   openedAt: string | null;
+  /** Mensagem opcional deixada ao responder ao convite. */
+  message?: string | null;
   invitedAt: string;
   respondedAt: string | null;
 }
@@ -239,6 +243,8 @@ export interface CreateEventInput {
   hostName: string;
   hostEmail: string;
   startsAt: string;
+  /** Fim opcional do evento (deve ser posterior a `startsAt`). */
+  endsAt?: string | null;
   timezone: string;
   venue: string;
   city: string;

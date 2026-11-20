@@ -437,6 +437,23 @@
                   <span
                     class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted"
                   >
+                    {{ i18n.t('create.field.endsAt') }}
+                    <span class="text-muted/60">({{ i18n.t('common.optional') }})</span>
+                  </span>
+                  <input
+                    type="datetime-local"
+                    formControlName="endsAt"
+                    class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink outline-none transition focus:border-brand/50"
+                  />
+                  @if (fieldError('endsAt')) {
+                    <span class="mt-1 block text-[10px] text-coral">{{ fieldError('endsAt') }}</span>
+                  }
+                </label>
+
+                <label class="col-span-2 block">
+                  <span
+                    class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted"
+                  >
                     {{ i18n.t('create.field.timezone') }} <span class="text-coral">*</span>
                   </span>
                   <span class="relative block">

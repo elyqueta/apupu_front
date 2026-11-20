@@ -107,6 +107,8 @@ export interface ApiInvitation {
   guest_email: string;
   guest_phone: string | null;
   table_name: string | null;
+  /** Mensagem opcional deixada pelo convidado ao responder. */
+  guest_message?: string | null;
   rsvp_status: ApiRsvpStatus;
   rsvp_responded_at: string | null;
   send_status: 'pending' | 'queued' | 'sent' | 'failed';
@@ -166,6 +168,11 @@ export interface PublicEvent {
   id: string;
   title: string;
   host_name: string;
+  /** Contacto mínimo do anfitrião; telefone/avatar podem ser nulos. */
+  host_email?: string;
+  host_phone?: string | null;
+  host_avatar_url?: string | null;
+  category?: EventCategory | null;
   starts_at: string;
   ends_at: string | null;
   timezone: string;
@@ -358,6 +365,8 @@ export interface PublicInvitation {
     email: string;
     /** `true` quando o email do convite já tem conta registada. */
     email_has_account: boolean;
+    /** Mensagem opcional deixada ao responder. */
+    message?: string | null;
     rsvp_status: ApiRsvpStatus;
     rsvp_responded_at: string | null;
   };

@@ -1,9 +1,18 @@
 {
+  "$schema": "https://openapi.vercel.sh/vercel.json",
   "outputDirectory": "dist/conta_comigo_front/browser",
   "rewrites": [
     {
       "source": "/api/v1/(.*)",
       "destination": "https://apupu-back.onrender.com/api/v1/$1"
+    },
+    {
+      "source": "/auth/google",
+      "destination": "https://apupu-back.onrender.com/auth/google"
+    },
+    {
+      "source": "/auth/google/callback",
+      "destination": "https://apupu-back.onrender.com/auth/google/callback"
     },
     {
       "source": "/(.*)",

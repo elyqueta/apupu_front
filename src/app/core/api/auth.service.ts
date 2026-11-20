@@ -1,6 +1,8 @@
+import { DOCUMENT } from '@angular/common';
 import { Injectable, inject, signal } from '@angular/core';
 import { ApiClient } from './api-client';
 import { ApiError } from './api-error';
+import { OAUTH_BASE_URL, googleAuthUrl } from './api-config';
 import { Host } from './api.models';
 import { SessionCache } from '../services/session-cache';
 
@@ -15,6 +17,10 @@ import { SessionCache } from '../services/session-cache';
  *
  * O registo termina com uma sessão já iniciada: `register()` devolve o
  * anfitrião e marca o estado como autenticado, tal como o `login()`.
+ *
+ * O login Google é uma navegação de página inteira. O backend cria a sessão
+ * e define o cookie HttpOnly `apupu_auth`; o frontend nunca recebe nem guarda
+ * um token — confirma apenas a sessão com `GET /auth/session`.
  */
 
 export interface RegistrationCodeAccepted {
@@ -63,6 +69,8 @@ const SOCIAL_LABELS: Record<SocialProvider, string> = {
 export class AuthService {
   private readonly api = inject(ApiClient);
   private readonly sessions = inject(SessionCache);
+  private readonly oauthBaseUrl = inject(OAUTH_BASE_URL);
+  private readonly document = inject(DOCUMENT);
 
   private readonly hostState = signal<Host | null>(null);
   private readonly readyState = signal(false);
@@ -190,15 +198,47 @@ export class AuthService {
   }
 
   /**
+   * URL do botão "Entrar com o Google".
+   *
+   * Expor o URL permite usar um `<a href>` (abre em nova tab, copia link)
+   * em alternativa ao redirecionamento por JavaScript.
+   */
+  googleAuthHref(): string {
+    return googleAuthUrl(this.oauthBaseUrl);
+  }
+
+  /**
    * Inicia a autenticação social.
-   * TODO: contrato não confirmado — iniciar OAuth Google/Facebook.
+   *
+   * O Google exige uma navegação de página inteira: `HttpClient` não serve,
+   * porque o fluxo termina com um `Set-Cookie` e um redirect do backend.
+   * Em produção o URL é relativo (`/auth/google`) e o Vercel reescreve para o
+   * Render — o browser continua na origem da SPA e o cookie é first-party.
    */
   async loginWithProvider(provider: SocialProvider): Promise<void> {
-    throw new ApiError(
-      501,
-      'provider_not_configured',
-      `A entrada com ${SOCIAL_LABELS[provider]} ainda não está disponível.`,
-    );
+    if (provider !== 'google') {
+      throw new ApiError(
+        501,
+        'provider_not_configured',
+        `A entrada com ${SOCIAL_LABELS[provider]} ainda não está disponível.`,
+      );
+    }
+
+    const view = this.document.defaultView;
+    if (!view) {
+      throw new ApiError(0, 'browser_required', 'O login Google só pode ser iniciado no browser.');
+    }
+    view.location.href = this.googleAuthHref();
+  }
+
+  /**
+   * Estado de autenticação derivado da sessão confirmada pelo backend.
+   *
+   * Não há token no browser: a autoridade é o cookie HttpOnly. Enquanto a
+   * sessão não for restaurada, `host()` é `null` e este método devolve `false`.
+   */
+  isAuthenticated(): boolean {
+    return this.host() !== null;
   }
 
   /** Termina a sessão no backend e limpa o estado local. */

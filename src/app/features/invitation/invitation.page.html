@@ -1,20 +1,14 @@
 <div class="relative min-h-dvh overflow-hidden">
-  <div class="mx-auto flex min-h-dvh w-full max-w-5xl flex-col px-4 py-5 sm:px-6 lg:py-8">
+  <div class="mx-auto flex min-h-dvh w-full max-w-5xl flex-col px-4 pb-32 pt-5 sm:px-6 lg:pb-8 lg:py-8">
     <header class="flex flex-wrap items-center justify-between gap-3">
       <app-brand />
-      <div class="flex items-center gap-2">
-        <app-preference-controls class="hidden sm:flex" />
-      </div>
+      <app-preference-controls class="hidden sm:flex" />
     </header>
 
     @if (loading()) {
       <main class="flex flex-1 flex-col gap-5 py-6">
         <div class="flex flex-col items-center gap-3 py-6">
-          <app-logo
-            variant="stacked"
-            [height]="80"
-            class="dark:hidden motion-safe:animate-pulse"
-          />
+          <app-logo variant="stacked" [height]="80" class="dark:hidden motion-safe:animate-pulse" />
           <app-logo
             variant="stacked"
             theme="white"
@@ -26,643 +20,129 @@
         <app-skeleton variant="invitation" />
       </main>
     } @else if (invitation(); as view) {
-      <main class="flex flex-1 flex-col gap-5 py-6">
-        <article
-          class="overflow-hidden rounded-4xl border border-line bg-surface shadow-card backdrop-blur-2xl"
-        >
-          @if (view.event.coverUrl) {
-            <button
-              type="button"
-              class="group/cover relative block h-60 w-full overflow-hidden text-left sm:h-72"
-              [attr.aria-label]="i18n.t('common.expandImage') + ': ' + view.event.title"
-              [attr.title]="i18n.t('common.expandImage')"
-              (click)="openCover()"
-            >
-              <img
-                [src]="view.event.coverUrl"
-                [alt]="view.event.title"
-                class="size-full object-cover transition duration-500 group-hover/cover:scale-[1.02]"
-              />
-              <span
-                class="pointer-events-none absolute inset-0 bg-gradient-to-t from-ink/80 via-ink/25 to-transparent"
-              ></span>
-              <span
-                class="pointer-events-none absolute inset-x-0 bottom-0 flex flex-col gap-1 p-5 text-white sm:p-6"
-              >
-                <span class="text-[10px] font-semibold uppercase tracking-[0.24em] text-white/75">
-                  {{ i18n.t('invitation.hostedBy', { name: view.event.hostName }) }}
-                </span>
-                <span class="font-display text-2xl font-semibold tracking-tight sm:text-3xl">
-                  {{ view.event.title }}
-                </span>
-              </span>
-              <span
-                class="pointer-events-none absolute right-4 top-4 inline-flex items-center gap-1.5 rounded-full border border-white/25 bg-canvas/55 px-3 py-1.5 text-[10px] font-semibold text-white/90 backdrop-blur-md"
-              >
-                <fa-icon [icon]="icons['image']" class="text-[10px]" aria-hidden="true" />
-                {{ i18n.t('common.expandImage') }}
-              </span>
-            </button>
-          } @else {
-            <app-template-artwork
-              [templateId]="view.event.templateId"
-              variant="hero"
-              [title]="view.event.title"
-              [subtitle]="i18n.t('invitation.hostedBy', { name: view.event.hostName })"
-              class="block h-60 sm:h-72"
+      <main class="flex flex-1 flex-col gap-4 py-5">
+        <app-invitation-hero
+          [event]="view.event"
+          [guestName]="view.guest.name"
+          [countdownDays]="countdownDays()"
+          (coverOpen)="openCover()"
+        />
+
+        <app-invitation-key-info
+          [event]="view.event"
+          [deadlinePassed]="deadlinePassed()"
+          (openHost)="hostOpen.set(true)"
+          (openLocation)="locationOpen.set(true)"
+        />
+
+        <div class="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,20rem)]">
+          <app-invitation-details-menu (open)="detailsOpen.set(true)" />
+
+          <aside class="lg:sticky lg:top-6">
+            <app-invitation-rsvp
+              variant="card"
+              [status]="status() ?? 'pending'"
+              [saving]="saving()"
+              [deadlinePassed]="deadlinePassed()"
+              [eventStatus]="view.event.status"
+              [actionError]="actionError()"
+              [email]="view.guest.email"
+              [emailHasAccount]="view.guest.emailHasAccount"
+              [accountDismissed]="accountDismissed()"
+              (respond)="requestRsvp($event)"
+              (createAccount)="createAccount($event)"
+              (login)="loginInstead()"
+              (dismissAccount)="dismissAccount()"
             />
-          }
-
-          <div class="flex flex-wrap items-center justify-between gap-4 p-5 sm:p-6">
-            <div class="min-w-0">
-              <p
-                class="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.24em] text-brand-strong"
-              >
-                <fa-icon [icon]="icons['sparkles']" class="text-[10px]" aria-hidden="true" />
-                {{ i18n.t('invitation.youAreInvited') }}
-              </p>
-              <h1
-                class="mt-1.5 font-display text-2xl font-semibold tracking-tight text-ink sm:text-3xl"
-              >
-                {{ i18n.t('invitation.guestGreeting', { name: view.guest.name }) }}
-              </h1>
-              @if (view.event.city) {
-                <p class="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted">
-                  <span class="inline-flex items-center gap-1.5">
-                    <fa-icon
-                      [icon]="icons['location']"
-                      class="text-[10px] text-aqua"
-                      aria-hidden="true"
-                    />
-                    {{ view.event.city }}
-                  </span>
-                </p>
-              }
-            </div>
-
-            <div class="flex items-center gap-3">
-              <div
-                class="rounded-2xl border border-line bg-surface-raised/60 px-4 py-2.5 text-center"
-              >
-                <p class="text-[9px] font-semibold uppercase tracking-[0.18em] text-muted">
-                  {{ i18n.t('invitation.countdown') }}
-                </p>
-                <p class="mt-0.5 font-display text-2xl font-semibold leading-none text-ink">
-                  {{ countdownDays() }}
-                  <span class="text-[10px] font-medium uppercase tracking-[0.12em] text-muted">
-                    {{ i18n.t('common.days') }}
-                  </span>
-                </p>
-              </div>
-              <app-status-badge [value]="view.event.status" />
-            </div>
-          </div>
-        </article>
-
-        <div class="grid gap-4 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,0.85fr)]">
-          <div class="flex flex-col gap-4">
-            <article
-              class="rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl sm:p-6"
-            >
-              <div class="flex items-start justify-between gap-3">
-                <div>
-                  <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-brand-strong">
-                    {{ i18n.t('invitation.detailsTitle') }}
-                  </p>
-                  <p class="mt-1 text-xs text-muted">
-                    {{ i18n.t('invitation.when') }} · {{ i18n.t('invitation.where') }}
-                  </p>
-                </div>
-              </div>
-
-              <div class="mt-4 grid gap-3 sm:grid-cols-2">
-                <div
-                  class="flex items-start gap-3 rounded-2xl border border-line bg-surface-raised/40 p-3"
-                >
-                  <span
-                    class="grid size-9 shrink-0 place-items-center rounded-xl border border-brand/25 bg-brand/10 text-brand-strong"
-                  >
-                    <fa-icon [icon]="icons['calendar']" class="text-xs" aria-hidden="true" />
-                  </span>
-                  <div class="min-w-0">
-                    <p class="text-[9px] font-semibold uppercase tracking-[0.16em] text-muted">
-                      {{ i18n.t('invitation.when') }}
-                    </p>
-                    <p class="mt-0.5 text-xs font-semibold text-ink">
-                      {{ i18n.fullDate(view.event.startsAt, view.event.timezone) }}
-                    </p>
-                    <p class="mt-0.5 text-[10px] text-muted">
-                      {{ i18n.time(view.event.startsAt, view.event.timezone) }} ·
-                      {{ view.event.timezone }}
-                    </p>
-                  </div>
-                </div>
-
-                @if (view.event.venue || view.event.city) {
-                  <div
-                    class="flex items-start gap-3 rounded-2xl border border-line bg-surface-raised/40 p-3"
-                  >
-                    <span
-                      class="grid size-9 shrink-0 place-items-center rounded-xl border border-aqua/25 bg-aqua/10 text-aqua"
-                    >
-                      <fa-icon [icon]="icons['location']" class="text-xs" aria-hidden="true" />
-                    </span>
-                    <div class="min-w-0">
-                      <p class="text-[9px] font-semibold uppercase tracking-[0.16em] text-muted">
-                        {{ i18n.t('invitation.where') }}
-                      </p>
-                      <p class="mt-0.5 text-xs font-semibold text-ink">{{ view.event.venue }}</p>
-                      @if (view.event.city) {
-                        <p class="mt-0.5 text-[10px] text-muted">{{ view.event.city }}</p>
-                      }
-                    </div>
-                  </div>
-                }
-
-                @if (view.event.onlineLink; as online) {
-                  <a
-                    [href]="online"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    class="flex items-center gap-3 rounded-2xl border border-aqua/25 bg-aqua/5 p-3 transition hover:border-aqua/40 sm:col-span-2"
-                  >
-                    <span
-                      class="grid size-9 shrink-0 place-items-center rounded-xl border border-aqua/25 bg-aqua/10 text-aqua"
-                    >
-                      <fa-icon [icon]="icons['link']" class="text-xs" aria-hidden="true" />
-                    </span>
-                    <span class="min-w-0 flex-1">
-                      <span
-                        class="block text-[9px] font-semibold uppercase tracking-[0.16em] text-muted"
-                      >
-                        {{ i18n.t('invitation.onlineLink') }}
-                      </span>
-                      <span class="mt-0.5 block truncate text-xs font-semibold text-ink">{{
-                        online
-                      }}</span>
-                    </span>
-                    <fa-icon
-                      [icon]="icons['arrowUpRight']"
-                      class="text-[10px] text-aqua"
-                      aria-hidden="true"
-                    />
-                  </a>
-                }
-
-                <div
-                  class="flex items-start gap-3 rounded-2xl border border-line bg-surface-raised/40 p-3"
-                >
-                  <span
-                    class="grid size-9 shrink-0 place-items-center rounded-xl border border-iris/25 bg-iris/10 text-iris"
-                  >
-                    <fa-icon [icon]="icons['user']" class="text-xs" aria-hidden="true" />
-                  </span>
-                  <div class="min-w-0">
-                    <p class="text-[9px] font-semibold uppercase tracking-[0.16em] text-muted">
-                      {{ i18n.t('eventDetail.host') }}
-                    </p>
-                    <p class="mt-0.5 truncate text-xs font-semibold text-ink">
-                      {{ view.event.hostName }}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              @if (view.event.dressCode) {
-                <div
-                  class="mt-3 flex items-start gap-3 rounded-2xl border border-line bg-surface-raised/40 p-3"
-                >
-                  <span
-                    class="grid size-9 shrink-0 place-items-center rounded-xl border border-amber/25 bg-amber/10 text-amber"
-                  >
-                    <fa-icon [icon]="icons['shirt']" class="text-xs" aria-hidden="true" />
-                  </span>
-                  <div class="min-w-0">
-                    <p class="text-[9px] font-semibold uppercase tracking-[0.16em] text-muted">
-                      {{ i18n.t('invitation.dressTitle') }}
-                    </p>
-                    <p class="mt-0.5 text-xs font-semibold text-ink">{{ view.event.dressCode }}</p>
-                  </div>
-                </div>
-              }
-            </article>
-
-            <article
-              class="rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl sm:p-6"
-            >
-              <p
-                class="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-brand-strong"
-              >
-                <fa-icon [icon]="icons['quote']" class="text-[10px]" aria-hidden="true" />
-                {{ i18n.t('invitation.messageTitle') }}
-              </p>
-              <p class="mt-3 text-sm leading-7 text-ink">{{ view.event.message }}</p>
-              <p class="mt-4 text-[11px] font-semibold text-muted">— {{ view.event.hostName }}</p>
-            </article>
-
-            @if (view.event.rules) {
-              <article
-                class="rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl sm:p-6"
-              >
-                <p
-                  class="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-amber"
-                >
-                  <fa-icon [icon]="icons['checklist']" class="text-[10px]" aria-hidden="true" />
-                  {{ i18n.t('invitation.rulesTitle') }}
-                </p>
-                <p class="mt-3 whitespace-pre-line text-sm leading-7 text-ink">
-                  {{ view.event.rules }}
-                </p>
-              </article>
-            }
-
-            @if (view.event.contributionEnabled && view.event.bankDetails; as bank) {
-              <article
-                class="rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl sm:p-6"
-              >
-                <div class="flex items-start justify-between gap-3">
-                  <div>
-                    <p
-                      class="text-[10px] font-semibold uppercase tracking-[0.2em] text-brand-strong"
-                    >
-                      {{ i18n.t('invitation.contributionTitle') }}
-                    </p>
-                    <p class="mt-1 text-xs text-muted">
-                      {{ i18n.t('invitation.contributionText') }}
-                    </p>
-                  </div>
-                  <span
-                    class="grid size-9 place-items-center rounded-xl border border-mint/25 bg-mint/10 text-mint"
-                  >
-                    <fa-icon [icon]="icons['bank']" class="text-xs" aria-hidden="true" />
-                  </span>
-                </div>
-
-                <dl class="mt-4 grid gap-2 text-xs sm:grid-cols-2">
-                  <div class="rounded-2xl border border-line bg-surface-raised/40 p-3">
-                    <dt class="text-[9px] font-semibold uppercase tracking-[0.16em] text-muted">
-                      {{ i18n.t('invitation.bank') }}
-                    </dt>
-                    <dd class="mt-0.5 font-semibold text-ink">{{ bank.bankName }}</dd>
-                  </div>
-                  <div class="rounded-2xl border border-line bg-surface-raised/40 p-3">
-                    <dt class="text-[9px] font-semibold uppercase tracking-[0.16em] text-muted">
-                      {{ i18n.t('invitation.account') }}
-                    </dt>
-                    <dd class="mt-0.5 font-semibold text-ink">{{ bank.accountHolder }}</dd>
-                  </div>
-                  <div
-                    class="rounded-2xl border border-line bg-surface-raised/40 p-3 sm:col-span-2"
-                  >
-                    <dt class="text-[9px] font-semibold uppercase tracking-[0.16em] text-muted">
-                      {{ i18n.t('invitation.iban') }}
-                    </dt>
-                    <dd class="mt-1 flex items-center justify-between gap-2">
-                      <span class="truncate font-mono text-[11px] text-ink">{{
-                        bank.accountReference
-                      }}</span>
-                      <button
-                        type="button"
-                        class="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border border-line bg-surface px-2 text-[10px] font-semibold text-ink transition hover:border-brand/40"
-                        (click)="copyAccountReference()"
-                      >
-                        <fa-icon
-                          [icon]="icons['copy']"
-                          class="text-[9px] text-muted"
-                          aria-hidden="true"
-                        />
-                        {{ i18n.t('invitation.copyIban') }}
-                      </button>
-                    </dd>
-                  </div>
-                </dl>
-
-                <p class="mt-3 flex items-start gap-2 text-[10px] leading-5 text-muted">
-                  <fa-icon
-                    [icon]="icons['info']"
-                    class="mt-0.5 text-[9px] text-aqua"
-                    aria-hidden="true"
-                  />
-                  {{ i18n.t('invitation.noPayments') }}
-                </p>
-              </article>
-            }
-          </div>
-
-          <aside class="flex flex-col gap-4 lg:sticky lg:top-6 lg:self-start">
-            <article
-              class="rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl sm:p-6"
-            >
-              <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-brand-strong">
-                {{ i18n.t('invitation.rsvpTitle') }}
-              </p>
-              <p class="mt-1 text-xs leading-5 text-muted">{{ i18n.t('invitation.rsvpHint') }}</p>
-
-              @if (!view.guest.emailHasAccount && !accountDismissed()) {
-                <div class="mt-3 rounded-2xl border border-brand/25 bg-brand/10 p-3.5">
-                  <p class="flex items-center gap-2 text-xs font-semibold text-brand-strong">
-                    <fa-icon [icon]="icons['shield']" class="text-[11px]" aria-hidden="true" />
-                    {{ i18n.t('account.title') }}
-                  </p>
-                  <p class="mt-1.5 text-[11px] leading-5 text-muted">
-                    {{ i18n.t('account.text', { email: view.guest.email }) }}
-                  </p>
-                  <div class="mt-3 flex flex-wrap gap-2">
-                    <button
-                      type="button"
-                      class="inline-flex h-9 items-center gap-1.5 rounded-xl bg-brand px-3 text-[11px] font-semibold text-on-secondary transition hover:bg-secondary-hover"
-                      (click)="createAccount(true)"
-                    >
-                      <fa-icon [icon]="icons['userPlus']" class="text-[10px]" aria-hidden="true" />
-                      {{ i18n.t('account.useEmail', { email: view.guest.email }) }}
-                    </button>
-                    <button
-                      type="button"
-                      class="inline-flex h-9 items-center gap-1.5 rounded-xl border border-line bg-surface px-3 text-[11px] font-semibold text-ink transition hover:border-brand/40"
-                      (click)="createAccount(false)"
-                    >
-                      {{ i18n.t('account.otherEmail') }}
-                    </button>
-                    <button
-                      type="button"
-                      class="inline-flex h-9 items-center gap-1.5 rounded-xl border border-line bg-surface px-3 text-[11px] font-semibold text-ink transition hover:border-brand/40"
-                      (click)="loginInstead()"
-                    >
-                      {{ i18n.t('account.login') }}
-                    </button>
-                    <button
-                      type="button"
-                      class="inline-flex h-9 items-center rounded-xl px-2.5 text-[11px] font-semibold text-muted transition hover:text-ink"
-                      (click)="dismissAccount()"
-                    >
-                      {{ i18n.t('account.later') }}
-                    </button>
-                  </div>
-                </div>
-              }
-              @if (actionError()) {
-                <p
-                  role="alert"
-                  class="mt-3 rounded-xl border border-coral/25 bg-coral/10 p-3 text-xs leading-5 text-coral"
-                >
-                  {{ actionError() }}
-                </p>
-              }
-
-              <div
-                class="mt-4 rounded-2xl border p-3.5"
-                [class]="
-                  view.guest.status === 'confirmed'
-                    ? 'border-mint/25 bg-mint/10'
-                    : view.guest.status === 'declined'
-                      ? 'border-coral/25 bg-coral/10'
-                      : 'border-amber/25 bg-amber/10'
-                "
-              >
-                <p
-                  class="flex items-center gap-2 text-xs font-semibold"
-                  [class]="
-                    view.guest.status === 'confirmed'
-                      ? 'text-mint'
-                      : view.guest.status === 'declined'
-                        ? 'text-coral'
-                        : 'text-amber'
-                  "
-                >
-                  <fa-icon
-                    [icon]="
-                      view.guest.status === 'confirmed'
-                        ? icons['success']
-                        : view.guest.status === 'declined'
-                          ? icons['cancelled']
-                          : icons['clock']
-                    "
-                    class="text-[11px]"
-                    aria-hidden="true"
-                  />
-                  {{
-                    view.guest.status === 'confirmed'
-                      ? i18n.t('invitation.confirmedTitle')
-                      : view.guest.status === 'declined'
-                        ? i18n.t('invitation.declinedTitle')
-                        : i18n.t('invitation.pendingTitle')
-                  }}
-                </p>
-                <p class="mt-1.5 text-[11px] leading-5 text-muted">
-                  {{
-                    view.guest.status === 'confirmed'
-                      ? i18n.t('invitation.confirmedText')
-                      : view.guest.status === 'declined'
-                        ? i18n.t('invitation.declinedText')
-                        : i18n.t('invitation.pendingText')
-                  }}
-                </p>
-              </div>
-
-              @if (view.event.status === 'cancelled') {
-                <div class="mt-4 rounded-2xl border border-coral/25 bg-coral/10 p-3.5">
-                  <p class="flex items-center gap-2 text-xs font-semibold text-coral">
-                    <fa-icon [icon]="icons['warning']" class="text-[11px]" aria-hidden="true" />
-                    {{ i18n.t('invitation.cancelledTitle') }}
-                  </p>
-                  <p class="mt-1.5 text-[11px] leading-5 text-muted">
-                    {{ i18n.t('invitation.cancelledText') }}
-                  </p>
-                </div>
-              } @else if (deadlinePassed() || view.event.status === 'completed') {
-                <div class="mt-4 rounded-2xl border border-line bg-surface-raised/50 p-3.5">
-                  <p class="flex items-center gap-2 text-xs font-semibold text-ink">
-                    <fa-icon
-                      [icon]="icons['hourglass']"
-                      class="text-[11px] text-amber"
-                      aria-hidden="true"
-                    />
-                    {{ i18n.t('invitation.deadlinePassed') }}
-                  </p>
-                  <p class="mt-1.5 text-[11px] leading-5 text-muted">
-                    {{ i18n.t('invitation.deadlinePassedText') }}
-                  </p>
-                </div>
-              } @else {
-                <div class="mt-4 flex flex-col gap-2">
-                  @if (view.guest.status === 'declined') {
-                    <button
-                      type="button"
-                      [disabled]="saving()"
-                      class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-brand hover:bg-secondary-hover px-4 text-sm font-semibold text-on-secondary transition disabled:cursor-wait disabled:opacity-70"
-                      (click)="requestAccept()"
-                    >
-                      @if (saving()) {
-                        <fa-icon
-                          [icon]="icons['spinner']"
-                          class="text-xs animate-spin"
-                          aria-hidden="true"
-                        />
-                        {{ i18n.t('invitation.saving') }}
-                      } @else {
-                        <fa-icon [icon]="icons['check']" class="text-xs" aria-hidden="true" />
-                        {{ i18n.t('invitation.changeToConfirmed') }}
-                      }
-                    </button>
-                  } @else {
-                    <button
-                      type="button"
-                      [disabled]="saving() || view.guest.status === 'confirmed'"
-                      class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-brand hover:bg-secondary-hover px-4 text-sm font-semibold text-on-secondary transition disabled:cursor-default disabled:opacity-60"
-                      (click)="requestAccept()"
-                    >
-                      @if (saving()) {
-                        <fa-icon
-                          [icon]="icons['spinner']"
-                          class="text-xs animate-spin"
-                          aria-hidden="true"
-                        />
-                        {{ i18n.t('invitation.saving') }}
-                      } @else if (view.guest.status === 'confirmed') {
-                        <fa-icon [icon]="icons['checkDouble']" class="text-xs" aria-hidden="true" />
-                        {{ i18n.t('invitation.confirmedTitle') }}
-                      } @else {
-                        <fa-icon [icon]="icons['check']" class="text-xs" aria-hidden="true" />
-                        {{ i18n.t('invitation.accept') }}
-                      }
-                    </button>
-
-                    <button
-                      type="button"
-                      [disabled]="saving()"
-                      class="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-coral/25 bg-coral/10 px-4 text-sm font-semibold text-coral transition hover:bg-coral/10 disabled:cursor-wait disabled:opacity-70"
-                      (click)="requestDecline()"
-                    >
-                      <fa-icon [icon]="icons['cancelled']" class="text-xs" aria-hidden="true" />
-                      {{ i18n.t('invitation.decline') }}
-                    </button>
-                  }
-                </div>
-              }
-
-              <p class="mt-3 flex items-start gap-2 text-[10px] leading-5 text-muted/80">
-                <fa-icon [icon]="icons['info']" class="mt-0.5 text-[9px]" aria-hidden="true" />
-                {{ i18n.t('invitation.demoNotice') }}
-              </p>
-            </article>
-
-            <article
-              class="rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl"
-            >
-              <p
-                class="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-muted"
-              >
-                <fa-icon [icon]="icons['bell']" class="text-[10px] text-aqua" aria-hidden="true" />
-                {{ i18n.t('invitation.reminderTitle') }}
-              </p>
-              <p class="mt-2 text-[11px] leading-5 text-muted">
-                {{ i18n.t('invitation.reminderText') }}
-              </p>
-
-              <div class="my-4 h-px bg-line"></div>
-
-              <p
-                class="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-muted"
-              >
-                <fa-icon
-                  [icon]="icons['lock']"
-                  class="text-[10px] text-brand-strong"
-                  aria-hidden="true"
-                />
-                {{ i18n.t('settings.privacy') }}
-              </p>
-              <p class="mt-2 text-[11px] leading-5 text-muted">
-                {{ i18n.t('invitation.privacyText') }}
-              </p>
-            </article>
           </aside>
         </div>
       </main>
 
       <footer
-        class="flex flex-col gap-2 border-t border-line/60 py-4 text-[10px] text-muted/70 sm:flex-row sm:items-center sm:justify-between"
+        class="flex flex-col gap-2 border-t border-line/60 py-4 text-xs text-muted sm:flex-row sm:items-center sm:justify-between"
       >
-        <p class="inline-flex items-center gap-1.5">
-          <fa-icon
-            [icon]="icons['logo']"
-            class="text-[10px] text-brand-strong"
-            aria-hidden="true"
-          />
+        <p class="inline-flex items-center gap-2">
+          <fa-icon [icon]="icons['logo']" class="text-brand-strong" aria-hidden="true" />
           {{ i18n.t('invitation.footer') }}
         </p>
         <p>{{ i18n.t('footer.rights', { year: 2026 }) }}</p>
       </footer>
+
+      <app-invitation-rsvp
+        variant="bar"
+        [status]="status() ?? 'pending'"
+        [saving]="saving()"
+        [deadlinePassed]="deadlinePassed()"
+        [eventStatus]="view.event.status"
+        [actionError]="actionError()"
+        (respond)="requestRsvp($event)"
+      />
+
+      <app-invitation-location-dialog
+        [open]="locationOpen()"
+        [event]="view.event"
+        (closed)="locationOpen.set(false)"
+      />
+      <app-invitation-host-dialog
+        [open]="hostOpen()"
+        [event]="view.event"
+        (closed)="hostOpen.set(false)"
+      />
+      <app-invitation-details-dialog
+        [open]="detailsOpen()"
+        [event]="view.event"
+        (closed)="detailsOpen.set(false)"
+      />
+      @if (rsvpDialog(); as responseStatus) {
+        <app-invitation-rsvp-dialog
+          [open]="true"
+          [response]="responseStatus"
+          [saving]="saving()"
+          [error]="actionError()"
+          (confirmed)="confirmRsvp($event)"
+          (cancelled)="closeRsvpDialog()"
+        />
+      }
     } @else {
       <main class="flex flex-1 items-center justify-center py-10">
         <article
-          class="w-full max-w-lg rounded-4xl border border-line bg-surface p-6 text-center shadow-card backdrop-blur-2xl animate-rise sm:p-8"
+          class="w-full max-w-lg rounded-4xl border border-line bg-surface p-6 text-center shadow-card animate-rise sm:p-8"
         >
           <span
             class="mx-auto grid size-16 place-items-center rounded-3xl border border-amber/30 bg-amber/15 text-2xl text-amber"
           >
             <fa-icon [icon]="icons['lock']" aria-hidden="true" />
           </span>
-          <p class="mt-5 text-[10px] font-semibold uppercase tracking-[0.26em] text-muted">
+          <p class="mt-5 text-xs font-semibold uppercase tracking-[0.2em] text-muted">
             {{ i18n.t('invitation.eyebrow') }}
           </p>
           <h1 class="mt-2 font-display text-2xl font-semibold tracking-tight text-ink">
             {{ i18n.t('invitation.unavailableTitle') }}
           </h1>
           <p class="mt-3 text-sm leading-6 text-muted">{{ loadError() }}</p>
-          <p class="mt-2 text-[11px] leading-5 text-muted/80">
-            {{ i18n.t('invitation.unavailableHint') }}
-          </p>
-
+          <p class="mt-2 text-xs leading-5 text-muted">{{ i18n.t('invitation.unavailableHint') }}</p>
           <button
             type="button"
-            class="mt-5 inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-line bg-surface-raised/70 px-4 text-sm font-semibold text-ink transition hover:border-brand/40"
+            class="mt-5 inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-line bg-surface-raised px-4 text-sm font-semibold text-ink transition hover:border-brand/40"
             (click)="retry()"
           >
-            <fa-icon [icon]="icons['refresh']" class="text-xs text-muted" aria-hidden="true" />
+            <fa-icon [icon]="icons['refresh']" aria-hidden="true" />
             {{ i18n.t('common.retry') }}
           </button>
         </article>
       </main>
 
-      <footer
-        class="mt-2 flex flex-wrap items-center justify-between gap-4 rounded-3xl bg-cc-primary px-4 py-4 text-[10px] text-white/75"
-      >
-        <app-logo variant="horizontal" theme="white" [height]="32" />
-        <div class="flex flex-wrap items-center gap-3">
-          <p>{{ i18n.t('footer.rights', { year: 2026 }) }}</p>
-          <span aria-hidden="true">·</span>
-          <p>{{ i18n.t('footer.made') }}</p>
-        </div>
+      <footer class="mt-2 flex flex-wrap items-center justify-between gap-4 py-4 text-xs text-muted">
+        <app-logo variant="horizontal" [height]="32" />
+        <p>{{ i18n.t('footer.rights', { year: 2026 }) }}</p>
       </footer>
     }
+
+    <app-image-lightbox
+      [src]="lightbox()?.src ?? null"
+      [alt]="lightbox()?.alt ?? ''"
+      [closeLabel]="i18n.t('common.close')"
+      (closed)="closeCover()"
+    />
   </div>
-
-  <app-confirm-dialog
-    [open]="declineOpen()"
-    [title]="i18n.t('invitation.declineTitle')"
-    [message]="i18n.t('invitation.declineText')"
-    [confirmLabel]="i18n.t('invitation.declineConfirm')"
-    [cancelLabel]="i18n.t('invitation.declineKeep')"
-    tone="danger"
-    (confirmed)="confirmDecline()"
-    (cancelled)="declineOpen.set(false)"
-  />
-
-  <app-confirm-dialog
-    [open]="acceptOpen()"
-    [title]="i18n.t('invitation.changeToConfirmedTitle')"
-    [message]="i18n.t('invitation.changeToConfirmedText')"
-    [confirmLabel]="i18n.t('invitation.changeToConfirmedConfirm')"
-    [cancelLabel]="i18n.t('invitation.declineKeep')"
-    tone="primary"
-    (confirmed)="confirmAccept()"
-    (cancelled)="acceptOpen.set(false)"
-  />
-
-  <app-image-lightbox
-    [src]="lightbox()?.src ?? null"
-    [alt]="lightbox()?.alt ?? ''"
-    [closeLabel]="i18n.t('common.close')"
-    (closed)="closeCover()"
-  />
 </div>

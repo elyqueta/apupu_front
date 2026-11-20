@@ -3,67 +3,54 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Router } from '@angular/router';
 import { ApiClient } from '../../core/api/api-client';
 import { toApiError } from '../../core/api/api-error';
-import { ApiRsvpStatus, PublicInvitation } from '../../core/api/api.models';
+import { PublicInvitation } from '../../core/api/api.models';
 import { I18nService } from '../../core/i18n/i18n.service';
-import { EventStatus, RsvpStatus } from '../../core/models/models';
-import { ShareService } from '../../core/services/share.service';
+import { RsvpStatus } from '../../core/models/models';
 import { ToastService } from '../../core/services/toast.service';
 import { ICONS } from '../../core/ui/icons';
 import { BrandComponent } from '../../shared/components/brand.component';
-import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog.component';
 import { ImageLightboxComponent } from '../../shared/components/image-lightbox.component';
 import { LogoComponent } from '../../shared/components/logo.component';
 import { PreferenceControlsComponent } from '../../shared/components/preference-controls.component';
 import { SkeletonComponent } from '../../shared/components/skeleton.component';
-import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
-import { TemplateArtworkComponent } from '../../shared/components/template-artwork.component';
-
-interface InvitationView {
-  event: {
-    title: string;
-    hostName: string;
-    startsAt: string;
-    timezone: string;
-    venue: string;
-    city: string;
-    onlineLink: string | null;
-    message: string;
-    rules: string;
-    dressCode: string;
-    coverUrl: string | null;
-    templateId: null;
-    status: EventStatus;
-    contributionEnabled: boolean;
-    bankDetails: {
-      bankName: string;
-      accountHolder: string;
-      accountReference: string;
-    } | null;
-  };
-  guest: { name: string; email: string; emailHasAccount: boolean; status: RsvpStatus };
-  deadlinePassed: boolean;
-  countdownDays: number;
-}
+import { mapPublicInvitation } from './invitation.mapper';
+import {
+  InvitationResponseInput,
+  InvitationResponseStatus,
+  InvitationView,
+} from './invitation.models';
+import { InvitationDetailsDialogComponent } from './parts/invitation-details-dialog.component';
+import { InvitationDetailsMenuComponent } from './parts/invitation-details-menu.component';
+import { InvitationHeroComponent } from './parts/invitation-hero.component';
+import { InvitationHostDialogComponent } from './parts/invitation-host-dialog.component';
+import { InvitationKeyInfoComponent } from './parts/invitation-key-info.component';
+import { InvitationLocationDialogComponent } from './parts/invitation-location-dialog.component';
+import { InvitationRsvpComponent } from './parts/invitation-rsvp.component';
+import { InvitationRsvpDialogComponent } from './parts/invitation-rsvp-dialog.component';
 
 @Component({
   selector: 'app-invitation-page',
   imports: [
     FaIconComponent,
     BrandComponent,
-    ConfirmDialogComponent,
     ImageLightboxComponent,
     LogoComponent,
     PreferenceControlsComponent,
     SkeletonComponent,
-    StatusBadgeComponent,
-    TemplateArtworkComponent,
+    InvitationHeroComponent,
+    InvitationKeyInfoComponent,
+    InvitationRsvpComponent,
+    InvitationDetailsMenuComponent,
+    InvitationDetailsDialogComponent,
+    InvitationHostDialogComponent,
+    InvitationLocationDialogComponent,
+    InvitationRsvpDialogComponent,
   ],
   templateUrl: './invitation.page.html',
 })
 export class InvitationPage {
   private readonly api = inject(ApiClient);
   private readonly toasts = inject(ToastService);
-  private readonly share = inject(ShareService);
   private readonly router = inject(Router);
   private loadVersion = 0;
 
@@ -83,44 +70,36 @@ export class InvitationPage {
   protected readonly countdownDays = computed(() => this.invitation()?.countdownDays ?? 0);
 
   protected readonly saving = signal(false);
-  protected readonly declineOpen = signal(false);
-  protected readonly acceptOpen = signal(false);
   protected readonly accountDismissed = signal(false);
   protected readonly lightbox = signal<{ src: string; alt: string } | null>(null);
+  protected readonly locationOpen = signal(false);
+  protected readonly hostOpen = signal(false);
+  protected readonly detailsOpen = signal(false);
+  protected readonly rsvpDialog = signal<InvitationResponseStatus | null>(null);
 
   constructor() {
     effect(() => {
-      const token = this.token();
-      void this.load(token);
+      void this.load(this.token());
     });
   }
 
-  protected requestAccept(): void {
-    if (this.saving() || this.deadlinePassed()) {
+  protected requestRsvp(status: InvitationResponseStatus): void {
+    if (this.saving() || this.deadlinePassed() || this.eventBlocked()) {
       return;
     }
-    if (this.status() === 'declined') {
-      this.acceptOpen.set(true);
-      return;
+    this.actionError.set('');
+    this.rsvpDialog.set(status);
+  }
+
+  protected confirmRsvp(input: InvitationResponseInput): void {
+    this.actionError.set('');
+    void this.respond(input);
+  }
+
+  protected closeRsvpDialog(): void {
+    if (!this.saving()) {
+      this.rsvpDialog.set(null);
     }
-    void this.respond('accepted');
-  }
-
-  protected confirmAccept(): void {
-    this.acceptOpen.set(false);
-    void this.respond('accepted');
-  }
-
-  protected requestDecline(): void {
-    if (this.saving() || this.deadlinePassed()) {
-      return;
-    }
-    this.declineOpen.set(true);
-  }
-
-  protected confirmDecline(): void {
-    this.declineOpen.set(false);
-    void this.respond('declined');
   }
 
   protected retry(): void {
@@ -161,34 +140,25 @@ export class InvitationPage {
     this.lightbox.set(null);
   }
 
-  protected async copyAccountReference(): Promise<void> {
-    const reference = this.invitation()?.event.bankDetails?.accountReference;
-    if (!reference) {
-      return;
-    }
-    const copied = await this.share.copy(reference);
-    if (copied) {
-      this.toasts.success(this.i18n.t('invitation.ibanCopied'));
-    } else {
-      this.toasts.error(this.i18n.t('common.copyError'));
-    }
+  private eventBlocked(): boolean {
+    const status = this.invitation()?.event.status;
+    return status === 'cancelled' || status === 'completed';
   }
 
-  private async respond(status: Extract<ApiRsvpStatus, 'accepted' | 'declined'>): Promise<void> {
-    const token = this.token();
+  private async respond(input: InvitationResponseInput): Promise<void> {
     if (!this.invitation() || this.saving()) {
       return;
     }
     this.saving.set(true);
-    this.actionError.set('');
     try {
       const result = await this.api.put<PublicInvitation>(
-        `/public/invitations/${encodeURIComponent(token)}/rsvp`,
-        { status },
+        `/public/invitations/${encodeURIComponent(this.token())}/rsvp`,
+        { status: input.status, message: input.message },
       );
-      this.invitation.set(mapInvitation(result));
+      this.invitation.set(mapPublicInvitation(result));
+      this.rsvpDialog.set(null);
       this.toasts.success(
-        status === 'accepted'
+        input.status === 'accepted'
           ? this.i18n.t('invitation.acceptSuccess')
           : this.i18n.t('invitation.declineSuccess'),
       );
@@ -219,14 +189,14 @@ export class InvitationPage {
         result = await this.api.post<PublicInvitation>(`${path}/claim`);
       }
       if (version === this.loadVersion) {
-        this.invitation.set(mapInvitation(result));
+        this.invitation.set(mapPublicInvitation(result));
       }
     } catch (error: unknown) {
       if (version === this.loadVersion) {
         const apiError = toApiError(error);
         this.loadError.set(
           apiError.status === 401 || apiError.status === 404
-            ? this.i18n.t('invitation.unavailableText')
+            ? this.i18n.t('invitation.inactiveText')
             : apiError.message,
         );
       }
@@ -236,56 +206,4 @@ export class InvitationPage {
       }
     }
   }
-}
-
-function mapInvitation(invitation: PublicInvitation): InvitationView {
-  const event = invitation.event;
-  const location = event.location;
-  const contribution = event.contribution;
-  const startsAt = event.starts_at;
-  const countdownDays = Math.max(
-    0,
-    Math.ceil((new Date(startsAt).getTime() - Date.now()) / 86_400_000),
-  );
-  return {
-    event: {
-      title: event.title,
-      hostName: event.host_name,
-      startsAt,
-      timezone: event.timezone,
-      venue: location.name ?? location.address ?? '',
-      city: location.name && location.address ? location.address : '',
-      onlineLink: location.type === 'online' ? (location.online_url ?? null) : null,
-      message: event.message ?? '',
-      rules: event.rules ?? '',
-      dressCode: event.dress_code ?? '',
-      coverUrl: event.cover_url ?? null,
-      templateId: null,
-      status: event.status === 'scheduled' ? 'published' : event.status,
-      contributionEnabled: contribution.enabled,
-      bankDetails:
-        contribution.enabled &&
-        contribution.bank_name &&
-        contribution.account_holder &&
-        contribution.account_reference
-          ? {
-              bankName: contribution.bank_name,
-              accountHolder: contribution.account_holder,
-              accountReference: contribution.account_reference,
-            }
-          : null,
-    },
-    guest: {
-      name: invitation.guest.name,
-      email: invitation.guest.email,
-      emailHasAccount: invitation.guest.email_has_account,
-      status: mapRsvpStatus(invitation.guest.rsvp_status),
-    },
-    deadlinePassed: invitation.rsvp_deadline_passed,
-    countdownDays,
-  };
-}
-
-function mapRsvpStatus(status: ApiRsvpStatus): RsvpStatus {
-  return status === 'accepted' ? 'confirmed' : status;
 }

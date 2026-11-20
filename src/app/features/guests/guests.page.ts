@@ -264,14 +264,6 @@ export class GuestsPage {
           : this.i18n.t('guests.notResponded'),
       },
     ];
-    const message = entry.guest.message?.trim();
-    if (message) {
-      const short = message.length > 120 ? `${message.slice(0, 117)}…` : message;
-      meta.unshift({
-        icon: 'quote',
-        label: this.i18n.t('guests.guestMessage', { message: short }),
-      });
-    }
     return meta;
   }
 

@@ -1,4 +1,4 @@
-<div class="relative min-h-dvh overflow-hidden">
+<div class="relative min-h-dvh overflow-x-clip">
   <div class="mx-auto flex min-h-dvh w-full max-w-6xl flex-col px-4 py-5 sm:px-6 lg:py-8">
     <header class="flex flex-wrap items-center justify-between gap-3">
       <app-brand />
@@ -43,74 +43,62 @@
         </div>
       </section>
     } @else if (event(); as item) {
-      <header class="sticky top-2 z-30 mb-4 rounded-3xl border border-line bg-surface/90 px-4 py-3 shadow-card backdrop-blur-xl sm:px-5">
-        <div class="flex flex-wrap items-center justify-between gap-3">
-          <a routerLink="/gestao" class="inline-flex min-h-11 items-center gap-2 text-xs font-semibold text-muted transition hover:text-ink">
-            <fa-icon [icon]="icons['chevronLeft']" aria-hidden="true" />
-            {{ i18n.t('eventDetail.backToManagement') }}
-          </a>
-          <div class="flex flex-wrap items-center gap-2">
-            @if (permissions().canEditEvent) {
-              <button type="button" class="inline-flex h-11 items-center gap-2 rounded-xl border border-line bg-surface px-3 text-xs font-semibold text-ink transition hover:border-brand/40" (click)="openEditModal()">
-                <fa-icon [icon]="icons['pen']" aria-hidden="true" />
-                {{ i18n.t('eventDetail.editEvent') }}
-              </button>
-              <button type="button" class="inline-flex h-11 items-center gap-2 rounded-xl border border-line bg-surface px-3 text-xs font-semibold text-ink transition hover:border-brand/40" (click)="openCoverModal()">
-                <fa-icon [icon]="icons['camera']" aria-hidden="true" />
-                {{ i18n.t('eventDetail.coverTitle') }}
-              </button>
-            }
+      <app-event-section-shell
+        backLink="/gestao"
+        [backLabel]="i18n.t('eventDetail.backToManagement')"
+        [contextLabel]="i18n.t('eventDetail.contextEvent')"
+        [title]="item.title"
+        [location]="item.venue + ', ' + item.city"
+        [badges]="eventBadges()"
+        [sections]="sections()"
+        [activeSection]="tab()"
+        [actions]="sectionActions()"
+        [disabledHint]="i18n.t('eventDetail.cancelledHint')"
+        [menuLabel]="i18n.t('eventDetail.eventMenu')"
+        (sectionChange)="onSectionChange($event)"
+        (action)="onSectionAction($event)"
+      >
+        <div class="flex flex-col gap-4">
+        @if (eventCancelled()) {
+          <div data-testid="event-cancelled-banner" role="status" class="flex flex-wrap items-center gap-2 rounded-2xl border border-coral/30 bg-coral/10 px-4 py-3 text-xs font-semibold text-coral">
+            <fa-icon [icon]="icons['warning']" aria-hidden="true" />
+            {{ i18n.t('eventDetail.cancelledBanner') }} — {{ i18n.t('eventDetail.cancelledHint') }}
           </div>
-        </div>
-        <div class="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted">
-          <span class="font-semibold uppercase tracking-wider text-brand">{{ i18n.t('eventDetail.contextEvent') }}</span>
-          <span aria-hidden="true">·</span>
-          <span>{{ item.venue }}, {{ item.city }}</span>
-          <span class="rounded-full border border-aqua/30 bg-aqua/10 px-2 py-0.5 text-xs font-semibold uppercase tracking-wider text-aqua">{{ i18n.t('eventDetail.roleManager') }}</span>
-        </div>
-        <h1 class="font-display text-xl font-semibold tracking-tight text-ink sm:text-2xl">{{ item.title }}</h1>
-      </header>
-
-      <nav class="no-scrollbar mb-4 flex gap-1 overflow-x-auto border-b border-line pb-2" role="tablist" [attr.aria-label]="i18n.t('eventDetail.detailsTitle')">
-        @for (definition of tabs; track definition.id) {
-          <button type="button" role="tab" class="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-xl px-3 text-xs font-semibold transition" [class]="tab() === definition.id ? 'border border-brand/30 bg-brand/15 text-ink' : 'border border-line text-muted hover:bg-surface-raised/60 hover:text-ink'" [attr.aria-selected]="tab() === definition.id" (click)="setTab(definition.id)">
-            <fa-icon [icon]="icons[definition.icon]" aria-hidden="true" />
-            {{ i18n.t(definition.labelKey) }}
-            @if (definition.id === 'convidados') { <span class="rounded-full bg-surface-raised px-2 text-xs text-muted">{{ stats().total }}</span> }
-          </button>
         }
-      </nav>
-
-      <main class="flex flex-1 flex-col gap-4">
         @if (actionError()) { <p role="alert" class="rounded-2xl border border-coral/25 bg-coral/5 p-3 text-xs leading-5 text-coral">{{ actionError() }}</p> }
         @if (feedback()) { <p role="status" class="rounded-2xl border border-mint/25 bg-mint/5 p-3 text-xs leading-5 text-mint">{{ feedback() }}</p> }
 
         @if (tab() === 'resumo') {
-          <app-event-summary [event]="item" [stats]="stats()" [typeLabel]="typeLabel()" [templateName]="templateName()" [permissions]="permissions()" [isManagement]="true" [deadlinePassed]="deadlinePassed()" (editEvent)="openEditModal()" (copyInvitation)="copyInvitation()" (openInvitation)="openInvitation()" />
+          <app-event-summary [event]="item" [stats]="stats()" [typeLabel]="typeLabel()" [templateName]="templateName()" [permissions]="effectivePermissions()" [isManagement]="true" [deadlinePassed]="deadlinePassed()" (editEvent)="openEditModal()" (copyInvitation)="copyInvitation()" (openInvitation)="openInvitation()" />
           <div class="grid gap-4 lg:grid-cols-2">
-            <app-event-tasks-section [tasks]="tasks()" [doneCount]="tasksDone()" [permissions]="permissions()" (toggleTask)="onTaskToggle()" />
-            <app-event-teams-section [teams]="teams()" [loading]="teamsLoading()" [permissions]="permissions()" [eventId]="item.id" (openTeam)="openTeam($event)" />
+            <app-event-tasks-section [tasks]="tasks()" [doneCount]="tasksDone()" [permissions]="effectivePermissions()" (toggleTask)="onTaskToggle()" />
+            <app-event-teams-section [teams]="teams()" [loading]="teamsLoading()" [permissions]="effectivePermissions()" [eventId]="item.id" (openTeam)="openTeam($event)" />
           </div>
         }
 
         @if (tab() === 'convidados') {
           <div id="event-guests-list" class="scroll-mt-24">
-            <app-event-guests-section [entries]="guestItems()" [pagination]="guestPagination()" [stats]="stats()" [counts]="guestCounts()" [loading]="guestLoading()" [loaded]="guestListLoaded()" [search]="guestSearch()" [filter]="guestFilter()" [rangeLabel]="guestRangeLabel()" [permissions]="permissions()" (searchChange)="onGuestSearch($event)" (filterChange)="setGuestFilter($event)" (pageChange)="goToGuestPage($event)" (addGuest)="openGuestCreate()" />
+            <app-event-guests-section [entries]="guestItems()" [pagination]="guestPagination()" [stats]="stats()" [counts]="guestCounts()" [loading]="guestLoading()" [loaded]="guestListLoaded()" [search]="guestSearch()" [filter]="guestFilter()" [rangeLabel]="guestRangeLabel()" [permissions]="effectivePermissions()" (searchChange)="onGuestSearch($event)" (filterChange)="setGuestFilter($event)" (pageChange)="goToGuestPage($event)" (addGuest)="openGuestCreate()" />
           </div>
         }
 
+        @if (tab() === 'mensagens') {
+          <app-messages-inbox [fixedEventId]="item.id" />
+        }
+
         @if (tab() === 'equipas') {
-          <app-event-teams-section [teams]="teams()" [loading]="teamsLoading()" [permissions]="permissions()" [eventId]="item.id" (openTeam)="openTeam($event)" />
+          <app-event-teams-section [teams]="teams()" [loading]="teamsLoading()" [permissions]="effectivePermissions()" [eventId]="item.id" (openTeam)="openTeam($event)" />
         }
 
         @if (tab() === 'gestores') {
-          <app-event-managers-section [managers]="managers()" [teams]="teams()" [permissions]="permissions()" [loading]="managersLoading()" [maxValidityDate]="maxValidityDate()" />
+          <app-event-managers-section [managers]="managers()" [teams]="teams()" [permissions]="effectivePermissions()" [loading]="managersLoading()" [maxValidityDate]="maxValidityDate()" />
         }
 
         @if (tab() === 'atividade') {
-          <app-event-activity-section [items]="activityItems()" [pagination]="activityPagination()" [loading]="activityLoading()" [eventTitle]="item.title" [permissions]="permissions()" (pageChange)="goToActivityPage($event)" />
+          <app-event-activity-section [items]="activityItems()" [pagination]="activityPagination()" [loading]="activityLoading()" [eventTitle]="item.title" [permissions]="effectivePermissions()" (pageChange)="goToActivityPage($event)" />
         }
-      </main>
+        </div>
+      </app-event-section-shell>
 
       <app-guest-dialog [open]="guestDialogOpen()" [fixedEventId]="item.id" (closed)="closeGuestDialog()" />
 

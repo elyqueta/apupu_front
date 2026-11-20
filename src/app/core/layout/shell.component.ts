@@ -80,6 +80,7 @@ export class ShellComponent {
     { path: '/eventos', labelKey: 'nav.events', icon: ICONS['events'], exact: false },
     { path: '/tarefas', labelKey: 'nav.tasks', icon: ICONS['checklist'], exact: false },
     { path: '/convites', labelKey: 'nav.invites', icon: ICONS['envelope'], exact: false },
+    { path: '/mensagens', labelKey: 'nav.messages', icon: ICONS['envelopeOpen'], exact: false },
     { path: '/convidados', labelKey: 'nav.guests', icon: ICONS['guests'], exact: false },
     { path: '/equipas', labelKey: 'nav.team', icon: ICONS['guestGroup'], exact: false },
     { path: '/templates', labelKey: 'nav.templates', icon: ICONS['templates'], exact: false },
@@ -394,6 +395,9 @@ export class ShellComponent {
     } else if (url.startsWith('/convites')) {
       this.pageTitle.set('nav.invites');
       this.skeletonVariant.set('cards');
+    } else if (url.startsWith('/mensagens')) {
+      this.pageTitle.set('nav.messages');
+      this.skeletonVariant.set('table');
     } else if (url.startsWith('/convidados')) {
       this.pageTitle.set('nav.guests');
       this.skeletonVariant.set('table');

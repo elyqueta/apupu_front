@@ -51,6 +51,11 @@
           (openLocation)="locationOpen.set(true)"
         />
 
+        <app-invitation-reply
+          [answer]="view.guest.answer"
+          [answeredAt]="view.guest.answeredAt"
+        />
+
         <div class="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,20rem)]">
           <app-invitation-details-menu (open)="detailsOpen.set(true)" />
 

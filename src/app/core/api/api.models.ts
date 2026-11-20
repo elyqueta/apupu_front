@@ -367,6 +367,10 @@ export interface PublicInvitation {
     email_has_account: boolean;
     /** Mensagem opcional deixada ao responder. */
     message?: string | null;
+    /** Resposta do anfitrião à mensagem do convidado. */
+    message_answer?: string | null;
+    /** Data em que a resposta foi enviada. */
+    message_answered_at?: string | null;
     rsvp_status: ApiRsvpStatus;
     rsvp_responded_at: string | null;
   };

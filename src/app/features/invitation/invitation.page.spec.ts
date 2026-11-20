@@ -153,6 +153,44 @@ describe('InvitationPage', () => {
     );
   });
 
+  it('mostra a resposta do anfitrião no convite quando existe', async () => {
+    const context = setup();
+    http = context.http;
+    const path = `${BASE}/public/invitations/${TOKEN}`;
+
+    http.expectOne(path).flush({
+      data: publicInvitationFixture({
+        message: 'Posso levar um amigo?',
+        messageAnswer: 'Claro, é bem-vindo!',
+        messageAnsweredAt: '2026-11-20T10:00:00.000Z',
+      }),
+    });
+    await settle(context.fixture);
+
+    const native = context.fixture.nativeElement as HTMLElement;
+    const reply = native.querySelector('[data-testid="invitation-host-reply"]');
+    expect(reply).not.toBeNull();
+    expect(reply?.textContent).toContain('Claro, é bem-vindo!');
+    expect(reply?.textContent).toContain(
+      TestBed.inject(I18nService).t('invitation.hostReplyTitle'),
+    );
+  });
+
+  it('não mostra a resposta do anfitrião quando não existe', async () => {
+    const context = setup();
+    http = context.http;
+    const path = `${BASE}/public/invitations/${TOKEN}`;
+
+    http.expectOne(path).flush({ data: publicInvitationFixture() });
+    await settle(context.fixture);
+
+    expect(
+      (context.fixture.nativeElement as HTMLElement).querySelector(
+        '[data-testid="invitation-host-reply"]',
+      ),
+    ).toBeNull();
+  });
+
   it('mostra sempre a mesma mensagem genérica para links inválidos, expirados ou revogados', async () => {
     const context = setup();
     http = context.http;

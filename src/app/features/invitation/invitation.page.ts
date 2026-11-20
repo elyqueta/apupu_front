@@ -26,6 +26,7 @@ import { InvitationHeroComponent } from './parts/invitation-hero.component';
 import { InvitationHostDialogComponent } from './parts/invitation-host-dialog.component';
 import { InvitationKeyInfoComponent } from './parts/invitation-key-info.component';
 import { InvitationLocationDialogComponent } from './parts/invitation-location-dialog.component';
+import { InvitationReplyComponent } from './parts/invitation-reply.component';
 import { InvitationRsvpComponent } from './parts/invitation-rsvp.component';
 import { InvitationRsvpDialogComponent } from './parts/invitation-rsvp-dialog.component';
 import { InvitationShareComponent } from './parts/invitation-share.component';
@@ -43,6 +44,7 @@ import { InvitationWelcomeComponent } from './parts/invitation-welcome.component
     InvitationCancelledComponent,
     InvitationHeroComponent,
     InvitationKeyInfoComponent,
+    InvitationReplyComponent,
     InvitationRsvpComponent,
     InvitationShareComponent,
     InvitationWelcomeComponent,

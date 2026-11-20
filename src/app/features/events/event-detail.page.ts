@@ -45,6 +45,8 @@ import { WorkspaceStore } from '../../core/services/workspace.store';
 import { EVENT_TYPE_ICONS, ICONS } from '../../core/ui/icons';
 import { ActivityPresenter } from '../../shared/services/activity.presenter';
 import { toApiError } from '../../core/api/api-error';
+import { ActionMenuItem } from '../../shared/components/action-menu.component';
+import { EventSectionItem, EventSectionShellComponent } from '../../shared/components/event-section-shell.component';
 import { GuestDialogComponent } from '../../shared/components/guest-dialog.component';
 import { ModalComponent } from '../../shared/components/modal.component';
 import { SkeletonComponent } from '../../shared/components/skeleton.component';
@@ -54,7 +56,14 @@ import type {
 } from '../../shared/components/person-card.component';
 import { TaskFormDialogComponent } from '../../shared/components/task-form-dialog.component';
 import { TeamManagerDialogComponent } from '../team/team-manager-dialog.component';
-import { eventTabQuery, EventTab, GuestFilter, parseEventTab } from './detail/detail.models';
+import {
+  eventTabQuery,
+  EVENT_TABS,
+  EventTab,
+  GuestFilter,
+  parseEventTab,
+} from './detail/detail.models';
+import { MessagesInboxComponent } from '../messages/messages-inbox.component';
 import { EventActivitySectionComponent } from './detail/event-activity-section.component';
 import { EventGuestsSectionComponent } from './detail/event-guests-section.component';
 import { EventManagersSectionComponent } from './detail/event-managers-section.component';
@@ -92,6 +101,8 @@ function isoDaysAgo(days: number): string {
     RouterLink,
     ReactiveFormsModule,
     FaIconComponent,
+    EventSectionShellComponent,
+    MessagesInboxComponent,
     GuestDialogComponent,
     ModalComponent,
     SkeletonComponent,
@@ -183,6 +194,79 @@ export class EventDetailPage {
   protected readonly permissions = computed<EventPermissions>(() =>
     eventPermissionsFor(this.accessRole()),
   );
+
+  /** Evento cancelado: todas as escritas ficam bloqueadas na interface. */
+  protected readonly eventCancelled = computed(() => this.event()?.status === 'cancelled');
+
+  protected readonly effectivePermissions = computed<EventPermissions>(() => {
+    const permissions = this.permissions();
+    if (!this.eventCancelled()) return permissions;
+    return {
+      ...permissions,
+      canEditEvent: false,
+      canManageGuests: false,
+      canManageTeams: false,
+      canManageManagers: false,
+      canCancelEvent: false,
+      canChangeEventStatus: false,
+      canEditExistingGuests: false,
+      canDeleteActivity: false,
+      canManageTasks: false,
+      canResendManageLink: false,
+    };
+  });
+
+  protected readonly eventBadges = computed<string[]>(() => {
+    const badges: string[] = [];
+    if (this.isManagement()) {
+      badges.push(this.i18n.t('settings.active'));
+    }
+    if (!this.isHost()) {
+      badges.push(this.i18n.t('eventDetail.roleManager'));
+    }
+    return badges;
+  });
+
+  /** Secções do rail, derivadas da lista partilhada de separadores. */
+  protected readonly sections = computed<EventSectionItem[]>(() =>
+    EVENT_TABS.map((definition) => ({
+      id: definition.id,
+      label: this.i18n.t(definition.labelKey),
+      icon: ICONS[definition.icon],
+      count: definition.id === 'convidados' ? this.stats().total : null,
+    })),
+  );
+
+  /** Ações da secção, agora no rail em vez do cabeçalho. */
+  protected readonly sectionActions = computed<ActionMenuItem[]>(() => {
+    const items: ActionMenuItem[] = [];
+    const permissions = this.effectivePermissions();
+    const event = this.event();
+
+    if (permissions.canEditEvent) {
+      items.push({
+        id: 'edit',
+        label: this.i18n.t('eventDetail.editEvent'),
+        icon: ICONS['pen'],
+      });
+    }
+    if (permissions.canChangeEventStatus && event?.status === 'draft') {
+      items.push({
+        id: 'publish',
+        label: this.i18n.t('eventDetail.publish'),
+        icon: ICONS['paperPlane'],
+      });
+    }
+    if (permissions.canExport) {
+      items.push({
+        id: 'copy',
+        label: this.i18n.t('eventDetail.copyInvitation'),
+        icon: ICONS['copy'],
+      });
+    }
+    return items;
+  });
+
   protected readonly managers = computed(() => this.store.managersFor(this.eventId()));
   protected readonly guestCounts = computed(() => {
     const stats = this.stats();
@@ -410,6 +494,24 @@ export class EventDetailPage {
     });
   }
 
+  protected onSectionChange(id: string): void {
+    this.setTab(id as EventTab);
+  }
+
+  protected onSectionAction(id: string): void {
+    switch (id) {
+      case 'edit':
+        this.openEditModal();
+        break;
+      case 'publish':
+        void this.publish();
+        break;
+      case 'copy':
+        void this.copyInvitation();
+        break;
+    }
+  }
+
   /** Pesquisa/filtro/paginação de convidados, sempre no servidor. */
   protected async loadGuests(): Promise<void> {
     const seq = ++this.guestRequestSeq;
@@ -491,14 +593,6 @@ export class EventDetailPage {
         label: `${this.i18n.t('eventDetail.table.table')}: ${entry.guest.tableName ?? '—'}`,
       },
     ];
-    const message = entry.guest.message?.trim();
-    if (message) {
-      const short = message.length > 120 ? `${message.slice(0, 117)}…` : message;
-      meta.unshift({
-        icon: 'quote',
-        label: this.i18n.t('guests.guestMessage', { message: short }),
-      });
-    }
     return meta;
   }
 

@@ -1,70 +1,40 @@
 @if (event(); as event) {
-  <header class="sticky top-0 z-40 border-b border-line bg-surface/80 backdrop-blur-xl">
-    <div class="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-3 sm:px-6">
-      <div class="flex flex-wrap items-center justify-between gap-3">
-        <a routerLink="/eventos" class="inline-flex min-h-11 items-center gap-2 text-xs font-semibold text-muted transition hover:text-ink"><fa-icon [icon]="icons['chevronLeft']" aria-hidden="true" /> {{ i18n.t('eventDetail.backToEvents') }}</a>
-        <div class="flex flex-wrap items-center gap-2">
-          @if (permissions().canEditEvent) {
-            <button type="button" class="inline-flex h-11 items-center gap-2 rounded-xl border border-line bg-surface px-3 text-xs font-semibold text-ink transition hover:border-brand/40" (click)="openEditModal()">
-              <fa-icon [icon]="icons['pen']" aria-hidden="true" /> {{ i18n.t('eventDetail.editEvent') }}
-            </button>
-          }
-          @if (permissions().canChangeEventStatus && event.status === 'draft') {
-            <button type="button" class="inline-flex h-11 items-center gap-2 rounded-xl bg-brand px-3 text-xs font-semibold text-on-secondary transition hover:bg-secondary-hover" (click)="publish()">
-              <fa-icon [icon]="icons['paperPlane']" aria-hidden="true" /> {{ i18n.t('eventDetail.publish') }}
-            </button>
-          }
-          @if (permissions().canExport) {
-            <button type="button" class="grid h-11 w-11 place-items-center rounded-xl border border-line bg-surface text-ink transition hover:border-brand/40" [attr.aria-label]="i18n.t('eventDetail.copyInvitation')" [attr.title]="i18n.t('eventDetail.copyInvitation')" (click)="copyInvitation()">
-              <fa-icon [icon]="icons['copy']" aria-hidden="true" />
-            </button>
-          }
-        </div>
+  <app-event-section-shell
+    backLink="/eventos"
+    [backLabel]="i18n.t('eventDetail.backToEvents')"
+    [contextLabel]="i18n.t('eventDetail.contextEvent')"
+    [title]="event.title"
+    [location]="event.venue + ', ' + event.city"
+    [badges]="eventBadges()"
+    [sections]="sections()"
+    [activeSection]="tab()"
+    [actions]="sectionActions()"
+    [disabledHint]="i18n.t('eventDetail.cancelledHint')"
+    [menuLabel]="i18n.t('eventDetail.eventMenu')"
+    (sectionChange)="onSectionChange($event)"
+    (action)="onSectionAction($event)"
+  >
+    <div class="flex flex-col gap-4">
+    @if (eventCancelled()) {
+      <div data-testid="event-cancelled-banner" role="status" class="flex flex-wrap items-center gap-2 rounded-2xl border border-coral/30 bg-coral/10 px-4 py-3 text-xs font-semibold text-coral">
+        <fa-icon [icon]="icons['warning']" aria-hidden="true" />
+        {{ i18n.t('eventDetail.cancelledBanner') }} — {{ i18n.t('eventDetail.cancelledHint') }}
       </div>
-      <div class="flex flex-wrap items-center gap-2 text-xs text-muted">
-        <span class="font-semibold uppercase tracking-wider text-brand">{{ i18n.t('eventDetail.contextEvent') }}</span>
-        <span aria-hidden="true">·</span><span>{{ event.venue }}, {{ event.city }}</span>
-        @if (isManagement()) { <span class="rounded-full border border-brand/30 bg-brand/10 px-2 py-0.5 text-xs font-semibold text-brand">{{ i18n.t('settings.active') }}</span> }
-        @if (!isHost()) { <span class="rounded-full border border-aqua/30 bg-aqua/10 px-2 py-0.5 text-xs font-semibold text-aqua">{{ i18n.t('eventDetail.roleManager') }}</span> }
-      </div>
-      <h1 class="font-display text-xl font-semibold tracking-tight text-ink sm:text-2xl">{{ event.title }}</h1>
-    </div>
-  </header>
-
-  <nav class="no-scrollbar mx-auto flex max-w-7xl gap-1 overflow-x-auto border-b border-line px-4 py-2 sm:px-6" role="tablist" [attr.aria-label]="i18n.t('eventDetail.detailsTitle')">
-    <button type="button" role="tab" class="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-xl px-3 text-xs font-semibold transition" [class]="tab() === 'resumo' ? 'border border-brand/30 bg-brand/15 text-ink' : 'border border-line text-muted hover:bg-surface-raised/60 hover:text-ink'" [attr.aria-selected]="tab() === 'resumo'" (click)="setTab('resumo')">
-      <fa-icon [icon]="icons['dashboardAlt']" aria-hidden="true" /> {{ i18n.t('eventDetail.tabs.overview') }}
-    </button>
-    <button type="button" role="tab" class="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-xl px-3 text-xs font-semibold transition" [class]="tab() === 'convidados' ? 'border border-brand/30 bg-brand/15 text-ink' : 'border border-line text-muted hover:bg-surface-raised/60 hover:text-ink'" [attr.aria-selected]="tab() === 'convidados'" (click)="setTab('convidados')">
-      <fa-icon [icon]="icons['guests']" aria-hidden="true" /> {{ i18n.t('eventDetail.tabs.guests') }}
-      <span class="rounded-full bg-surface-raised px-2 text-xs text-muted">{{ stats().total }}</span>
-    </button>
-    <button type="button" role="tab" class="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-xl px-3 text-xs font-semibold transition" [class]="tab() === 'equipas' ? 'border border-brand/30 bg-brand/15 text-ink' : 'border border-line text-muted hover:bg-surface-raised/60 hover:text-ink'" [attr.aria-selected]="tab() === 'equipas'" (click)="setTab('equipas')">
-      <fa-icon [icon]="icons['guestGroup']" aria-hidden="true" /> {{ i18n.t('eventDetail.tabs.teams') }}
-    </button>
-    <button type="button" role="tab" class="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-xl px-3 text-xs font-semibold transition" [class]="tab() === 'gestores' ? 'border border-brand/30 bg-brand/15 text-ink' : 'border border-line text-muted hover:bg-surface-raised/60 hover:text-ink'" [attr.aria-selected]="tab() === 'gestores'" (click)="setTab('gestores')">
-      <fa-icon [icon]="icons['user']" aria-hidden="true" /> {{ i18n.t('eventDetail.tabs.managers') }}
-    </button>
-    <button type="button" role="tab" class="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-xl px-3 text-xs font-semibold transition" [class]="tab() === 'atividade' ? 'border border-brand/30 bg-brand/15 text-ink' : 'border border-line text-muted hover:bg-surface-raised/60 hover:text-ink'" [attr.aria-selected]="tab() === 'atividade'" (click)="setTab('atividade')">
-      <fa-icon [icon]="icons['clock']" aria-hidden="true" /> {{ i18n.t('eventDetail.tabs.activity') }}
-    </button>
-  </nav>
-
-  <main class="mx-auto flex max-w-7xl flex-col gap-4 px-4 pb-10 pt-4 sm:px-6">
+    }
     @if (tab() === 'resumo') {
       <app-event-summary [event]="event" [stats]="stats()" [typeLabel]="typeLabel()" [templateName]="templateName()"
-        [permissions]="permissions()" [isManagement]="isManagement()" [exporting]="exporting()" [deadlinePassed]="deadlinePassed()"
+        [permissions]="effectivePermissions()" [isManagement]="isManagement()" [exporting]="exporting()" [deadlinePassed]="deadlinePassed()"
         [periodFrom]="periodFrom()" [periodTo]="periodTo()" [periodInvalid]="periodInvalid()"
         (resendManageLink)="resendManagementLink()" (publish)="publish()" (editEvent)="openEditModal()" (cancelEvent)="cancelEvent()"
         (exportDocument)="exportDocument($event.document, $event.format)" (exportPeriod)="exportPeriodReport($event)"
         (periodFromChange)="setPeriodFrom($event)" (periodToChange)="setPeriodTo($event)"
         (copyInvitation)="copyInvitation()" (openInvitation)="openInvitation()" />
       <div class="grid gap-4 lg:grid-cols-2">
-        <app-event-tasks-section [tasks]="tasks()" [doneCount]="tasksDone()" [permissions]="permissions()" [busyId]="taskBusyId()"
+        <app-event-tasks-section [tasks]="tasks()" [doneCount]="tasksDone()" [permissions]="effectivePermissions()" [busyId]="taskBusyId()"
           [onlyMine]="onlyMine()" [loading]="false" (createTask)="openTaskDialog()" (toggleTask)="toggleTask($event.id)"
           (removeTask)="removeTask($event)" (onlyMineChange)="onOnlyMineChange($event)" />
         @if (teamsLoading()) { <app-skeleton variant="cards" /> } @else {
-          <app-event-teams-section [teams]="teams()" [loading]="false" [permissions]="permissions()" [eventId]="eventId()"
+          <app-event-teams-section [teams]="teams()" [loading]="false" [permissions]="effectivePermissions()" [eventId]="eventId()"
             (openTeam)="openTeam($event)" (createTeam)="openManagerDialog()" />
         }
       </div>
@@ -74,20 +44,24 @@
       <div id="event-guests-list" class="scroll-mt-24">
         <app-event-guests-section [entries]="guestItems()" [pagination]="guestPagination()" [stats]="stats()" [counts]="guestCounts()"
           [loading]="guestListLoading()" [loaded]="guestListLoaded()" [search]="guestSearch()" [filter]="guestFilter()"
-          [rangeLabel]="guestRangeLabel()" [permissions]="permissions()" (searchChange)="onGuestSearch($event)"
+          [rangeLabel]="guestRangeLabel()" [permissions]="effectivePermissions()" (searchChange)="onGuestSearch($event)"
           (filterChange)="setGuestFilter($event)" (pageChange)="goToGuestPage($event)" (addGuest)="openGuestCreate()"
           (editGuest)="openGuestEdit($event)" (resendGuest)="resend($event)" (removeGuest)="removeGuest($event)"
           (ticketGuest)="downloadTicket($event)" (whatsappGuest)="forwardWhatsApp($event)" />
       </div>
     }
 
+    @if (tab() === 'mensagens') {
+      <app-messages-inbox [fixedEventId]="event.id" />
+    }
+
     @if (tab() === 'equipas') {
-      <app-event-teams-section [teams]="teams()" [loading]="teamsLoading()" [permissions]="permissions()" [eventId]="eventId()"
+      <app-event-teams-section [teams]="teams()" [loading]="teamsLoading()" [permissions]="effectivePermissions()" [eventId]="eventId()"
         (openTeam)="openTeam($event)" (createTeam)="openManagerDialog()" />
     }
 
     @if (tab() === 'gestores') {
-      <app-event-managers-section [managers]="managers()" [teams]="teams()" [permissions]="permissions()" [loading]="managersLoading()"
+      <app-event-managers-section [managers]="managers()" [teams]="teams()" [permissions]="effectivePermissions()" [loading]="managersLoading()"
         [busyId]="managerBusyId()" [maxValidityDate]="maxValidityDate()" [credentials]="credentials()" [credentialsOpen]="credentialsOpen()"
         (newManager)="openManagerDialog()" (newCodeConfirmed)="regenerateManagerCode($event)"
         (validityConfirmed)="changeManagerValidity($event)" (revokeConfirmed)="revokeManagerAccess($event)"
@@ -96,10 +70,11 @@
 
     @if (tab() === 'atividade') {
       <app-event-activity-section [items]="activityItems()" [pagination]="activityPagination()" [loading]="activityLoading()"
-        [eventTitle]="event.title" [permissions]="permissions()" [busyId]="activityBusyId()"
+        [eventTitle]="event.title" [permissions]="effectivePermissions()" [busyId]="activityBusyId()"
         (remove)="removeActivity($event)" (pageChange)="goToActivityPage($event)" />
     }
-  </main>
+    </div>
+  </app-event-section-shell>
 
   <app-guest-dialog [open]="guestDialogOpen() || guestEditTarget() !== null" [fixedEventId]="event.id" [guest]="guestEditTarget()" (closed)="closeGuestDialog()" />
 

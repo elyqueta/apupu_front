@@ -229,14 +229,6 @@ export class EventGuestsSectionComponent {
         label: `${this.i18n.t('eventDetail.table.table')}: ${entry.guest.tableName ?? '—'}`,
       },
     ];
-    const message = entry.guest.message?.trim();
-    if (message) {
-      const short = message.length > 120 ? `${message.slice(0, 117)}…` : message;
-      meta.unshift({
-        icon: 'quote',
-        label: this.i18n.t('guests.guestMessage', { message: short }),
-      });
-    }
     return meta;
   }
 

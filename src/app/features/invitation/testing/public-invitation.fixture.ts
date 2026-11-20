@@ -9,6 +9,8 @@ export interface InvitationFixtureOverrides {
   hostPhone?: string | null;
   coverUrl?: string | null;
   status?: ApiEventStatus;
+  messageAnswer?: string | null;
+  messageAnsweredAt?: string | null;
 }
 
 /** DTO público mínimo, alinhado com `PublicInvitation` do backend. */
@@ -50,6 +52,8 @@ export function publicInvitationFixture(
       rsvp_status: overrides.rsvpStatus ?? 'pending',
       rsvp_responded_at: null,
       message: 'message' in overrides ? overrides.message ?? null : null,
+      message_answer: overrides.messageAnswer ?? null,
+      message_answered_at: overrides.messageAnsweredAt ?? null,
     },
     rsvp_deadline_passed: overrides.deadlinePassed ?? false,
     csrf_token: 'csrf-token',

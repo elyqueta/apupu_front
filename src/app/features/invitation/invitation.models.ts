@@ -41,6 +41,9 @@ export interface InvitationGuestView {
   emailHasAccount: boolean;
   status: RsvpStatus;
   message: string | null;
+  /** Resposta do anfitrião à mensagem deixada pelo convidado. */
+  answer: string | null;
+  answeredAt: string | null;
 }
 
 export interface InvitationView {

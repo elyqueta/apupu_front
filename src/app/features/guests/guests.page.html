@@ -148,6 +148,7 @@
           </button>
           <button
             type="button"
+            data-testid="guests-add"
             class="hidden h-11 w-fit items-center gap-2 rounded-xl bg-brand px-4 text-sm font-semibold text-on-secondary transition hover:bg-secondary-hover md:inline-flex"
             (click)="openCreate()"
           >
@@ -277,6 +278,7 @@
   <!-- FAB (mobile): abre o mesmo diálogo de adicionar convidado, acima da bottom-nav. -->
   <button
     type="button"
+    data-testid="guests-add"
     class="fixed right-4 z-30 inline-flex h-12 items-center gap-2 rounded-full bg-brand px-4 text-sm font-semibold text-on-secondary shadow-card transition hover:bg-secondary-hover md:hidden"
     style="bottom: calc(env(safe-area-inset-bottom) + 4.5rem)"
     (click)="openCreate()"

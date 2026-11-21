@@ -86,7 +86,8 @@
 
         <button
           type="button"
-          class="inline-flex h-10 shrink-0 items-center gap-2 self-start rounded-xl border border-line bg-surface-raised/70 px-4 text-xs font-semibold text-ink transition hover:border-brand/40 sm:mt-1"
+          data-testid="profile-edit"
+          class="inline-flex h-11 shrink-0 items-center gap-2 self-start rounded-xl border border-line bg-surface-raised/70 px-4 text-xs font-semibold text-ink transition hover:border-brand/40 sm:mt-1"
           (click)="openEdit()"
         >
           <fa-icon [icon]="icons['pen']" class="text-[11px] text-muted" aria-hidden="true" />

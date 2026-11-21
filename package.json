@@ -8,6 +8,8 @@
     "build:prototype": "ng build --configuration=prototype",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
+    "e2e": "playwright test",
+    "e2e:typecheck": "tsc --noEmit -p tsconfig.e2e.json",
     "serve:ssr:conta_comigo_front": "node dist/conta_comigo_front/server/server.mjs",
     "lint": "ng lint"
   },
@@ -36,6 +38,7 @@
     "@angular/cli": "^22.0.4",
     "@angular/compiler-cli": "^22.0.0",
     "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.65.1",
     "@tailwindcss/postcss": "^4.1.12",
     "@types/express": "^5.0.1",
     "@types/node": "^20.17.19",

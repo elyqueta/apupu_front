@@ -195,6 +195,18 @@ export class ManagementEventPage {
     }
     return items;
   });
+  /** Única ação no cabeçalho; as restantes ficam no rail. */
+  protected readonly primarySectionAction = computed<ActionMenuItem | null>(() =>
+    this.effectivePermissions().canManageGuests
+      ? {
+          id: 'addGuest',
+          label: this.i18n.t('management.addGuestTitle'),
+          icon: ICONS['userPlus'],
+          disabled: this.eventCancelled(),
+        }
+      : null,
+  );
+
   protected readonly typeLabel = computed(() => {
     const type = this.event()?.type;
     return type ? this.i18n.t(`type.${type}` as TranslationKey) : '';
@@ -349,6 +361,9 @@ export class ManagementEventPage {
 
   protected onSectionAction(id: string): void {
     switch (id) {
+      case 'addGuest':
+        this.openGuestCreate();
+        break;
       case 'edit':
         this.openEditModal();
         break;

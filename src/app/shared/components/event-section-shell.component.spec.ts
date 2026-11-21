@@ -21,12 +21,14 @@ const ACTIONS: ActionMenuItem[] = [
     <app-event-section-shell
       backLink="/eventos"
       backLabel="Voltar aos eventos"
+      backLabelShort="Voltar"
       contextLabel="Evento"
       title="Casamento da Ana"
       location="Luanda"
       [sections]="sections"
       activeSection="resumo"
       [actions]="actions"
+      [primaryAction]="primary"
       menuLabel="Menu do evento"
       (sectionChange)="changed.set($event)"
       (action)="selected.set($event)"
@@ -38,6 +40,11 @@ const ACTIONS: ActionMenuItem[] = [
 class ShellHostComponent {
   readonly sections = SECTIONS;
   readonly actions = ACTIONS;
+  readonly primary: ActionMenuItem = {
+    id: 'addGuest',
+    label: 'Convidar',
+    icon: ICONS['userPlus'],
+  };
   readonly changed = signal('');
   readonly selected = signal('');
 }
@@ -74,6 +81,34 @@ describe('EventSectionShellComponent', () => {
     expect(root.querySelector('header')?.textContent).toContain('Casamento da Ana');
     expect(root.querySelector('header')?.textContent).not.toContain('Editar');
     expect(root.querySelector('header')?.textContent).not.toContain('Publicar');
+  });
+
+  it('mostra rótulo curto, título completo e ação principal no cabeçalho', () => {
+    const header = native().querySelector('header');
+    expect(header?.textContent).toContain('Voltar');
+    expect(native().querySelector('h1')?.getAttribute('title')).toBe('Casamento da Ana');
+
+    const primary = native().querySelector(
+      '[data-testid="event-section-primary-action"]',
+    ) as HTMLButtonElement;
+    expect(primary?.textContent).toContain('Convidar');
+    primary.click();
+    expect(host.selected()).toBe('addGuest');
+  });
+
+  it('recolhe o rail direito e mantém só os ícones', () => {
+    const toggle = native().querySelector(
+      '[data-testid="event-rail-toggle"]',
+    ) as HTMLButtonElement;
+    const grid = native().querySelector('main')?.parentElement;
+    expect(grid?.classList.contains('lg:grid-cols-[minmax(0,1fr)_16rem]')).toBe(true);
+
+    toggle.click();
+    fixture.detectChanges();
+
+    expect(grid?.classList.contains('lg:grid-cols-[minmax(0,1fr)_4.5rem]')).toBe(true);
+    expect(toggle.getAttribute('aria-expanded')).toBe('false');
+    expect(native().querySelector('aside')?.textContent).not.toContain('Resumo');
   });
 
   it('coloca as secções e ações no rail direito', () => {

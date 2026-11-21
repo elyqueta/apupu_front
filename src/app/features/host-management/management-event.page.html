@@ -46,6 +46,7 @@
       <app-event-section-shell
         backLink="/gestao"
         [backLabel]="i18n.t('eventDetail.backToManagement')"
+        [backLabelShort]="i18n.t('block9.event.backShort')"
         [contextLabel]="i18n.t('eventDetail.contextEvent')"
         [title]="item.title"
         [location]="item.venue + ', ' + item.city"
@@ -53,6 +54,7 @@
         [sections]="sections()"
         [activeSection]="tab()"
         [actions]="sectionActions()"
+        [primaryAction]="primarySectionAction()"
         [disabledHint]="i18n.t('eventDetail.cancelledHint')"
         [menuLabel]="i18n.t('eventDetail.eventMenu')"
         (sectionChange)="onSectionChange($event)"

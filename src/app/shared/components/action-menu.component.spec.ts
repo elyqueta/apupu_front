@@ -18,31 +18,11 @@ class ActionMenuHostComponent {
   readonly selected = signal('');
 }
 
-function mediaQuery(matches: boolean): MediaQueryList {
-  return {
-    matches,
-    media: '(max-width: 767px)',
-    onchange: null,
-    addEventListener: () => undefined,
-    removeEventListener: () => undefined,
-    addListener: () => undefined,
-    removeListener: () => undefined,
-    dispatchEvent: () => false,
-  } as MediaQueryList;
-}
-
 describe('ActionMenuComponent', () => {
   let fixture: ComponentFixture<ActionMenuHostComponent>;
   let host: ActionMenuHostComponent;
-  let matchMediaMock: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
-    matchMediaMock = vi.fn().mockReturnValue(mediaQuery(false));
-    Object.defineProperty(window, 'matchMedia', {
-      configurable: true,
-      writable: true,
-      value: matchMediaMock,
-    });
     TestBed.configureTestingModule({ imports: [ActionMenuHostComponent] });
     fixture = TestBed.createComponent(ActionMenuHostComponent);
     host = fixture.componentInstance;
@@ -50,8 +30,10 @@ describe('ActionMenuComponent', () => {
   });
 
   afterEach(() => {
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    fixture.detectChanges();
+    document.querySelectorAll('app-action-menu-portal').forEach((node) => node.remove());
     vi.restoreAllMocks();
-    Reflect.deleteProperty(window, 'matchMedia');
   });
 
   function query(selector: string): HTMLElement | null {
@@ -59,17 +41,22 @@ describe('ActionMenuComponent', () => {
   }
 
   function queryAll(selector: string): HTMLElement[] {
-    return Array.from(fixture.nativeElement.querySelectorAll(selector)) as HTMLElement[];
+    return Array.from(document.querySelectorAll(selector)) as HTMLElement[];
   }
 
   function trigger(): HTMLButtonElement {
     return query('button[aria-haspopup="menu"]') as HTMLButtonElement;
   }
 
+  function menu(): HTMLElement | null {
+    return document.querySelector('[data-testid="action-menu-panel"]');
+  }
+
   async function openMenu(): Promise<void> {
     trigger().click();
     fixture.detectChanges();
     await fixture.whenStable();
+    fixture.detectChanges();
   }
 
   it('exposes menu semantics and closes after choosing an item', async () => {
@@ -78,11 +65,12 @@ describe('ActionMenuComponent', () => {
     await openMenu();
 
     expect(trigger().getAttribute('aria-expanded')).toBe('true');
-    expect(query('[role="menu"]')).not.toBeNull();
-    query('[role="menuitem"]')?.click();
+    expect(menu()).not.toBeNull();
+    expect(menu()?.closest('app-action-menu-portal')).not.toBeNull();
+    queryAll('[role="menuitem"]')[0].click();
     fixture.detectChanges();
     expect(host.selected()).toBe('edit');
-    expect(query('[role="menu"]')).toBeNull();
+    expect(menu()).toBeNull();
   });
 
   it('moves focus with arrow keys and skips disabled items', async () => {
@@ -110,31 +98,64 @@ describe('ActionMenuComponent', () => {
     fixture.detectChanges();
     await fixture.whenStable();
 
-    expect(query('[role="menu"]')).toBeNull();
+    expect(menu()).toBeNull();
     expect(document.activeElement).toBe(trigger());
   });
 
-  it('closes when the outside overlay is clicked', async () => {
+  it('closes when clicking outside the panel', async () => {
     await openMenu();
-    const overlay = queryAll('button').find(
-      (button) => button.getAttribute('aria-haspopup') === null,
-    );
-    expect(overlay).toBeDefined();
-    overlay?.click();
+    const outside = document.createElement('div');
+    document.body.appendChild(outside);
+    outside.click();
     fixture.detectChanges();
 
-    expect(query('[role="menu"]')).toBeNull();
+    expect(menu()).toBeNull();
+    outside.remove();
   });
 
-  it('opens as a bottom sheet on small screens', async () => {
-    matchMediaMock.mockReturnValue(mediaQuery(true));
-    fixture = TestBed.createComponent(ActionMenuHostComponent);
-    host = fixture.componentInstance;
-    fixture.detectChanges();
+  it('opens above the button when there is no space below', async () => {
+    vi.spyOn(trigger(), 'getBoundingClientRect').mockReturnValue({
+      top: 340,
+      bottom: 380,
+      left: 50,
+      right: 100,
+      width: 50,
+      height: 40,
+      x: 50,
+      y: 340,
+      toJSON: () => ({}),
+    } as DOMRect);
+    vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockReturnValue(200);
+    const innerHeight = vi.spyOn(window, 'innerHeight', 'get').mockReturnValue(400);
 
     await openMenu();
 
-    expect(query('app-modal [data-testid="app-modal"] [role="dialog"]')).not.toBeNull();
-    expect(query('app-modal [role="menu"]')).not.toBeNull();
+    const panel = menu() as HTMLElement;
+    expect(parseFloat(panel.style.top)).toBeLessThan(340);
+    expect(parseFloat(panel.style.top)).toBeGreaterThanOrEqual(8);
+    expect(parseFloat(panel.style.left)).toBeGreaterThanOrEqual(8);
+    innerHeight.mockRestore();
+  });
+
+  it('keeps the panel inside the viewport when the button is near the right edge', async () => {
+    vi.spyOn(trigger(), 'getBoundingClientRect').mockReturnValue({
+      top: 100,
+      bottom: 140,
+      left: window.innerWidth - 20,
+      right: window.innerWidth - 10,
+      width: 10,
+      height: 40,
+      x: window.innerWidth - 20,
+      y: 100,
+      toJSON: () => ({}),
+    } as DOMRect);
+    vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockReturnValue(120);
+
+    await openMenu();
+
+    const panel = menu() as HTMLElement;
+    expect(parseFloat(panel.style.left) + parseFloat(panel.style.width)).toBeLessThanOrEqual(
+      window.innerWidth - 8,
+    );
   });
 });

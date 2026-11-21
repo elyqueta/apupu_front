@@ -271,7 +271,7 @@ function openMemberActions(native: HTMLElement, memberId: string): void {
 }
 
 function clickMenuItem(native: HTMLElement, label: string): void {
-  const item = Array.from(native.querySelectorAll('[role="menuitem"]')).find((button) =>
+  const item = Array.from(document.querySelectorAll('[role="menuitem"]')).find((button) =>
     button.textContent?.includes(label),
   ) as HTMLButtonElement;
   item.click();
@@ -320,7 +320,7 @@ describe('TeamDetailPage', () => {
     menuTrigger.click();
     context.fixture.detectChanges();
     const menuItems = Array.from(
-      native.querySelectorAll('[role="menuitem"]'),
+      document.querySelectorAll('[role="menuitem"]'),
     ) as HTMLButtonElement[];
     expect(menuItems.length).toBe(2);
     expect(menuItems.every((item) => item.disabled)).toBe(true);

@@ -9,6 +9,7 @@ import { ModalComponent } from './modal.component';
     <app-modal
       [open]="open()"
       [title]="title()"
+      [presentation]="presentation()"
       [dismissible]="dismissible()"
       (closed)="open.set(false)"
     >
@@ -22,6 +23,7 @@ class ModalHostComponent {
   readonly open = signal(false);
   readonly title = signal('Título do modal');
   readonly dismissible = signal(true);
+  readonly presentation = signal<'dialog' | 'sheet'>('dialog');
 }
 
 describe('ModalComponent', () => {
@@ -97,18 +99,46 @@ describe('ModalComponent', () => {
     expect(dialog()).not.toBeNull();
   });
 
-  it('mantém o corpo com scroll interno e o rodapé fixo fora do corpo', async () => {
+  it('faz scroll do painel inteiro no modo dialog, com o rodapé dentro do fluxo', async () => {
     await open();
+    const container = fixture.nativeElement.querySelector('[data-testid="app-modal"]') as HTMLElement;
     const panel = dialog() as HTMLElement;
     const body = panel.querySelector('[data-testid="app-modal-body"]') as HTMLElement;
     const footer = panel.querySelector('[data-testid="app-modal-footer"]') as HTMLElement;
     const save = panel.querySelector('button.last') as HTMLButtonElement;
 
-    expect(body.className).toContain('overflow-y-auto');
-    expect(body.className).toContain('min-h-0');
-    expect(footer.className).toContain('sticky');
+    expect(container.getAttribute('data-presentation')).toBe('dialog');
+    expect(container.className).toContain('items-center');
+    expect(panel.className).toContain('overflow-y-auto');
+    expect(panel.className).toContain('rounded-4xl');
+    expect(body.className).not.toContain('overflow-y-auto');
+    expect(footer.className).not.toContain('sticky');
     expect(footer.contains(save)).toBe(true);
     expect(body.contains(save)).toBe(false);
+  });
+
+  it('mantém o bottom sheet de leitura no modo sheet', async () => {
+    host.presentation.set('sheet');
+    await open();
+    const container = fixture.nativeElement.querySelector('[data-testid="app-modal"]') as HTMLElement;
+    const panel = dialog() as HTMLElement;
+    const body = panel.querySelector('[data-testid="app-modal-body"]') as HTMLElement;
+    const footer = panel.querySelector('[data-testid="app-modal-footer"]') as HTMLElement;
+
+    expect(container.getAttribute('data-presentation')).toBe('sheet');
+    expect(container.className).toContain('items-end');
+    expect(panel.className).toContain('rounded-t-4xl');
+    expect(body.className).toContain('overflow-y-auto');
+    expect(footer.className).toContain('sticky');
+  });
+
+  it('centra o campo focado no modo dialog', async () => {
+    const scrollIntoView = vi.fn();
+    await open();
+    const field = fixture.nativeElement.querySelector('button.first') as HTMLButtonElement;
+    field.scrollIntoView = scrollIntoView;
+    field.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
+    expect(scrollIntoView).toHaveBeenCalledWith({ block: 'center' });
   });
 
   it('circula o foco com Tab dentro do modal', async () => {

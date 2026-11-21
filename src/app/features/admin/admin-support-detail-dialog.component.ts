@@ -17,6 +17,7 @@ const STATUS_KEYS: Record<SupportMessageStatus, TranslationKey> = {
     <app-modal
       [open]="open()"
       [title]="i18n.t('admin.support.detail.title')"
+      presentation="sheet"
       size="lg"
       (closed)="closed.emit()"
     >

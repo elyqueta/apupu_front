@@ -19,6 +19,7 @@ const STATUS_KEYS: Record<AdminEventStatus, TranslationKey> = {
   template: `
     <app-modal
       [open]="open()"
+      presentation="sheet"
       size="lg"
       [title]="i18n.t('admin.events.detail.title')"
       (closed)="closed.emit()"

@@ -45,6 +45,7 @@ const STATUS_KEYS: Record<AdminUserStatus, TranslationKey> = {
     <app-modal
       [open]="open()"
       [title]="i18n.t('admin.users.detail.title')"
+      presentation="sheet"
       size="lg"
       (closed)="closed.emit()"
     >

@@ -28,6 +28,7 @@ export function normalizeAccessCode(code: string): string {
     <app-modal
       [open]="open()"
       [title]="i18n.t('managerDialog.credentialsTitle')"
+      presentation="sheet"
       [dismissible]="false"
       size="md"
       (closed)="done.emit()"

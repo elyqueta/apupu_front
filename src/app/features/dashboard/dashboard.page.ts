@@ -1,11 +1,12 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { toApiError } from '../../core/api/api-error';
 import { TranslationKey } from '../../core/i18n/translations';
-import { EventActivity, Guest, HostEvent } from '../../core/models/models';
+import { EventActivity, Guest, HostEvent, RsvpStatus } from '../../core/models/models';
+import { ShareService } from '../../core/services/share.service';
 import { ToastService } from '../../core/services/toast.service';
 import { WorkspaceStore } from '../../core/services/workspace.store';
 import { EVENT_TYPE_ICONS, ICONS } from '../../core/ui/icons';
@@ -13,8 +14,13 @@ import { ActivityPresenter } from '../../shared/services/activity.presenter';
 import { ActionMenuItem } from '../../shared/components/action-menu.component';
 import { AvatarComponent } from '../../shared/components/avatar.component';
 import { EventCardComponent } from '../../shared/components/event-card.component';
-import { PersonCardComponent } from '../../shared/components/person-card.component';
+import {
+  PersonCardComponent,
+  PersonMetaItem,
+  PersonPrimaryAction,
+} from '../../shared/components/person-card.component';
 import { StatCardComponent } from '../../shared/components/stat-card.component';
+import { SkeletonComponent } from '../../shared/components/skeleton.component';
 import { StatGridComponent } from '../../shared/components/stat-grid.component';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
 import { TemplateArtworkComponent } from '../../shared/components/template-artwork.component';
@@ -23,6 +29,11 @@ interface ChartDay {
   label: string;
   value: number;
   height: number;
+}
+
+interface GuestEntry {
+  guest: Guest;
+  event: HostEvent;
 }
 
 @Component({
@@ -35,6 +46,7 @@ interface ChartDay {
     PersonCardComponent,
     StatCardComponent,
     StatGridComponent,
+    SkeletonComponent,
     StatusBadgeComponent,
     TemplateArtworkComponent,
   ],
@@ -46,6 +58,7 @@ export class DashboardPage {
   protected readonly icons = ICONS;
   protected readonly Math = Math;
   private readonly toasts = inject(ToastService);
+  private readonly share = inject(ShareService);
   private readonly router = inject(Router);
   private readonly activityPresenter = inject(ActivityPresenter);
 
@@ -66,16 +79,36 @@ export class DashboardPage {
   protected readonly recentEvents = computed(() => this.store.recentEvents().slice(0, 4));
   protected readonly tasks = computed(() => this.store.tasks().slice(0, 4));
   protected readonly activity = computed(() => this.store.activityFeed().slice(0, 5));
-  protected readonly pending = computed(() => {
+  protected readonly guestStatusFilter = signal<RsvpStatus>('pending');
+
+  protected readonly filters: { id: RsvpStatus; labelKey: TranslationKey }[] = [
+    { id: 'confirmed', labelKey: 'dashboard.statusConfirmed' },
+    { id: 'declined', labelKey: 'dashboard.statusDeclined' },
+    { id: 'pending', labelKey: 'dashboard.statusNoResponse' },
+  ];
+
+  /** Convites do próximo evento (ou todos, quando não há próximo). */
+  private readonly scopedEntries = computed<GuestEntry[]>(() => {
     const event = this.nextEvent();
-    if (event) {
-      return this.store
-        .pendingGuests()
-        .filter((entry) => entry.guest.eventId === event.id)
-        .slice(0, 6);
-    }
-    return this.store.pendingGuests().slice(0, 6);
+    return this.store
+      .guestsWithEvent()
+      .filter((entry) => !event || entry.event.id === event.id);
   });
+
+  protected readonly statusCounts = computed<Record<RsvpStatus, number>>(() => {
+    const entries = this.scopedEntries();
+    return {
+      confirmed: entries.filter((entry) => entry.guest.status === 'confirmed').length,
+      declined: entries.filter((entry) => entry.guest.status === 'declined').length,
+      pending: entries.filter((entry) => entry.guest.status === 'pending').length,
+    };
+  });
+
+  protected readonly filteredGuests = computed(() =>
+    this.scopedEntries()
+      .filter((entry) => entry.guest.status === this.guestStatusFilter())
+      .slice(0, 6),
+  );
 
   protected readonly firstName = computed(() => this.store.profile().name.split(' ')[0]);
   protected readonly guestNames = computed(() =>
@@ -163,8 +196,55 @@ export class DashboardPage {
     return this.activityPresenter.tone(kind);
   }
 
-  /** Menu compacto da lista de convidados por responder do painel. */
-  protected pendingActions(entry: { guest: Guest; event: HostEvent }): ActionMenuItem[] {
+  protected setFilter(status: RsvpStatus): void {
+    this.guestStatusFilter.set(status);
+  }
+
+  protected filterClass(status: RsvpStatus): string {
+    const base = 'ui-chip-interactive';
+    if (this.guestStatusFilter() !== status) {
+      return `${base} border-line bg-surface-raised text-muted`;
+    }
+    if (status === 'confirmed') {
+      return `${base} border-mint/40 bg-mint/15 text-mint`;
+    }
+    if (status === 'declined') {
+      return `${base} border-coral/40 bg-coral/15 text-coral`;
+    }
+    return `${base} border-amber/40 bg-amber/15 text-amber`;
+  }
+
+  protected subtitleFor(guest: Guest): string {
+    return guest.email || guest.phone || '';
+  }
+
+  protected metaFor(entry: GuestEntry): PersonMetaItem[] {
+    const days = Math.max(
+      0,
+      Math.floor((Date.now() - new Date(entry.guest.invitedAt).getTime()) / 86_400_000),
+    );
+    return [
+      { icon: 'calendar', label: entry.event.title },
+      { icon: 'clock', label: this.i18n.t('block9.dashboard.invitedDays', { count: days }) },
+    ];
+  }
+
+  protected primaryFor(entry: GuestEntry): PersonPrimaryAction {
+    const items = this.guestActions(entry);
+    const preferred = entry.guest.phone
+      ? items.find((item) => item.id === 'whatsapp')
+      : items.find((item) => item.id === 'resend');
+    const action = preferred ?? items[0];
+    return {
+      id: action.id,
+      label: action.label,
+      icon: action.icon,
+      disabled: action.disabled,
+    };
+  }
+
+  /** Ações do cartão: WhatsApp e reenvio visíveis, navegação sempre no menu. */
+  protected guestActions(entry: GuestEntry): ActionMenuItem[] {
     const items: ActionMenuItem[] = [
       { id: 'view', label: this.i18n.t('guests.viewEvent'), icon: ICONS['arrowUpRight'] },
     ];
@@ -175,15 +255,45 @@ export class DashboardPage {
         icon: ICONS['envelope'],
       });
     }
+    if (entry.guest.phone) {
+      items.unshift({
+        id: 'whatsapp',
+        label: this.i18n.t('guests.whatsappShort'),
+        icon: ICONS['whatsapp'],
+      });
+    }
     return items;
   }
 
-  protected onPendingAction(action: string, entry: { guest: Guest; event: HostEvent }): void {
+  protected onGuestAction(action: string, entry: GuestEntry): void {
     if (action === 'resend') {
       void this.resendEmail(entry.guest);
+    } else if (action === 'whatsapp') {
+      this.sendWhatsApp(entry);
     } else if (action === 'view') {
       void this.router.navigate(['/eventos', entry.event.id]);
     }
+  }
+
+  protected sendWhatsApp(entry: GuestEntry): void {
+    const key = entry.guest.invitationUrl
+      ? 'guests.whatsappMessageWithLink'
+      : 'guests.whatsappMessage';
+    const text = this.i18n.t(key, {
+      name: entry.guest.name,
+      event: entry.event.title,
+      url: entry.guest.invitationUrl ?? '',
+    });
+    const url = this.share.whatsappUrl(entry.guest.phone, text);
+    if (url) {
+      this.share.openExternal(url);
+    } else {
+      this.toasts.error(this.i18n.t('guests.whatsappUnavailable'));
+    }
+  }
+
+  protected retry(): void {
+    void this.store.retry();
   }
 
   protected async resendEmail(guest: Guest): Promise<void> {

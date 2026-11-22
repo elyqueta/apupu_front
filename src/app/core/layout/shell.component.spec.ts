@@ -193,6 +193,26 @@ describe('ShellComponent · global search', () => {
     expect(document.getElementById(activeId as string)).not.toBeNull();
   });
 
+  it('persists the collapsed sidebar state and reflows the layout', () => {
+    const toggle = query<HTMLButtonElement>('[data-testid="sidebar-toggle"]');
+    const aside = query<HTMLElement>('aside');
+    expect(aside.classList.contains('lg:w-[18.5rem]')).toBe(true);
+    expect(toggle.getAttribute('aria-expanded')).toBe('true');
+
+    toggle.click();
+    fixture.detectChanges();
+
+    expect(aside.classList.contains('lg:w-[4.5rem]')).toBe(true);
+    expect(toggle.getAttribute('aria-expanded')).toBe('false');
+    expect(localStorage.getItem('apupu.sidebar.collapsed')).toBe('true');
+
+    toggle.click();
+    fixture.detectChanges();
+
+    expect(aside.classList.contains('lg:w-[18.5rem]')).toBe(true);
+    expect(localStorage.getItem('apupu.sidebar.collapsed')).toBe('false');
+  });
+
   it('clears the term and restores focus on Escape', async () => {
     const trigger = query<HTMLButtonElement>('[data-search-trigger]');
     trigger.click();

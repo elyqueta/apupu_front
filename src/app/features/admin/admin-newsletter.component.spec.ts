@@ -167,8 +167,8 @@ describe('AdminNewsletterComponent', () => {
     trigger?.click();
     context.fixture.detectChanges();
     const remove = Array.from(
-      root.querySelectorAll<HTMLButtonElement>(
-        `[data-testid="admin-newsletter-card-${SUBSCRIPTION_ID}"] app-action-menu button[role="menuitem"]`,
+      document.querySelectorAll<HTMLButtonElement>(
+        '[data-testid="action-menu-panel"] button[role="menuitem"]',
       ),
     ).find((button) => button.textContent?.includes('Remover'));
     expect(remove).toBeTruthy();

@@ -46,7 +46,9 @@ export interface PersonPrimaryAction {
         <app-avatar [name]="name()" [imageUrl]="avatarUrl()" [size]="compact() ? 'sm' : 'md'" />
         <div class="min-w-0 flex-1">
           <div class="flex min-w-0 items-start justify-between gap-2">
-            <p class="min-w-0 truncate text-sm font-semibold text-ink">{{ name() }}</p>
+            <p class="min-w-0 text-sm font-semibold leading-5 text-ink line-clamp-2" [title]="name()">
+              {{ name() }}
+            </p>
             @if (status(); as value) {
               <app-status-badge [value]="value" />
             }

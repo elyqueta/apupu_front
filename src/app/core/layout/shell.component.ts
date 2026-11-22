@@ -55,6 +55,7 @@ export class ShellComponent {
   private readonly searchService = inject(SearchService);
 
   protected readonly mobileOpen = signal(false);
+  protected readonly sidebarCollapsed = signal(false);
   protected readonly notificationsOpen = signal(false);
   protected readonly searchTerm = signal('');
   protected readonly searchOpen = signal(false);
@@ -132,6 +133,15 @@ export class ShellComponent {
   );
 
   constructor() {
+    try {
+      this.sidebarCollapsed.set(
+        typeof localStorage !== 'undefined' &&
+          localStorage.getItem('apupu.sidebar.collapsed') === 'true',
+      );
+    } catch {
+      this.sidebarCollapsed.set(false);
+    }
+
     // Carrega o "chrome" (perfil, atividade e eventos) depois de qualquer
     // `resetAll()` da autenticação. Cada página pede depois os domínios que
     // precisa via `store.load(...)`.
@@ -172,6 +182,17 @@ export class ShellComponent {
         this.closeSearch();
       });
     this.updatePageTitle();
+  }
+
+  /** Alterna o menu lateral no desktop e guarda a preferência localmente. */
+  protected toggleSidebar(): void {
+    const collapsed = !this.sidebarCollapsed();
+    this.sidebarCollapsed.set(collapsed);
+    try {
+      localStorage.setItem('apupu.sidebar.collapsed', String(collapsed));
+    } catch {
+      // O menu continua a funcionar quando o armazenamento não está disponível.
+    }
   }
 
   /** Abre a barra de pesquisa (desktop) e foca o campo no mesmo gesto. */

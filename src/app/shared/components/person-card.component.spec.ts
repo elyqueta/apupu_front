@@ -69,7 +69,7 @@ describe('PersonCardComponent', () => {
   it('emits the selected action id', () => {
     query('app-action-menu button')?.click();
     fixture.detectChanges();
-    query('[role="menuitem"]')?.click();
+    document.querySelector<HTMLButtonElement>('[role="menuitem"]')?.click();
     expect(host.selected()).toBe('edit');
   });
 

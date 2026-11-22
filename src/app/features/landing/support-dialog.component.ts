@@ -130,6 +130,7 @@ import { ModalComponent } from '../../shared/components/modal.component';
       data-testid="support-success-dialog"
       [open]="open() && sentFlag()"
       [title]="i18n.t('support.title')"
+      presentation="sheet"
       (closed)="close()"
     >
       <div class="flex flex-col items-center gap-3 py-6 text-center" data-testid="support-success">

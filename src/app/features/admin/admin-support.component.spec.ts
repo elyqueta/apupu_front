@@ -76,8 +76,8 @@ function clickMenuAction(
   trigger?.click();
   fixture.detectChanges();
   const item = Array.from(
-    root.querySelectorAll<HTMLButtonElement>(
-      `[data-testid="admin-support-card-${MESSAGE_ID}"] app-action-menu button[role="menuitem"]`,
+    document.querySelectorAll<HTMLButtonElement>(
+      '[data-testid="action-menu-panel"] button[role="menuitem"]',
     ),
   ).find((button) => button.textContent?.includes(label));
   expect(item, label).toBeTruthy();

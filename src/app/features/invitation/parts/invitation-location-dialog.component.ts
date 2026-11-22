@@ -15,6 +15,7 @@ import { InvitationEventView } from '../invitation.models';
     <app-modal
       [open]="open()"
       [title]="i18n.t('invitation.locationTitle')"
+      presentation="sheet"
       size="md"
       (closed)="closed.emit()"
     >

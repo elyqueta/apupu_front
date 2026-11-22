@@ -29,8 +29,9 @@ let titleCounter = 0;
   template: `
     @if (open()) {
       <div
-        class="fixed inset-0 z-[100] flex items-end justify-center sm:items-center sm:p-4"
+        [class]="containerClass()"
         data-testid="app-modal"
+        [attr.data-presentation]="presentation()"
       >
         <button
           type="button"
@@ -48,8 +49,11 @@ let titleCounter = 0;
           tabindex="-1"
           [class]="panelClass()"
           (keydown)="onKeydown($event)"
+          (focusin)="onFocusIn($event)"
         >
-          <div aria-hidden="true" class="mx-auto mt-2 h-1 w-10 shrink-0 rounded-full bg-line sm:hidden"></div>
+          @if (presentation() === 'sheet') {
+            <div aria-hidden="true" class="mx-auto mt-2 h-1 w-10 shrink-0 rounded-full bg-line sm:hidden"></div>
+          }
 
           @if (title()) {
             <header class="flex shrink-0 items-center justify-between gap-4 px-5 pt-3 pb-2 sm:px-6 sm:pt-5">
@@ -69,7 +73,7 @@ let titleCounter = 0;
 
           <div
             data-testid="app-modal-body"
-            class="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-4 sm:px-6"
+            [class]="bodyClass()"
             style="scrollbar-gutter: stable"
           >
             <ng-content />
@@ -77,7 +81,7 @@ let titleCounter = 0;
 
           <div
             data-testid="app-modal-footer"
-            class="sticky bottom-0 z-10 flex shrink-0 flex-col-reverse gap-2 border-t border-line bg-surface-solid/95 px-5 py-4 backdrop-blur-xl empty:hidden sm:flex-row sm:justify-end sm:px-6"
+            [class]="footerClass()"
             style="padding-bottom: max(1rem, env(safe-area-inset-bottom))"
           >
             <ng-content select="[modal-footer]" />
@@ -91,6 +95,8 @@ export class ModalComponent {
   readonly open = input.required<boolean>();
   readonly title = input<string>();
   readonly size = input<'sm' | 'md' | 'lg'>('md');
+  /** `dialog` centra o painel e faz scroll do painel inteiro; `sheet` mantém o bottom sheet de leitura. */
+  readonly presentation = input<'dialog' | 'sheet'>('dialog');
   readonly dismissible = input(true);
 
   readonly closed = output<void>();
@@ -106,6 +112,7 @@ export class ModalComponent {
 
   private registered = false;
   private restoreFocus: HTMLElement | null = null;
+  private viewportResize: (() => void) | null = null;
 
   constructor() {
     effect(() => {
@@ -118,14 +125,51 @@ export class ModalComponent {
     this.destroyRef.onDestroy(() => this.deactivate(false));
   }
 
+  protected containerClass(): string {
+    return this.presentation() === 'sheet'
+      ? 'fixed inset-0 z-[100] flex items-end justify-center sm:items-center sm:p-4'
+      : 'fixed inset-0 z-[100] flex items-center justify-center p-4';
+  }
+
   protected panelClass(): string {
+    const size = this.size();
+    const desktopWidth =
+      size === 'sm' ? 'sm:max-w-[24rem]' : size === 'lg' ? 'sm:max-w-[44rem]' : 'sm:max-w-[32rem]';
     const width =
-      this.size() === 'sm'
-        ? 'sm:max-w-[24rem]'
-        : this.size() === 'lg'
-          ? 'sm:max-w-[44rem]'
-          : 'sm:max-w-[32rem]';
-    return `relative flex max-h-[calc(100dvh-0.5rem)] w-full flex-col overflow-hidden rounded-t-4xl border border-line bg-surface-solid/95 shadow-card backdrop-blur-2xl motion-safe:animate-sheet sm:max-h-[min(92dvh,52rem)] sm:rounded-4xl sm:motion-safe:animate-rise ${width}`;
+      this.presentation() === 'sheet'
+        ? desktopWidth
+        : size === 'sm'
+          ? 'max-w-[24rem]'
+          : size === 'lg'
+            ? 'max-w-[44rem]'
+            : 'max-w-[32rem]';
+    if (this.presentation() === 'sheet') {
+      return `relative flex max-h-[calc(100dvh-0.5rem)] w-full flex-col overflow-hidden rounded-t-4xl border border-line bg-surface-solid/95 shadow-card backdrop-blur-2xl motion-safe:animate-sheet sm:max-h-[min(92dvh,52rem)] sm:rounded-4xl sm:motion-safe:animate-rise ${desktopWidth}`;
+    }
+    return `relative flex max-h-[calc(100dvh-2rem)] w-full flex-col overflow-y-auto overscroll-contain rounded-4xl border border-line bg-surface-solid/95 shadow-card backdrop-blur-2xl motion-safe:animate-rise ${width}`;
+  }
+
+  protected bodyClass(): string {
+    return this.presentation() === 'sheet'
+      ? 'min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-4 sm:px-6'
+      : 'min-h-0 px-5 py-4 sm:px-6';
+  }
+
+  protected footerClass(): string {
+    const base =
+      'flex shrink-0 flex-col-reverse gap-2 border-t border-line bg-surface-solid/95 px-5 py-4 backdrop-blur-xl empty:hidden sm:flex-row sm:justify-end sm:px-6';
+    return this.presentation() === 'sheet' ? `sticky bottom-0 z-10 ${base}` : base;
+  }
+
+  /** No modo `dialog`, o painel inteiro faz scroll: mantém o campo focado visível. */
+  protected onFocusIn(event: FocusEvent): void {
+    if (this.presentation() !== 'dialog' || !isPlatformBrowser(this.platformId)) {
+      return;
+    }
+    const target = event.target;
+    if (target instanceof HTMLElement && typeof target.scrollIntoView === 'function') {
+      target.scrollIntoView({ block: 'center' });
+    }
   }
 
   protected requestClose(): void {
@@ -168,7 +212,22 @@ export class ModalComponent {
       this.document.body.style.overflow = 'hidden';
     }
     openModals.push(this);
+    if (this.presentation() === 'dialog' && isPlatformBrowser(this.platformId) && window.visualViewport) {
+      this.viewportResize = () => this.syncViewportHeight();
+      window.visualViewport.addEventListener('resize', this.viewportResize);
+      this.syncViewportHeight();
+    }
     this.scheduleFocus(() => this.focusFirst());
+  }
+
+  /** Ajusta a altura quando o teclado virtual reduz o `visualViewport`. */
+  private syncViewportHeight(): void {
+    const panel = this.panel()?.nativeElement;
+    const viewport = window.visualViewport;
+    if (!panel || !viewport) {
+      return;
+    }
+    panel.style.maxHeight = `${Math.max(240, Math.floor(viewport.height) - 32)}px`;
   }
 
   private deactivate(restore = true): void {
@@ -176,6 +235,11 @@ export class ModalComponent {
       return;
     }
     this.registered = false;
+    if (this.viewportResize) {
+      window.visualViewport?.removeEventListener('resize', this.viewportResize);
+      this.viewportResize = null;
+      this.panel()?.nativeElement.style.removeProperty('max-height');
+    }
     const index = openModals.lastIndexOf(this);
     if (index >= 0) {
       openModals.splice(index, 1);

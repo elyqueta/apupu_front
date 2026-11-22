@@ -274,6 +274,18 @@ export class EventDetailPage {
     return items;
   });
 
+  /** Única ação no cabeçalho; as restantes ficam no rail. */
+  protected readonly primarySectionAction = computed<ActionMenuItem | null>(() =>
+    this.effectivePermissions().canManageGuests
+      ? {
+          id: 'addGuest',
+          label: this.i18n.t('eventDetail.addGuest'),
+          icon: ICONS['userPlus'],
+          disabled: this.eventCancelled(),
+        }
+      : null,
+  );
+
   protected readonly managers = computed(() => this.store.managersFor(this.eventId()));
   protected readonly guestCounts = computed(() => {
     const stats = this.stats();
@@ -513,6 +525,9 @@ export class EventDetailPage {
 
   protected onSectionAction(id: string): void {
     switch (id) {
+      case 'addGuest':
+        this.openGuestCreate();
+        break;
       case 'edit':
         this.openEditModal();
         break;

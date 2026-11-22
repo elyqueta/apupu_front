@@ -148,3 +148,46 @@ Mapeamento feito antes de alterar código. O frontend parte de `feat/bloco-3-det
 | 2026-11-20 | Ligações de apoio. | `mailto:` da landing e de Definições substituído pelo mesmo `app-support-dialog`, que envia `POST /public/support`. | Uma única mensagem guardada no backend e visível no admin, sem depender do cliente de email do utilizador. |
 | 2026-11-20 | Localização do componente do modal. | `SupportDialogComponent` vive em `features/landing/` e é reutilizado por Definições. | Evita duplicar formulário e validação; mudá-lo para `shared/` acrescentaria alterações sem benefício funcional neste bloco. |
 | 2026-11-20 | Formatação de datas nas novas abas. | `i18n.dateTime(iso, 'Africa/Luanda')`, o mesmo helper já usado nas abas do bloco 6. | Consistência de fuso horário e formatação em todo o painel. |
+
+## Bloco 9 — UI mobile (2026-11-21)
+
+| Data | Dúvida / ponto ambíguo | Escolha | Motivo |
+|---|---|---|---|
+| 2026-11-21 | Classificação pedida no Passo 2 para cada modal. | Tabela abaixo: formulários/ações → `dialog` (por omissão); leitura → `presentation="sheet"`; confirmações → `dialog` `size="sm"`. | Regra explícita do bloco; `dialog` passa a ser a apresentação por defeito. |
+| 2026-11-21 | O menu de secções do evento e o prompt de conta são "só informação"? | Não: são navegação/choice com botões, por isso ficam `dialog` `size="sm"`. O popup de três pontinhos deixa de ser modal (Passo 3). | O `sheet` fica reservado para leitura; menus devem aparecer ao lado do botão, não em baixo. |
+
+### Classificação dos modais (Passo 2)
+
+| Modal | Ficheiro | Apresentação |
+|---|---|---|
+| Detalhes/editar evento | `features/events/event-detail.page.html` | `dialog` |
+| Capa do evento | `features/events/event-detail.page.html` | `dialog` |
+| Convidado (criar/editar) | `shared/components/guest-dialog.component.ts` | `dialog` |
+| Confirmação genérica | `shared/components/confirm-dialog.component.ts` | `dialog` `size="sm"` |
+| Menu de secções do evento (mobile) | `shared/components/event-section-shell.component.ts` | `dialog` `size="sm"` |
+| Detalhes/editar evento (gestor) | `features/host-management/management-event.page.html` | `dialog` |
+| Capa do evento (gestor) | `features/host-management/management-event.page.html` | `dialog` |
+| Criar conta (gestor) | `features/host-management/management-event.page.html` | `dialog` `size="sm"` |
+| Nova tarefa | `shared/components/task-form-dialog.component.ts` | `dialog` |
+| Validade do link de convite | `features/events/detail/invitation-link-dialog.component.ts` | `dialog` |
+| Prompt de conta na entrada de gestão | `features/host-management/management-entry.page.html` | `dialog` |
+| Validade do link de gestor | `features/events/detail/event-managers-section.component.ts` | `dialog` |
+| Responder mensagem | `features/messages/messages-inbox.component.ts` | `dialog` |
+| Formulário de apoio | `features/landing/support-dialog.component.ts` | `dialog` |
+| Confirmação de apoio enviado | `features/landing/support-dialog.component.ts` | `presentation="sheet"` |
+| Criar gestor/equipa | `features/team/team-manager-dialog.component.ts` | `dialog` |
+| Detalhe de evento no admin | `features/admin/admin-event-detail-dialog.component.ts` | `presentation="sheet"` |
+| Criar/editar equipa | `features/team/team-form-dialog.component.ts` | `dialog` |
+| Adicionar membro | `features/team/team-detail.page.html` | `dialog` |
+| Validade de membro | `features/team/team-detail.page.html` | `dialog` |
+| Eliminação bloqueada por tarefas | `features/team/team-detail.page.html` | `dialog` |
+| Remover membro com reatribuição | `features/team/team-detail.page.html` | `dialog` |
+| Credenciais do gestor | `features/team/manager-credentials-dialog.component.ts` | `presentation="sheet"` |
+| Editar perfil | `features/profile/profile-edit-dialog.component.ts` | `dialog` |
+| Localização no convite | `features/invitation/parts/invitation-location-dialog.component.ts` | `presentation="sheet"` |
+| Anfitrião no convite | `features/invitation/parts/invitation-host-dialog.component.ts` | `presentation="sheet"` |
+| Mais detalhes do convite | `features/invitation/parts/invitation-details-dialog.component.ts` | `presentation="sheet"` |
+| Resposta RSVP (mensagem opcional) | `features/invitation/parts/invitation-rsvp-dialog.component.ts` | `dialog` |
+| Cancelar evento no admin | `features/admin/admin-cancel-dialog.component.ts` | `dialog` |
+| Detalhe de utilizador no admin | `features/admin/admin-user-detail-dialog.component.ts` | `presentation="sheet"` |
+| Detalhe de mensagem de apoio no admin | `features/admin/admin-support-detail-dialog.component.ts` | `presentation="sheet"` |

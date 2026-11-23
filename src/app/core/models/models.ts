@@ -128,6 +128,9 @@ export interface Guest {
   invitationUrl: string | null;
   /** Primeira abertura do link do convite; `null` se nunca foi aberto. */
   openedAt: string | null;
+  /** Última partilha iniciada no WhatsApp; não confirma envio nem leitura. */
+  whatsappSharedAt: string | null;
+  whatsappShareCount: number;
   /** Mensagem opcional deixada ao responder ao convite. */
   message?: string | null;
   invitedAt: string;

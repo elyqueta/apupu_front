@@ -10,6 +10,7 @@ import { PersonCardComponent, PersonMetaItem, PersonPrimaryAction } from '../../
 import { SkeletonComponent } from '../../../shared/components/skeleton.component';
 import { StatCardComponent } from '../../../shared/components/stat-card.component';
 import { StatGridComponent } from '../../../shared/components/stat-grid.component';
+import { whatsappSharedLabel } from '../../../shared/services/whatsapp-share.presenter';
 import { GUEST_FILTERS, GuestFilter } from './detail.models';
 
 /** Secção de convidados do detalhe do evento (lista paginada no servidor). */
@@ -230,6 +231,10 @@ export class EventGuestsSectionComponent {
         label: `${this.i18n.t('eventDetail.table.table')}: ${entry.guest.tableName ?? '—'}`,
       },
     ];
+    const shared = whatsappSharedLabel(this.i18n, entry.guest.whatsappSharedAt);
+    if (shared) {
+      meta.push({ icon: 'whatsapp', label: shared });
+    }
     return meta;
   }
 

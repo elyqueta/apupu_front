@@ -426,6 +426,11 @@ export class WorkspaceStore implements Resettable {
     return this.guestsRepo.sendReminder(guestId);
   }
 
+  /** Regista a partilha iniciada no WhatsApp para um convite específico. */
+  markWhatsappShared(guest: Guest): Promise<Guest> {
+    return this.guestsRepo.markWhatsappShared(guest);
+  }
+
   async toggleTask(taskId: string, done?: boolean): Promise<void> {
     await this.tasksRepo.toggle(taskId, done);
   }

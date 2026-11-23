@@ -11,6 +11,7 @@ import { ToastService } from '../../core/services/toast.service';
 import { WorkspaceStore } from '../../core/services/workspace.store';
 import { EVENT_TYPE_ICONS, ICONS } from '../../core/ui/icons';
 import { ActivityPresenter } from '../../shared/services/activity.presenter';
+import { whatsappSharedLabel } from '../../shared/services/whatsapp-share.presenter';
 import { ActionMenuItem } from '../../shared/components/action-menu.component';
 import { AvatarComponent } from '../../shared/components/avatar.component';
 import { EventCardComponent } from '../../shared/components/event-card.component';
@@ -278,10 +279,15 @@ export class DashboardPage {
       0,
       Math.floor((Date.now() - new Date(entry.guest.invitedAt).getTime()) / 86_400_000),
     );
-    return [
+    const meta: PersonMetaItem[] = [
       { icon: 'calendar', label: entry.event.title },
       { icon: 'clock', label: this.i18n.t('block9.dashboard.invitedDays', { count: days }) },
     ];
+    const shared = whatsappSharedLabel(this.i18n, entry.guest.whatsappSharedAt);
+    if (shared) {
+      meta.push({ icon: 'whatsapp', label: shared });
+    }
+    return meta;
   }
 
   protected primaryFor(entry: GuestEntry): PersonPrimaryAction {
@@ -342,9 +348,18 @@ export class DashboardPage {
     const url = this.share.whatsappUrl(entry.guest.phone, text);
     if (url) {
       this.share.openExternal(url);
+      this.recordShare(entry.guest);
     } else {
       this.toasts.error(this.i18n.t('guests.whatsappUnavailable'));
     }
+  }
+
+  /** Só existe convidado específico quando há link individual; falha de registo não bloqueia o envio. */
+  private recordShare(guest: Guest): void {
+    if (!guest.invitationUrl) {
+      return;
+    }
+    void this.store.markWhatsappShared(guest).catch(() => undefined);
   }
 
   protected retry(): void {

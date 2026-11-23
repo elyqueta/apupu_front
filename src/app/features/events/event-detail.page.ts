@@ -1311,6 +1311,22 @@ export class EventDetailPage {
     const url = this.share.whatsappUrl(guest.phone, text);
     if (url) {
       this.share.openExternal(url);
+      void this.recordWhatsappShare(guest);
+    }
+  }
+
+  /** Regista a partilha de um convite específico sem bloquear novo envio. */
+  private async recordWhatsappShare(guest: Guest): Promise<void> {
+    if (!guest.invitationUrl) {
+      return;
+    }
+    try {
+      const updated = await this.store.markWhatsappShared(guest);
+      this.guestItems.update((items) =>
+        items.map((entry) => (entry.guest.id === updated.id ? { ...entry, guest: updated } : entry)),
+      );
+    } catch {
+      // A partilha no WhatsApp já foi aberta; apenas o registo falhou.
     }
   }
 

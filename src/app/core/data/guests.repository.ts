@@ -127,6 +127,27 @@ export class GuestsRepository extends CachedRepository<Guest[]> {
     return true;
   }
 
+  /**
+   * Regista que o anfitrião iniciou a partilha do link no WhatsApp.
+   *
+   * Só é chamado quando existe um link individual (há um convidado
+   * específico); o registo não afirma que a mensagem foi enviada. Devolve o
+   * convite actualizado para as listas paginadas poderem mostrar a meta sem
+   * recarregar.
+   */
+  async markWhatsappShared(guest: Guest): Promise<Guest> {
+    const response = await this.api.post<ApiInvitation>(
+      `/host/events/${encodeURIComponent(guest.eventId)}/invitations/${encodeURIComponent(guest.id)}/whatsapp-shared`,
+    );
+    const updated = mapInvitation(response);
+    if (this.data()) {
+      this.mutate((guests) =>
+        (guests ?? []).map((item) => (item.id === updated.id ? updated : item)),
+      );
+    }
+    return updated;
+  }
+
   /** Remove do cache os convidados de um evento apagado. */
   removeForEvent(eventId: string): void {
     this.mutate((guests) => (guests ?? []).filter((guest) => guest.eventId !== eventId));

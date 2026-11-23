@@ -154,6 +154,8 @@ export function mapInvitation(invitation: ApiInvitation): Guest {
     tableName: invitation.table_name,
     invitationUrl: invitation.invitation_url,
     openedAt: invitation.opened_at,
+    whatsappSharedAt: invitation.whatsapp_shared_at,
+    whatsappShareCount: invitation.whatsapp_share_count,
     message: invitation.guest_message ?? null,
     invitedAt: invitation.created_at,
     respondedAt: invitation.rsvp_responded_at,

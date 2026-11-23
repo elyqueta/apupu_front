@@ -114,6 +114,9 @@ export interface ApiInvitation {
   send_status: 'pending' | 'queued' | 'sent' | 'failed';
   send_count: number;
   last_sent_at: string | null;
+  /** Última vez que o anfitrião abriu o WhatsApp com o link deste convite. */
+  whatsapp_shared_at: string | null;
+  whatsapp_share_count: number;
   /** Primeira abertura do link do convite; `null` se nunca foi aberto. */
   opened_at: string | null;
   invitation_url: string | null;

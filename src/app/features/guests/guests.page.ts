@@ -22,6 +22,7 @@ import { PersonCardComponent, PersonMetaItem, PersonPrimaryAction } from '../../
 import { SkeletonComponent } from '../../shared/components/skeleton.component';
 import { StatCardComponent } from '../../shared/components/stat-card.component';
 import { StatGridComponent } from '../../shared/components/stat-grid.component';
+import { whatsappSharedLabel } from '../../shared/services/whatsapp-share.presenter';
 
 type StatusFilter = 'all' | RsvpStatus;
 
@@ -266,6 +267,10 @@ export class GuestsPage {
           : this.i18n.t('guests.notResponded'),
       },
     ];
+    const shared = whatsappSharedLabel(this.i18n, entry.guest.whatsappSharedAt);
+    if (shared) {
+      meta.push({ icon: 'whatsapp', label: shared });
+    }
     return meta;
   }
 
@@ -341,6 +346,22 @@ export class GuestsPage {
     const url = this.share.whatsappUrl(guest.phone, text);
     if (url) {
       this.share.openExternal(url);
+      void this.recordShare(guest);
+    }
+  }
+
+  /** Actualiza a lista sem recarregar; um erro de registo não impede novo envio. */
+  private async recordShare(guest: Guest): Promise<void> {
+    if (!guest.invitationUrl) {
+      return;
+    }
+    try {
+      const updated = await this.store.markWhatsappShared(guest);
+      this.items.update((items) =>
+        items.map((entry) => (entry.guest.id === updated.id ? { ...entry, guest: updated } : entry)),
+      );
+    } catch {
+      // A partilha no WhatsApp já foi aberta; não mostrar erro ao anfitrião.
     }
   }
 

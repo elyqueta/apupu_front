@@ -14,6 +14,7 @@ import { ModalComponent } from './modal.component';
       (closed)="open.set(false)"
     >
       <p>Conteúdo do modal</p>
+      <input type="text" class="first-field" aria-label="Campo" />
       <button type="button" class="first">Primeiro</button>
       <button modal-footer type="button" class="last">Guardar</button>
     </app-modal>
@@ -129,13 +130,14 @@ describe('ModalComponent', () => {
     expect(container.className).toContain('items-end');
     expect(panel.className).toContain('rounded-t-4xl');
     expect(body.className).toContain('overflow-y-auto');
-    expect(footer.className).toContain('sticky');
+    expect(footer.className).not.toContain('sticky');
+    expect(footer.className).not.toContain('fixed');
   });
 
-  it('centra o campo focado no modo dialog', async () => {
+  it('centra o campo de formulário focado no modo dialog', async () => {
     const scrollIntoView = vi.fn();
     await open();
-    const field = fixture.nativeElement.querySelector('button.first') as HTMLButtonElement;
+    const field = fixture.nativeElement.querySelector('input.first-field') as HTMLInputElement;
     field.scrollIntoView = scrollIntoView;
     field.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
     expect(scrollIntoView).toHaveBeenCalledWith({ block: 'center' });

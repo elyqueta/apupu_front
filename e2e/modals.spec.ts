@@ -59,6 +59,71 @@ test.describe('modais', () => {
     await expect(guestModal).toBeHidden();
   });
 
+  test('formulários mantêm cabeçalho, último campo e botões no fluxo com teclado', async (
+    { authenticatedPage },
+    testInfo,
+  ) => {
+    test.skip(!testInfo.project.name.startsWith('mobile'), 'Cenário de teclado virtual em mobile.');
+    const page = authenticatedPage;
+
+    const scenarios = [
+      {
+        path: '/convidados',
+        trigger: '[data-testid="guests-add"]',
+        lastField: '#app-guest-form input[formcontrolname="phone"]',
+      },
+      {
+        path: '/perfil',
+        trigger: '[data-testid="profile-edit"]',
+        lastField: '#app-profile-form input[formcontrolname="avatarUrl"]',
+      },
+      {
+        path: '/tarefas',
+        trigger: '[data-testid="create-task"]',
+        lastField: '#app-task-form-dialog select[formcontrolname="assigneeMemberId"]',
+      },
+    ];
+
+    // Simula o teclado virtual em cada navegação: o visualViewport encolhe 220 px.
+    await page.addInitScript(() => {
+      const vv = window.visualViewport;
+      if (!vv) return;
+      Object.defineProperty(vv, 'height', {
+        configurable: true,
+        get: () => Math.max(240, window.innerHeight - 220),
+      });
+    });
+
+    for (const scenario of scenarios) {
+      await page.goto(scenario.path);
+      await page.locator(scenario.trigger).click();
+
+      const modal = page.getByTestId('app-modal');
+      await expect(modal).toBeVisible();
+      await expect(modal.locator('h2')).toBeVisible();
+
+      const footer = page.getByTestId('app-modal-footer');
+      expect(await footer.evaluate((element) => getComputedStyle(element).position)).not.toMatch(
+        /^(sticky|fixed)$/,
+      );
+
+      const lastField = modal.locator(scenario.lastField);
+      await expect(lastField).toBeVisible();
+      await lastField.click();
+
+      const fieldBox = await lastField.boundingBox();
+      const footerBox = await footer.boundingBox();
+      expect(fieldBox).not.toBeNull();
+      expect(footerBox).not.toBeNull();
+      if (fieldBox && footerBox) {
+        expect(footerBox.y).toBeGreaterThan(fieldBox.y + fieldBox.height - 1);
+      }
+
+      await page.keyboard.press('Escape');
+      await expect(modal).toBeHidden();
+    }
+  });
+
   test('modal de leitura permanece como bottom sheet em mobile', async (
     { authenticatedPage },
     testInfo,

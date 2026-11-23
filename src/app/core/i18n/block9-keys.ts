@@ -26,6 +26,13 @@ export const BLOCK9_KEYS_PT = {
   'block9.dashboard.chartTooltip': '{day} · {date} · {count} respostas',
 
   'block9.guests.whatsappShared': 'Link partilhado por WhatsApp · há {count} dias',
+
+  'block9.team.viewMember': 'Ver membro',
+  'block9.team.memberTitle': 'Detalhes do membro',
+  'block9.team.memberStatus': 'Estado',
+  'block9.team.memberOpenTasks': 'Tarefas abertas',
+  'block9.team.memberNoContact': 'Sem contacto disponível',
+  'block9.team.memberNotFound': 'Não foi possível carregar os dados deste membro.',
 };
 
 export const BLOCK9_KEYS_EN = {
@@ -49,4 +56,11 @@ export const BLOCK9_KEYS_EN = {
   'block9.dashboard.chartTooltip': '{day} · {date} · {count} responses',
 
   'block9.guests.whatsappShared': 'Link shared on WhatsApp · {count} days ago',
+
+  'block9.team.viewMember': 'View member',
+  'block9.team.memberTitle': 'Member details',
+  'block9.team.memberStatus': 'Status',
+  'block9.team.memberOpenTasks': 'Open tasks',
+  'block9.team.memberNoContact': 'No contact details available',
+  'block9.team.memberNotFound': 'Could not load this member’s details.',
 };

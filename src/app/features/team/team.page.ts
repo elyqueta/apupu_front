@@ -26,6 +26,7 @@ import {
   TeamCategory,
   TeamEventStatus,
   TeamManager,
+  TeamMember,
   TeamMyRole,
 } from '../../core/models/models';
 import { TeamsStore } from '../../core/services/teams.store';
@@ -39,6 +40,7 @@ import { PageHeaderComponent } from '../../shared/components/page-header.compone
 import { SkeletonComponent } from '../../shared/components/skeleton.component';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
 import { StatCardComponent } from '../../shared/components/stat-card.component';
+import { TeamMemberDetailDialogComponent } from '../../shared/components/team-member-detail-dialog.component';
 import { StatGridComponent } from '../../shared/components/stat-grid.component';
 import { TeamFormDialogComponent, TeamFormValue } from './team-form-dialog.component';
 import { TeamManagerDialogComponent } from './team-manager-dialog.component';
@@ -89,6 +91,7 @@ interface ManagerGroup {
     PageHeaderComponent,
     StatCardComponent,
     StatGridComponent,
+    TeamMemberDetailDialogComponent,
     TeamFormDialogComponent,
     TeamManagerDialogComponent,
   ],
@@ -121,6 +124,12 @@ export class TeamPage {
 
   protected readonly managerSearch = signal('');
   protected readonly managersLoading = signal(false);
+
+  /** Sheet de leitura de um membro, aberto a partir do cartão da equipa. */
+  protected readonly memberDetailOpen = signal(false);
+  protected readonly memberDetail = signal<TeamMember | null>(null);
+  protected readonly memberDetailAvatar = signal<string | null>(null);
+  protected readonly memberDetailLoading = signal(false);
 
   /** Eventos a que o utilizador tem acesso; a API decide a lista. */
   protected readonly events = this.workspace.events;
@@ -559,6 +568,39 @@ export class TeamPage {
 
   protected previewImages(team: Team): Array<string | null> {
     return team.membersPreview.map((member) => member.avatarUrl);
+  }
+
+  protected previewIds(team: Team): string[] {
+    return team.membersPreview.map((member) => member.id);
+  }
+
+  protected previewAvatar(team: Team, memberId: string): string | null {
+    return team.membersPreview.find((member) => member.id === memberId)?.avatarUrl ?? null;
+  }
+
+  /**
+   * Abre os dados completos do membro. A lista de membros é authorization-aware
+   * no backend; aqui só se filtra o registo escolhido e se mostra o que a API
+   * devolveu. Um erro não deixa o sheet aberto com dados vazios.
+   */
+  protected async openMemberDetail(
+    teamId: string,
+    memberId: string,
+    avatarUrl: string | null,
+  ): Promise<void> {
+    this.memberDetailAvatar.set(avatarUrl);
+    this.memberDetail.set(null);
+    this.memberDetailLoading.set(true);
+    this.memberDetailOpen.set(true);
+    try {
+      const page = await this.repository.listMembers(teamId, { page: 1, pageSize: 100 });
+      this.memberDetail.set(page.items.find((member) => member.id === memberId) ?? null);
+    } catch {
+      this.memberDetailOpen.set(false);
+      this.toasts.error(this.i18n.t('block9.team.memberNotFound'));
+    } finally {
+      this.memberDetailLoading.set(false);
+    }
   }
 
   private tabFromParams(params: ParamMap): TeamTab {

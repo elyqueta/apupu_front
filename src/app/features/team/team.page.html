@@ -343,7 +343,7 @@
           }
         </div>
       } @else {
-        <ul class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        <ul class="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
           @for (team of items(); track team.id) {
             <li class="min-w-0">
               <article
@@ -415,14 +415,29 @@
                     </span>
                     @if (team.membersPreview.length > 0) {
                       <span
-                        class="inline-flex items-center"
+                        class="inline-flex min-w-0 items-center gap-2"
                         [attr.data-testid]="'team-avatars-' + team.id"
                       >
                         <app-avatar-stack
                           [names]="previewNames(team)"
                           [images]="previewImages(team)"
+                          [ids]="previewIds(team)"
                           [max]="3"
+                          [selectable]="true"
+                          [selectLabel]="i18n.t('block9.team.viewMember')"
+                          (memberSelected)="openMemberDetail(team.id, $event, previewAvatar(team, $event))"
                         />
+                        @if (team.membersPreview[0]; as firstMember) {
+                          <button
+                            type="button"
+                            class="max-w-[9rem] truncate text-xs text-ink underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60"
+                            [attr.title]="firstMember.displayName ?? i18n.t('teams.previewFallback')"
+                            [attr.aria-label]="i18n.t('block9.team.viewMember') + ': ' + (firstMember.displayName ?? i18n.t('teams.previewFallback'))"
+                            (click)="openMemberDetail(team.id, firstMember.id, firstMember.avatarUrl)"
+                          >
+                            {{ firstMember.displayName ?? i18n.t('teams.previewFallback') }}
+                          </button>
+                        }
                       </span>
                     }
                   </div>
@@ -605,6 +620,14 @@
     [eventId]="filters().eventId || null"
     (created)="onManagerCreated($event)"
     (cancel)="closeManagerDialog()"
+  />
+
+  <app-team-member-detail-dialog
+    [open]="memberDetailOpen()"
+    [member]="memberDetail()"
+    [avatarUrl]="memberDetailAvatar()"
+    [loading]="memberDetailLoading()"
+    (closed)="memberDetailOpen.set(false)"
   />
 
   @if (tab() === 'teams') {

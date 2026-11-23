@@ -29,7 +29,7 @@ import { InvitationEventView } from '../invitation.models';
             [href]="online"
             target="_blank"
             rel="noopener noreferrer"
-            class="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-brand px-4 text-sm font-semibold text-on-secondary transition hover:bg-secondary-hover"
+            class="ui-btn"
           >
             <fa-icon [icon]="icons['arrowUpRight']" aria-hidden="true" />
             {{ i18n.t('invitation.openOnlineLink') }}
@@ -51,7 +51,7 @@ import { InvitationEventView } from '../invitation.models';
             <button
               type="button"
               data-testid="invitation-copy-address"
-              class="inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-xl border border-line bg-surface px-4 text-sm font-semibold text-ink transition hover:border-brand/40"
+              class="ui-btn-secondary flex-1"
               (click)="copyAddress()"
             >
               <fa-icon [icon]="icons['copy']" aria-hidden="true" />
@@ -62,7 +62,7 @@ import { InvitationEventView } from '../invitation.models';
               target="_blank"
               rel="noopener noreferrer"
               data-testid="invitation-open-maps"
-              class="inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-brand px-4 text-sm font-semibold text-on-secondary transition hover:bg-secondary-hover"
+              class="ui-btn flex-1"
             >
               <fa-icon [icon]="icons['location']" aria-hidden="true" />
               {{ i18n.t('invitation.openMaps') }}

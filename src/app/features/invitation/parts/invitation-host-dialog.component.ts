@@ -38,7 +38,7 @@ import { InvitationEventView } from '../invitation.models';
             target="_blank"
             rel="noopener noreferrer"
             data-testid="invitation-host-whatsapp"
-            class="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-brand px-4 text-sm font-semibold text-on-secondary transition hover:bg-secondary-hover"
+            class="ui-btn"
           >
             <fa-icon [icon]="icons['whatsapp']" aria-hidden="true" />
             {{ i18n.t('invitation.whatsapp') }}
@@ -47,7 +47,7 @@ import { InvitationEventView } from '../invitation.models';
         <a
           [href]="mailto()"
           data-testid="invitation-host-email"
-          class="inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-line bg-surface px-4 text-sm font-semibold text-ink transition hover:border-brand/40"
+          class="ui-btn-secondary"
         >
           <fa-icon [icon]="icons['envelope']" aria-hidden="true" />
           {{ i18n.t('invitation.emailHost') }}

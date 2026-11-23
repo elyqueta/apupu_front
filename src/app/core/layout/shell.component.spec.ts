@@ -202,7 +202,8 @@ describe('ShellComponent · global search', () => {
     toggle.click();
     fixture.detectChanges();
 
-    expect(aside.classList.contains('lg:w-[4.5rem]')).toBe(true);
+    expect(aside.classList.contains('lg:w-[5rem]')).toBe(true);
+    expect(aside.getAttribute('data-rail')).toBe('true');
     expect(toggle.getAttribute('aria-expanded')).toBe('false');
     expect(localStorage.getItem('apupu.sidebar.collapsed')).toBe('true');
 

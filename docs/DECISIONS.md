@@ -215,7 +215,7 @@ Mapeamento feito antes de alterar código. O frontend parte de `feat/bloco-3-det
 ## Bloco 10 — pedido do autor (23/11/2026): campos de telefone
 
 - **Pedido:** todos os inputs de telefone começam por 9, aceitam apenas 9 dígitos, não aceitam letras e mostram máscara a cada 3 dígitos (`9XX XXX XXX`).
-- **Escolha:** diretiva partilhada `appPhoneInput` aplicada a todos os `input` de telefone (convidado, perfil, gestor, equipa, apoio, link público). O valor guardado no formulário continua a ser só dígitos; o prefixo `+244` é acrescentado no envio como hoje. Validação: `^9\d{8}$`.
+- **Escolha:** a diretiva partilhada `appPhoneMask` foi reforçada e está em todos os `input` de telefone (convidado, criação de evento, perfil, gestor, membro de equipa; o link público do Bloco 10 usa a mesma). Só dígitos, descarta o que vier antes do primeiro 9, máximo 9 dígitos, grupos de 3; valores antigos `+244 …`/`00244…` são normalizados ao carregar ou colar. Fornece o validador `phone` (`^9\d{8}$`, vazio permitido) e marca o campo com `aria-invalid` e contorno coral depois de tocado. O valor enviado é o mascarado (`923 456 789`); o backend já normaliza para E.164 onde compara telefones. Sem `maxlength` no input, para não cortar texto colado com indicativo.
 - **Motivo:** um único ponto de verdade evita máscaras divergentes entre formulários.
 
 ## Bloco 10 — Visibilidade e convite público (23/11/2026)

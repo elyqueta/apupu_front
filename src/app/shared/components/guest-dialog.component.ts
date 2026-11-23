@@ -118,7 +118,7 @@ import { ModalComponent } from './modal.component';
                 class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink outline-none transition placeholder:text-muted/60 focus:border-brand/50 disabled:cursor-not-allowed disabled:opacity-60"
                 [placeholder]="i18n.t('create.placeholder.guestPhone')"
               />
-              <span class="mt-1 block text-[10px] text-muted">{{ i18n.t('common.phoneHint') }}</span>
+              <span class="mt-1 block text-xs text-muted">{{ i18n.t('common.phoneHint') }}</span>
             </label>
 
             @if (contactLocked()) {

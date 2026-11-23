@@ -196,7 +196,7 @@ import { PhoneMaskDirective } from '../../shared/directives/phone-mask.directive
                   autocomplete="tel"
                   class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink outline-none transition focus:border-brand/50"
                 />
-                <span class="mt-1 block text-[10px] text-muted">{{
+                <span class="mt-1 block text-xs text-muted">{{
                   i18n.t('common.phoneHint')
                 }}</span>
               </label>

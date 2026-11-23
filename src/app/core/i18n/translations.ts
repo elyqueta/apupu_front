@@ -456,7 +456,7 @@ const PT_AO = {
   'create.placeholder.dressCode': 'Ex.: Traje formal, tons de azul',
   'create.placeholder.guestName': 'Nome do convidado',
   'create.placeholder.guestEmail': 'nome@exemplo.ao',
-  'create.placeholder.guestPhone': '+244 900 000 000',
+  'create.placeholder.guestPhone': '923 456 789',
   'create.placeholder.bankName': 'Ex.: BAI',
   'create.placeholder.accountName': 'Nome na conta',
   'create.placeholder.iban': 'Referência da conta',
@@ -1038,7 +1038,8 @@ const PT_AO = {
 
   'nav.tasks': 'Tarefas',
   'nav.notifications': 'Notificações',
-  'common.phoneHint': 'Sem +244 — escreve apenas os 9 dígitos.',
+  'common.phoneHint': 'Sem +244 — 9 dígitos, a começar por 9.',
+  'common.phoneInvalid': 'Indique 9 dígitos a começar por 9 (ex.: 923 456 789).',
   'profile.personal.birthDateMin': 'A idade mínima é 5 anos.',
 
   'eventDetail.tasksDone': '{done} de {total} concluídas',
@@ -1957,7 +1958,7 @@ const EN: Record<TranslationKey, string> = {
   'create.placeholder.dressCode': 'E.g. Formal attire, shades of blue',
   'create.placeholder.guestName': 'Guest name',
   'create.placeholder.guestEmail': 'name@example.com',
-  'create.placeholder.guestPhone': '+244 900 000 000',
+  'create.placeholder.guestPhone': '923 456 789',
   'create.placeholder.bankName': 'E.g. BAI',
   'create.placeholder.accountName': 'Name on account',
   'create.placeholder.iban': 'Account reference',
@@ -2535,7 +2536,8 @@ const EN: Record<TranslationKey, string> = {
 
   'nav.tasks': 'Tasks',
   'nav.notifications': 'Notifications',
-  'common.phoneHint': 'No +244 needed — just type the 9 digits.',
+  'common.phoneHint': 'No +244 needed — 9 digits starting with 9.',
+  'common.phoneInvalid': 'Enter 9 digits starting with 9 (e.g. 923 456 789).',
   'profile.personal.birthDateMin': 'The minimum age is 5.',
 
   'eventDetail.tasksDone': '{done} of {total} done',

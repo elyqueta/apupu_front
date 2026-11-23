@@ -314,7 +314,7 @@
             data-testid="member-phone"
             class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink outline-none transition focus:border-brand/50 focus-visible:ring-2 focus-visible:ring-brand/60"
             [value]="memberForm.controls.phone.value"
-            (input)="memberForm.controls.phone.setValue($any($event.target).value)"
+            (input)="memberForm.controls.phone.setValue(formatPhone($any($event.target).value))"
           />
         </label>
       </div>

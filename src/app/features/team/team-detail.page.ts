@@ -41,6 +41,7 @@ import { StatGridComponent } from '../../shared/components/stat-grid.component';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
 import { TaskFormDialogComponent } from '../../shared/components/task-form-dialog.component';
 import { PhoneMaskDirective } from '../../shared/directives/phone-mask.directive';
+import { formatPhoneMask } from '../../core/utils/phone.util';
 import { ManagerCredentialsDialogComponent } from './manager-credentials-dialog.component';
 import { TeamFormDialogComponent, TeamFormValue } from './team-form-dialog.component';
 
@@ -96,6 +97,7 @@ export class TeamDetailPage {
   private readonly share = inject(ShareService);
   private readonly toasts = inject(ToastService);
   protected readonly i18n = inject(I18nService);
+  protected readonly formatPhone = formatPhoneMask;
   protected readonly icons = ICONS;
 
   private readonly teamId = this.route.snapshot.paramMap.get('teamId') ?? '';

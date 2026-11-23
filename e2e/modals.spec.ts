@@ -107,6 +107,12 @@ test.describe('modais', () => {
         /^(sticky|fixed)$/,
       );
 
+      // O corpo nunca encolhe: o conteúdo inteiro cabe nele e é o painel que faz scroll.
+      const body = page.getByTestId('app-modal-body');
+      expect(
+        await body.evaluate((element) => element.scrollHeight - element.clientHeight),
+      ).toBeLessThanOrEqual(1);
+
       const lastField = modal.locator(scenario.lastField);
       await expect(lastField).toBeVisible();
       await lastField.click();

@@ -81,6 +81,7 @@ let titleCounter = 0;
           </div>
 
           <div
+            #footer
             data-testid="app-modal-footer"
             [class]="footerClass()"
             style="padding-bottom: max(1rem, env(safe-area-inset-bottom))"
@@ -110,7 +111,7 @@ export class ModalComponent {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly destroyRef = inject(DestroyRef);
   private readonly panel = viewChild<ElementRef<HTMLElement>>('panel');
-  private readonly body = viewChild<ElementRef<HTMLElement>>('body');
+  private readonly footer = viewChild<ElementRef<HTMLElement>>('footer');
 
   private registered = false;
   private restoreFocus: HTMLElement | null = null;
@@ -154,12 +155,17 @@ export class ModalComponent {
   protected bodyClass(): string {
     return this.presentation() === 'sheet'
       ? 'min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-4 sm:px-6'
-      : 'min-h-0 px-5 pt-4 pb-8 sm:px-6';
+      : 'shrink-0 px-5 pt-4 pb-6 sm:px-6';
   }
 
-  /** Os botões de ação vivem no fim do painel, nunca fixos sobre o formulário. */
+  /**
+   * Os botões de ação vivem no fim do painel, dentro do mesmo scroll do
+   * formulário: nunca fixos, flutuantes ou sobrepostos aos campos.
+   */
   protected footerClass(): string {
-    return 'flex shrink-0 flex-col-reverse gap-2 border-t border-line bg-surface-solid/95 px-5 py-4 backdrop-blur-xl empty:hidden sm:flex-row sm:justify-end sm:px-6';
+    return this.presentation() === 'sheet'
+      ? 'flex shrink-0 flex-col-reverse gap-2 border-t border-line px-5 py-4 empty:hidden sm:flex-row sm:justify-end sm:px-6'
+      : 'flex shrink-0 flex-col-reverse gap-2 px-5 pt-2 pb-4 empty:hidden sm:flex-row sm:justify-end sm:px-6';
   }
 
   /** Com teclado aberto, centra o campo activo no scroll do painel. */
@@ -236,10 +242,15 @@ export class ModalComponent {
     const reserved = 48 + Math.max(0, viewport.offsetTop);
     panel.style.maxHeight = `${Math.max(240, Math.floor(viewport.height - reserved))}px`;
 
-    const keyboardHeight = Math.max(0, window.innerHeight - viewport.height - 32);
-    const body = this.body()?.nativeElement;
-    if (body) {
-      body.style.paddingBottom = `${32 + keyboardHeight}px`;
+    // Com o teclado aberto, espaço extra no fim do painel (depois dos
+    // botões) para que o último campo e as ações possam subir acima dele.
+    const keyboardHeight = Math.max(0, window.innerHeight - viewport.height);
+    const footer = this.footer()?.nativeElement;
+    if (footer) {
+      footer.style.paddingBottom =
+        keyboardHeight > 0
+          ? `${16 + keyboardHeight}px`
+          : 'max(1rem, env(safe-area-inset-bottom))';
     }
   }
 
@@ -252,7 +263,7 @@ export class ModalComponent {
       window.visualViewport?.removeEventListener('resize', this.viewportResize);
       this.viewportResize = null;
       this.panel()?.nativeElement.style.removeProperty('max-height');
-      this.body()?.nativeElement.style.removeProperty('padding-bottom');
+      this.footer()?.nativeElement.style.removeProperty('padding-bottom');
     }
     const index = openModals.lastIndexOf(this);
     if (index >= 0) {

@@ -439,45 +439,69 @@
         </div>
       </div>
 
-      <div class="mt-5">
+      <div class="relative mt-3">
+        @if (activeChartDay(); as day) {
+          <div
+            role="status"
+            class="pointer-events-none absolute top-0 z-10 -translate-x-1/2 whitespace-nowrap rounded-lg border border-line bg-surface-solid px-2 py-1 text-[11px] font-semibold text-ink shadow-card"
+            [style.left.%]="Math.min(93, Math.max(7, (activeDay() ?? 0) * 14 + 7))"
+          >
+            {{ day.ariaLabel }}
+          </div>
+        }
         <svg
-          viewBox="0 0 100 34"
+          viewBox="0 0 100 36"
           preserveAspectRatio="none"
-          class="h-32 w-full"
+          class="h-40 w-full"
           role="img"
           [attr.aria-label]="i18n.t('dashboard.chartTitle')"
         >
-          <line x1="0" y1="33.5" x2="100" y2="33.5" class="stroke-line" stroke-width="0.3" />
+          <line x1="0" y1="35.5" x2="100" y2="35.5" class="stroke-line" stroke-width="0.3" />
           @for (day of week(); track $index) {
-            <rect
-              [attr.x]="$index * 14 + 3"
-              [attr.y]="32 - day.height"
-              [attr.width]="8"
-              [attr.height]="day.height"
-              rx="2"
-              class="fill-brand/70"
-            />
-            <rect
-              [attr.x]="$index * 14 + 3"
-              [attr.y]="32 - day.height"
-              [attr.width]="8"
-              [attr.height]="Math.min(day.height, 4)"
-              rx="2"
-              class="fill-brand"
-            />
+            <g
+              role="img"
+              tabindex="0"
+              [attr.aria-label]="day.ariaLabel"
+              class="cursor-pointer outline-none"
+              (mouseenter)="setActiveDay($index)"
+              (mouseleave)="setActiveDay(null)"
+              (focus)="setActiveDay($index)"
+              (blur)="setActiveDay(null)"
+              (click)="setActiveDay($index)"
+            >
+              <rect [attr.x]="$index * 14" y="0" width="14" height="36" fill="transparent" />
+              @if (day.value === 0) {
+                <rect
+                  [attr.x]="$index * 14 + 3"
+                  y="35"
+                  width="8"
+                  height="0.8"
+                  rx="0.4"
+                  class="fill-line"
+                />
+              } @else {
+                <rect
+                  [attr.x]="$index * 14 + 3"
+                  [attr.y]="35 - day.height"
+                  width="8"
+                  [attr.height]="day.height"
+                  rx="2"
+                  [attr.class]="activeDay() === $index ? 'fill-brand' : 'fill-brand/70'"
+                />
+              }
+            </g>
           }
         </svg>
-        <div class="mt-2 grid grid-cols-7 gap-1 text-center">
+        <div class="mt-1 grid grid-cols-7 gap-1 text-center">
           @for (day of week(); track $index) {
             <div>
               <p
-                class="text-[9px] font-semibold uppercase tracking-[0.14em] text-muted"
-                [attr.aria-label]="day.label"
+                class="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted"
                 [attr.title]="day.label"
               >
                 {{ day.label.slice(0, 3) }}
               </p>
-              <p class="mt-0.5 text-[11px] font-semibold text-ink">{{ day.value }}</p>
+              <p class="mt-0.5 text-[11px] font-semibold tabular-nums text-ink">{{ day.value }}</p>
             </div>
           }
         </div>

@@ -23,6 +23,7 @@ export const BLOCK9_KEYS_PT = {
   'block9.dashboard.carouselPrevious': 'Convidado anterior',
   'block9.dashboard.carouselNext': 'Convidado seguinte',
   'block9.dashboard.carouselPosition': '{current} de {total}',
+  'block9.dashboard.chartTooltip': '{day} · {date} · {count} respostas',
 };
 
 export const BLOCK9_KEYS_EN = {
@@ -43,4 +44,5 @@ export const BLOCK9_KEYS_EN = {
   'block9.dashboard.carouselPrevious': 'Previous guest',
   'block9.dashboard.carouselNext': 'Next guest',
   'block9.dashboard.carouselPosition': '{current} of {total}',
+  'block9.dashboard.chartTooltip': '{day} · {date} · {count} responses',
 };

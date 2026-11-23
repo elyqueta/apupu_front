@@ -28,7 +28,9 @@ import { TemplateArtworkComponent } from '../../shared/components/template-artwo
 interface ChartDay {
   label: string;
   value: number;
+  /** Altura proporcional ao máximo da semana, em unidades do viewBox. */
   height: number;
+  ariaLabel: string;
 }
 
 interface GuestEntry {
@@ -81,6 +83,7 @@ export class DashboardPage {
   protected readonly activity = computed(() => this.store.activityFeed().slice(0, 5));
   protected readonly guestStatusFilter = signal<RsvpStatus>('pending');
   protected readonly carouselIndex = signal(1);
+  protected readonly activeDay = signal<number | null>(null);
   private readonly guestCarousel = viewChild<ElementRef<HTMLUListElement>>('guestCarousel');
 
   protected readonly filters: { id: RsvpStatus; labelKey: TranslationKey }[] = [
@@ -165,12 +168,30 @@ export class DashboardPage {
       return { date: day, value };
     });
     const max = Math.max(...days.map((day) => day.value), 1);
-    return days.map((day) => ({
-      label: this.i18n.weekdayShort(day.date, 'Africa/Luanda'),
-      value: day.value,
-      height: Math.max(4, Math.round((day.value / max) * 74)),
-    }));
+    return days.map((day) => {
+      const label = this.i18n.weekdayShort(day.date, 'Africa/Luanda');
+      return {
+        label,
+        value: day.value,
+        // O dia com mais respostas usa toda a altura útil; zero é só a linha de base.
+        height: day.value === 0 ? 0 : Math.max(3, Math.round((day.value / max) * 34)),
+        ariaLabel: this.i18n.t('block9.dashboard.chartTooltip', {
+          day: label,
+          date: this.i18n.shortDate(day.date, 'Africa/Luanda'),
+          count: day.value,
+        }),
+      };
+    });
   });
+
+  protected readonly activeChartDay = computed(() => {
+    const index = this.activeDay();
+    return index === null ? null : (this.week()[index] ?? null);
+  });
+
+  protected setActiveDay(index: number | null): void {
+    this.activeDay.set(index);
+  }
 
   protected readonly typeIcon = computed<IconDefinition>(() => {
     const event = this.nextEvent();

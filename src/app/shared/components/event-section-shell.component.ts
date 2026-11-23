@@ -20,14 +20,20 @@ export interface EventSectionItem {
  * navegação das secções e as ações disponíveis. Em ecrãs pequenos o rail
  * passa a drawer ("Menu do evento"), aberta a partir do cabeçalho.
  *
- * O cabeçalho mostra apenas voltar, contexto, título, estado e uma ação
- * principal; as restantes vivem no rail, colapsável no desktop.
+ * No desktop, o cabeçalho mostra voltar, contexto, título, estado e uma
+ * ação principal; as restantes vivem no rail, colapsável. No mobile o
+ * cabeçalho é omitido (a barra superior da app tem voltar e menu do
+ * evento) e "Mais ações" abre como bottom sheet, como no convite.
  */
 @Component({
   selector: 'app-event-section-shell',
   imports: [RouterLink, FaIconComponent, ModalComponent],
   template: `
-    <header class="sticky top-0 z-30 border-b border-line bg-surface/85 backdrop-blur-xl">
+    <!--
+      No mobile a barra superior da app já tem voltar e o menu do evento
+      (com "Adicionar convidado"), por isso este cabeçalho só aparece no desktop.
+    -->
+    <header class="sticky top-0 z-30 hidden border-b border-line bg-surface/85 backdrop-blur-xl lg:block">
       <div
         class="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-3 sm:px-6 lg:flex-row lg:items-center lg:gap-5"
       >
@@ -103,7 +109,7 @@ export interface EventSectionItem {
     </header>
 
     <div
-      class="mx-auto grid w-full max-w-7xl gap-6 px-4 pb-10 pt-4 transition-[grid-template-columns] duration-200 motion-reduce:transition-none sm:px-6"
+      class="mx-auto grid w-full max-w-7xl gap-6 px-4 pb-10 pt-2 transition-[grid-template-columns] duration-200 motion-reduce:transition-none sm:px-6"
       [class]="
         railCollapsed()
           ? 'lg:grid-cols-[minmax(0,1fr)_4.5rem]'
@@ -201,6 +207,7 @@ export interface EventSectionItem {
         [open]="true"
         [title]="menuLabel()"
         size="sm"
+        presentation="sheet"
         (closed)="menuOpen.set(false)"
       >
         <nav role="tablist" [attr.aria-label]="menuLabel()" class="flex flex-col gap-1">

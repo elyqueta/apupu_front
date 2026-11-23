@@ -7,6 +7,7 @@ import { GuestMessage, MessagesQuery, MessagesRepository } from '../../core/data
 import { ToastService } from '../../core/services/toast.service';
 import { WorkspaceStore } from '../../core/services/workspace.store';
 import { ICONS } from '../../core/ui/icons';
+import { FilterPanelComponent } from '../../shared/components/filter-panel.component';
 import { ModalComponent } from '../../shared/components/modal.component';
 
 type ReadFilter = NonNullable<MessagesQuery['read']>;
@@ -18,7 +19,7 @@ type AnsweredFilter = NonNullable<MessagesQuery['answered']>;
  */
 @Component({
   selector: 'app-messages-inbox',
-  imports: [ReactiveFormsModule, FaIconComponent, ModalComponent],
+  imports: [ReactiveFormsModule, FaIconComponent, FilterPanelComponent, ModalComponent],
   template: `
     <section class="flex flex-col gap-4">
       <div>
@@ -44,7 +45,15 @@ type AnsweredFilter = NonNullable<MessagesQuery['answered']>;
         </label>
       }
 
-      <form class="grid gap-2 sm:grid-cols-2 lg:grid-cols-5" [formGroup]="filters" (ngSubmit)="applyFilters()">
+      <form class="flex flex-col gap-3" [formGroup]="filters" (ngSubmit)="applyFilters()">
+        <app-filter-panel
+          [label]="i18n.t('messages.filters')"
+          controlsId="messages-filters"
+          [expanded]="filtersOpen()"
+          [activeCount]="activeFilterCount()"
+          (expandedChange)="filtersOpen.set($event)"
+        >
+          <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
         <label class="sm:col-span-2 lg:col-span-1">
           <span class="sr-only">{{ i18n.t('messages.searchPlaceholder') }}</span>
           <input
@@ -72,10 +81,12 @@ type AnsweredFilter = NonNullable<MessagesQuery['answered']>;
           <span class="sr-only">{{ i18n.t('messages.to') }}</span>
           <input type="date" formControlName="to" class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink" />
         </label>
-        <button type="submit" class="ui-btn-secondary sm:col-span-2 lg:col-span-5">
-          <fa-icon [icon]="icons['search']" aria-hidden="true" />
-          {{ i18n.t('common.search') }}
-        </button>
+            <button type="submit" class="ui-btn-secondary sm:col-span-2 lg:col-span-5">
+              <fa-icon [icon]="icons['search']" aria-hidden="true" />
+              {{ i18n.t('common.search') }}
+            </button>
+          </div>
+        </app-filter-panel>
       </form>
 
       @if (loading()) {
@@ -199,6 +210,7 @@ export class MessagesInboxComponent {
   protected readonly loading = signal(false);
   protected readonly error = signal('');
   protected readonly page = signal(1);
+  protected readonly filtersOpen = signal(false);
   protected readonly answering = signal<GuestMessage | null>(null);
   protected readonly saving = signal(false);
   protected readonly answerError = signal('');
@@ -238,6 +250,17 @@ export class MessagesInboxComponent {
   protected onEventChange(event: Event): void {
     this.selectedEventId.set((event.target as HTMLSelectElement).value);
     this.page.set(1);
+  }
+
+  protected activeFilterCount(): number {
+    const value = this.filters.getRawValue();
+    return (
+      (value.q.trim() ? 1 : 0) +
+      (value.read !== 'all' ? 1 : 0) +
+      (value.answered !== 'all' ? 1 : 0) +
+      (value.from ? 1 : 0) +
+      (value.to ? 1 : 0)
+    );
   }
 
   protected applyFilters(): void {

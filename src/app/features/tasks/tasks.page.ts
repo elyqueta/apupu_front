@@ -13,6 +13,8 @@ import { TeamsStore } from '../../core/services/teams.store';
 import { ToastService } from '../../core/services/toast.service';
 import { WorkspaceStore } from '../../core/services/workspace.store';
 import { ICONS } from '../../core/ui/icons';
+import { FilterPanelComponent } from '../../shared/components/filter-panel.component';
+import { MobileFabComponent } from '../../shared/components/mobile-fab.component';
 import { PageHeaderComponent } from '../../shared/components/page-header.component';
 import { SkeletonComponent } from '../../shared/components/skeleton.component';
 import { StatCardComponent } from '../../shared/components/stat-card.component';
@@ -32,6 +34,8 @@ const PAGE_SIZE = 12;
   selector: 'app-tasks-page',
   imports: [
     FaIconComponent,
+    FilterPanelComponent,
+    MobileFabComponent,
     PageHeaderComponent,
     SkeletonComponent,
     StatCardComponent,

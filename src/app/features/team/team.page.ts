@@ -33,6 +33,8 @@ import { ToastService } from '../../core/services/toast.service';
 import { WorkspaceStore } from '../../core/services/workspace.store';
 import { ICONS } from '../../core/ui/icons';
 import { AvatarStackComponent } from '../../shared/components/avatar-stack.component';
+import { FilterPanelComponent } from '../../shared/components/filter-panel.component';
+import { MobileFabComponent } from '../../shared/components/mobile-fab.component';
 import { PageHeaderComponent } from '../../shared/components/page-header.component';
 import { SkeletonComponent } from '../../shared/components/skeleton.component';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
@@ -82,6 +84,8 @@ interface ManagerGroup {
     SkeletonComponent,
     StatusBadgeComponent,
     AvatarStackComponent,
+    FilterPanelComponent,
+    MobileFabComponent,
     PageHeaderComponent,
     StatCardComponent,
     StatGridComponent,
@@ -105,6 +109,7 @@ export class TeamPage {
   protected readonly searchInput = signal('');
   protected readonly eventSearch = signal('');
   protected readonly tab = signal<TeamTab>('teams');
+  protected readonly filtersOpen = signal(false);
 
   protected readonly formOpen = signal(false);
   protected readonly formSaving = signal(false);

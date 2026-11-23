@@ -48,37 +48,12 @@
     class="flex flex-col gap-3 rounded-3xl border border-line bg-surface/70 p-3 shadow-card backdrop-blur-2xl"
     (submit)="$event.preventDefault(); applyFilters()"
   >
-    <button
-      type="button"
-      class="flex h-11 w-full items-center justify-between gap-2 rounded-xl border border-line bg-surface-raised/70 px-3 text-xs font-semibold text-ink transition hover:border-brand/40 md:hidden"
-      [attr.aria-expanded]="filtersOpen()"
-      aria-controls="tasks-filters"
-      (click)="filtersOpen.set(!filtersOpen())"
-    >
-      <span class="inline-flex min-w-0 items-center gap-2">
-        <fa-icon [icon]="icons['filter']" class="text-[11px] text-muted" aria-hidden="true" />
-        {{ i18n.t('tasks.filters') }}
-        @if (activeFilterCount() > 0) {
-          <span
-            class="grid size-4 place-items-center rounded-full bg-brand text-[9px] font-semibold text-on-secondary"
-          >
-            {{ activeFilterCount() }}
-          </span>
-        }
-      </span>
-      <fa-icon
-        [icon]="icons['chevronDown']"
-        class="text-[10px] text-muted transition"
-        [class.rotate-180]="filtersOpen()"
-        aria-hidden="true"
-      />
-    </button>
-
-    <div
-      id="tasks-filters"
-      class="min-w-0 flex-col gap-3 md:flex"
-      [class.flex]="filtersOpen()"
-      [class.hidden]="!filtersOpen()"
+    <app-filter-panel
+      [label]="i18n.t('tasks.filters')"
+      controlsId="tasks-filters"
+      [expanded]="filtersOpen()"
+      [activeCount]="activeFilterCount()"
+      (expandedChange)="filtersOpen.set($event)"
     >
       <div class="flex min-w-0 flex-wrap items-center gap-1.5">
         @for (option of statusOptions; track option.id) {
@@ -171,7 +146,7 @@
       </div>
 
       <p class="text-[10px] text-muted">{{ rangeLabel() }}</p>
-    </div>
+    </app-filter-panel>
   </form>
 
   @if (loading()) {
@@ -315,5 +290,11 @@
     [saving]="creating()"
     (closed)="closeTaskDialog()"
     (submitted)="submitTask($event)"
+  />
+
+  <app-mobile-fab
+    [label]="i18n.t('tasks.create')"
+    testId="create-task-fab"
+    (pressed)="openTaskDialog()"
   />
 </section>

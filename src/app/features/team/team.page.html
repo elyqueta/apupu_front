@@ -113,7 +113,14 @@
             />
           </label>
 
-          <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
+          <app-filter-panel
+            [label]="i18n.t('teams.filters')"
+            controlsId="teams-filters"
+            [expanded]="filtersOpen()"
+            [activeCount]="chips().length"
+            (expandedChange)="filtersOpen.set($event)"
+          >
+            <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
             <div class="block sm:col-span-2">
               <label class="block">
                 <span
@@ -246,7 +253,8 @@
                 </span>
               </label>
             </div>
-          </div>
+            </div>
+          </app-filter-panel>
 
           @if (hasFilters()) {
             <div class="flex flex-wrap items-center gap-2 border-t border-line pt-3">
@@ -598,4 +606,12 @@
     (created)="onManagerCreated($event)"
     (cancel)="closeManagerDialog()"
   />
+
+  @if (tab() === 'teams') {
+    <app-mobile-fab
+      [label]="i18n.t('teams.new')"
+      testId="new-team-fab"
+      (pressed)="openCreate()"
+    />
+  }
 </section>

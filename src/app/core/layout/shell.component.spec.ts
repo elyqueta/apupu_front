@@ -2,7 +2,7 @@ import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { PLATFORM_ID } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { API_BASE_URL } from '../api/api-config';
 import { apiRequestInterceptor } from '../api/api.interceptor';
 import { ApiEvent, ApiNotification } from '../api/api.models';
@@ -107,7 +107,7 @@ describe('ShellComponent · global search', () => {
     TestBed.configureTestingModule({
       imports: [ShellComponent],
       providers: [
-        provideRouter([]),
+        provideRouter([{ path: 'eventos/:eventId', children: [] }, { path: '**', children: [] }]),
         provideHttpClient(withInterceptors([apiRequestInterceptor])),
         provideHttpClientTesting(),
         { provide: PLATFORM_ID, useValue: 'browser' },
@@ -212,6 +212,17 @@ describe('ShellComponent · global search', () => {
 
     expect(aside.classList.contains('lg:w-[18.5rem]')).toBe(true);
     expect(localStorage.getItem('apupu.sidebar.collapsed')).toBe('false');
+  });
+
+  it('mostra voltar e menu do evento na barra superior em /eventos/:id', async () => {
+    const router = TestBed.inject(Router);
+    await router.navigateByUrl('/eventos/evt-1');
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(query('[data-testid="event-back-button"]')).not.toBeNull();
+    expect(query('[data-testid="event-menu-trigger"]')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('[aria-label="Notificações"], [aria-label="Notifications"]')).toBeNull();
   });
 
   it('clears the term and restores focus on Escape', async () => {

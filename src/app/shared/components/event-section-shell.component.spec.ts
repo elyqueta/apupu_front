@@ -146,4 +146,11 @@ describe('EventSectionShellComponent', () => {
     publish.click();
     expect(host.selected()).toBe('');
   });
+
+  it('expõe openMenu() para a barra superior abrir o menu do evento', async () => {
+    const shell = fixture.debugElement.children[0].componentInstance as EventSectionShellComponent;
+    shell.openMenu();
+    await settle();
+    expect(native().querySelector('[role="dialog"]')).not.toBeNull();
+  });
 });

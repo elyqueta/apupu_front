@@ -120,3 +120,30 @@ Sem alterações. O backend permanece na branch `feat/ajustes-fase-4`, intacto.
 - Novas páginas ou regras de negócio.
 - Captura automatizada de contraste/tamanho de alvos; a verificação visual foi
   feita por revisão das classes Tailwind e dos tokens claros/escuros.
+
+## Retificações 9.1
+
+Execução na branch `feat/bloco-10-visibilidade` (front) e `feat/bloco-10-visibilidade` (back), sem push/merge/rebase/reset. Cada ponto em commit próprio `fix(ui): ...` / commit de migração backend no ponto 7.
+
+| Ponto | Estado | Evidência |
+|---|---|---|
+| 1. Modais de formulário sem ações sticky/fixed | ✔ | `d3642e6`. `modal.component` com `max-height: visualViewport`, margem safe-area, scroll no painel; footer no fluxo; `scrollIntoView` em campos focados. Verificação front: build/lint 0 erros/tsc/test 210/e2e:typecheck/e2e 28 skipped. |
+| 2. Carrossel de pendentes | ✔ | `fb8dd0e`. Dashboard com carrossel horizontal snap, setas 44 px, contagem “1 de N”, cards `min-w-[17rem] sm:min-w-[20rem]`, nomes `line-clamp-2`. |
+| 3. Gráfico respostas da semana | ✔ | `32c85ec`. Escala pelo máximo da semana, linha fina para zero, tooltip acessível por rato/toque/teclado com dia/data/contagem. |
+| 4. Menu lateral comprimido | ✔ | `1223780`. Rail `lg:w-[5rem]`, tooltips CSS em `[data-rail]`, `.no-scrollbar` no nav. |
+| 5. Filtros mobile e FAB | ✔ | `e842383`. `app-filter-panel` e `app-mobile-fab` partilhados; FAB com safe-area acima da navegação inferior. |
+| 6. Botões do modal de localização | ✔ | `7aae9d3`. Botões usam `ui-btn`/`ui-btn-secondary`, altura/alinhamento consistentes com contacto. |
+| 7. Link partilhado por WhatsApp | ✔ | Back `dcf0fc0`: migração reversível `1739900000027_invitation-whatsapp-share.js`, action `guest_whatsapp_shared`, endpoint `POST /host/events/:eventId/invitations/:invitationId/whatsapp-shared`, auditoria/permissões, build/typecheck/lint/test 320 passed 89 skipped 409, migração up→down→up verificada. Front `c6f1d73`: campos `whatsapp_shared_at`/`whatsapp_share_count`, metadados só host-side; “sucesso” = URL válida + `openExternal`. |
+| 8. Cards de equipa e detalhe de membro | ✔ | `44c8ea7` (decisão) + `f5a7c71`. Grelha `grid-cols-1 md:grid-cols-2 xl:grid-cols-3`; `app-avatar-stack` com `ids`/seleção 44 px; sheet `team-member-detail-dialog` com dados de `GET /host/teams/:id/members`; e2e `teams.spec.ts` adicionado. |
+| 9. Barra superior/navegação do evento e ordem da Visão geral | ✔ | Commit deste ponto. Shell em `/eventos/:id` troca menu principal por chevron voltar e notificações por hambúrguer do evento (`aria-expanded`); `/gestao/evento/:id` recebe os mesmos controlos no cabeçalho público. Drawer direito com fechar, “Adicionar convidado”, secções, “Mais ações”, Escape/backdrop/link, foco preso/devolvido; rail desktop mantido. `app-stat-grid` passa a primeiro elemento da “Visão geral”. |
+
+### Verificação final (ponto 9)
+
+| Comando | Resultado |
+|---|---|
+| `npm run build` | OK |
+| `npx tsc --noEmit` | OK |
+| `npm run lint` | OK — 0 erros, 24 avisos preexistentes |
+| `npm test -- --watch=false` | OK — 49 ficheiros, 211 testes passados |
+| `npm run e2e:typecheck` | OK |
+| `npm run e2e` (sem credenciais) | OK — 32 skipped, exit 0; `E2E_EMAIL`/`E2E_PASSWORD`/`E2E_BASE_URL` ausentes, sem credenciais registadas |

@@ -8,6 +8,7 @@ import {
   PLATFORM_ID,
   signal,
   untracked,
+  viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -38,6 +39,7 @@ import {
   Team,
   WorkspaceTask,
 } from '../../core/models/models';
+import { EventMenuBridgeService } from '../../core/services/event-menu-bridge.service';
 import { ShareService } from '../../core/services/share.service';
 import { DownloadService } from '../../core/services/download.service';
 import { ToastService } from '../../core/services/toast.service';
@@ -130,6 +132,7 @@ export class EventDetailPage {
   private readonly teamsRepository = inject(TeamsRepository);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly eventMenuBridge = inject(EventMenuBridgeService);
   private readonly downloads = inject(DownloadService);
   private readonly document = inject(DOCUMENT);
   private readonly platformId = inject(PLATFORM_ID);
@@ -140,6 +143,7 @@ export class EventDetailPage {
   protected readonly icons = ICONS;
 
   readonly eventId = input.required<string>();
+  private readonly sectionShell = viewChild(EventSectionShellComponent);
 
   protected readonly tab = signal<EventTab>('resumo');
   protected readonly guestSearch = signal('');
@@ -501,6 +505,14 @@ export class EventDetailPage {
         this.coverForm.reset({ url: event?.coverUrl ?? '' });
       });
     });
+    this.eventMenuBridge.actions.pipe(takeUntilDestroyed()).subscribe((action) => {
+      if (action === 'addGuest') {
+        this.openGuestCreate();
+        return;
+      }
+      this.sectionShell()?.openMenu();
+    });
+
     this.destroyRef.onDestroy(() => {
       if (this.guestDebounce) {
         clearTimeout(this.guestDebounce);

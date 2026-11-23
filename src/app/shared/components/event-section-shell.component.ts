@@ -273,6 +273,11 @@ export class EventSectionShellComponent {
   protected readonly menuOpen = signal(false);
   protected readonly railCollapsed = signal(false);
 
+  /** Abre o menu de secções a pedido da barra superior do evento. */
+  openMenu(): void {
+    this.menuOpen.set(true);
+  }
+
   protected selectSection(id: string): void {
     this.menuOpen.set(false);
     if (id !== this.activeSection()) {

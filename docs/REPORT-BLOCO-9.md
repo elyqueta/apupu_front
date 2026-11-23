@@ -137,6 +137,14 @@ Execução na branch `feat/bloco-10-visibilidade` (front) e `feat/bloco-10-visib
 | 8. Cards de equipa e detalhe de membro | ✔ | `44c8ea7` (decisão) + `f5a7c71`. Grelha `grid-cols-1 md:grid-cols-2 xl:grid-cols-3`; `app-avatar-stack` com `ids`/seleção 44 px; sheet `team-member-detail-dialog` com dados de `GET /host/teams/:id/members`; e2e `teams.spec.ts` adicionado. |
 | 9. Barra superior/navegação do evento e ordem da Visão geral | ✔ | `6a2563c`. Shell em `/eventos/:id` troca menu principal por chevron voltar e notificações por hambúrguer do evento (`aria-expanded`); `/gestao/evento/:id` recebe os mesmos controlos no cabeçalho público. Drawer direito com fechar, “Adicionar convidado”, secções, “Mais ações”, Escape/backdrop/link, foco preso/devolvido; rail desktop mantido. `app-stat-grid` passa a primeiro elemento da “Visão geral”. |
 
+### Verificação manual no browser (23/11/2026, 360×640 e 1440×900)
+
+| Verificação | Estado | Evidência |
+|---|---|---|
+| Ponto 1 revisto: corpo do modal encolhia (`min-h-0` no painel flex) e a dica do último campo ficava por baixo dos botões | ✔ corrigido | `9bc0544`. Corpo `shrink-0`, painel faz scroll inteiro, espaço do teclado passa para depois das ações. "Novo convidado", "Nova tarefa" e "Editar perfil" verificados: botões depois do último campo, corpo sem corte, painel a ≥17 px do topo; com altura visível reduzida a 360 px o último campo fica centrado e clicável. E2E reforçado (`scrollHeight − clientHeight ≤ 1` no corpo). |
+| Gestão do evento no mobile: cabeçalho da secção (voltar/título/“Adicionar convidado”) redundante com a barra superior | ✔ | `35ef77a`. Cabeçalho só em `lg+`; no mobile as métricas ficam logo abaixo da barra superior. "Menu do evento"/"Mais ações" abre como bottom sheet (`presentation="sheet"`), como no convite. Desktop 1440×900 mantém cabeçalho e rail. |
+| build / lint / test / e2e:typecheck | ✔ | build OK; lint 0 erros (24 avisos preexistentes); 49 ficheiros, 213 testes; e2e:typecheck OK. |
+
 ### Verificação final (ponto 9)
 
 | Comando | Resultado |

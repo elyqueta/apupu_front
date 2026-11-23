@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, ElementRef, inject, signal, viewChild } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
@@ -80,6 +80,8 @@ export class DashboardPage {
   protected readonly tasks = computed(() => this.store.tasks().slice(0, 4));
   protected readonly activity = computed(() => this.store.activityFeed().slice(0, 5));
   protected readonly guestStatusFilter = signal<RsvpStatus>('pending');
+  protected readonly carouselIndex = signal(1);
+  private readonly guestCarousel = viewChild<ElementRef<HTMLUListElement>>('guestCarousel');
 
   protected readonly filters: { id: RsvpStatus; labelKey: TranslationKey }[] = [
     { id: 'confirmed', labelKey: 'dashboard.statusConfirmed' },
@@ -198,6 +200,38 @@ export class DashboardPage {
 
   protected setFilter(status: RsvpStatus): void {
     this.guestStatusFilter.set(status);
+    this.carouselIndex.set(1);
+    this.guestCarousel()?.nativeElement.scrollTo({ left: 0, behavior: 'smooth' });
+  }
+
+  /** Mantém a contagem "1 de N" sincronizada com o scroll por toque/rato. */
+  protected onCarouselScroll(): void {
+    const element = this.guestCarousel()?.nativeElement;
+    if (!element) {
+      return;
+    }
+    const cardWidth = element.firstElementChild?.getBoundingClientRect().width ?? element.clientWidth;
+    if (cardWidth > 0) {
+      this.carouselIndex.set(Math.min(this.filteredGuests().length, Math.round(element.scrollLeft / cardWidth) + 1));
+    }
+  }
+
+  /** Setas do desktop e setas do teclado partilham o mesmo passo de scroll. */
+  protected moveCarousel(direction: -1 | 1): void {
+    const element = this.guestCarousel()?.nativeElement;
+    if (!element) {
+      return;
+    }
+    const cardWidth = element.firstElementChild?.getBoundingClientRect().width ?? element.clientWidth;
+    element.scrollBy({ left: direction * cardWidth, behavior: 'smooth' });
+  }
+
+  protected onCarouselKeydown(event: KeyboardEvent): void {
+    if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') {
+      return;
+    }
+    event.preventDefault();
+    this.moveCarousel(event.key === 'ArrowRight' ? 1 : -1);
   }
 
   protected filterClass(status: RsvpStatus): string {

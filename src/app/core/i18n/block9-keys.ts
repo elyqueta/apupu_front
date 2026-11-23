@@ -20,6 +20,9 @@ export const BLOCK9_KEYS_PT = {
   'block9.dashboard.guestOf': 'Convidado de {event}',
   'block9.dashboard.allResponded': 'Todos já responderam',
   'block9.dashboard.retry': 'Tentar de novo',
+  'block9.dashboard.carouselPrevious': 'Convidado anterior',
+  'block9.dashboard.carouselNext': 'Convidado seguinte',
+  'block9.dashboard.carouselPosition': '{current} de {total}',
 };
 
 export const BLOCK9_KEYS_EN = {
@@ -37,4 +40,7 @@ export const BLOCK9_KEYS_EN = {
   'block9.dashboard.guestOf': 'Guest for {event}',
   'block9.dashboard.allResponded': 'Everyone has responded',
   'block9.dashboard.retry': 'Try again',
+  'block9.dashboard.carouselPrevious': 'Previous guest',
+  'block9.dashboard.carouselNext': 'Next guest',
+  'block9.dashboard.carouselPosition': '{current} of {total}',
 };

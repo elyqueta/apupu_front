@@ -45,16 +45,16 @@ export interface PersonPrimaryAction {
       <div class="flex min-w-0 items-start gap-3">
         <app-avatar [name]="name()" [imageUrl]="avatarUrl()" [size]="compact() ? 'sm' : 'md'" />
         <div class="min-w-0 flex-1">
-          <div class="flex min-w-0 items-start justify-between gap-2">
-            <p class="min-w-0 text-sm font-semibold leading-5 text-ink line-clamp-2" [title]="name()">
+          <div class="flex min-w-0 flex-wrap items-start justify-between gap-2">
+            <p class="min-w-0 flex-1 basis-24 text-sm font-semibold leading-5 text-ink line-clamp-2" [title]="name()">
               {{ name() }}
             </p>
             @if (status(); as value) {
-              <app-status-badge [value]="value" />
+              <app-status-badge class="shrink-0" [value]="value" />
             }
           </div>
           @if (subtitle() && !compact()) {
-            <p class="mt-0.5 truncate text-xs text-muted">{{ subtitle() }}</p>
+            <p class="mt-0.5 truncate text-xs text-muted" [title]="subtitle()">{{ subtitle() }}</p>
           }
         </div>
       </div>

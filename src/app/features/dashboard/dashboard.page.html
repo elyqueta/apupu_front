@@ -553,23 +553,60 @@
           </a>
         </div>
       } @else {
-        <ul class="mt-4 grid min-w-0 gap-3 sm:grid-cols-2">
-          @for (entry of filteredGuests(); track entry.guest.id) {
-            <li class="min-w-0">
-              <app-person-card
-                [name]="entry.guest.name"
-                [subtitle]="subtitleFor(entry.guest)"
-                [status]="entry.guest.status"
-                [meta]="metaFor(entry)"
-                [actions]="guestActions(entry)"
-                [primaryAction]="primaryFor(entry)"
-                [actionsLabel]="i18n.t('guests.tableActions')"
-                (actionSelected)="onGuestAction($event, entry)"
-                (primaryTriggered)="onGuestAction($event, entry)"
-              />
-            </li>
-          }
-        </ul>
+        <div class="mt-4 min-w-0">
+          <div class="flex items-center justify-between gap-3">
+            <p class="text-[11px] font-semibold tabular-nums text-muted" aria-live="polite">
+              {{
+                i18n.t('block9.dashboard.carouselPosition', {
+                  current: carouselIndex(),
+                  total: filteredGuests().length,
+                })
+              }}
+            </p>
+            <div class="hidden items-center gap-2 md:flex">
+              <button
+                type="button"
+                class="ui-icon-button"
+                [attr.aria-label]="i18n.t('block9.dashboard.carouselPrevious')"
+                (click)="moveCarousel(-1)"
+              >
+                <fa-icon [icon]="icons['chevronLeft']" aria-hidden="true" />
+              </button>
+              <button
+                type="button"
+                class="ui-icon-button"
+                [attr.aria-label]="i18n.t('block9.dashboard.carouselNext')"
+                (click)="moveCarousel(1)"
+              >
+                <fa-icon [icon]="icons['chevronRight']" aria-hidden="true" />
+              </button>
+            </div>
+          </div>
+          <ul
+            #guestCarousel
+            class="no-scrollbar mt-3 flex snap-x snap-mandatory gap-3 overflow-x-auto pb-1"
+            tabindex="0"
+            [attr.aria-label]="i18n.t('dashboard.pendingTitle')"
+            (scroll)="onCarouselScroll()"
+            (keydown)="onCarouselKeydown($event)"
+          >
+            @for (entry of filteredGuests(); track entry.guest.id) {
+              <li class="min-w-[17rem] max-w-[calc(100vw-3rem)] shrink-0 snap-start sm:min-w-[20rem]">
+                <app-person-card
+                  [name]="entry.guest.name"
+                  [subtitle]="subtitleFor(entry.guest)"
+                  [status]="entry.guest.status"
+                  [meta]="metaFor(entry)"
+                  [actions]="guestActions(entry)"
+                  [primaryAction]="primaryFor(entry)"
+                  [actionsLabel]="i18n.t('guests.tableActions')"
+                  (actionSelected)="onGuestAction($event, entry)"
+                  (primaryTriggered)="onGuestAction($event, entry)"
+                />
+              </li>
+            }
+          </ul>
+        </div>
       }
     </section>
   </div>

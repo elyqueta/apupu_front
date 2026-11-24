@@ -286,6 +286,11 @@ export interface ApiTeam {
   completed_task_count: number;
   members_preview: ApiTeamMemberPreview[];
   open_task_count: number;
+  /** Bloco 11: comunidade, criador e eventos geridos pela equipa. */
+  community_id?: string | null;
+  creator_id?: string | null;
+  event_ids?: string[];
+  event_count?: number;
   created_at: string;
   updated_at: string;
 }
@@ -487,6 +492,7 @@ export interface CreateEventRequest {
     show_attendee_count?: boolean;
     min_age?: number | null;
     max_age?: number | null;
+    community_id?: string | null;
   };
   guests: Array<{
     name: string;

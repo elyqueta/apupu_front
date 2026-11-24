@@ -100,6 +100,74 @@ export class TeamDetailPage {
   private readonly toasts = inject(ToastService);
   protected readonly i18n = inject(I18nService);
   protected readonly formatPhone = formatPhoneMask;
+  /* Bloco 11: eventos da equipa (só o criador) e sair da equipa. */
+  protected readonly teamEventsOpen = signal(false);
+  protected readonly teamEventsAll = signal(false);
+  protected readonly teamEventsSelected = signal<string[]>([]);
+  protected readonly teamEventsSaving = signal(false);
+  protected readonly leaveOpen = signal(false);
+  protected readonly isCreator = computed(() => {
+    const team = this.team();
+    const me = this.auth.host();
+    return !!team && !!me && team.creatorId === me.id;
+  });
+  protected readonly canLeaveTeam = computed(() => {
+    const role = this.team()?.myRole;
+    return !this.isCreator() && (role === 'membro' || role === 'gestor');
+  });
+  /** Eventos que a conta gere (o servidor valida a lista final). */
+  protected readonly assignableEvents = computed(() =>
+    this.workspace.events().filter((event) => event.accessRole === 'host'),
+  );
+
+  protected eventTitle(eventId: string): string {
+    return this.workspace.eventById(eventId)?.title ?? (eventId === this.team()?.eventId ? this.team()?.eventTitle ?? '' : '—');
+  }
+
+  protected openTeamEvents(): void {
+    const team = this.team();
+    if (!team) return;
+    this.teamEventsAll.set(false);
+    this.teamEventsSelected.set([...team.eventIds]);
+    this.teamEventsOpen.set(true);
+  }
+
+  protected toggleTeamEvent(eventId: string, checked: boolean): void {
+    this.teamEventsSelected.update((list) =>
+      checked ? Array.from(new Set([...list, eventId])) : list.filter((id) => id !== eventId),
+    );
+  }
+
+  protected async saveTeamEvents(event: Event): Promise<void> {
+    event.preventDefault();
+    const team = this.team();
+    if (!team || this.teamEventsSaving()) return;
+    this.teamEventsSaving.set(true);
+    try {
+      const updated = await this.repository.setEvents(team.id, this.teamEventsSelected(), this.teamEventsAll());
+      this.team.set({ ...updated, myRole: team.myRole });
+      this.teamEventsOpen.set(false);
+      this.toasts.success(this.i18n.t('block11.teamEvents.saved'));
+    } catch (error: unknown) {
+      this.toasts.error(toApiError(error).status === 403 ? this.i18n.t('block11.common.forbidden') : this.i18n.t('block11.common.error'));
+    } finally {
+      this.teamEventsSaving.set(false);
+    }
+  }
+
+  protected async leaveTeam(): Promise<void> {
+    const team = this.team();
+    if (!team) return;
+    try {
+      await this.repository.leave(team.id);
+      this.leaveOpen.set(false);
+      this.toasts.success(this.i18n.t('block11.team.left'));
+      void this.router.navigate(['/equipas']);
+    } catch {
+      this.toasts.error(this.i18n.t('block11.common.error'));
+    }
+  }
+
   /** Tarefa aberta no detalhe (autor persistente, responsável, prazo). */
   protected readonly detailTask = signal<TeamTask | null>(null);
   protected readonly icons = ICONS;

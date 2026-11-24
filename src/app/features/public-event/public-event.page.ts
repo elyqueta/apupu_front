@@ -70,6 +70,8 @@ export class PublicEventPage {
 
   /** Parâmetro de rota (`withComponentInputBinding`). */
   readonly slug = input('');
+  /** Bloco 11: código de partilha do membro da comunidade (`?ref=`). */
+  readonly ref = input<string | undefined>(undefined);
 
   protected readonly state = signal<LoadState>('loading');
   protected readonly raw = signal<ApiOpenEvent | null>(null);
@@ -192,6 +194,8 @@ export class PublicEventPage {
       message: value.message.trim() || null,
       website: value.website,
     };
+    const ref = this.ref();
+    if (ref && /^[A-Za-z0-9_-]{6,32}$/.test(ref)) body['ref'] = ref;
     if (!this.viewer()) {
       body['name'] = value.name.trim();
       if (value.email.trim()) body['email'] = value.email.trim();

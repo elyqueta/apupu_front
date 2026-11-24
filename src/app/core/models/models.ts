@@ -283,6 +283,8 @@ export interface CreateEventInput {
   showAttendeeCount?: boolean;
   minAge?: number | null;
   maxAge?: number | null;
+  /** Bloco 11: evento da comunidade (`null` = pessoal). */
+  communityId?: string | null;
 }
 
 export interface AddGuestResult {
@@ -356,6 +358,12 @@ export interface Team {
   completedTaskCount: number;
   membersPreview: TeamMemberPreview[];
   openTaskCount: number;
+  /** Bloco 11: comunidade da equipa (`null` = sem comunidade). */
+  communityId: string | null;
+  /** Conta que criou a equipa (só ela associa outros eventos). */
+  creatorId: string | null;
+  /** Eventos geridos pela equipa (inclui o principal). */
+  eventIds: string[];
   createdAt: string;
   updatedAt: string;
 }

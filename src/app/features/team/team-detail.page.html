@@ -49,6 +49,41 @@
       <p class="mt-3 max-w-2xl text-sm leading-6 text-muted">{{ currentTeam.description }}</p>
     }
 
+    <!-- Bloco 11: eventos geridos pela equipa e saída da equipa. -->
+    <section class="mt-3 flex flex-col gap-3 rounded-3xl border border-line bg-surface p-4 shadow-card" data-testid="team-events">
+      <div class="flex flex-wrap items-start justify-between gap-2">
+        <div class="min-w-0">
+          <h2 class="text-sm font-semibold text-ink">{{ i18n.t('block11.teamEvents.title') }}</h2>
+          <p class="mt-0.5 text-xs text-muted">{{ i18n.t('block11.teamEvents.hint') }}</p>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          @if (isCreator()) {
+            <button type="button" class="ui-btn-secondary" data-testid="team-events-edit" (click)="openTeamEvents()">
+              <fa-icon [icon]="icons['calendar']" aria-hidden="true" />
+              {{ i18n.t('block11.teamEvents.edit') }}
+            </button>
+          }
+          @if (canLeaveTeam()) {
+            <button type="button" class="ui-btn-secondary" data-testid="team-leave" (click)="leaveOpen.set(true)">
+              <fa-icon [icon]="icons['logout']" aria-hidden="true" />
+              {{ i18n.t('block11.team.leave') }}
+            </button>
+          }
+        </div>
+      </div>
+      <ul class="flex flex-wrap gap-2">
+        @for (eventId of currentTeam.eventIds; track eventId) {
+          <li class="ui-chip">
+            <fa-icon [icon]="icons['calendar']" aria-hidden="true" />
+            {{ eventTitle(eventId) }}
+            @if (eventId === currentTeam.eventId) {
+              <span class="text-brand-strong">· {{ i18n.t('block11.teamEvents.primary') }}</span>
+            }
+          </li>
+        }
+      </ul>
+    </section>
+
     <app-stat-grid [columns]="4">
       @for (stat of stats(); track stat.label) {
         <app-stat-card
@@ -607,3 +642,52 @@
 </section>
 
 <app-task-detail-dialog [task]="detailTask()" (closed)="detailTask.set(null)" />
+
+<app-modal [open]="teamEventsOpen()" [title]="i18n.t('block11.teamEvents.title')" size="sm" (closed)="teamEventsOpen.set(false)">
+  <form class="flex flex-col gap-4" (submit)="saveTeamEvents($event)">
+    <label class="flex min-h-11 cursor-pointer items-start gap-3 rounded-2xl border border-line bg-surface-raised p-3">
+      <input type="checkbox" class="mt-1 size-4 accent-current" [checked]="teamEventsAll()" (change)="teamEventsAll.set($any($event.target).checked)" data-testid="team-events-all" />
+      <span class="min-w-0">
+        <span class="block text-sm font-semibold text-ink">{{ i18n.t('block11.teamEvents.all') }}</span>
+        <span class="mt-0.5 block text-xs text-muted">{{ i18n.t('block11.teamEvents.allHint') }}</span>
+      </span>
+    </label>
+    @if (!teamEventsAll()) {
+      @if (assignableEvents().length === 0) {
+        <p class="text-sm text-muted">{{ i18n.t('block11.teamEvents.empty') }}</p>
+      } @else {
+        <fieldset class="flex max-h-72 flex-col gap-1 overflow-y-auto">
+          @for (event of assignableEvents(); track event.id) {
+            <label class="flex min-h-11 cursor-pointer items-center gap-3 rounded-xl px-2 hover:bg-surface-raised">
+              <input
+                type="checkbox"
+                class="size-4"
+                [checked]="teamEventsSelected().includes(event.id) || event.id === team()?.eventId"
+                [disabled]="event.id === team()?.eventId"
+                (change)="toggleTeamEvent(event.id, $any($event.target).checked)"
+              />
+              <span class="min-w-0 flex-1 truncate text-sm text-ink">{{ event.title }}</span>
+              @if (event.id === team()?.eventId) {
+                <span class="text-xs text-brand-strong">{{ i18n.t('block11.teamEvents.primary') }}</span>
+              }
+            </label>
+          }
+        </fieldset>
+      }
+    }
+    <div class="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end">
+      <button type="button" class="ui-btn-secondary" (click)="teamEventsOpen.set(false)">{{ i18n.t('block11.form.cancel') }}</button>
+      <button type="submit" class="ui-btn" [disabled]="teamEventsSaving()" data-testid="team-events-save">{{ i18n.t('block11.teamEvents.save') }}</button>
+    </div>
+  </form>
+</app-modal>
+
+<app-confirm-dialog
+  [open]="leaveOpen()"
+  [title]="i18n.t('block11.team.leave')"
+  [message]="i18n.t('block11.team.leaveConfirm')"
+  [confirmLabel]="i18n.t('block11.team.leave')"
+  [cancelLabel]="i18n.t('block11.form.cancel')"
+  (confirmed)="leaveTeam()"
+  (cancelled)="leaveOpen.set(false)"
+/>

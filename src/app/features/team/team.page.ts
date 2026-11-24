@@ -329,6 +329,11 @@ export class TeamPage {
     this.searchInput.set(initial.q);
     this.tab.set(this.tabFromParams(this.route.snapshot.queryParamMap));
 
+    // Bloco 11: `?nova=1` (vindo da comunidade) abre logo o modal de criação.
+    if (this.route.snapshot.queryParamMap.get('nova') === '1') {
+      queueMicrotask(() => this.openCreate());
+    }
+
     this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe((params) => {
       const next = teamFiltersFromParams(params);
       const nextTab = this.tabFromParams(params);
@@ -506,7 +511,10 @@ export class TeamPage {
             category: value.category,
             description: value.description,
           })
-        : await this.repository.create(value);
+        : await this.repository.create({
+            ...value,
+            communityId: this.route.snapshot.queryParamMap.get('comunidade'),
+          });
       this.store.upsert(team);
       this.formOpen.set(false);
       this.toasts.success(this.i18n.t(editing ? 'teams.form.updated' : 'teams.form.created'));

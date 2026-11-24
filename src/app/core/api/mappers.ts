@@ -277,6 +277,9 @@ export function mapTeam(team: ApiTeam): Team {
       avatarUrl: member.avatar_url,
     })),
     openTaskCount: team.open_task_count,
+    communityId: team.community_id ?? null,
+    creatorId: team.creator_id ?? null,
+    eventIds: team.event_ids ?? [team.event_id],
     createdAt: team.created_at,
     updatedAt: team.updated_at,
   };

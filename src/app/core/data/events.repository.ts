@@ -120,6 +120,7 @@ export class EventsRepository extends CachedRepository<HostEvent[]> {
         show_attendee_count: input.visibility === 'public' ? (input.showAttendeeCount ?? false) : false,
         min_age: input.minAge ?? null,
         max_age: input.maxAge ?? null,
+        community_id: input.communityId ?? null,
       },
       guests: input.guests.map((guest) => ({
         name: guest.name,

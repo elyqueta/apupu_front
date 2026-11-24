@@ -6,7 +6,8 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ApiCommunity, CommunitiesRepository } from '../../core/data/communities.repository';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { toApiError } from '../../core/api/api-error';
@@ -57,6 +58,12 @@ export class CreateEventPage {
   private readonly fb = inject(NonNullableFormBuilder);
   private readonly toasts = inject(ToastService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+  private readonly communitiesRepo = inject(CommunitiesRepository);
+
+  /** Bloco 11: comunidades onde a conta é gestora ou responsável. */
+  protected readonly communities = signal<ApiCommunity[]>([]);
+  protected readonly communityId = signal<string>('');
   private readonly destroyRef = inject(DestroyRef);
 
   protected readonly store = inject(WorkspaceStore);
@@ -193,6 +200,7 @@ export class CreateEventPage {
   protected readonly canSubmit = computed(() => this.contributionReady() && this.guestCount() >= 0);
 
   constructor() {
+    void this.loadCommunities();
     this.store.load({ templates: true, profile: true });
     // Se os modelos chegarem depois de o formulário ser criado, aplica o
     // primeiro por omissão (o valor inicial pode ter sido `null`).
@@ -424,6 +432,23 @@ export class CreateEventPage {
     this.form.controls.guests.push(this.guestGroup());
   }
 
+  /** Pré-seleciona `?comunidade=` (vindo da página da comunidade). */
+  private async loadCommunities(): Promise<void> {
+    try {
+      const mine = await this.communitiesRepo.list('mine');
+      const eligible = mine.filter(
+        (item) => item.my_status === 'active' && (item.my_role === 'owner' || item.my_role === 'manager'),
+      );
+      this.communities.set(eligible);
+      const requested = this.route.snapshot.queryParamMap.get('comunidade');
+      if (requested && eligible.some((item) => item.id === requested)) {
+        this.communityId.set(requested);
+      }
+    } catch {
+      this.communities.set([]);
+    }
+  }
+
   private validateAll(): boolean {
     return this.validateStep(0) && this.validateStep(1) && this.validateStep(2);
   }
@@ -562,6 +587,7 @@ export class CreateEventPage {
         value.visibilitySettings.showAttendeeCount,
       minAge: parseAge(value.visibilitySettings.minAge),
       maxAge: parseAge(value.visibilitySettings.maxAge),
+      communityId: this.communityId() || null,
     };
   }
 

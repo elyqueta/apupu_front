@@ -67,6 +67,8 @@ export interface CreateTeamInput {
   name: string;
   category?: TeamCategory;
   description?: string | null;
+  /** Bloco 11: equipa dentro de uma comunidade. */
+  communityId?: string | null;
 }
 
 export interface UpdateTeamInput {
@@ -117,8 +119,23 @@ export class TeamsRepository {
       name: input.name,
       category: input.category,
       description: input.description,
+      ...(input.communityId ? { community_id: input.communityId } : {}),
     });
     return mapTeam(team);
+  }
+
+  /** Bloco 11: eventos geridos pela equipa (só o criador). */
+  async setEvents(teamId: string, eventIds: string[], all = false): Promise<Team> {
+    const team = await this.api.put<ApiTeam>(`/host/teams/${encodeURIComponent(teamId)}/events`, {
+      event_ids: eventIds,
+      all,
+    });
+    return mapTeam(team);
+  }
+
+  /** Bloco 11: sair da equipa. */
+  async leave(teamId: string): Promise<void> {
+    await this.api.postRaw<void>(`/host/teams/${encodeURIComponent(teamId)}/leave`, {});
   }
 
   async update(teamId: string, input: UpdateTeamInput): Promise<Team> {

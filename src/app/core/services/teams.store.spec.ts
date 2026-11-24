@@ -115,6 +115,9 @@ describe('TeamsStore', () => {
         { id: 'member-2', displayName: null, avatarUrl: null },
       ],
       openTaskCount: 2,
+      communityId: null,
+      creatorId: null,
+      eventIds: ['evt-1'],
       createdAt: '2026-01-01T00:00:00Z',
       updatedAt: '2026-01-02T00:00:00Z',
     });

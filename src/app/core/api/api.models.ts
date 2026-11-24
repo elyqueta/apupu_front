@@ -433,6 +433,7 @@ export interface ApiTemplate {
   supported_fields: string[];
   themes: Array<{ mode: 'light' | 'dark'; palette: string }>;
   is_active: boolean;
+  kind?: 'system' | 'user';
   manifest?: unknown;
 }
 

@@ -1,0 +1,36 @@
+/** Chaves i18n do Bloco 15 (templates, Gratitude, convidados, feed, eventos passados). */
+export const BLOCK15_KEYS_PT = {
+  'block15.event.completedBanner': 'Evento terminado. O conteúdo está em modo de leitura, exceto a galeria.',
+  'block15.status.active': 'Ativo',
+  'block15.status.completed': 'Terminado',
+  'block15.status.cancelled': 'Cancelado',
+  'block15.location.saveTitle': 'Guardar localização',
+  'block15.location.saveBody': 'Quer guardar esta localização no seu perfil para usar noutros eventos?',
+  'block15.location.saveConfirm': 'Guardar no perfil',
+  'block15.location.saveDismiss': 'Agora não',
+  'block15.gratitude.organization': 'ORGANIZAÇÃO',
+  'block15.gratitude.subtitle': 'FESTIVAL DE ADOLESCENTES',
+  'block15.gratitude.info': 'Informação',
+  'block15.gratitude.location': 'LOCAL',
+  'block15.gratitude.dressCode': 'DRESS-CODE',
+  'block15.gratitude.defaultDress': 'TRAJE AFRICANO',
+  'block15.invitation.completedText': 'Este evento já terminou. As respostas RSVP já não estão disponíveis.',
+} as const;
+
+export const BLOCK15_KEYS_EN: Record<keyof typeof BLOCK15_KEYS_PT, string> = {
+  'block15.event.completedBanner': 'This event has finished. Content is read-only, except the gallery.',
+  'block15.status.active': 'Active',
+  'block15.status.completed': 'Finished',
+  'block15.status.cancelled': 'Cancelled',
+  'block15.location.saveTitle': 'Save location',
+  'block15.location.saveBody': 'Do you want to save this location to your profile for other events?',
+  'block15.location.saveConfirm': 'Save to profile',
+  'block15.location.saveDismiss': 'Not now',
+  'block15.gratitude.organization': 'ORGANIZATION',
+  'block15.gratitude.subtitle': 'YOUTH FESTIVAL',
+  'block15.gratitude.info': 'Information',
+  'block15.gratitude.location': 'LOCATION',
+  'block15.gratitude.dressCode': 'DRESS CODE',
+  'block15.gratitude.defaultDress': 'AFRICAN ATTIRE',
+  'block15.invitation.completedText': 'This event has finished. RSVP responses are no longer available.',
+};

@@ -62,6 +62,7 @@ export interface ApiGuestInvitation {
     | 'title'
     | 'host_name'
     | 'starts_at'
+    | 'ends_at'
     | 'timezone'
     | 'location'
     | 'status'
@@ -184,6 +185,7 @@ export function mapGuestInvitation(invitation: ApiGuestInvitation): GuestInvitat
     title: invitation.event.title,
     hostName: invitation.event.host_name,
     startsAt: invitation.event.starts_at,
+    endsAt: invitation.event.ends_at ?? null,
     timezone: invitation.event.timezone,
     venue: location.type === 'venue' ? (location.name ?? '') : '',
     city: location.type === 'venue' ? (location.address ?? '') : '',
@@ -192,6 +194,7 @@ export function mapGuestInvitation(invitation: ApiGuestInvitation): GuestInvitat
     templateId: invitation.event.template_id,
     coverUrl: invitation.event.cover_url,
     status: invitation.rsvp_status === 'accepted' ? 'confirmed' : invitation.rsvp_status,
+    eventStatus: invitation.event.status === 'scheduled' ? 'published' : invitation.event.status,
     tableName: invitation.table_name,
     invitationUrl: invitation.invitation_url,
     invitedAt: invitation.created_at,
@@ -363,6 +366,7 @@ export function mapTemplate(template: ApiTemplate): EventTemplate {
     supportedFields: template.supported_fields,
     themes: template.themes,
     manifest: normalizeManifest(template.manifest),
+    kind: template.kind ?? 'user',
   };
 }
 

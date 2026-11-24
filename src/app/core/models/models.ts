@@ -170,6 +170,7 @@ export interface GuestInvitation {
   title: string;
   hostName: string;
   startsAt: string | null;
+  endsAt: string | null;
   timezone: string;
   venue: string;
   city: string;
@@ -179,6 +180,8 @@ export interface GuestInvitation {
   /** Imagem de capa do evento, quando o anfitrião definiu uma. */
   coverUrl: string | null;
   status: RsvpStatus;
+  /** Estado efetivo do evento (Bloco 15). */
+  eventStatus: EventStatus;
   tableName: string | null;
   /** Link individual do convite; `null` quando ainda não está disponível. */
   invitationUrl: string | null;
@@ -196,6 +199,7 @@ export interface EventTemplate {
   themes: Array<{ mode: 'light' | 'dark'; palette: string }>;
   /** Bloco 14: aparência, abertura e PDF. */
   manifest: TemplateManifest;
+  kind?: 'system' | 'user';
 }
 
 export interface EventActivity {

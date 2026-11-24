@@ -23,9 +23,13 @@ export class StatusBadgeComponent {
 
   readonly value = input.required<string>();
 
-  protected readonly label = computed(() =>
-    this.i18n.t(`status.${this.value()}` as TranslationKey),
-  );
+  protected readonly label = computed(() => {
+    const value = this.value();
+    if (value === 'published' || value === 'scheduled' || value === 'agendado') {
+      return this.i18n.t('status.active' as TranslationKey);
+    }
+    return this.i18n.t(`status.${value}` as TranslationKey);
+  });
 
   protected readonly classes = computed(() => {
     switch (this.value()) {

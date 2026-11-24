@@ -77,3 +77,13 @@
 ## Observações — Bloco 11 (24/11/2026)
 
 - **Auditoria:** o tipo `AUDIT_ACTIONS` do backend inclui `event_cancelled`, `event_cancel_otp_requested`, `admin_event_cancelled`, `event_cover_updated`, `event_cover_removed` e `activity_deleted`, mas o `CHECK host_audit_log_action_check` (migrações 0023/0027/0029) não as aceita. Essas linhas de auditoria falham ao inserir. Não alterei, porque está fora do âmbito; a correção é acrescentá-las ao `CHECK` numa migração própria.
+
+## Bloco 15 — Passo 1 (25/11/2026)
+
+| Passo / área | Observação | Estado / decisão |
+|---|---|---|
+| Passo 1.4 — Galeria em eventos terminados | A spec pede "modo leitura, exceto galeria (ainda por implementar)". Não existe galeria completa implementada neste bloco. | `requireActiveEvent` aceita `allowGallery` para caminhos `/events/:id/gallery|media` como ponto de extensão; UI não expõe ações de galeria. Registar como extensão futura, não bloquear Passo 1. |
+| Passo 1.1/1.3 — QR digital Gratitude | O QR digital do Gratitude usa imagem gerada por `https://api.qrserver.com/...` para evitar nova dependência no front. | Funciona como mínimo; se houver requisito de offline/privacidade, substituir por gerador local no Passo 2/3 sem mudar contrato. |
+| Passo 1.1 — Fidelidade visual Gratitude | O flyer de referência foi descrito em texto (agente não vê imagens). A implementação usa SVG/CSS próprio com os elementos descritos. | Validar visualmente com o autor; ajustar no Passo 2 quando o TemplateRenderer único existir. |
+| Verificação — migração up/down em DB de teste | Não executei `migration up/down` numa DB de teste dedicada neste ambiente (requer DB de teste configurada e pode ser destrutivo). | Build/typecheck/testes passaram; migração é reversível por código (`down` remove Gratitude/kind). Confirmar em CI/DB de teste antes de merge. |
+| Verificação — lint/testes completos | Lint e suite completa de testes do front/back ainda por executar no fecho do Passo 1. | Executar antes de declarar Passo 1 verde; corrigir falhas reais. |

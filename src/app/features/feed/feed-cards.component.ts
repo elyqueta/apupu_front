@@ -6,6 +6,7 @@ import { FeedCommunity,
 import { I18nService } from '../../core/i18n/i18n.service';
 import { ICONS } from '../../core/ui/icons';
 import { AvatarComponent } from '../../shared/components/avatar.component';
+import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
 import { TemplateArtworkComponent } from '../../shared/components/template-artwork.component';
 
 /** Caminho interno do link aberto (`/e/:slug`) a partir do URL absoluto. */
@@ -20,7 +21,7 @@ export function eventPath(event: Pick<FeedEvent, 'slug'>): string {
  */
 @Component({
   selector: 'app-feed-event-card',
-  imports: [RouterLink, FaIconComponent, TemplateArtworkComponent],
+  imports: [RouterLink, FaIconComponent, StatusBadgeComponent, TemplateArtworkComponent],
   template: `
     <article
       class="group flex h-full min-w-0 flex-col overflow-hidden rounded-4xl border border-line bg-surface shadow-card transition hover:border-brand/40"
@@ -36,6 +37,11 @@ export function eventPath(event: Pick<FeedEvent, 'slug'>): string {
           <fa-icon [icon]="icons['calendar']" aria-hidden="true" />
           <span class="truncate">{{ dateLabel() }}</span>
         </span>
+        @if (event().status) {
+          <span class="absolute right-3 top-3">
+            <app-status-badge [value]="event().status!" />
+          </span>
+        }
         @if (event().attendee_count !== undefined) {
           <span class="absolute bottom-3 right-3 inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-black/40 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur-md">
             <fa-icon [icon]="icons['guests']" aria-hidden="true" />

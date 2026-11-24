@@ -226,25 +226,29 @@ export class EventDetailPage {
     eventPermissionsFor(this.accessRole()),
   );
 
-  /** Evento cancelado: todas as escritas ficam bloqueadas na interface. */
+  /** Evento cancelado/terminado: escritas bloqueadas na interface. */
   protected readonly eventCancelled = computed(() => this.event()?.status === 'cancelled');
+  protected readonly eventCompleted = computed(() => this.event()?.status === 'completed');
 
   protected readonly effectivePermissions = computed<EventPermissions>(() => {
     const permissions = this.permissions();
-    if (!this.eventCancelled()) return permissions;
-    return {
-      ...permissions,
-      canEditEvent: false,
-      canManageGuests: false,
-      canManageTeams: false,
-      canManageManagers: false,
-      canCancelEvent: false,
-      canChangeEventStatus: false,
-      canEditExistingGuests: false,
-      canDeleteActivity: false,
-      canManageTasks: false,
-      canResendManageLink: false,
-    };
+    if (this.eventCancelled() || this.eventCompleted()) {
+      return {
+        ...permissions,
+        canEditEvent: false,
+        canManageGuests: false,
+        canManageTeams: false,
+        canManageManagers: false,
+        canCancelEvent: false,
+        canChangeEventStatus: false,
+        canEditExistingGuests: false,
+        canDeleteActivity: false,
+        canManageTasks: false,
+        canResendManageLink: false,
+        // Bloco 15: galeria permanece como ponto de extensão futuro.
+      };
+    }
+    return permissions;
   });
 
   protected readonly eventBadges = computed<string[]>(() => {

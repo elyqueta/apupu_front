@@ -41,8 +41,8 @@ export function roundCoord(value: number): number {
   selector: 'app-map-picker-dialog',
   imports: [ModalComponent, FaIconComponent],
   template: `
-    <app-modal [open]="open()" [title]="i18n.t('block14.location.mapTitle')" size="lg" (closed)="closed.emit()">
-      <div class="flex flex-col gap-3">
+    <app-modal [open]="open()" [title]="i18n.t('block14.location.mapTitle')" size="full" (closed)="closed.emit()">
+      <div class="flex h-full min-h-0 flex-col gap-3">
         <p class="text-xs leading-5 text-muted">{{ i18n.t('block14.location.mapHint') }}</p>
         <form class="flex gap-2" (submit)="$event.preventDefault(); search()">
           <label class="relative block flex-1">
@@ -63,14 +63,14 @@ export function roundCoord(value: number): number {
         @if (searchMessage()) {
           <p class="text-xs text-muted" role="status">{{ searchMessage() }}</p>
         }
-        <div #mapHost class="h-72 w-full overflow-hidden rounded-2xl border border-line bg-surface-raised sm:h-96" data-testid="map-picker"></div>
+        <div #mapHost class="min-h-0 w-full flex-1 overflow-hidden rounded-2xl border border-line bg-surface-raised" data-testid="map-picker"></div>
         @if (error()) {
           <p class="text-xs text-coral" role="alert">{{ error() }}</p>
         }
         @if (point(); as p) {
           <p class="text-xs text-muted" data-testid="map-picker-point">{{ i18n.t('block14.location.set', { lat: p.latitude, lng: p.longitude }) }}</p>
         }
-        <div class="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end">
+        <div class="flex flex-col-reverse gap-2 pt-1 sm:flex-row sm:justify-end">
           <button type="button" class="ui-btn-secondary" (click)="closed.emit()">{{ i18n.t('block14.location.cancel') }}</button>
           <button type="button" class="ui-btn" [disabled]="!point()" (click)="confirm()">
             <fa-icon [icon]="icons['mapPin']" aria-hidden="true" />
@@ -102,6 +102,7 @@ export class MapPickerDialogComponent {
   private leaflet: typeof Leaflet | null = null;
   private map: Leaflet.Map | null = null;
   private marker: Leaflet.Marker | null = null;
+  private resizeObs: ResizeObserver | null = null;
 
   constructor() {
     effect(() => {
@@ -143,7 +144,12 @@ export class MapPickerDialogComponent {
       this.map = map;
       this.marker = marker;
       // O modal anima a abertura: recalcula o tamanho depois de visível.
-      setTimeout(() => map.invalidateSize(), 250);
+      setTimeout(() => map.invalidateSize(), 150);
+      setTimeout(() => map.invalidateSize(), 400);
+      if (typeof ResizeObserver !== 'undefined') {
+        this.resizeObs = new ResizeObserver(() => map.invalidateSize());
+        this.resizeObs.observe(element);
+      }
     } catch {
       this.error.set(this.i18n.t('block14.location.mapError'));
     }
@@ -195,6 +201,8 @@ export class MapPickerDialogComponent {
   }
 
   private teardown(): void {
+    this.resizeObs?.disconnect();
+    this.resizeObs = null;
     this.map?.remove();
     this.map = null;
     this.marker = null;

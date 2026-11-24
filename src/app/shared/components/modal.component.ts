@@ -96,7 +96,7 @@ let titleCounter = 0;
 export class ModalComponent {
   readonly open = input.required<boolean>();
   readonly title = input<string>();
-  readonly size = input<'sm' | 'md' | 'lg'>('md');
+  readonly size = input<'sm' | 'md' | 'lg' | 'full'>('md');
   /** `dialog` centra o painel e faz scroll do painel inteiro; `sheet` mantém o bottom sheet de leitura. */
   readonly presentation = input<'dialog' | 'sheet'>('dialog');
   readonly dismissible = input(true);
@@ -137,7 +137,13 @@ export class ModalComponent {
   protected panelClass(): string {
     const size = this.size();
     const desktopWidth =
-      size === 'sm' ? 'sm:max-w-[24rem]' : size === 'lg' ? 'sm:max-w-[44rem]' : 'sm:max-w-[32rem]';
+      size === 'sm'
+        ? 'sm:max-w-[24rem]'
+        : size === 'lg'
+          ? 'sm:max-w-[44rem]'
+          : size === 'full'
+            ? 'sm:max-w-none sm:h-full'
+            : 'sm:max-w-[32rem]';
     const width =
       this.presentation() === 'sheet'
         ? desktopWidth
@@ -145,14 +151,22 @@ export class ModalComponent {
           ? 'max-w-[24rem]'
           : size === 'lg'
             ? 'max-w-[44rem]'
-            : 'max-w-[32rem]';
+            : size === 'full'
+              ? 'max-w-none h-[calc(100dvh-2rem)]'
+              : 'max-w-[32rem]';
     if (this.presentation() === 'sheet') {
-      return `relative flex max-h-[calc(100dvh-0.5rem)] w-full flex-col overflow-hidden rounded-t-4xl border border-line bg-surface-solid/95 shadow-card backdrop-blur-2xl motion-safe:animate-sheet sm:max-h-[min(92dvh,52rem)] sm:rounded-4xl sm:motion-safe:animate-rise ${desktopWidth}`;
+      return `relative flex max-h-[calc(100dvh-0.5rem)] w-full flex-col overflow-hidden rounded-t-4xl border border-line bg-surface-solid/95 shadow-card backdrop-blur-2xl motion-safe:animate-sheet ${size === 'full' ? 'sm:h-[min(92dvh,52rem)] sm:max-h-[min(92dvh,52rem)]' : 'sm:max-h-[min(92dvh,52rem)]'} sm:rounded-4xl sm:motion-safe:animate-rise ${desktopWidth}`;
+    }
+    if (size === 'full') {
+      return `relative flex h-[calc(100dvh-2rem)] w-full max-w-none flex-col overflow-hidden rounded-4xl border border-line bg-surface-solid/95 shadow-card backdrop-blur-2xl motion-safe:animate-rise`;
     }
     return `relative flex max-h-[calc(100dvh-2rem)] w-full flex-col overflow-y-auto overscroll-contain rounded-4xl border border-line bg-surface-solid/95 shadow-card backdrop-blur-2xl motion-safe:animate-rise ${width}`;
   }
 
   protected bodyClass(): string {
+    if (this.size() === 'full') {
+      return 'min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-4 sm:px-6';
+    }
     return this.presentation() === 'sheet'
       ? 'min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-4 sm:px-6'
       : 'shrink-0 px-5 pt-4 pb-6 sm:px-6';

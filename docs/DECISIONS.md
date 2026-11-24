@@ -234,3 +234,19 @@ Mapeamento feito antes de alterar código. O frontend parte de `feat/bloco-3-det
 | Google e data de nascimento. | O login Google pede apenas `profile` e `email`; a data de nascimento **não** vem nesses scopes, por isso fica vazia. Não foram pedidos scopes extra. | Regra do bloco: não pedir scopes extra sem aprovação. |
 | Pesquisa de perfis. | Não existia pesquisa de perfis para utilizadores (só a do admin). Criado `hostRepository.searchPublicProfiles`, que filtra sempre `profile_visibility = 'public'`, para os blocos seguintes; teste negativo em `tests/bloco10.test.ts`. A lista do super admin não é "pesquisa" de utilizadores e mantém todas as contas. | Garante o critério desde já. |
 | Slug do link público. | 12 caracteres base64url (72 bits), gerado ao tornar público; mantém-se se o evento voltar a privado (o link deixa de resolver) e é reutilizado se voltar a público. | Link estável para quem já o partilhou. |
+
+## Bloco 11 — Comunidades e equipas (24/11/2026)
+
+| Dúvida | Escolha | Motivo |
+|---|---|---|
+| `teams.creator_id` pedido, mas já existia `teams.created_by_host_id`. | Reutilizado `created_by_host_id` como criador; backfill com o anfitrião do evento onde estava vazio (nenhuma equipa ficou sem criador). | Evita duas colunas com o mesmo significado. |
+| `team_events` e queries. | Tabela criada com backfill do `event_id` actual (4/4 equipas na base local). Novas equipas escrevem em `team_events`. `teams.event_id` mantém-se como **evento principal**: as tarefas continuam ligadas a ele (trigger do Bloco 2). `team_events` é usado na listagem por evento, no acesso (anfitrião de um evento associado vê a equipa como gestor; o criador como anfitrião) e na página da comunidade. | Migrar todas as queries de tarefas/membros para `team_events` era uma reescrita de risco (trigger de tarefas e ~10 queries). Fica para um bloco futuro, já com os dados prontos. |
+| Equipa sem evento. | Não suportado: uma equipa continua a precisar de um evento principal. "Equipa sem comunidade" é suportado. | O modelo de tarefas depende do evento. |
+| "Associar a todos os eventos". | Numa equipa de comunidade: todos os eventos da comunidade. Sem comunidade: todos os eventos de que o criador é anfitrião. Lista explícita: qualquer evento que o criador gere (comunidade + pessoais). | Leitura literal de "todos os da comunidade". |
+| Papel do responsável da comunidade nos eventos. | Responsável = poderes de anfitrião (`access_role = host`); gestores da comunidade = gestor do evento. | "Configurações alteradas por gestores e responsável". |
+| Apagar evento da comunidade. | Sem confirmados: gestores, responsável e o criador do evento; com confirmados: só o responsável (mais confirmação do nome, Bloco 10). | Regra do bloco. |
+| Convites para comunidades privadas. | O gestor convida por email/telefone (estado `invited`); a pessoa aceita ou recusa na app (o convite liga-se à conta pelo email). | Simples, sem tokens novos. |
+| OTP da transferência. | Reutiliza `registration_verifications` com `purpose = 'community_transfer'`, o mesmo TTL, tentativas e intervalo de reenvio; email `comunidade_transferencia_codigo`. | Pedido do bloco. |
+| Emails de comunidade. | Um único tipo de outbox `community_notice` (pedido recebido/aprovado/recusado, convite, transferência iniciada/concluída) com template `comunidade_aviso`. | Evita seis tipos novos no `CHECK`. |
+| Código de partilha (`?ref=`). | Cada membro tem `community_members.ref_code` (8 caracteres aleatórios). Só conta na confirmação pelo link aberto de um evento da mesma comunidade, na criação da confirmação. | O membro não controla a contagem depois de criada. |
+| Contactos de membros. | Membros veem nome, foto e papel; o email só é devolvido a gestores/responsável; o telefone nunca. | Minimização de dados. |

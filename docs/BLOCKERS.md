@@ -73,3 +73,7 @@
 | Qualidade — lint | `npm run lint` termina com **0 erros** e **24 avisos** preexistentes. | Aceite conforme `REGRAS-GERAIS.md` §5; nenhum aviso novo introduzido. |
 | Passo 3 — portal | O menu de ações é montado no `body`; o estilo depende de `position: fixed` e de `getBoundingClientRect()`. | Coberto por Vitest (abertura para cima e limite direito) e por Playwright (dentro do ecrã, ao lado do botão, primeiro/último cartão). |
 | Verificação visual | Não existe captura automatizada de contraste, tamanho de texto ou alvos de toque. | Critérios revisados nas classes Tailwind: `text-xs` ou superior, alvos `size-11`/`h-11` ou superior, tokens claros/escuros e 320 px–desktop. Confirmação manual recomendada no resumo final. |
+
+## Observações — Bloco 11 (24/11/2026)
+
+- **Auditoria:** o tipo `AUDIT_ACTIONS` do backend inclui `event_cancelled`, `event_cancel_otp_requested`, `admin_event_cancelled`, `event_cover_updated`, `event_cover_removed` e `activity_deleted`, mas o `CHECK host_audit_log_action_check` (migrações 0023/0027/0029) não as aceita. Essas linhas de auditoria falham ao inserir. Não alterei, porque está fora do âmbito; a correção é acrescentá-las ao `CHECK` numa migração própria.

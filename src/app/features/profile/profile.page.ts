@@ -47,6 +47,7 @@ export class ProfilePage {
   private readonly reports = inject(ReportsRepository);
 
   protected readonly editOpen = signal(false);
+  protected readonly visibilitySaving = signal(false);
   protected readonly exportOpen = signal(false);
   protected readonly exporting = signal<ReportExportFormat | null>(null);
   protected readonly searchTerm = signal('');
@@ -113,6 +114,21 @@ export class ProfilePage {
    * O ficheiro vem do backend com o mesmo layout do separador
    * "Relatórios"; a página de perfil só inicia o download.
    */
+  /** Interruptor "Perfil público" (privado por defeito). */
+  protected async toggleProfileVisibility(): Promise<void> {
+    if (this.visibilitySaving()) return;
+    const next = this.profile().profileVisibility === 'public' ? 'private' : 'public';
+    this.visibilitySaving.set(true);
+    try {
+      await this.store.setProfileVisibility(next);
+      this.toasts.success(this.i18n.t('block10.profile.saved'));
+    } catch {
+      this.toasts.error(this.i18n.t('block10.profile.saveError'));
+    } finally {
+      this.visibilitySaving.set(false);
+    }
+  }
+
   protected async exportReport(format: ReportExportFormat): Promise<void> {
     if (this.exporting() !== null) {
       return;

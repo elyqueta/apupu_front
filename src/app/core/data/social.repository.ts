@@ -17,6 +17,10 @@ export interface FeedEvent {
   cover_url: string | null;
   template: { id: string | null; palette: string; mode: string };
   host_name: string;
+  host_avatar_url?: string | null;
+  /** Início da mensagem pública do convite. */
+  excerpt?: string | null;
+  published_at?: string;
   public_url: string;
   slug: string;
   community: { name: string | null; slug: string } | null;

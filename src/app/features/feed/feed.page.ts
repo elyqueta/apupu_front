@@ -4,6 +4,7 @@ import { Meta, Title } from '@angular/platform-browser';
 import { Router, RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { AuthService } from '../../core/api/auth.service';
+import { ApiCommunity, CommunitiesRepository } from '../../core/data/communities.repository';
 import {
   FeedCommunity,
   FeedEvent,
@@ -15,25 +16,29 @@ import {
 } from '../../core/data/social.repository';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { TranslationKey } from '../../core/i18n/translations';
+import { ToastService } from '../../core/services/toast.service';
 import { ICONS } from '../../core/ui/icons';
 import { AvatarComponent } from '../../shared/components/avatar.component';
 import { BrandComponent } from '../../shared/components/brand.component';
 import { ModalComponent } from '../../shared/components/modal.component';
 import { PreferenceControlsComponent } from '../../shared/components/preference-controls.component';
 import { SkeletonComponent } from '../../shared/components/skeleton.component';
-import {
-  FeedCommunityCardComponent,
-  FeedEventCardComponent,
-  FeedPersonCardComponent,
-  eventPath,
-} from './feed-cards.component';
+import { FeedCommunityCardComponent, FeedPersonCardComponent, eventPath } from './feed-cards.component';
+import { FeedPostComponent } from './feed-post.component';
 
 const CATEGORIES = ['wedding', 'birthday', 'corporate', 'baby', 'other'] as const;
 
 /**
- * Feed público (`/`, Bloco 12): eventos públicos próximos, comunidades e
- * pessoas públicas. Sem conta vê tudo o que é público e é convidado a criar
- * conta para ver perfis.
+ * Feed público (`/`, Bloco 12), desenhado a partir das referências do autor
+ * (`docs/REFERENCIAS-FEED-BLOCO-12.md`):
+ *
+ * - desktop em três colunas: perfil + atalhos | compositor + publicações |
+ *   próximos eventos + sugestões;
+ * - mobile imersivo: faixa de avatares em anel, publicações a toda a
+ *   largura com sobreposições em vidro e navegação inferior flutuante.
+ *
+ * Sem conta vê tudo o que é público e é convidado a criar conta para ver
+ * perfis.
  */
 @Component({
   selector: 'app-feed-page',
@@ -45,7 +50,7 @@ const CATEGORIES = ['wedding', 'birthday', 'corporate', 'baby', 'other'] as cons
     ModalComponent,
     PreferenceControlsComponent,
     SkeletonComponent,
-    FeedEventCardComponent,
+    FeedPostComponent,
     FeedCommunityCardComponent,
     FeedPersonCardComponent,
   ],
@@ -56,6 +61,8 @@ export class FeedPage {
   protected readonly icons = ICONS;
   protected readonly auth = inject(AuthService);
   private readonly social = inject(SocialRepository);
+  private readonly communitiesRepo = inject(CommunitiesRepository);
+  private readonly toasts = inject(ToastService);
   private readonly router = inject(Router);
   private readonly title = inject(Title);
   private readonly meta = inject(Meta);
@@ -75,8 +82,17 @@ export class FeedPage {
   protected readonly loading = signal(true);
   protected readonly loadingMore = signal(false);
   protected readonly error = signal(false);
-  protected readonly strip = signal<FeedCommunity[]>([]);
 
+  /** Faixa de avatares (comunidades públicas) e colunas laterais. */
+  protected readonly strip = signal<FeedCommunity[]>([]);
+  protected readonly upcoming = signal<FeedEvent[]>([]);
+  protected readonly suggestions = signal<FeedPerson[]>([]);
+  protected readonly requested = signal<string[]>([]);
+  protected readonly myCommunities = signal<ApiCommunity[]>([]);
+  protected readonly friendCount = signal(0);
+  protected readonly requestCount = signal(0);
+
+  protected readonly menuOpen = signal(false);
   protected readonly searchOpen = signal(false);
   protected readonly query = signal('');
   protected readonly results = signal<SearchResults | null>(null);
@@ -86,6 +102,8 @@ export class FeedPage {
 
   protected readonly gatePerson = signal<FeedPerson | null>(null);
   protected readonly signedIn = computed(() => !!this.auth.host());
+  protected readonly me = computed(() => this.auth.host());
+  protected readonly myName = computed(() => this.me()?.profile?.display_name || this.me()?.email || '');
 
   protected readonly events = computed(() => this.items().filter((item): item is FeedEvent => item.type === 'event'));
   protected readonly communities = computed(() =>
@@ -100,8 +118,7 @@ export class FeedPage {
     this.meta.updateTag({ property: 'og:description', content: this.i18n.t('block12.seo.description') });
 
     if (this.browser) {
-      void this.auth.restoreSession();
-      void this.loadStrip();
+      void this.loadSidebars();
     }
     effect(() => {
       this.type();
@@ -142,12 +159,31 @@ export class FeedPage {
     }
   }
 
-  private async loadStrip(): Promise<void> {
-    try {
-      const page = await this.social.feed('communities');
-      this.strip.set(page.items.filter((item): item is FeedCommunity => item.type === 'community').slice(0, 10));
-    } catch {
-      this.strip.set([]);
+  /** Colunas laterais e faixa de avatares; falhas aqui nunca bloqueiam o feed. */
+  private async loadSidebars(): Promise<void> {
+    const host = await this.auth.restoreSession().catch(() => null);
+    const [communities, events, people] = await Promise.all([
+      this.social.feed('communities').catch(() => null),
+      this.social.feed('events').catch(() => null),
+      this.social.feed('people').catch(() => null),
+    ]);
+    this.strip.set((communities?.items ?? []).filter((item): item is FeedCommunity => item.type === 'community').slice(0, 12));
+    this.upcoming.set((events?.items ?? []).filter((item): item is FeedEvent => item.type === 'event').slice(0, 4));
+    this.suggestions.set(
+      (people?.items ?? [])
+        .filter((item): item is FeedPerson => item.type === 'person' && item.id !== host?.id)
+        .slice(0, 5),
+    );
+    if (host) {
+      const [mine, friends] = await Promise.all([
+        this.communitiesRepo.list('mine').catch(() => []),
+        this.social.friends().catch(() => null),
+      ]);
+      this.myCommunities.set(mine.filter((item) => item.my_status === 'active').slice(0, 6));
+      this.friendCount.set(friends?.friends.length ?? 0);
+      this.requestCount.set(friends?.incoming.length ?? 0);
+      const pending = new Set((friends?.outgoing ?? []).map((entry) => entry.person.id));
+      this.requested.set([...pending]);
     }
   }
 
@@ -159,9 +195,18 @@ export class FeedPage {
     return this.i18n.t(`type.${id}` as TranslationKey);
   }
 
+  protected compose(kind: 'event' | 'community'): void {
+    if (!this.signedIn()) {
+      void this.router.navigate(['/criar-conta']);
+      return;
+    }
+    void this.router.navigate([kind === 'event' ? '/criar-evento' : '/comunidades']);
+  }
+
   /* ─────────────────────────────── Pesquisa ─────────────────────────────── */
 
   protected openSearch(): void {
+    this.menuOpen.set(false);
     this.searchOpen.set(true);
     queueMicrotask(() => document.getElementById('feed-search-input')?.focus());
   }
@@ -212,5 +257,24 @@ export class FeedPage {
     } else {
       this.gatePerson.set(person);
     }
+  }
+
+  protected async addFriend(person: FeedPerson): Promise<void> {
+    if (!this.signedIn()) {
+      this.gatePerson.set(person);
+      return;
+    }
+    try {
+      await this.social.requestFriend(person.id);
+      this.requested.update((ids) => [...ids, person.id]);
+      this.toasts.success(this.i18n.t('block12.friends.requested'));
+    } catch {
+      this.toasts.error(this.i18n.t('block12.common.error'));
+    }
+  }
+
+  protected openProfile(): void {
+    const me = this.me();
+    void this.router.navigate(me ? ['/pessoas', me.id] : ['/entrar']);
   }
 }

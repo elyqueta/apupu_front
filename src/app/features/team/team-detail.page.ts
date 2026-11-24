@@ -40,6 +40,7 @@ import { StatCardComponent } from '../../shared/components/stat-card.component';
 import { StatGridComponent } from '../../shared/components/stat-grid.component';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
 import { TaskFormDialogComponent } from '../../shared/components/task-form-dialog.component';
+import { TaskDetailDialogComponent } from '../../shared/components/task-detail-dialog.component';
 import { PhoneMaskDirective } from '../../shared/directives/phone-mask.directive';
 import { formatPhoneMask } from '../../core/utils/phone.util';
 import { ManagerCredentialsDialogComponent } from './manager-credentials-dialog.component';
@@ -66,6 +67,7 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 @Component({
   selector: 'app-team-detail-page',
   imports: [
+    TaskDetailDialogComponent,
     FaIconComponent,
     ReactiveFormsModule,
     SkeletonComponent,
@@ -98,6 +100,8 @@ export class TeamDetailPage {
   private readonly toasts = inject(ToastService);
   protected readonly i18n = inject(I18nService);
   protected readonly formatPhone = formatPhoneMask;
+  /** Tarefa aberta no detalhe (autor persistente, responsável, prazo). */
+  protected readonly detailTask = signal<TeamTask | null>(null);
   protected readonly icons = ICONS;
 
   private readonly teamId = this.route.snapshot.paramMap.get('teamId') ?? '';

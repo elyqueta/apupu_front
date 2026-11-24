@@ -70,7 +70,7 @@ export interface PersonPrimaryAction {
       </div>
 
       @if (!compact() && meta().length > 0) {
-        <ul class="mt-3 space-y-1.5 border-t border-line/70 pt-3">
+        <ul class="flex-1 space-y-1.5 border-t border-line/70 pt-3">
           @for (item of meta(); track $index) {
             <li class="flex min-w-0 items-center gap-2 text-xs text-muted">
               <fa-icon [icon]="iconFor(item.icon)" class="w-3 shrink-0 text-xs" aria-hidden="true" />
@@ -81,7 +81,7 @@ export interface PersonPrimaryAction {
       }
 
       @if ((actions().length > 0 || primaryAction() || secondaryAction()) && !compact()) {
-        <div class="mt-3 flex items-center justify-between gap-2 border-t border-line/70 pt-3">
+        <div class="mt-auto flex items-center justify-between gap-2 border-t border-line/70 pt-3">
           <div class="flex min-w-0 items-center gap-2">
           @if (primaryAction(); as primary) {
             <button
@@ -122,7 +122,7 @@ export interface PersonPrimaryAction {
           }
         </div>
       } @else if (actions().length > 0 && compact()) {
-        <div class="mt-2 flex justify-end">
+        <div class="mt-auto flex justify-end">
           <app-action-menu
             [items]="actions()"
             [triggerLabel]="actionsLabel()"
@@ -159,8 +159,10 @@ export class PersonCardComponent {
   protected readonly icons = ICONS;
 
   protected readonly classes = (): string => {
+    // Todos os cartões de pessoa ocupam a altura da célula da grelha
+    // (`auto-rows-fr`) e encostam as ações em baixo: tamanho uniforme.
     const base =
-      'min-w-0 rounded-2xl border shadow-card transition ' +
+      'flex h-full min-w-0 flex-col gap-3 rounded-2xl border shadow-card transition ' +
       (this.compact() ? 'p-3' : 'p-3.5');
     return this.highlight()
       ? `${base} border-brand/50 bg-brand/5`

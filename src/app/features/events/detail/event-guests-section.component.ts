@@ -127,9 +127,9 @@ import { GUEST_FILTERS, GuestFilter } from './detail.models';
               }
             </div>
           } @else {
-            <ul class="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            <ul class="mt-4 grid auto-rows-fr grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
               @for (entry of entries(); track entry.guest.id) {
-                <li class="min-w-0">
+                <li class="h-full min-w-0">
                   <app-person-card
                     [name]="entry.guest.name"
                     [subtitle]="contactLine(entry.guest)"

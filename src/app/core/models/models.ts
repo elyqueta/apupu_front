@@ -211,6 +211,8 @@ export interface WorkspaceTask {
   completedAt: string | null;
   createdAt: string;
   updatedAt: string;
+  /** Vista completa da tarefa para o detalhe (autor, responsável, prazo…). */
+  detail: TeamTask;
 }
 
 /** Tipos de notificação in-app gerados a partir de atividades e lembretes. */
@@ -432,7 +434,11 @@ export interface TeamTask {
   priority: TaskPriority;
   status: TaskStatus;
   createdByHostId: string | null;
+  /** Nome de quem criou a tarefa (persistente). */
+  createdByName: string | null;
   completedByMemberId: string | null;
+  /** Nome de quem concluiu a tarefa. */
+  completedByName: string | null;
   completedAt: string | null;
   archivedAt: string | null;
   createdAt: string;

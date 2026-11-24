@@ -318,7 +318,9 @@ export function mapTeamTask(task: ApiTask): TeamTask {
     priority: task.priority ?? 'normal',
     status: task.status ?? (task.done ? 'concluida' : 'por_fazer'),
     createdByHostId: task.created_by_host_id ?? null,
+    createdByName: task.created_by_name ?? null,
     completedByMemberId: task.completed_by_member_id ?? null,
+    completedByName: task.completed_by_name ?? null,
     completedAt: task.completed_at,
     archivedAt: task.archived_at ?? null,
     createdAt: task.created_at,
@@ -338,6 +340,7 @@ export function mapTask(task: ApiTask): WorkspaceTask {
     completedAt: task.completed_at,
     createdAt: task.created_at,
     updatedAt: task.updated_at,
+    detail: mapTeamTask(task),
   };
 }
 

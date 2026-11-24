@@ -366,7 +366,10 @@ export interface ApiTask {
   priority: ApiTaskPriority;
   status: ApiTaskStatus;
   created_by_host_id: string | null;
+  /** Autor da tarefa (persistente, mesmo sem a conta). */
+  created_by_name?: string | null;
   completed_by_member_id: string | null;
+  completed_by_name?: string | null;
   completed_at: string | null;
   archived_at: string | null;
   /** @deprecated Use `title`. */

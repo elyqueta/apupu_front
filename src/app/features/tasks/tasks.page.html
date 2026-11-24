@@ -178,7 +178,7 @@
         >
           <button
             type="button"
-            class="mt-0.5 grid size-8 shrink-0 place-items-center rounded-xl border transition disabled:opacity-50"
+            class="mt-0.5 grid size-11 shrink-0 place-items-center rounded-xl border transition disabled:opacity-50"
             [class]="
               task.done
                 ? 'border-mint/30 bg-mint/15 text-mint'
@@ -188,25 +188,31 @@
             [attr.aria-label]="task.done ? i18n.t('tasks.markPending') : i18n.t('tasks.markDone')"
             (click)="toggle(task)"
           >
-            <fa-icon [icon]="icons['check']" class="text-[10px]" aria-hidden="true" />
+            <fa-icon [icon]="icons['check']" class="text-xs" aria-hidden="true" />
           </button>
 
           <div class="min-w-0 flex-1">
-            <p
-              class="text-sm font-semibold text-ink"
+            <button
+              type="button"
+              class="block max-w-full text-left text-sm font-semibold text-ink underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60"
               [class.line-through]="task.done"
               [class.text-muted]="task.done"
+              [attr.data-testid]="'task-open-' + task.id"
+              (click)="detailTask.set(task.detail)"
             >
-              {{ task.label }}
+              {{ task.detail.title || task.label }}
+            </button>
+            <p class="mt-0.5 text-xs text-muted" [attr.data-testid]="'task-author-' + task.id">
+              {{ i18n.t('block11.task.authorLine', { name: task.detail.createdByName || i18n.t('block11.task.unknownAuthor') }) }}
             </p>
-            <p class="mt-1 flex flex-wrap items-center gap-2 text-[10px] text-muted">
+            <p class="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted">
               @if (task.eventTitle) {
                 <span
                   class="inline-flex max-w-full min-w-0 items-center gap-1 rounded-full border border-line bg-surface px-2 py-0.5"
                 >
                   <fa-icon
                     [icon]="icons['calendar']"
-                    class="shrink-0 text-[8px]"
+                    class="shrink-0 text-[10px]"
                     aria-hidden="true"
                   />
                   <span class="truncate">{{ task.eventTitle }}</span>
@@ -216,14 +222,14 @@
                 <span
                   class="inline-flex max-w-full min-w-0 items-center gap-1 rounded-full border border-iris/30 bg-iris/10 px-2 py-0.5 text-iris"
                 >
-                  <fa-icon [icon]="icons['user']" class="shrink-0 text-[8px]" aria-hidden="true" />
+                  <fa-icon [icon]="icons['user']" class="shrink-0 text-[10px]" aria-hidden="true" />
                   <span class="truncate">{{ task.managerEmail }}</span>
                 </span>
               } @else {
                 <span
                   class="inline-flex items-center gap-1 rounded-full border border-brand/25 bg-brand/10 px-2 py-0.5 text-brand-strong"
                 >
-                  <fa-icon [icon]="icons['userCheck']" class="text-[8px]" aria-hidden="true" />
+                  <fa-icon [icon]="icons['userCheck']" class="text-[10px]" aria-hidden="true" />
                   {{ i18n.t('tasks.assignee.host') }}
                 </span>
               }
@@ -237,13 +243,22 @@
 
           <button
             type="button"
-            class="grid size-8 shrink-0 place-items-center rounded-xl border border-line bg-surface text-muted transition hover:border-coral/40 hover:text-coral disabled:opacity-50"
+            class="grid size-11 shrink-0 place-items-center rounded-xl border border-line bg-surface text-muted transition hover:border-brand/40 hover:text-ink"
+            [attr.aria-label]="i18n.t('block11.task.details')"
+            [attr.title]="i18n.t('block11.task.details')"
+            (click)="detailTask.set(task.detail)"
+          >
+            <fa-icon [icon]="icons['info']" aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            class="grid size-11 shrink-0 place-items-center rounded-xl border border-line bg-surface text-muted transition hover:border-coral/40 hover:text-coral disabled:opacity-50"
             [disabled]="busyId() === task.id"
             [attr.aria-label]="i18n.t('tasks.remove')"
             [attr.title]="i18n.t('tasks.remove')"
             (click)="remove(task)"
           >
-            <fa-icon [icon]="icons['trash']" class="text-[10px]" aria-hidden="true" />
+            <fa-icon [icon]="icons['trash']" class="text-xs" aria-hidden="true" />
           </button>
         </li>
       }
@@ -298,3 +313,5 @@
     (pressed)="openTaskDialog()"
   />
 </section>
+
+<app-task-detail-dialog [task]="detailTask()" (closed)="detailTask.set(null)" />

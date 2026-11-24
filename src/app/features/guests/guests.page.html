@@ -148,6 +148,7 @@
           </button>
           <button
             type="button"
+            data-testid="guests-add"
             class="hidden h-11 w-fit items-center gap-2 rounded-xl bg-brand px-4 text-sm font-semibold text-on-secondary transition hover:bg-secondary-hover md:inline-flex"
             (click)="openCreate()"
           >
@@ -197,19 +198,19 @@
         }
       </div>
     } @else {
-      <ul class="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+      <ul class="mt-4 grid auto-rows-fr grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
         @for (entry of items(); track entry.guest.id) {
-          <li class="min-w-0">
+          <li class="h-full min-w-0">
             <app-person-card
               [name]="entry.guest.name"
-              [subtitle]="
-                entry.guest.email +
-                (entry.guest.phone ? ' · ' + entry.guest.phone : '')
-              "
+              [subtitle]="contactLine(entry.guest)"
               [status]="entry.guest.status"
               [meta]="metaFor(entry)"
               [actions]="actionsFor(entry)"
               [primaryAction]="primaryFor(entry)"
+              [secondaryAction]="secondaryFor(entry)"
+              [flag]="entry.guest.ageFlag ? i18n.t('block10.guest.ageFlag') : null"
+              [flagHint]="i18n.t('block10.guest.ageFlagHint')"
               [actionsLabel]="i18n.t('guests.tableActions')"
               (actionSelected)="onMenuAction($event, entry)"
               (primaryTriggered)="onPrimary($event, entry)"
@@ -275,13 +276,9 @@
   />
 
   <!-- FAB (mobile): abre o mesmo diálogo de adicionar convidado, acima da bottom-nav. -->
-  <button
-    type="button"
-    class="fixed right-4 z-30 inline-flex h-12 items-center gap-2 rounded-full bg-brand px-4 text-sm font-semibold text-on-secondary shadow-card transition hover:bg-secondary-hover md:hidden"
-    style="bottom: calc(env(safe-area-inset-bottom) + 4.5rem)"
-    (click)="openCreate()"
-  >
-    <fa-icon [icon]="icons['plus']" class="text-xs" aria-hidden="true" />
-    {{ i18n.t('guests.addShort') }}
-  </button>
+  <app-mobile-fab
+    [label]="i18n.t('guests.addShort')"
+    testId="guests-add"
+    (pressed)="openCreate()"
+  />
 </section>

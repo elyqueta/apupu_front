@@ -8,6 +8,7 @@ import {
   PLATFORM_ID,
   signal,
   untracked,
+  viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -38,6 +39,7 @@ import {
   Team,
   WorkspaceTask,
 } from '../../core/models/models';
+import { EventMenuBridgeService } from '../../core/services/event-menu-bridge.service';
 import { ShareService } from '../../core/services/share.service';
 import { DownloadService } from '../../core/services/download.service';
 import { ToastService } from '../../core/services/toast.service';
@@ -71,6 +73,14 @@ import { EventManagersSectionComponent } from './detail/event-managers-section.c
 import { EventSummaryComponent } from './detail/event-summary.component';
 import { EventTasksSectionComponent } from './detail/event-tasks-section.component';
 import { EventTeamsSectionComponent } from './detail/event-teams-section.component';
+import { DeleteEventDialogComponent } from '../../shared/components/delete-event-dialog.component';
+import {
+  EventVisibilityFieldsComponent,
+  ageRangeError,
+  parseAge,
+} from '../../shared/components/event-visibility-fields.component';
+import { PublicLinkCardComponent } from '../../shared/components/public-link-card.component';
+import { EventVisibility } from '../../core/models/models';
 
 function toIsoDate(date: Date): string {
   return date.toISOString().slice(0, 10);
@@ -116,6 +126,9 @@ function isoDaysAgo(days: number): string {
     EventSummaryComponent,
     EventTasksSectionComponent,
     EventTeamsSectionComponent,
+    EventVisibilityFieldsComponent,
+    PublicLinkCardComponent,
+    DeleteEventDialogComponent,
   ],
   templateUrl: './event-detail.page.html',
 })
@@ -130,6 +143,7 @@ export class EventDetailPage {
   private readonly teamsRepository = inject(TeamsRepository);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly eventMenuBridge = inject(EventMenuBridgeService);
   private readonly downloads = inject(DownloadService);
   private readonly document = inject(DOCUMENT);
   private readonly platformId = inject(PLATFORM_ID);
@@ -140,6 +154,7 @@ export class EventDetailPage {
   protected readonly icons = ICONS;
 
   readonly eventId = input.required<string>();
+  private readonly sectionShell = viewChild(EventSectionShellComponent);
 
   protected readonly tab = signal<EventTab>('resumo');
   protected readonly guestSearch = signal('');
@@ -173,6 +188,9 @@ export class EventDetailPage {
   protected readonly credentials = signal<ManagerCreationResult | null>(null);
   protected readonly credentialsOpen = signal(false);
   protected readonly editModalOpen = signal(false);
+  protected readonly deleteOpen = signal(false);
+  protected readonly deleteBusy = signal(false);
+  protected readonly deleteError = signal('');
   protected readonly coverModalOpen = signal(false);
   protected readonly taskDialogOpen = signal(false);
   protected readonly onlyMine = signal(false);
@@ -269,6 +287,22 @@ export class EventDetailPage {
         id: 'copy',
         label: this.i18n.t('eventDetail.copyInvitation'),
         icon: ICONS['copy'],
+      });
+    }
+    if (permissions.canExport && event?.visibility === 'public' && event.publicUrl) {
+      items.push({
+        id: 'copyPublicLink',
+        label: this.i18n.t('block10.copy.link'),
+        icon: ICONS['globe'],
+      });
+    }
+    // Só o criador/proprietário pode apagar (o servidor confirma).
+    if (this.accessRole() === 'host' && !this.isManagement()) {
+      items.push({
+        id: 'delete',
+        label: this.i18n.t('block10.delete.title'),
+        icon: ICONS['trash'],
+        tone: 'danger',
       });
     }
     return items;
@@ -426,6 +460,12 @@ export class EventDetailPage {
     message: ['', [Validators.required, Validators.maxLength(1200)]],
     rules: ['', [Validators.maxLength(800)]],
     dressCode: ['', [Validators.maxLength(160)]],
+    visibilitySettings: this.fb.group({
+      visibility: this.fb.control<EventVisibility>('private'),
+      showAttendeeCount: [false],
+      minAge: [''],
+      maxAge: [''],
+    }),
   });
 
   protected readonly taskForm = this.fb.group({
@@ -465,6 +505,12 @@ export class EventDetailPage {
         message: event.message,
         rules: event.rules,
         dressCode: event.dressCode,
+        visibilitySettings: {
+          visibility: event.visibility,
+          showAttendeeCount: event.showAttendeeCount,
+          minAge: event.minAge === null ? '' : String(event.minAge),
+          maxAge: event.maxAge === null ? '' : String(event.maxAge),
+        },
       });
     });
     effect(() => {
@@ -501,6 +547,14 @@ export class EventDetailPage {
         this.coverForm.reset({ url: event?.coverUrl ?? '' });
       });
     });
+    this.eventMenuBridge.actions.pipe(takeUntilDestroyed()).subscribe((action) => {
+      if (action === 'addGuest') {
+        this.openGuestCreate();
+        return;
+      }
+      this.sectionShell()?.openMenu();
+    });
+
     this.destroyRef.onDestroy(() => {
       if (this.guestDebounce) {
         clearTimeout(this.guestDebounce);
@@ -537,6 +591,45 @@ export class EventDetailPage {
       case 'copy':
         void this.copyInvitation();
         break;
+      case 'copyPublicLink':
+        void this.copyPublicLink();
+        break;
+      case 'delete':
+        this.deleteError.set('');
+        this.deleteOpen.set(true);
+        break;
+    }
+  }
+
+  protected async copyPublicLink(): Promise<void> {
+    const url = this.event()?.publicUrl;
+    if (!url) return;
+    if (await this.share.copy(url)) {
+      this.toasts.success(this.i18n.t('block10.copy.done'));
+    } else {
+      this.toasts.error(this.i18n.t('block10.copy.failed'));
+    }
+  }
+
+  /** Apaga o evento (remoção lógica) depois da confirmação por escrito. */
+  protected async confirmDeleteEvent(confirmName: string | undefined): Promise<void> {
+    if (this.deleteBusy()) return;
+    this.deleteBusy.set(true);
+    this.deleteError.set('');
+    try {
+      await this.store.deleteEvent(this.eventId(), confirmName);
+      this.deleteOpen.set(false);
+      this.toasts.success(this.i18n.t('block10.delete.success'));
+      void this.router.navigate(['/eventos']);
+    } catch (error: unknown) {
+      const apiError = toApiError(error);
+      this.deleteError.set(
+        apiError.code === 'event_delete_confirmation_required'
+          ? this.i18n.t('block10.delete.mismatch')
+          : this.i18n.t('block10.delete.error'),
+      );
+    } finally {
+      this.deleteBusy.set(false);
     }
   }
 
@@ -1265,8 +1358,19 @@ export class EventDetailPage {
       this.settingsForm.markAllAsTouched();
       return;
     }
+    const { visibilitySettings, ...fields } = this.settingsForm.getRawValue();
+    if (ageRangeError(visibilitySettings.minAge, visibilitySettings.maxAge)) {
+      return;
+    }
     try {
-      await this.store.updateEvent(this.eventId(), this.settingsForm.getRawValue());
+      await this.store.updateEvent(this.eventId(), {
+        ...fields,
+        visibility: visibilitySettings.visibility,
+        showAttendeeCount:
+          visibilitySettings.visibility === 'public' && visibilitySettings.showAttendeeCount,
+        minAge: parseAge(visibilitySettings.minAge),
+        maxAge: parseAge(visibilitySettings.maxAge),
+      });
       this.toasts.success(this.i18n.t('eventDetail.changesSaved'));
     } catch (error: unknown) {
       this.toasts.error(toApiError(error).message);
@@ -1311,6 +1415,22 @@ export class EventDetailPage {
     const url = this.share.whatsappUrl(guest.phone, text);
     if (url) {
       this.share.openExternal(url);
+      void this.recordWhatsappShare(guest);
+    }
+  }
+
+  /** Regista a partilha de um convite específico sem bloquear novo envio. */
+  private async recordWhatsappShare(guest: Guest): Promise<void> {
+    if (!guest.invitationUrl) {
+      return;
+    }
+    try {
+      const updated = await this.store.markWhatsappShared(guest);
+      this.guestItems.update((items) =>
+        items.map((entry) => (entry.guest.id === updated.id ? { ...entry, guest: updated } : entry)),
+      );
+    } catch {
+      // A partilha no WhatsApp já foi aberta; apenas o registo falhou.
     }
   }
 

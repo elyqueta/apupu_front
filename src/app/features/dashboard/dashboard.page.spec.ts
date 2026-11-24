@@ -24,6 +24,10 @@ function guest(id: string, status: RsvpStatus, phone: string | null): Guest {
     tableName: null,
     invitationUrl: 'https://example.com/convite/1',
     openedAt: null,
+    whatsappSharedAt: new Date(Date.now() - 2 * 86_400_000).toISOString(),
+    whatsappShareCount: 1,
+    source: 'personal',
+    ageFlag: false,
     invitedAt: new Date(Date.now() - 3 * 86_400_000).toISOString(),
     respondedAt: null,
   };
@@ -71,6 +75,7 @@ describe('DashboardPage · convidados', () => {
     eventStats: vi.fn().mockReturnValue(null),
     isEventHost: vi.fn().mockReturnValue(true),
     sendReminder: vi.fn().mockResolvedValue(true),
+    markWhatsappShared: vi.fn().mockImplementation(async (value: Guest) => value),
     retry: vi.fn(),
     toggleTask: vi.fn().mockResolvedValue(undefined),
   };
@@ -128,9 +133,12 @@ describe('DashboardPage · convidados', () => {
     expect(view.primaryFor(entry).id).toBe('whatsapp');
     expect(view.metaFor(entry)[0].label).toBe(event.title);
     expect(view.metaFor(entry)[1].label).toContain('3 dias');
+    expect(view.metaFor(entry)[2].label).toContain('Link partilhado por WhatsApp');
+    expect(view.metaFor(entry)[2].label).toContain('há 2 dias');
 
     view.onGuestAction('whatsapp', entry);
     expect(share.whatsappUrl).toHaveBeenCalled();
     expect(share.openExternal).toHaveBeenCalledWith('https://wa.me/244912345678?text=convite');
+    expect(store.markWhatsappShared).toHaveBeenCalledWith(entry.guest);
   });
 });

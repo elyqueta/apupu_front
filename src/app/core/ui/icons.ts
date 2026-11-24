@@ -86,10 +86,21 @@ import {
   faWandMagicSparkles,
   faWineGlass,
   faXmark,
+  faCompass,
+  faEllipsisVertical,
+  faHouse,
+  faPlay,
+  faLocationCrosshairs,
 } from '@fortawesome/free-solid-svg-icons';
 import { faFacebook, faGoogle, faWhatsapp } from '@fortawesome/free-brands-svg-icons';
 
 export const ICONS: Record<string, IconDefinition> = {
+  // Bloco 12 (feed): menu ⋮, início e descobrir.
+  ellipsisVertical: faEllipsisVertical,
+  home: faHouse,
+  compass: faCompass,
+  play: faPlay,
+  crosshairs: faLocationCrosshairs,
   dashboard: faGaugeHigh,
   dashboardAlt: faTableCellsLarge,
   events: faCalendarDays,

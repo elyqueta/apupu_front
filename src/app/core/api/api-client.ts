@@ -132,6 +132,11 @@ export class ApiClient {
     await firstValueFrom(this.http.delete<void>(this.url(path), { params: this.params(query) }));
   }
 
+  /** `DELETE` com corpo JSON (ex.: confirmação por escrito do nome). */
+  async deleteWithBody(path: string, body: unknown): Promise<void> {
+    await firstValueFrom(this.http.delete<void>(this.url(path), { body }));
+  }
+
   /**
    * Descarrega um ficheiro binário (PDF, CSV, …).
    *

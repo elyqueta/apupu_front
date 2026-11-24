@@ -131,6 +131,45 @@ describe('InvitationPage', () => {
     expect(native.querySelector('[data-testid="invitation-accept"]')).not.toBeNull();
   });
 
+  it('Bloco 14: sem capa abre no estilo do template; vídeo só carrega ao clicar; organizadores', async () => {
+    const context = setup();
+    http = context.http;
+    const fixture = publicInvitationFixture();
+    fixture.event.template = {
+      slug: 'marfim-dourado',
+      name: 'Marfim',
+      manifest: {
+        version: 1,
+        palette: { bg: '#FBF7EF', surface: '#FFFDF8', ink: '#3A2F1E', accent: '#B8913A', muted: '#8A7A5C' },
+        fonts: { display: 'script', body: 'serif' },
+        ornaments: { frame: 'thin-gold', corners: 'floral', divider: 'flourish' },
+        layout: { align: 'center', blocks: ['title'] },
+        cover: 'framed',
+        open_style: 'envelope',
+        pdf: { frame: 'double', qr_position: 'bottom-center', show_ornaments: true },
+      },
+    };
+    fixture.event.youtube_video_id = 'dQw4w9WgXcQ';
+    fixture.event.organizers = [
+      { display_name: 'Ana', avatar_url: null, role: 'owner', email: 'ana@exemplo.ao', phone: '923456789' },
+    ];
+    http.expectOne(`${BASE}/public/invitations/${TOKEN}`).flush({ data: fixture });
+    await settle(context.fixture);
+
+    const native = context.fixture.nativeElement as HTMLElement;
+    const welcome = native.querySelector('[data-testid="invitation-welcome"]');
+    expect(welcome?.getAttribute('data-open-style')).toBe('envelope');
+    (native.querySelector('[data-testid="invitation-welcome-continue"]') as HTMLButtonElement).click();
+    await settle(context.fixture);
+
+    expect(native.querySelector('[data-testid="invitation-video"] iframe')).toBeNull();
+    (native.querySelector('[data-testid="invitation-video-play"]') as HTMLButtonElement).click();
+    await settle(context.fixture);
+    const iframe = native.querySelector('[data-testid="invitation-video"] iframe');
+    expect(iframe?.getAttribute('src')).toContain('https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ');
+    expect(native.querySelector('[data-testid="invitation-organizers"]')?.textContent).toContain('Ana');
+  });
+
   it('mostra apenas o estado de cancelado num evento cancelado', async () => {
     const context = setup();
     http = context.http;

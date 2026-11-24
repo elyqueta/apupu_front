@@ -26,9 +26,10 @@
           [hostEmail]="view.event.hostEmail"
           [hostPhone]="view.event.hostPhone"
         />
-      } @else if (showWelcome() && view.event.coverUrl; as cover) {
+      } @else if (showWelcome()) {
         <app-invitation-welcome
-          [coverUrl]="cover"
+          [coverUrl]="view.event.coverUrl"
+          [manifest]="view.event.manifest"
           [guestName]="view.guest.name"
           [eventTitle]="view.event.title"
           (continue)="continueToInvitation()"
@@ -50,6 +51,10 @@
           (openHost)="hostOpen.set(true)"
           (openLocation)="locationOpen.set(true)"
         />
+
+        <app-invitation-video [videoId]="view.event.youtubeVideoId" [eventTitle]="view.event.title" />
+
+        <app-invitation-organizers [event]="view.event" />
 
         <app-invitation-reply
           [answer]="view.guest.answer"

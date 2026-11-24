@@ -79,9 +79,10 @@
       [class.-translate-x-full]="!mobileOpen()"
       [class]="
         sidebarCollapsed()
-          ? 'lg:w-[4.5rem] lg:transition-[width] lg:duration-200'
+          ? 'lg:w-[5rem] lg:transition-[width] lg:duration-200'
           : 'lg:w-[18.5rem] lg:transition-[width] lg:duration-200'
       "
+      [attr.data-rail]="sidebarCollapsed() ? 'true' : null"
       aria-label="Navegação principal"
     >
       <div
@@ -93,7 +94,7 @@
               routerLink="/painel"
               class="inline-flex"
               [attr.aria-label]="i18n.t('app.name')"
-              [attr.title]="i18n.t('app.name')"
+              [attr.data-tooltip]="i18n.t('app.name')"
             >
               <app-logo variant="symbol" [height]="40" class="dark:hidden" />
               <app-logo variant="symbol" theme="white" [height]="40" class="hidden dark:block" />
@@ -111,7 +112,7 @@
           </button>
         </div>
 
-        <nav class="mt-6 flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto pr-0.5">
+        <nav class="no-scrollbar mt-6 flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto pr-0.5">
           <p
             class="mb-2 px-2 text-xs font-semibold uppercase tracking-[0.24em] text-muted/80"
             [class.hidden]="sidebarCollapsed()"
@@ -125,7 +126,8 @@
               routerLinkActive
               #rla="routerLinkActive"
               [routerLinkActiveOptions]="{ exact: item.exact }"
-              [attr.title]="i18n.t(item.labelKey)"
+              [attr.title]="sidebarCollapsed() ? null : i18n.t(item.labelKey)"
+              [attr.data-tooltip]="sidebarCollapsed() ? i18n.t(item.labelKey) : null"
               [class]="
                 (rla.isActive
                   ? 'group flex items-center gap-3 rounded-2xl border border-brand/30 bg-secondary-soft py-2.5 text-brand-strong'
@@ -160,7 +162,8 @@
             routerLink="/gestao"
             routerLinkActive
             #mgmt="routerLinkActive"
-            [attr.title]="i18n.t('nav.management')"
+            [attr.title]="sidebarCollapsed() ? null : i18n.t('nav.management')"
+            [attr.data-tooltip]="sidebarCollapsed() ? i18n.t('nav.management') : null"
             [class]="
               (mgmt.isActive
                 ? 'group flex items-center gap-3 rounded-2xl border border-brand/30 bg-secondary-soft py-2.5 text-brand-strong'
@@ -200,7 +203,7 @@
               routerLink="/perfil"
               class="grid size-11 shrink-0 place-items-center rounded-2xl border border-line bg-surface-raised/60 transition hover:border-brand/35"
               [attr.aria-label]="i18n.t('shell.openProfile')"
-              [attr.title]="i18n.t('shell.openProfile')"
+              [attr.data-tooltip]="i18n.t('shell.openProfile')"
             >
               <app-avatar
                 [name]="store.profile().name"
@@ -212,7 +215,7 @@
               routerLink="/definicoes"
               class="grid size-11 shrink-0 place-items-center rounded-2xl border border-line bg-surface-raised/60 text-muted transition hover:border-brand/40 hover:text-ink"
               [attr.aria-label]="i18n.t('nav.settings')"
-              [attr.title]="i18n.t('nav.settings')"
+              [attr.data-tooltip]="i18n.t('nav.settings')"
             >
               <fa-icon [icon]="icons['settings']" class="text-sm" aria-hidden="true" />
             </a>
@@ -221,7 +224,7 @@
               [disabled]="loggingOut()"
               class="grid size-11 shrink-0 place-items-center rounded-2xl border border-line bg-surface-raised/60 text-muted transition hover:border-coral/40 hover:text-coral disabled:cursor-wait disabled:opacity-60"
               [attr.aria-label]="i18n.t('settings.logout')"
-              [attr.title]="i18n.t('settings.logout')"
+              [attr.data-tooltip]="i18n.t('settings.logout')"
               (click)="logout()"
             >
               <fa-icon [icon]="icons['logout']" class="text-sm" aria-hidden="true" />
@@ -274,14 +277,26 @@
         <div
           class="relative flex items-center gap-2 rounded-3xl border border-line bg-surface/80 p-2.5 shadow-card backdrop-blur-2xl sm:gap-3 sm:rounded-4xl sm:p-3"
         >
-          <button
-            type="button"
-            class="grid size-9 shrink-0 place-items-center rounded-xl border border-line bg-surface-raised text-muted transition hover:text-ink lg:hidden"
-            [attr.aria-label]="i18n.t('common.openMenu')"
-            (click)="mobileOpen.set(true)"
-          >
-            <fa-icon [icon]="icons['menu']" class="text-base" />
-          </button>
+          @if (isEventDetail()) {
+            <a
+              data-testid="event-back-button"
+              [routerLink]="eventBackLink()"
+              [attr.aria-label]="i18n.t(eventBackLabel())"
+              [attr.title]="i18n.t(eventBackLabel())"
+              class="grid size-11 shrink-0 place-items-center rounded-xl border border-line bg-surface-raised text-muted transition hover:border-brand/40 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60 lg:hidden"
+            >
+              <fa-icon [icon]="icons['chevronLeft']" class="text-base" aria-hidden="true" />
+            </a>
+          } @else {
+            <button
+              type="button"
+              class="grid size-9 shrink-0 place-items-center rounded-xl border border-line bg-surface-raised text-muted transition hover:text-ink lg:hidden"
+              [attr.aria-label]="i18n.t('common.openMenu')"
+              (click)="mobileOpen.set(true)"
+            >
+              <fa-icon [icon]="icons['menu']" class="text-base" />
+            </button>
+          }
 
           <button
             type="button"
@@ -381,6 +396,20 @@
               <span class="hidden sm:inline">{{ i18n.t('shell.newEvent') }}</span>
             </a>
 
+            @if (isEventDetail()) {
+              <button
+                type="button"
+                data-testid="event-menu-trigger"
+                class="grid size-11 shrink-0 place-items-center rounded-xl border border-line bg-surface-raised/60 text-muted transition hover:border-brand/40 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60"
+                [attr.aria-label]="i18n.t('eventDetail.eventMenu')"
+                [attr.title]="i18n.t('eventDetail.eventMenu')"
+                aria-haspopup="dialog"
+                [attr.aria-expanded]="eventMenuOpen()"
+                (click)="eventMenuOpen.set(true)"
+              >
+                <fa-icon [icon]="icons['menu']" class="text-sm" aria-hidden="true" />
+              </button>
+            } @else {
             <div>
               <button
                 type="button"
@@ -482,6 +511,7 @@
                 </div>
               }
             </div>
+            }
 
             <a
               routerLink="/perfil"
@@ -602,4 +632,19 @@
       </button>
     </div>
   </nav>
+
+  @if (isEventDetail()) {
+    <app-event-menu-drawer
+      [open]="eventMenuOpen()"
+      [title]="i18n.t('eventDetail.eventMenu')"
+      [closeLabel]="i18n.t('common.close')"
+      [addGuestLabel]="i18n.t('eventDetail.addGuest')"
+      [moreActionsLabel]="i18n.t('common.moreActions')"
+      [sections]="eventMenuSections()"
+      (closed)="eventMenuOpen.set(false)"
+      (sectionSelected)="onEventMenuSection($event)"
+      (addGuest)="eventMenuBridge.request('addGuest')"
+      (moreActions)="eventMenuBridge.request('moreActions')"
+    />
+  }
 </div>

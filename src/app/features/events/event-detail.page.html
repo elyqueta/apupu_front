@@ -31,6 +31,9 @@
         (exportDocument)="exportDocument($event.document, $event.format)" (exportPeriod)="exportPeriodReport($event)"
         (periodFromChange)="setPeriodFrom($event)" (periodToChange)="setPeriodTo($event)"
         (copyInvitation)="copyInvitation()" (openInvitation)="openInvitation()" />
+      @if (event.visibility === 'public' && event.publicUrl && effectivePermissions().canExport) {
+        <app-public-link-card [url]="event.publicUrl" [eventTitle]="event.title" />
+      }
       <div class="grid gap-4 lg:grid-cols-2">
         <app-event-tasks-section [tasks]="tasks()" [doneCount]="tasksDone()" [permissions]="effectivePermissions()" [busyId]="taskBusyId()"
           [onlyMine]="onlyMine()" [loading]="false" (createTask)="openTaskDialog()" (toggleTask)="toggleTask($event.id)"
@@ -126,12 +129,25 @@
           <textarea formControlName="dressCode" rows="3" class="w-full rounded-xl border border-line bg-surface-raised px-3 py-2.5 text-sm leading-6 text-ink outline-none focus:border-brand/50"></textarea>
         </label>
       </div>
+      <div class="border-t border-line pt-4">
+        <app-event-visibility-fields [group]="settingsForm.controls.visibilitySettings" />
+      </div>
     </form>
     <div modal-footer class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
       <button type="button" class="inline-flex h-11 items-center justify-center rounded-xl border border-line bg-surface-raised px-4 text-sm font-semibold text-ink transition hover:border-brand/40" (click)="closeEditModal()">{{ i18n.t('common.cancel') }}</button>
       <button type="submit" form="app-event-settings-form" class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-brand px-4 text-sm font-semibold text-on-secondary transition hover:bg-secondary-hover"><fa-icon [icon]="icons['check']" aria-hidden="true" /> {{ i18n.t('eventDetail.saveChanges') }}</button>
     </div>
   </app-modal>
+
+  <app-delete-event-dialog
+    [open]="deleteOpen()"
+    [eventTitle]="event.title"
+    [acceptedCount]="stats().confirmed"
+    [busy]="deleteBusy()"
+    [error]="deleteError()"
+    (confirmed)="confirmDeleteEvent($event)"
+    (closed)="deleteOpen.set(false)"
+  />
 
   <app-modal [open]="coverModalOpen()" [title]="i18n.t('eventDetail.coverTitle')" (closed)="closeCoverModal()">
     @if (event.coverUrl) {

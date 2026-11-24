@@ -4,6 +4,11 @@ import { BLOCK6_KEYS_EN, BLOCK6_KEYS_PT } from './block6-keys';
 import { BLOCK7_KEYS_EN, BLOCK7_KEYS_PT } from './block7-keys';
 import { BLOCK8_KEYS_EN, BLOCK8_KEYS_PT } from './block8-keys';
 import { BLOCK9_KEYS_EN, BLOCK9_KEYS_PT } from './block9-keys';
+import { BLOCK10_KEYS_EN, BLOCK10_KEYS_PT } from './block10-keys';
+import { BLOCK11_KEYS_EN, BLOCK11_KEYS_PT } from './block11-keys';
+import { BLOCK12_KEYS_EN, BLOCK12_KEYS_PT } from './block12-keys';
+import { BLOCK13_KEYS_EN, BLOCK13_KEYS_PT } from './block13-keys';
+import { BLOCK14_KEYS_EN, BLOCK14_KEYS_PT } from './block14-keys';
 
 const PT_AO = {
   ...BLOCK5_KEYS_PT,
@@ -11,6 +16,11 @@ const PT_AO = {
   ...BLOCK7_KEYS_PT,
   ...BLOCK8_KEYS_PT,
   ...BLOCK9_KEYS_PT,
+  ...BLOCK10_KEYS_PT,
+  ...BLOCK11_KEYS_PT,
+  ...BLOCK12_KEYS_PT,
+  ...BLOCK13_KEYS_PT,
+  ...BLOCK14_KEYS_PT,
 
   'app.name': 'Conto Contigo',
   'app.tagline': 'Eventos & convites',
@@ -248,7 +258,7 @@ const PT_AO = {
   'eventDetail.managerTeamLabel': 'Equipa: {name}',
   'eventDetail.newCodeTitle': 'Gerar novo código?',
   'eventDetail.newCodeMessage':
-    'O link e o código atuais deixam de funcionar. Vais receber um novo link e código para partilhar.',
+    'O link e o código atuais deixam de servir para novas entradas. Quem já entrou continua com acesso neste navegador até revogares o link.',
   'eventDetail.newCodeConfirm': 'Gerar novo código',
   'eventDetail.validityTitle': 'Alterar validade do link',
   'eventDetail.validityMessage': 'Escolhe até quando o gestor pode usar este link.',
@@ -456,7 +466,7 @@ const PT_AO = {
   'create.placeholder.dressCode': 'Ex.: Traje formal, tons de azul',
   'create.placeholder.guestName': 'Nome do convidado',
   'create.placeholder.guestEmail': 'nome@exemplo.ao',
-  'create.placeholder.guestPhone': '+244 900 000 000',
+  'create.placeholder.guestPhone': '923 456 789',
   'create.placeholder.bankName': 'Ex.: BAI',
   'create.placeholder.accountName': 'Nome na conta',
   'create.placeholder.iban': 'Referência da conta',
@@ -1038,7 +1048,8 @@ const PT_AO = {
 
   'nav.tasks': 'Tarefas',
   'nav.notifications': 'Notificações',
-  'common.phoneHint': 'Sem +244 — escreve apenas os 9 dígitos.',
+  'common.phoneHint': 'Sem +244 — 9 dígitos, a começar por 9.',
+  'common.phoneInvalid': 'Indique 9 dígitos a começar por 9 (ex.: 923 456 789).',
   'profile.personal.birthDateMin': 'A idade mínima é 5 anos.',
 
   'eventDetail.tasksDone': '{done} de {total} concluídas',
@@ -1452,7 +1463,7 @@ const PT_AO = {
   'teamDetail.action.demote': 'Passar a membro',
   'teamDetail.action.remove': 'Remover',
   'teamDetail.revokeTitle': 'Revogar acesso',
-  'teamDetail.revokeMessage': 'O link de {name} deixa de funcionar. A pessoa mantém-se na equipa.',
+  'teamDetail.revokeMessage': 'O link de {name} deixa de funcionar e as sessões abertas terminam. A pessoa mantém-se na equipa.',
   'teamDetail.revokeConfirm': 'Revogar acesso',
   'teamDetail.validityTitle': 'Alterar validade do link',
   'teamDetail.validitySaved': 'Validade do link atualizada.',
@@ -1513,6 +1524,11 @@ const EN: Record<TranslationKey, string> = {
   ...BLOCK7_KEYS_EN,
   ...BLOCK8_KEYS_EN,
   ...BLOCK9_KEYS_EN,
+  ...BLOCK10_KEYS_EN,
+  ...BLOCK11_KEYS_EN,
+  ...BLOCK12_KEYS_EN,
+  ...BLOCK13_KEYS_EN,
+  ...BLOCK14_KEYS_EN,
 
   'app.name': 'Conto Contigo',
   'app.tagline': 'Events & invitations',
@@ -1751,7 +1767,7 @@ const EN: Record<TranslationKey, string> = {
   'eventDetail.managerTeamLabel': 'Team: {name}',
   'eventDetail.newCodeTitle': 'Generate a new code?',
   'eventDetail.newCodeMessage':
-    'The current link and code will stop working. You will receive a new link and code to share.',
+    'The current link and code can no longer be used to sign in. Anyone already signed in keeps access on their browser until you revoke the link.',
   'eventDetail.newCodeConfirm': 'Generate new code',
   'eventDetail.validityTitle': 'Change link validity',
   'eventDetail.validityMessage': 'Choose until when the manager can use this link.',
@@ -1957,7 +1973,7 @@ const EN: Record<TranslationKey, string> = {
   'create.placeholder.dressCode': 'E.g. Formal attire, shades of blue',
   'create.placeholder.guestName': 'Guest name',
   'create.placeholder.guestEmail': 'name@example.com',
-  'create.placeholder.guestPhone': '+244 900 000 000',
+  'create.placeholder.guestPhone': '923 456 789',
   'create.placeholder.bankName': 'E.g. BAI',
   'create.placeholder.accountName': 'Name on account',
   'create.placeholder.iban': 'Account reference',
@@ -2535,7 +2551,8 @@ const EN: Record<TranslationKey, string> = {
 
   'nav.tasks': 'Tasks',
   'nav.notifications': 'Notifications',
-  'common.phoneHint': 'No +244 needed — just type the 9 digits.',
+  'common.phoneHint': 'No +244 needed — 9 digits starting with 9.',
+  'common.phoneInvalid': 'Enter 9 digits starting with 9 (e.g. 923 456 789).',
   'profile.personal.birthDateMin': 'The minimum age is 5.',
 
   'eventDetail.tasksDone': '{done} of {total} done',
@@ -2946,7 +2963,7 @@ const EN: Record<TranslationKey, string> = {
   'teamDetail.action.demote': 'Make member',
   'teamDetail.action.remove': 'Remove',
   'teamDetail.revokeTitle': 'Revoke access',
-  'teamDetail.revokeMessage': 'The link for {name} will stop working. They stay on the team.',
+  'teamDetail.revokeMessage': 'The link for {name} stops working and open sessions end. They stay on the team.',
   'teamDetail.revokeConfirm': 'Revoke access',
   'teamDetail.validityTitle': 'Change link validity',
   'teamDetail.validitySaved': 'Link validity updated.',

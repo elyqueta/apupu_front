@@ -64,6 +64,8 @@ function guestFixture(overrides: Partial<ApiInvitation> = {}): ApiInvitation {
     send_status: 'queued',
     send_count: 0,
     last_sent_at: null,
+    whatsapp_shared_at: null,
+    whatsapp_share_count: 0,
     opened_at: null,
     invitation_url: 'https://apupu-front.vercel.app/convite/token-de-teste',
     invitation_url_expires_at: null,

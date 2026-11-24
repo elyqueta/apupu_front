@@ -39,6 +39,8 @@ export interface HostProfileData {
   timezone: string;
   avatar_url: string | null;
   cover_url: string | null;
+  /** `private` por defeito; um perfil privado não aparece em pesquisas. */
+  profile_visibility?: 'public' | 'private';
 }
 
 export interface Host {
@@ -57,6 +59,10 @@ export interface EventLocation {
   name?: string;
   address?: string | null;
   online_url?: string;
+  /** Bloco 14: localização exata (ambas ou nenhuma). */
+  latitude?: number | null;
+  longitude?: number | null;
+  place_label?: string | null;
 }
 
 export interface EventContribution {
@@ -93,6 +99,14 @@ export interface ApiEvent {
   contribution: EventContribution;
   rsvp_deadline: string | null;
   status: ApiEventStatus;
+  /** Bloco 10: `private` (só convites individuais) ou `public` (link aberto). */
+  visibility?: 'public' | 'private';
+  /** Link aberto do evento; `null` quando é privado. */
+  public_url?: string | null;
+  show_attendee_count?: boolean;
+  /** Limites de idade: só na vista de gestão. */
+  min_age?: number | null;
+  max_age?: number | null;
   /** Papel de quem consulta o evento; ausente na vista pública. */
   access_role?: ApiEventAccessRole;
   created_at: string;
@@ -104,8 +118,15 @@ export interface ApiInvitation {
   id: string;
   event_id: string;
   guest_name: string;
-  guest_email: string;
+  /** `null` em confirmações pelo link aberto feitas só com telefone. */
+  guest_email: string | null;
   guest_phone: string | null;
+  /** `personal` (convite individual) ou `public_link` (link aberto). */
+  source?: 'personal' | 'public_link';
+  guest_age?: number | null;
+  /** Selo "Idade alterada". */
+  age_flag?: boolean;
+  age_flag_reason?: 'birth_date_changed' | null;
   table_name: string | null;
   /** Mensagem opcional deixada pelo convidado ao responder. */
   guest_message?: string | null;
@@ -114,6 +135,9 @@ export interface ApiInvitation {
   send_status: 'pending' | 'queued' | 'sent' | 'failed';
   send_count: number;
   last_sent_at: string | null;
+  /** Última vez que o anfitrião abriu o WhatsApp com o link deste convite. */
+  whatsapp_shared_at: string | null;
+  whatsapp_share_count: number;
   /** Primeira abertura do link do convite; `null` se nunca foi aberto. */
   opened_at: string | null;
   invitation_url: string | null;
@@ -185,6 +209,48 @@ export interface PublicEvent {
   contribution: EventContribution;
   rsvp_deadline: string | null;
   status: ApiEventStatus;
+  /** Bloco 14 */
+  youtube_video_id?: string | null;
+  template?: { slug: string; name: string; manifest: unknown } | null;
+  organizers?: ApiOrganizer[];
+  community?: { name: string; slug: string; avatar_url: string | null; visibility: string } | null;
+}
+
+/** Bloco 14: organizador visível no convite (nunca membros). */
+export interface ApiOrganizer {
+  display_name: string;
+  avatar_url: string | null;
+  role: 'owner' | 'manager';
+  email: string | null;
+  phone: string | null;
+}
+
+/** Link aberto de um evento público (`GET /public/events/:slug`, Bloco 10). */
+export interface ApiOpenEvent extends PublicEvent {
+  slug: string;
+  has_age_restriction: boolean;
+  rsvp_deadline_passed: boolean;
+  /** Só existe quando o anfitrião tornou público o nº de confirmados. */
+  attendee_count?: number;
+}
+
+export interface ApiOpenEventViewer {
+  name: string;
+  email: string;
+  phone: string | null;
+  has_birth_date: boolean;
+  rsvp_status: ApiRsvpStatus | null;
+}
+
+export interface ApiOpenEventEnvelope {
+  event: ApiOpenEvent;
+  viewer: ApiOpenEventViewer | null;
+  csrf_token: string | null;
+}
+
+export interface ApiOpenEventRsvpResult {
+  event: ApiOpenEvent;
+  rsvp: { name: string; status: ApiRsvpStatus; responded_at: string | null };
 }
 
 export interface ApiActivity {
@@ -238,6 +304,11 @@ export interface ApiTeam {
   completed_task_count: number;
   members_preview: ApiTeamMemberPreview[];
   open_task_count: number;
+  /** Bloco 11: comunidade, criador e eventos geridos pela equipa. */
+  community_id?: string | null;
+  creator_id?: string | null;
+  event_ids?: string[];
+  event_count?: number;
   created_at: string;
   updated_at: string;
 }
@@ -318,7 +389,10 @@ export interface ApiTask {
   priority: ApiTaskPriority;
   status: ApiTaskStatus;
   created_by_host_id: string | null;
+  /** Autor da tarefa (persistente, mesmo sem a conta). */
+  created_by_name?: string | null;
   completed_by_member_id: string | null;
+  completed_by_name?: string | null;
   completed_at: string | null;
   archived_at: string | null;
   /** @deprecated Use `title`. */
@@ -356,6 +430,7 @@ export interface ApiTemplate {
   supported_fields: string[];
   themes: Array<{ mode: 'light' | 'dark'; palette: string }>;
   is_active: boolean;
+  manifest?: unknown;
 }
 
 export interface PublicInvitation {
@@ -432,6 +507,11 @@ export interface CreateEventRequest {
     contribution: EventContribution;
     rsvp_deadline?: string | null;
     cover_url?: string | null;
+    visibility?: 'public' | 'private';
+    show_attendee_count?: boolean;
+    min_age?: number | null;
+    max_age?: number | null;
+    community_id?: string | null;
   };
   guests: Array<{
     name: string;

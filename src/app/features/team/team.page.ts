@@ -26,6 +26,7 @@ import {
   TeamCategory,
   TeamEventStatus,
   TeamManager,
+  TeamMember,
   TeamMyRole,
 } from '../../core/models/models';
 import { TeamsStore } from '../../core/services/teams.store';
@@ -33,10 +34,13 @@ import { ToastService } from '../../core/services/toast.service';
 import { WorkspaceStore } from '../../core/services/workspace.store';
 import { ICONS } from '../../core/ui/icons';
 import { AvatarStackComponent } from '../../shared/components/avatar-stack.component';
+import { FilterPanelComponent } from '../../shared/components/filter-panel.component';
+import { MobileFabComponent } from '../../shared/components/mobile-fab.component';
 import { PageHeaderComponent } from '../../shared/components/page-header.component';
 import { SkeletonComponent } from '../../shared/components/skeleton.component';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
 import { StatCardComponent } from '../../shared/components/stat-card.component';
+import { TeamMemberDetailDialogComponent } from '../../shared/components/team-member-detail-dialog.component';
 import { StatGridComponent } from '../../shared/components/stat-grid.component';
 import { TeamFormDialogComponent, TeamFormValue } from './team-form-dialog.component';
 import { TeamManagerDialogComponent } from './team-manager-dialog.component';
@@ -82,9 +86,12 @@ interface ManagerGroup {
     SkeletonComponent,
     StatusBadgeComponent,
     AvatarStackComponent,
+    FilterPanelComponent,
+    MobileFabComponent,
     PageHeaderComponent,
     StatCardComponent,
     StatGridComponent,
+    TeamMemberDetailDialogComponent,
     TeamFormDialogComponent,
     TeamManagerDialogComponent,
   ],
@@ -105,6 +112,7 @@ export class TeamPage {
   protected readonly searchInput = signal('');
   protected readonly eventSearch = signal('');
   protected readonly tab = signal<TeamTab>('teams');
+  protected readonly filtersOpen = signal(false);
 
   protected readonly formOpen = signal(false);
   protected readonly formSaving = signal(false);
@@ -116,6 +124,12 @@ export class TeamPage {
 
   protected readonly managerSearch = signal('');
   protected readonly managersLoading = signal(false);
+
+  /** Sheet de leitura de um membro, aberto a partir do cartão da equipa. */
+  protected readonly memberDetailOpen = signal(false);
+  protected readonly memberDetail = signal<TeamMember | null>(null);
+  protected readonly memberDetailAvatar = signal<string | null>(null);
+  protected readonly memberDetailLoading = signal(false);
 
   /** Eventos a que o utilizador tem acesso; a API decide a lista. */
   protected readonly events = this.workspace.events;
@@ -315,6 +329,11 @@ export class TeamPage {
     this.searchInput.set(initial.q);
     this.tab.set(this.tabFromParams(this.route.snapshot.queryParamMap));
 
+    // Bloco 11: `?nova=1` (vindo da comunidade) abre logo o modal de criação.
+    if (this.route.snapshot.queryParamMap.get('nova') === '1') {
+      queueMicrotask(() => this.openCreate());
+    }
+
     this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe((params) => {
       const next = teamFiltersFromParams(params);
       const nextTab = this.tabFromParams(params);
@@ -492,7 +511,10 @@ export class TeamPage {
             category: value.category,
             description: value.description,
           })
-        : await this.repository.create(value);
+        : await this.repository.create({
+            ...value,
+            communityId: this.route.snapshot.queryParamMap.get('comunidade'),
+          });
       this.store.upsert(team);
       this.formOpen.set(false);
       this.toasts.success(this.i18n.t(editing ? 'teams.form.updated' : 'teams.form.created'));
@@ -554,6 +576,39 @@ export class TeamPage {
 
   protected previewImages(team: Team): Array<string | null> {
     return team.membersPreview.map((member) => member.avatarUrl);
+  }
+
+  protected previewIds(team: Team): string[] {
+    return team.membersPreview.map((member) => member.id);
+  }
+
+  protected previewAvatar(team: Team, memberId: string): string | null {
+    return team.membersPreview.find((member) => member.id === memberId)?.avatarUrl ?? null;
+  }
+
+  /**
+   * Abre os dados completos do membro. A lista de membros é authorization-aware
+   * no backend; aqui só se filtra o registo escolhido e se mostra o que a API
+   * devolveu. Um erro não deixa o sheet aberto com dados vazios.
+   */
+  protected async openMemberDetail(
+    teamId: string,
+    memberId: string,
+    avatarUrl: string | null,
+  ): Promise<void> {
+    this.memberDetailAvatar.set(avatarUrl);
+    this.memberDetail.set(null);
+    this.memberDetailLoading.set(true);
+    this.memberDetailOpen.set(true);
+    try {
+      const page = await this.repository.listMembers(teamId, { page: 1, pageSize: 100 });
+      this.memberDetail.set(page.items.find((member) => member.id === memberId) ?? null);
+    } catch {
+      this.memberDetailOpen.set(false);
+      this.toasts.error(this.i18n.t('block9.team.memberNotFound'));
+    } finally {
+      this.memberDetailLoading.set(false);
+    }
   }
 
   private tabFromParams(params: ParamMap): TeamTab {

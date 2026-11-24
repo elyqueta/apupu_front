@@ -39,12 +39,12 @@ async function settle(fixture: ComponentFixture<LoginSuccessComponent>): Promise
 }
 
 describe('LoginSuccessComponent', () => {
-  it('confirma a sessão por cookie e abre o painel', async () => {
+  it('confirma a sessão por cookie e abre o feed (Bloco 12)', async () => {
     const { fixture, navigate, restore } = setup('browser');
     await settle(fixture);
 
     expect(restore).toHaveBeenCalledOnce();
-    expect(navigate).toHaveBeenCalledWith('/painel', { replaceUrl: true });
+    expect(navigate).toHaveBeenCalledWith('/', { replaceUrl: true });
   });
 
   it('volta ao login quando o backend não confirma a sessão', async () => {

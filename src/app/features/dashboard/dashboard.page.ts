@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, ElementRef, inject, signal, viewChild } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
@@ -11,6 +11,7 @@ import { ToastService } from '../../core/services/toast.service';
 import { WorkspaceStore } from '../../core/services/workspace.store';
 import { EVENT_TYPE_ICONS, ICONS } from '../../core/ui/icons';
 import { ActivityPresenter } from '../../shared/services/activity.presenter';
+import { whatsappSharedLabel } from '../../shared/services/whatsapp-share.presenter';
 import { ActionMenuItem } from '../../shared/components/action-menu.component';
 import { AvatarComponent } from '../../shared/components/avatar.component';
 import { EventCardComponent } from '../../shared/components/event-card.component';
@@ -28,7 +29,9 @@ import { TemplateArtworkComponent } from '../../shared/components/template-artwo
 interface ChartDay {
   label: string;
   value: number;
+  /** Altura proporcional ao máximo da semana, em unidades do viewBox. */
   height: number;
+  ariaLabel: string;
 }
 
 interface GuestEntry {
@@ -80,6 +83,9 @@ export class DashboardPage {
   protected readonly tasks = computed(() => this.store.tasks().slice(0, 4));
   protected readonly activity = computed(() => this.store.activityFeed().slice(0, 5));
   protected readonly guestStatusFilter = signal<RsvpStatus>('pending');
+  protected readonly carouselIndex = signal(1);
+  protected readonly activeDay = signal<number | null>(null);
+  private readonly guestCarousel = viewChild<ElementRef<HTMLUListElement>>('guestCarousel');
 
   protected readonly filters: { id: RsvpStatus; labelKey: TranslationKey }[] = [
     { id: 'confirmed', labelKey: 'dashboard.statusConfirmed' },
@@ -163,12 +169,30 @@ export class DashboardPage {
       return { date: day, value };
     });
     const max = Math.max(...days.map((day) => day.value), 1);
-    return days.map((day) => ({
-      label: this.i18n.weekdayShort(day.date, 'Africa/Luanda'),
-      value: day.value,
-      height: Math.max(4, Math.round((day.value / max) * 74)),
-    }));
+    return days.map((day) => {
+      const label = this.i18n.weekdayShort(day.date, 'Africa/Luanda');
+      return {
+        label,
+        value: day.value,
+        // O dia com mais respostas usa toda a altura útil; zero é só a linha de base.
+        height: day.value === 0 ? 0 : Math.max(3, Math.round((day.value / max) * 34)),
+        ariaLabel: this.i18n.t('block9.dashboard.chartTooltip', {
+          day: label,
+          date: this.i18n.shortDate(day.date, 'Africa/Luanda'),
+          count: day.value,
+        }),
+      };
+    });
   });
+
+  protected readonly activeChartDay = computed(() => {
+    const index = this.activeDay();
+    return index === null ? null : (this.week()[index] ?? null);
+  });
+
+  protected setActiveDay(index: number | null): void {
+    this.activeDay.set(index);
+  }
 
   protected readonly typeIcon = computed<IconDefinition>(() => {
     const event = this.nextEvent();
@@ -198,6 +222,38 @@ export class DashboardPage {
 
   protected setFilter(status: RsvpStatus): void {
     this.guestStatusFilter.set(status);
+    this.carouselIndex.set(1);
+    this.guestCarousel()?.nativeElement.scrollTo({ left: 0, behavior: 'smooth' });
+  }
+
+  /** Mantém a contagem "1 de N" sincronizada com o scroll por toque/rato. */
+  protected onCarouselScroll(): void {
+    const element = this.guestCarousel()?.nativeElement;
+    if (!element) {
+      return;
+    }
+    const cardWidth = element.firstElementChild?.getBoundingClientRect().width ?? element.clientWidth;
+    if (cardWidth > 0) {
+      this.carouselIndex.set(Math.min(this.filteredGuests().length, Math.round(element.scrollLeft / cardWidth) + 1));
+    }
+  }
+
+  /** Setas do desktop e setas do teclado partilham o mesmo passo de scroll. */
+  protected moveCarousel(direction: -1 | 1): void {
+    const element = this.guestCarousel()?.nativeElement;
+    if (!element) {
+      return;
+    }
+    const cardWidth = element.firstElementChild?.getBoundingClientRect().width ?? element.clientWidth;
+    element.scrollBy({ left: direction * cardWidth, behavior: 'smooth' });
+  }
+
+  protected onCarouselKeydown(event: KeyboardEvent): void {
+    if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') {
+      return;
+    }
+    event.preventDefault();
+    this.moveCarousel(event.key === 'ArrowRight' ? 1 : -1);
   }
 
   protected filterClass(status: RsvpStatus): string {
@@ -223,10 +279,15 @@ export class DashboardPage {
       0,
       Math.floor((Date.now() - new Date(entry.guest.invitedAt).getTime()) / 86_400_000),
     );
-    return [
+    const meta: PersonMetaItem[] = [
       { icon: 'calendar', label: entry.event.title },
       { icon: 'clock', label: this.i18n.t('block9.dashboard.invitedDays', { count: days }) },
     ];
+    const shared = whatsappSharedLabel(this.i18n, entry.guest.whatsappSharedAt);
+    if (shared) {
+      meta.push({ icon: 'whatsapp', label: shared });
+    }
+    return meta;
   }
 
   protected primaryFor(entry: GuestEntry): PersonPrimaryAction {
@@ -287,9 +348,18 @@ export class DashboardPage {
     const url = this.share.whatsappUrl(entry.guest.phone, text);
     if (url) {
       this.share.openExternal(url);
+      this.recordShare(entry.guest);
     } else {
       this.toasts.error(this.i18n.t('guests.whatsappUnavailable'));
     }
+  }
+
+  /** Só existe convidado específico quando há link individual; falha de registo não bloqueia o envio. */
+  private recordShare(guest: Guest): void {
+    if (!guest.invitationUrl) {
+      return;
+    }
+    void this.store.markWhatsappShared(guest).catch(() => undefined);
   }
 
   protected retry(): void {

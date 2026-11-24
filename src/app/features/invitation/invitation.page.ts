@@ -1,3 +1,5 @@
+import { InvitationOrganizersComponent } from './parts/invitation-organizers.component';
+import { InvitationVideoComponent } from './parts/invitation-video.component';
 import { Component, computed, effect, inject, input, signal } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Router } from '@angular/router';
@@ -36,6 +38,8 @@ import { InvitationWelcomeComponent } from './parts/invitation-welcome.component
   selector: 'app-invitation-page',
   imports: [
     FaIconComponent,
+    InvitationVideoComponent,
+    InvitationOrganizersComponent,
     BrandComponent,
     ImageLightboxComponent,
     LogoComponent,
@@ -208,7 +212,12 @@ export class InvitationPage {
       if (version === this.loadVersion) {
         const view = mapPublicInvitation(result);
         this.invitation.set(view);
-        this.showWelcome.set(Boolean(view.event.coverUrl) && view.event.status !== 'cancelled');
+        // Bloco 14: sem capa, abre no estilo do template (salvo `open_style: none`).
+        this.showWelcome.set(
+          (Boolean(view.event.coverUrl) ||
+            (view.event.templateSlug !== null && view.event.manifest.open_style !== 'none')) &&
+            view.event.status !== 'cancelled',
+        );
       }
     } catch (error: unknown) {
       if (version === this.loadVersion) {

@@ -7,6 +7,7 @@ import {
   inject,
   signal,
   untracked,
+  viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -46,6 +47,7 @@ import { WorkspaceStore } from '../../core/services/workspace.store';
 import { ICONS } from '../../core/ui/icons';
 import { ActionMenuItem } from '../../shared/components/action-menu.component';
 import { BrandComponent } from '../../shared/components/brand.component';
+import { EventMenuDrawerComponent } from '../../shared/components/event-menu-drawer.component';
 import { EventSectionItem, EventSectionShellComponent } from '../../shared/components/event-section-shell.component';
 import { GuestDialogComponent } from '../../shared/components/guest-dialog.component';
 import { ModalComponent } from '../../shared/components/modal.component';
@@ -92,6 +94,7 @@ function isoDatePlusDays(value: string, days: number): string {
     FaIconComponent,
     BrandComponent,
     EventSectionShellComponent,
+    EventMenuDrawerComponent,
     MessagesInboxComponent,
     GuestDialogComponent,
     ModalComponent,
@@ -125,8 +128,11 @@ export class ManagementEventPage {
   protected readonly icons = ICONS;
   protected readonly tabs = EVENT_TABS;
 
+  protected readonly sectionShell = viewChild(EventSectionShellComponent);
+
   private readonly routeEventId = signal('');
   protected readonly event = signal<HostEvent | null>(null);
+  protected readonly eventMenuOpen = signal(false);
   protected readonly detailGuests = signal<Guest[]>([]);
   protected readonly loading = signal(true);
   protected readonly error = signal('');

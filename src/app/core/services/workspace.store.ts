@@ -22,7 +22,7 @@ import {
 import { ActivityRepository } from '../data/activity.repository';
 import { CachedRepository, LoadOptions } from '../data/cached-repository';
 import { DashboardRepository } from '../data/dashboard.repository';
-import { EventsRepository } from '../data/events.repository';
+import { EventsRepository, EventUpdatePatch } from '../data/events.repository';
 import { GuestPage, GuestsQuery, GuestsRepository } from '../data/guests.repository';
 import { ManagementStore } from '../data/management.store';
 import {
@@ -299,9 +299,7 @@ export class WorkspaceStore implements Resettable {
 
   async updateEvent(
     eventId: string,
-    patch: Partial<
-      Pick<HostEvent, 'title' | 'venue' | 'city' | 'message' | 'rules' | 'dressCode' | 'status'>
-    >,
+    patch: EventUpdatePatch,
   ): Promise<HostEvent | null> {
     const updated = await this.eventsRepo.update(eventId, patch);
     if (updated) {
@@ -311,8 +309,8 @@ export class WorkspaceStore implements Resettable {
     return updated;
   }
 
-  async deleteEvent(eventId: string): Promise<void> {
-    await this.eventsRepo.remove(eventId);
+  async deleteEvent(eventId: string, confirmName?: string): Promise<void> {
+    await this.eventsRepo.remove(eventId, confirmName);
     this.guestsRepo.removeForEvent(eventId);
     this.dashboardRepo.invalidate();
     this.reportsRepo.invalidate();
@@ -426,6 +424,11 @@ export class WorkspaceStore implements Resettable {
     return this.guestsRepo.sendReminder(guestId);
   }
 
+  /** Regista a partilha iniciada no WhatsApp para um convite específico. */
+  markWhatsappShared(guest: Guest): Promise<Guest> {
+    return this.guestsRepo.markWhatsappShared(guest);
+  }
+
   async toggleTask(taskId: string, done?: boolean): Promise<void> {
     await this.tasksRepo.toggle(taskId, done);
   }
@@ -490,6 +493,10 @@ export class WorkspaceStore implements Resettable {
 
   async refreshNotifications(): Promise<void> {
     await this.notificationsRepo.load({ force: true });
+  }
+
+  async setProfileVisibility(visibility: 'public' | 'private'): Promise<HostProfile> {
+    return this.profileRepo.setVisibility(visibility);
   }
 
   async saveProfile(input: ProfileUpdateInput): Promise<HostProfile> {

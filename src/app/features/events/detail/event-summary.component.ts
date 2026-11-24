@@ -27,6 +27,12 @@ const PRIMARY_ACTION_CLASS = 'inline-flex h-11 items-center gap-2 rounded-2xl bg
   imports: [FaIconComponent, ConfirmDialogComponent, StatCardComponent, StatGridComponent, StatusBadgeComponent, TemplateArtworkComponent],
   template: `
     <section class="flex flex-col gap-4">
+      <app-stat-grid>
+        @for (card of statCards(); track card.key) {
+          <app-stat-card [label]="card.label" [value]="card.value" [hint]="card.hint" [icon]="card.icon" [tone]="card.tone" />
+        }
+      </app-stat-grid>
+
       @if (isManagement()) {
         <div class="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-brand/25 bg-surface p-4 shadow-card">
           <p class="text-xs text-muted">{{ i18n.t('eventDetail.manageTitle') }} · {{ i18n.t('eventDetail.manageHint') }}</p>
@@ -72,12 +78,6 @@ const PRIMARY_ACTION_CLASS = 'inline-flex h-11 items-center gap-2 rounded-2xl bg
           </div>
         </div>
       </article>
-
-      <app-stat-grid>
-        @for (card of statCards(); track card.key) {
-          <app-stat-card [label]="card.label" [value]="card.value" [hint]="card.hint" [icon]="card.icon" [tone]="card.tone" />
-        }
-      </app-stat-grid>
 
       <div class="grid gap-4 lg:grid-cols-2">
         <article class="rounded-4xl border border-line bg-surface p-5 shadow-card">

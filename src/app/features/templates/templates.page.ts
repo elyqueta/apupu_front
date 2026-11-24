@@ -7,11 +7,12 @@ import { TemplateId } from '../../core/models/models';
 import { ToastService } from '../../core/services/toast.service';
 import { WorkspaceStore } from '../../core/services/workspace.store';
 import { ICONS } from '../../core/ui/icons';
-import { TemplateArtworkComponent } from '../../shared/components/template-artwork.component';
+import { TemplatePreviewComponent } from '../../shared/components/template-preview.component';
+import { DEFAULT_MANIFEST, OpenStyle } from '../../core/models/template-manifest';
 
 @Component({
   selector: 'app-templates-page',
-  imports: [RouterLink, FaIconComponent, TemplateArtworkComponent],
+  imports: [RouterLink, FaIconComponent, TemplatePreviewComponent],
   templateUrl: './templates.page.html',
 })
 export class TemplatesPage {
@@ -42,6 +43,14 @@ export class TemplatesPage {
       ? { name: template.name, tag: template.slug, description: template.description ?? '' }
       : { name: '', tag: '', description: '' };
   });
+
+  protected readonly selectedManifest = computed(
+    () => this.templates().find((item) => item.id === this.selected())?.manifest ?? DEFAULT_MANIFEST,
+  );
+
+  protected openStyleKey(style: OpenStyle): TranslationKey {
+    return `block14.open.${style}` as TranslationKey;
+  }
 
   constructor() {
     this.store.load({ templates: true });

@@ -6,7 +6,8 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ApiCommunity, CommunitiesRepository } from '../../core/data/communities.repository';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { toApiError } from '../../core/api/api-error';
@@ -22,8 +23,15 @@ import {
 import { ToastService } from '../../core/services/toast.service';
 import { WorkspaceStore } from '../../core/services/workspace.store';
 import { ICONS } from '../../core/ui/icons';
-import { TemplateArtworkComponent } from '../../shared/components/template-artwork.component';
+import { TemplatePreviewComponent } from '../../shared/components/template-preview.component';
+import { DEFAULT_MANIFEST, TemplateManifest } from '../../core/models/template-manifest';
 import { PhoneMaskDirective } from '../../shared/directives/phone-mask.directive';
+import {
+  EventVisibilityFieldsComponent,
+  ageRangeError,
+  parseAge,
+} from '../../shared/components/event-visibility-fields.component';
+import { EventVisibility } from '../../core/models/models';
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const COVER_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
@@ -41,8 +49,9 @@ interface WizardStep {
     RouterLink,
     ReactiveFormsModule,
     FaIconComponent,
-    TemplateArtworkComponent,
+    TemplatePreviewComponent,
     PhoneMaskDirective,
+    EventVisibilityFieldsComponent,
   ],
   templateUrl: './create-event.page.html',
 })
@@ -50,6 +59,12 @@ export class CreateEventPage {
   private readonly fb = inject(NonNullableFormBuilder);
   private readonly toasts = inject(ToastService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+  private readonly communitiesRepo = inject(CommunitiesRepository);
+
+  /** Bloco 11: comunidades onde a conta é gestora ou responsável. */
+  protected readonly communities = signal<ApiCommunity[]>([]);
+  protected readonly communityId = signal<string>('');
   private readonly destroyRef = inject(DestroyRef);
 
   protected readonly store = inject(WorkspaceStore);
@@ -104,6 +119,12 @@ export class CreateEventPage {
     bankName: [''],
     accountName: [''],
     iban: [''],
+    visibilitySettings: this.fb.group({
+      visibility: this.fb.control<EventVisibility>('private'),
+      showAttendeeCount: [false],
+      minAge: [''],
+      maxAge: [''],
+    }),
     guests: this.fb.array([this.guestGroup()]),
   });
 
@@ -180,6 +201,7 @@ export class CreateEventPage {
   protected readonly canSubmit = computed(() => this.contributionReady() && this.guestCount() >= 0);
 
   constructor() {
+    void this.loadCommunities();
     this.store.load({ templates: true, profile: true });
     // Se os modelos chegarem depois de o formulário ser criado, aplica o
     // primeiro por omissão (o valor inicial pode ter sido `null`).
@@ -245,6 +267,10 @@ export class CreateEventPage {
   protected selectTemplate(id: TemplateId): void {
     this.form.controls.templateId.setValue(id);
     this.store.selectedTemplate.set(id);
+  }
+
+  protected manifestFor(id: TemplateId | null): TemplateManifest {
+    return this.store.templates().find((template) => template.id === id)?.manifest ?? DEFAULT_MANIFEST;
   }
 
   protected templateName(id: TemplateId | null): string {
@@ -400,9 +426,32 @@ export class CreateEventPage {
       bankName: '',
       accountName: '',
       iban: '',
+      visibilitySettings: {
+        visibility: 'private',
+        showAttendeeCount: false,
+        minAge: '',
+        maxAge: '',
+      },
     });
     this.form.controls.guests.clear();
     this.form.controls.guests.push(this.guestGroup());
+  }
+
+  /** Pré-seleciona `?comunidade=` (vindo da página da comunidade). */
+  private async loadCommunities(): Promise<void> {
+    try {
+      const mine = await this.communitiesRepo.list('mine');
+      const eligible = mine.filter(
+        (item) => item.my_status === 'active' && (item.my_role === 'owner' || item.my_role === 'manager'),
+      );
+      this.communities.set(eligible);
+      const requested = this.route.snapshot.queryParamMap.get('comunidade');
+      if (requested && eligible.some((item) => item.id === requested)) {
+        this.communityId.set(requested);
+      }
+    } catch {
+      this.communities.set([]);
+    }
   }
 
   private validateAll(): boolean {
@@ -455,6 +504,10 @@ export class CreateEventPage {
         return false;
       }
       if (this.form.controls.contributionEnabled.value && !this.contributionReady()) {
+        return false;
+      }
+      const ages = this.form.controls.visibilitySettings.getRawValue();
+      if (ageRangeError(ages.minAge, ages.maxAge)) {
         return false;
       }
       return true;
@@ -533,6 +586,13 @@ export class CreateEventPage {
       contributionEnabled: value.contributionEnabled,
       bankDetails,
       guests,
+      visibility: value.visibilitySettings.visibility,
+      showAttendeeCount:
+        value.visibilitySettings.visibility === 'public' &&
+        value.visibilitySettings.showAttendeeCount,
+      minAge: parseAge(value.visibilitySettings.minAge),
+      maxAge: parseAge(value.visibilitySettings.maxAge),
+      communityId: this.communityId() || null,
     };
   }
 

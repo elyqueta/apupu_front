@@ -7,9 +7,11 @@ import { EventPermissions, EventStats, Guest } from '../../../core/models/models
 import { ICONS } from '../../../core/ui/icons';
 import { ActionMenuItem } from '../../../shared/components/action-menu.component';
 import { PersonCardComponent, PersonMetaItem, PersonPrimaryAction } from '../../../shared/components/person-card.component';
+import { LinkCopyService } from '../../../shared/services/link-copy.service';
 import { SkeletonComponent } from '../../../shared/components/skeleton.component';
 import { StatCardComponent } from '../../../shared/components/stat-card.component';
 import { StatGridComponent } from '../../../shared/components/stat-grid.component';
+import { whatsappSharedLabel } from '../../../shared/services/whatsapp-share.presenter';
 import { GUEST_FILTERS, GuestFilter } from './detail.models';
 
 /** Secção de convidados do detalhe do evento (lista paginada no servidor). */
@@ -125,16 +127,19 @@ import { GUEST_FILTERS, GuestFilter } from './detail.models';
               }
             </div>
           } @else {
-            <ul class="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            <ul class="mt-4 grid auto-rows-fr grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
               @for (entry of entries(); track entry.guest.id) {
-                <li class="min-w-0">
+                <li class="h-full min-w-0">
                   <app-person-card
                     [name]="entry.guest.name"
-                    [subtitle]="entry.guest.email + (entry.guest.phone ? ' · ' + entry.guest.phone : '')"
+                    [subtitle]="contactLine(entry.guest)"
                     [status]="entry.guest.status"
                     [meta]="metaFor(entry)"
                     [actions]="actionsFor(entry)"
                     [primaryAction]="primaryFor(entry)"
+                    [secondaryAction]="secondaryFor(entry)"
+                    [flag]="entry.guest.ageFlag ? i18n.t('block10.guest.ageFlag') : null"
+                    [flagHint]="i18n.t('block10.guest.ageFlagHint')"
                     [actionsLabel]="i18n.t('eventDetail.table.actions')"
                     (actionSelected)="onAction($event, entry)"
                     (primaryTriggered)="onPrimary($event, entry)"
@@ -206,6 +211,20 @@ export class EventGuestsSectionComponent {
   protected readonly i18n = inject(I18nService);
   protected readonly icons = ICONS;
   protected readonly filters = GUEST_FILTERS;
+  private readonly linkCopy = inject(LinkCopyService);
+
+  /** Email e/ou telefone (confirmações pelo link aberto podem ter só um). */
+  protected contactLine(guest: Guest): string {
+    return [guest.email, guest.phone].filter(Boolean).join(' · ');
+  }
+
+  /** "Copiar" ao lado do WhatsApp, sempre que há link individual. */
+  protected secondaryFor(entry: GuestListEntry): PersonPrimaryAction | null {
+    if (!this.permissions().canExport || !entry.guest.invitationUrl || entry.guest.source !== 'personal') {
+      return null;
+    }
+    return this.linkCopy.action();
+  }
 
   protected countFor(filter: GuestFilter): number {
     return this.counts()[filter];
@@ -230,6 +249,13 @@ export class EventGuestsSectionComponent {
         label: `${this.i18n.t('eventDetail.table.table')}: ${entry.guest.tableName ?? '—'}`,
       },
     ];
+    const shared = whatsappSharedLabel(this.i18n, entry.guest.whatsappSharedAt);
+    if (shared) {
+      meta.push({ icon: 'whatsapp', label: shared });
+    }
+    if (entry.guest.source === 'public_link') {
+      meta.push({ icon: 'globe', label: this.i18n.t('block10.guest.publicLink') });
+    }
     return meta;
   }
 
@@ -299,6 +325,8 @@ export class EventGuestsSectionComponent {
   protected onPrimary(id: string, entry: GuestListEntry): void {
     if (id === 'whatsapp') {
       this.whatsappGuest.emit(entry.guest);
+    } else if (id === 'copy') {
+      void this.linkCopy.copy(entry.guest.invitationUrl);
     }
   }
 }

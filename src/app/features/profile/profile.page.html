@@ -86,7 +86,8 @@
 
         <button
           type="button"
-          class="inline-flex h-10 shrink-0 items-center gap-2 self-start rounded-xl border border-line bg-surface-raised/70 px-4 text-xs font-semibold text-ink transition hover:border-brand/40 sm:mt-1"
+          data-testid="profile-edit"
+          class="inline-flex h-11 shrink-0 items-center gap-2 self-start rounded-xl border border-line bg-surface-raised/70 px-4 text-xs font-semibold text-ink transition hover:border-brand/40 sm:mt-1"
           (click)="openEdit()"
         >
           <fa-icon [icon]="icons['pen']" class="text-[11px] text-muted" aria-hidden="true" />
@@ -379,6 +380,43 @@
             </dd>
           </div>
         </dl>
+      </article>
+
+      <article
+        class="min-w-0 rounded-4xl border border-line bg-surface p-4 shadow-card backdrop-blur-2xl sm:p-5"
+        data-testid="profile-visibility"
+      >
+        <label class="flex min-h-11 cursor-pointer items-start justify-between gap-3">
+          <span class="min-w-0">
+            <span class="flex items-center gap-2 text-sm font-semibold text-ink">
+              <fa-icon [icon]="icons[profile().profileVisibility === 'public' ? 'globe' : 'lock']" class="text-brand" aria-hidden="true" />
+              {{ i18n.t('block10.profile.publicTitle') }}
+            </span>
+            <span class="mt-1 block text-xs leading-5 text-muted">{{ i18n.t('block10.profile.publicHint') }}</span>
+            <span class="mt-2 block text-xs font-semibold" [class]="profile().profileVisibility === 'public' ? 'text-brand-strong' : 'text-muted'" role="status">
+              {{ profile().profileVisibility === 'public' ? i18n.t('block10.profile.publicOn') : i18n.t('block10.profile.publicOff') }}
+            </span>
+          </span>
+          <input
+            type="checkbox"
+            role="switch"
+            class="peer sr-only"
+            data-testid="profile-visibility-switch"
+            [checked]="profile().profileVisibility === 'public'"
+            [disabled]="visibilitySaving()"
+            (change)="toggleProfileVisibility()"
+          />
+          <span
+            aria-hidden="true"
+            class="relative mt-1 h-6 w-11 shrink-0 rounded-full border transition peer-focus-visible:ring-2 peer-focus-visible:ring-brand/60"
+            [class]="profile().profileVisibility === 'public' ? 'border-brand/40 bg-brand/70' : 'border-line bg-surface-raised'"
+          >
+            <span
+              class="absolute top-0.5 size-4.5 rounded-full bg-surface-solid shadow transition-all"
+              [class]="profile().profileVisibility === 'public' ? 'left-[1.45rem]' : 'left-0.5'"
+            ></span>
+          </span>
+        </label>
       </article>
 
       <article

@@ -48,7 +48,8 @@ export class LoginSuccessComponent implements OnInit {
 
     const host = await this.auth.restoreSession();
     this.clearQueryString();
-    await this.router.navigateByUrl(host ? '/painel' : '/entrar', { replaceUrl: true });
+    // Bloco 12: o login Google também vai para o feed.
+    await this.router.navigateByUrl(host ? '/' : '/entrar', { replaceUrl: true });
     this.failed.set(!host);
   }
 

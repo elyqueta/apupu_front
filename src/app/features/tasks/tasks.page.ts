@@ -8,16 +8,19 @@ import { Pagination } from '../../core/api/api.models';
 import { TaskAssigneeFilter, TaskQuery, TaskStatusFilter } from '../../core/data/tasks.repository';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { TranslationKey } from '../../core/i18n/translations';
-import { WorkspaceTask } from '../../core/models/models';
+import { TeamTask, WorkspaceTask } from '../../core/models/models';
 import { TeamsStore } from '../../core/services/teams.store';
 import { ToastService } from '../../core/services/toast.service';
 import { WorkspaceStore } from '../../core/services/workspace.store';
 import { ICONS } from '../../core/ui/icons';
+import { FilterPanelComponent } from '../../shared/components/filter-panel.component';
+import { MobileFabComponent } from '../../shared/components/mobile-fab.component';
 import { PageHeaderComponent } from '../../shared/components/page-header.component';
 import { SkeletonComponent } from '../../shared/components/skeleton.component';
 import { StatCardComponent } from '../../shared/components/stat-card.component';
 import { StatGridComponent } from '../../shared/components/stat-grid.component';
 import { TaskFormDialogComponent } from '../../shared/components/task-form-dialog.component';
+import { TaskDetailDialogComponent } from '../../shared/components/task-detail-dialog.component';
 
 interface TaskFormValue {
   label: string;
@@ -31,7 +34,10 @@ const PAGE_SIZE = 12;
 @Component({
   selector: 'app-tasks-page',
   imports: [
+    TaskDetailDialogComponent,
     FaIconComponent,
+    FilterPanelComponent,
+    MobileFabComponent,
     PageHeaderComponent,
     SkeletonComponent,
     StatCardComponent,
@@ -41,6 +47,8 @@ const PAGE_SIZE = 12;
   templateUrl: './tasks.page.html',
 })
 export class TasksPage {
+  /** Tarefa aberta no detalhe (autor, responsável, prazo…). */
+  protected readonly detailTask = signal<TeamTask | null>(null);
   private readonly store = inject(WorkspaceStore);
   private readonly teamsStore = inject(TeamsStore);
   private readonly toasts = inject(ToastService);

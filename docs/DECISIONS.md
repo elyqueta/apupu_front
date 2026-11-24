@@ -155,6 +155,12 @@ Mapeamento feito antes de alterar código. O frontend parte de `feat/bloco-3-det
 |---|---|---|---|
 | 2026-11-21 | Classificação pedida no Passo 2 para cada modal. | Tabela abaixo: formulários/ações → `dialog` (por omissão); leitura → `presentation="sheet"`; confirmações → `dialog` `size="sm"`. | Regra explícita do bloco; `dialog` passa a ser a apresentação por defeito. |
 | 2026-11-21 | O menu de secções do evento e o prompt de conta são "só informação"? | Não: são navegação/choice com botões, por isso ficam `dialog` `size="sm"`. O popup de três pontinhos deixa de ser modal (Passo 3). | O `sheet` fica reservado para leitura; menus devem aparecer ao lado do botão, não em baixo. |
+| 2026-11-21 | Onde montar o popup de três pontinhos. | `app-action-menu` cria um portal no `body` com `position: fixed`, usando `DOCUMENT` mesmo quando `PLATFORM_ID` é `'server'`; o menu só abre por interação do utilizador. | A portal evita cortes por `overflow`/`transform` dos cartões; o `@if (open())` impede qualquer escrita no DOM durante SSR. |
+| 2026-11-21 | Estado do menu ativo. | Guardado num `signal` em vez de capturar `this` em closures; a view incorporada recebe um segundo `detectChanges()` após `createEmbeddedView()`. | Evita `@typescript-eslint/no-this-alias` e garante que os itens aparecem no mesmo tick em deteção zoneless. |
+| 2026-11-21 | Colapso da sidebar no desktop. | Chave `apupu.sidebar.collapsed` em `localStorage`, lida/escrita dentro de `try/catch`; larguras `lg:w-[18.5rem]` (aberta) e `lg:w-[4.5rem]` (recolhida). | Preserva a preferência entre navegações sem quebrar SSR/ambientes com armazenamento bloqueado; o `main` reflui sem scroll horizontal. |
+| 2026-11-21 | Ações no cabeçalho do evento. | Uma única ação primária (`addGuest` → `openGuestCreate()`); as restantes permanecem no rail. O botão “voltar” usa texto curto em mobile e completo no desktop. | Reduz competição por espaço em 360 px sem remover funcionalidade. |
+| 2026-11-21 | Painel de convidados pendentes no `/painel`. | Filtro `pending` por omissão; ação principal prefere WhatsApp quando há telefone, senão reenvio por email; linha `meta` com título do evento + `block9.dashboard.invitedDays`; contagens limitadas ao próximo evento quando existe. | O estado inicial mostra quem precisa de resposta; a ação e o contexto ficam visíveis sem abrir o card. |
+| 2026-11-21 | Credenciais e execução dos testes Playwright. | Apenas `E2E_EMAIL`, `E2E_PASSWORD` e `E2E_BASE_URL`; se faltarem, os testes são `skipped` antes de iniciar o browser. O teste do convidado deixa nome/email vazios de propósito para a validação impedir criação de dados. | Cumpre a regra de nunca guardar segredos no repositório e evita poluir o ambiente com registros de teste. |
 
 ### Classificação dos modais (Passo 2)
 
@@ -191,3 +197,90 @@ Mapeamento feito antes de alterar código. O frontend parte de `feat/bloco-3-det
 | Cancelar evento no admin | `features/admin/admin-cancel-dialog.component.ts` | `dialog` |
 | Detalhe de utilizador no admin | `features/admin/admin-user-detail-dialog.component.ts` | `presentation="sheet"` |
 | Detalhe de mensagem de apoio no admin | `features/admin/admin-support-detail-dialog.component.ts` | `presentation="sheet"` |
+
+## Bloco 9.1 — retificações (2026-11-23)
+
+| Data | Dúvida / ponto ambíguo | Escolha | Motivo |
+|---|---|---|---|
+| 2026-11-23 | Rodapé dos modais com teclado virtual. | Nenhum rodapé é `sticky`/`fixed`, incluindo sheets. O painel `dialog` usa `visualViewport.height` com margem de segurança e `env(safe-area-inset-*)`; `scrollIntoView({ block: 'center' })` só em `input`/`select`/`textarea`/`[contenteditable="true"]`. | Botões de ação têm de estar no fim do formulário e no fluxo de scroll; o cabeçalho não pode ficar cortado. |
+| 2026-11-23 | Apresentação dos pendentes no painel. | Carrossel horizontal com `snap-x snap-mandatory` e `no-scrollbar`; setas de 44 px no desktop, contagem “1 de N” e cards `min-w-[17rem] sm:min-w-[20rem]`. | Nome e badge deixam de se cortar em 360 px; mantém-se a navegação por toque, rato e teclado. |
+| 2026-11-23 | Escala do gráfico semanal. | Barras dimensionadas pelo máximo da semana; dias com zero são uma linha fina de base; tooltip por rato, toque e teclado com `{day} · {date} · {count} respostas`. | O dia com mais respostas ocupa sempre a altura toda; zeros deixam de parecer valores cheios. |
+| 2026-11-23 | Rail da sidebar colapsada. | `lg:w-[5rem]`; tooltip CSS em `[data-rail='true'] [data-tooltip]` para hover/focus; `.no-scrollbar` no `<nav>`. | Mais respiro para os ícones sem trazer de volta a barra de scroll vertical. |
+| 2026-11-23 | Filtros e FAB nas listas. | `app-filter-panel` partilhado por Mensagens, Equipas e Tarefas; `app-mobile-fab` criado com `bottom: calc(env(safe-area-inset-bottom) + 4.5rem)`. | Um único markup para as três páginas e um único botão suspenso acima da navegação inferior. |
+| 2026-11-23 | Botões do modal de localização. | Reutilizam `ui-btn`/`ui-btn-secondary`, com a mesma altura dos botões do modal de contacto do anfitrião. | Paridade visual e alvos ≥44 px sem duplicar estilos. |
+| 2026-11-23 | O que significa “link reencaminhado por WhatsApp”. | Só se regista a partilha **host-side de um convite com convidado específico**: `whatsapp_shared_at` e `whatsapp_share_count` via `POST /host/events/:eventId/invitations/:invitationId/whatsapp-shared`, com as mesmas permissões do reenvio e auditoria. “Sucesso” é a URL válida e a abertura do `openExternal`, não a confirmação de entrega. Novo envio continua permitido; a convite público sem convidado não se aplica. | A aplicação não consegue confirmar o envio no WhatsApp, pelo que o texto é “Link partilhado por WhatsApp · há N dias”, nunca “entregue”. |
+| 2026-11-23 | Cartões de equipa e detalhe de membro. | Grelha `grid-cols-1 md:grid-cols-2 xl:grid-cols-3` em `/equipas` e na secção de equipas do evento; `app-avatar-stack` com `images` (já implementado) e seleção opcional por `ids`/`memberSelected`, alvos de 44 px; o sheet de leitura `team-member-detail-dialog` obtém os dados de `GET /host/teams/:id/members`, que já valida acesso, e usa a foto da pré-visualização com iniciais como fallback. | Não duplicar regras de autorização no front; o DTO completo do membro não traz foto e a preview não traz contacto/papel, por isso se juntam as duas fontes sem criar endpoints novos. |
+| 2026-11-23 | Barra superior e navegação do evento. | Em `/eventos/:id` a barra superior do shell mostra chevron de voltar (44 px) em vez do menu principal, e hambúrguer do evento em vez das notificações; em `/gestao/evento/:id` o cabeçalho público recebe os mesmos controlos. O hambúrguer abre `app-event-menu-drawer` à direita com fechar, “Adicionar convidado”, secções do evento e “Mais ações”, com Escape/backdrop/link, foco preso/devolvido e `aria-expanded`; o rail desktop do `EventSectionShell` mantém-se. A “Visão geral” mostra `app-stat-grid` antes do cartão/capa. | Mantém o menu principal acessível pelo sidebar/“Mais” no mobile e evita duplicar a lógica de navegação: o drawer reutiliza as secções partilhadas e encaminha ações por ponte para a página ativa. |
+
+## Bloco 10 — pedido do autor (23/11/2026): campos de telefone
+
+- **Pedido:** todos os inputs de telefone começam por 9, aceitam apenas 9 dígitos, não aceitam letras e mostram máscara a cada 3 dígitos (`9XX XXX XXX`).
+- **Escolha:** a diretiva partilhada `appPhoneMask` foi reforçada e está em todos os `input` de telefone (convidado, criação de evento, perfil, gestor, membro de equipa; o link público do Bloco 10 usa a mesma). Só dígitos, descarta o que vier antes do primeiro 9, máximo 9 dígitos, grupos de 3; valores antigos `+244 …`/`00244…` são normalizados ao carregar ou colar. Fornece o validador `phone` (`^9\d{8}$`, vazio permitido) e marca o campo com `aria-invalid` e contorno coral depois de tocado. O valor enviado é o mascarado (`923 456 789`); o backend já normaliza para E.164 onde compara telefones. Sem `maxlength` no input, para não cortar texto colado com indicativo.
+- **Motivo:** um único ponto de verdade evita máscaras divergentes entre formulários.
+
+## Bloco 10 — Visibilidade e convite público (23/11/2026)
+
+| Dúvida | Escolha | Motivo |
+|---|---|---|
+| "Soft delete" de eventos não existia (a remoção era física com cascata). | `events.deleted_at` + filtro `deleted_at IS NULL` em todas as leituras de entrada (`findById*`, token de gestão, listas/totais/próximos, admin) e nas listagens cruzadas (convidados, caixa de entrada, atividade, relatórios, lembretes in-app, gestores, equipas, tarefas). A remoção revoga o link de gestão e cancela emails pendentes. | Mais simples e seguro do que uma vista SQL; não destrói dados. O `down` da migração apaga fisicamente os eventos removidos (era o comportamento anterior). |
+| Confirmação pelo link aberto só com telefone, mas `invitations.guest_email` era `NOT NULL`. | `guest_email` passa a anulável, com `CHECK` que o mantém obrigatório em convites `personal`. Emails para destinatários sem email são simplesmente não enfileirados. | Cumpre "e-mail **ou** telefone" sem inventar dados. |
+| Contacto do link aberto coincide com um convite individual. | 409 `public_rsvp_personal_invite` ("Use o link que recebeu"); o link aberto nunca altera convites pessoais. | Senão qualquer pessoa que soubesse o email de um convidado podia mudar a resposta dele. |
+| Recusar (declined) num evento com restrição de idade. | A idade só é exigida/validada ao **confirmar**; recusar não pede idade. | Recusar não dá acesso ao evento; pedir idade seria recolher PII desnecessária. |
+| Recusa por idade. | Sempre 403 `public_rsvp_refused` com "Não foi possível confirmar a sua presença neste evento." para mínimo e máximo. | Critério de aceitação: limites nunca expostos. |
+| Notificação "idade alterada". | Reutiliza a atividade `rsvp_accepted` com `metadata.age_flag = true` e texto próprio ("Confirmação a rever: idade alterada"), enviado ao anfitrião e aos gestores com conta (o mesmo fan-out existente). | Evita novo tipo no `CHECK` de notificações. O "responsável" é o anfitrião/criador. |
+| Conta autenticada no link aberto. | Só é usada para confirmar se o pedido trouxer o CSRF derivado da sessão; caso contrário é tratado como visitante. | Impede que um site terceiro confirme em nome da conta. |
+| Honeypot. | Campo `website`; preenchido → resposta de sucesso sem gravar. | Bots não aprendem que foram detetados. |
+| Limites. | `publicTokenLimiter` (IP) + `rsvpLimiter` (IP + slug) + novo `publicEventRsvpEventLimiter` (por evento, 10× o limite público). Corpo limitado pelo parser global (100 kb) e pelo schema `.strict()`. | Reutiliza variáveis existentes; nenhuma variável de ambiente nova. |
+| Google e data de nascimento. | O login Google pede apenas `profile` e `email`; a data de nascimento **não** vem nesses scopes, por isso fica vazia. Não foram pedidos scopes extra. | Regra do bloco: não pedir scopes extra sem aprovação. |
+| Pesquisa de perfis. | Não existia pesquisa de perfis para utilizadores (só a do admin). Criado `hostRepository.searchPublicProfiles`, que filtra sempre `profile_visibility = 'public'`, para os blocos seguintes; teste negativo em `tests/bloco10.test.ts`. A lista do super admin não é "pesquisa" de utilizadores e mantém todas as contas. | Garante o critério desde já. |
+| Slug do link público. | 12 caracteres base64url (72 bits), gerado ao tornar público; mantém-se se o evento voltar a privado (o link deixa de resolver) e é reutilizado se voltar a público. | Link estável para quem já o partilhou. |
+
+## Bloco 11 — Comunidades e equipas (24/11/2026)
+
+| Dúvida | Escolha | Motivo |
+|---|---|---|
+| `teams.creator_id` pedido, mas já existia `teams.created_by_host_id`. | Reutilizado `created_by_host_id` como criador; backfill com o anfitrião do evento onde estava vazio (nenhuma equipa ficou sem criador). | Evita duas colunas com o mesmo significado. |
+| `team_events` e queries. | Tabela criada com backfill do `event_id` actual (4/4 equipas na base local). Novas equipas escrevem em `team_events`. `teams.event_id` mantém-se como **evento principal**: as tarefas continuam ligadas a ele (trigger do Bloco 2). `team_events` é usado na listagem por evento, no acesso (anfitrião de um evento associado vê a equipa como gestor; o criador como anfitrião) e na página da comunidade. | Migrar todas as queries de tarefas/membros para `team_events` era uma reescrita de risco (trigger de tarefas e ~10 queries). Fica para um bloco futuro, já com os dados prontos. |
+| Equipa sem evento. | Não suportado: uma equipa continua a precisar de um evento principal. "Equipa sem comunidade" é suportado. | O modelo de tarefas depende do evento. |
+| "Associar a todos os eventos". | Numa equipa de comunidade: todos os eventos da comunidade. Sem comunidade: todos os eventos de que o criador é anfitrião. Lista explícita: qualquer evento que o criador gere (comunidade + pessoais). | Leitura literal de "todos os da comunidade". |
+| Papel do responsável da comunidade nos eventos. | Responsável = poderes de anfitrião (`access_role = host`); gestores da comunidade = gestor do evento. | "Configurações alteradas por gestores e responsável". |
+| Apagar evento da comunidade. | Sem confirmados: gestores, responsável e o criador do evento; com confirmados: só o responsável (mais confirmação do nome, Bloco 10). | Regra do bloco. |
+| Convites para comunidades privadas. | O gestor convida por email/telefone (estado `invited`); a pessoa aceita ou recusa na app (o convite liga-se à conta pelo email). | Simples, sem tokens novos. |
+| OTP da transferência. | Reutiliza `registration_verifications` com `purpose = 'community_transfer'`, o mesmo TTL, tentativas e intervalo de reenvio; email `comunidade_transferencia_codigo`. | Pedido do bloco. |
+| Emails de comunidade. | Um único tipo de outbox `community_notice` (pedido recebido/aprovado/recusado, convite, transferência iniciada/concluída) com template `comunidade_aviso`. | Evita seis tipos novos no `CHECK`. |
+| Código de partilha (`?ref=`). | Cada membro tem `community_members.ref_code` (8 caracteres aleatórios). Só conta na confirmação pelo link aberto de um evento da mesma comunidade, na criação da confirmação. | O membro não controla a contagem depois de criada. |
+| Contactos de membros. | Membros veem nome, foto e papel; o email só é devolvido a gestores/responsável; o telefone nunca. | Minimização de dados. |
+
+## Pedidos do autor durante o Bloco 11 (24/11/2026)
+
+| Pedido | Escolha |
+|---|---|
+| Cartões de equipa, convidados e membros sempre com o mesmo tamanho, mais uniformes. | Todas as grelhas usam `grid auto-rows-fr grid-cols-1 md:grid-cols-2 xl:grid-cols-3` (cada linha com a altura da mais alta); o `app-person-card` ocupa a célula (`h-full`, coluna flex, ações em baixo com `mt-auto`); a descrição da equipa reserva duas linhas. Textos de 9–11 px subidos para 12 px; "Abrir equipa" e botões das tarefas com 44 px. |
+| Tarefa com detalhes, autoria e dono persistentes. | Migração `0030`: `host_tasks.created_by_name` (trigger em qualquer criação + backfill) e `created_by_host_id ON DELETE SET NULL` (já não apaga tarefas). DTO devolve `created_by_name` e `completed_by_name`. Novo `app-task-detail-dialog` (sheet só de leitura) na página de Tarefas e no detalhe da equipa, com estado, prioridade, prazo, evento, equipa, responsável, autor, datas e quem concluiu. `host_tasks.host_id` continua `CASCADE` (fora do pedido; contas não são apagadas fisicamente pela app). |
+| Sessão de quem entra com link + código guardada no navegador, sem conta, até um gestor revogar; gerar outro código não corta quem já entrou. | Gerar código já não revogava sessões; o problema era a duração (120 min). A sessão por link + código passa a durar até ao fim da validade do link (máx. 30 dias sem validade), com cookie persistente. Cada pedido revalida o gestor: revogar o link ou remover o gestor termina a sessão de imediato. O navegador lembra o último evento (`localStorage`) e `/gestao` volta a entrar sozinho. Textos dos diálogos "Gerar novo código" e "Revogar" atualizados. |
+
+## Bloco 12 — Feed, pesquisa, amigos e ajuda (24/11/2026)
+
+| Dúvida | Escolha | Motivo |
+|---|---|---|
+| Comunidade pública sem conta em `/comunidades/:slug`. | `/comunidades/:slug` fica na área autenticada (Bloco 11); a versão limitada para visitantes vive em **`/comunidade/:slug`** (sem membros, com eventos e "Entrar"/"Abrir comunidade"). O feed e a pesquisa apontam para a versão pública. | Evita mexer no guard da área autenticada e na casca da app. |
+| Cursor do feed. | Cursor opaco (base64url do deslocamento, máx. 10 000), 12 por página e "Carregar mais" (44 px). | Simples e suficiente para o volume atual; ordem estável (`starts_at`, `id`). |
+| "Próximos ou a decorrer". | `COALESCE(ends_at, starts_at + 6 h) >= now()` e estado `scheduled`. | Eventos sem fim definido continuam visíveis enquanto decorrem. |
+| Limites da pesquisa e do feed. | Limitadores próprios por IP (`publicFeedLimiter`, `publicSearchLimiter`) com as variáveis públicas existentes; pesquisa só a partir de 2 caracteres e 5 resultados por grupo, `ILIKE` com escape. | Navegar no feed não esgota a quota dos links de convite. |
+| Amizades. | Só com perfis públicos; um pedido em sentido contrário pendente é aceite em vez de duplicado; limite de 30 pedidos por dia; notificações in-app `friend_request`/`friend_accepted` (sem email). | Evita spam e respeita "perfil privado nunca aparece". |
+| "Eventos anteriores" com o estilo do template. | Cartões com a capa ou, sem capa, a arte do template (`app-template-artwork`) e `template { id, palette, mode }` no DTO. O renderer dos Blocos 14/15 ainda não existe; quando existir substitui a arte. | Regista a dependência. |
+| Ajuda em Markdown. | `src/content/docs/*.md` carregados como texto pelo builder do Angular (`"loader": { ".md": "text" }` em `angular.json`, sem dependências) e um renderer mínimo próprio (títulos, listas, negrito, links internos/https; texto sempre escapado). `docs/GUIA-UTILIZADOR.md` gerado a partir dos mesmos ficheiros. **Exige reiniciar o `ng serve`** depois de mudar de branch. | Pedido do bloco, sem dependência pesada. |
+| `app-brand`. | Passa a ligar para `/` (feed) em vez de `/painel`. | `/` é a página inicial; visitantes não eram mandados para o login. |
+| Destino pós-login. | `/` (feed) por defeito, também no Google; `returnUrl` continua a mandar. | Regra do bloco. |
+
+## Bloco 13 — Instituições (24/11/2026)
+
+| Dúvida | Escolha | Motivo |
+|---|---|---|
+| Quem confirma com OTP. | Só o **criador da instituição** confirma com código (6 dígitos, `purpose = 'institution_link'`, email `instituicao_codigo`) ligar **e** remover uma comunidade. O responsável da comunidade pede ou aceita o convite sem código. | "Nenhuma comunidade é ligada sem OTP do criador"; o pedido parte de quem tem menos poder. |
+| Sair da instituição. | O responsável da comunidade pode sair **sem OTP** (ação no detalhe, com confirmação). | Sair só reduz o alcance da instituição; não exige o consentimento do criador. |
+| Fluxo dos pedidos. | `pending` → (convite: a comunidade aceita) → o criador aprova (`awaiting_otp`, código enviado) → confirma o código (liga/desliga numa transação). Um pedido aberto por comunidade e instituição (`institution_request_open`). Uma comunidade só pertence a uma instituição (`community_has_institution`). | Estados explícitos e auditados em `host_audit_log`. |
+| Instituição privada. | 404 para quem não é criador nem responsável de uma comunidade associada; comunidades privadas da instituição só aparecem ao criador e ao próprio responsável. | Mesma regra de não revelar existência dos blocos 11/12. |
+| Feed. | No separador "Comunidades", a primeira página começa com até 6 instituições públicas (`type: 'institution'`), com cartão do mesmo tamanho dos de comunidade. O cartão abre `/instituicoes/:slug` (área autenticada; visitantes passam pelo login). | Sem página pública própria neste bloco. |
+| Correção do feed (avatar, excerto, data). | Commit `cb53190` ficou na branch do Bloco 13 do back porque já descendia da do 12. | Registo. |
+| Perfil da comunidade. | O DTO da comunidade passa a ter `institution { name, slug }`; o detalhe autenticado mostra "Faz parte de …" com ligação. A página pública `/comunidade/:slug` ainda não mostra (fica para depois). | Âmbito do bloco. |

@@ -48,37 +48,12 @@
     class="flex flex-col gap-3 rounded-3xl border border-line bg-surface/70 p-3 shadow-card backdrop-blur-2xl"
     (submit)="$event.preventDefault(); applyFilters()"
   >
-    <button
-      type="button"
-      class="flex h-11 w-full items-center justify-between gap-2 rounded-xl border border-line bg-surface-raised/70 px-3 text-xs font-semibold text-ink transition hover:border-brand/40 md:hidden"
-      [attr.aria-expanded]="filtersOpen()"
-      aria-controls="tasks-filters"
-      (click)="filtersOpen.set(!filtersOpen())"
-    >
-      <span class="inline-flex min-w-0 items-center gap-2">
-        <fa-icon [icon]="icons['filter']" class="text-[11px] text-muted" aria-hidden="true" />
-        {{ i18n.t('tasks.filters') }}
-        @if (activeFilterCount() > 0) {
-          <span
-            class="grid size-4 place-items-center rounded-full bg-brand text-[9px] font-semibold text-on-secondary"
-          >
-            {{ activeFilterCount() }}
-          </span>
-        }
-      </span>
-      <fa-icon
-        [icon]="icons['chevronDown']"
-        class="text-[10px] text-muted transition"
-        [class.rotate-180]="filtersOpen()"
-        aria-hidden="true"
-      />
-    </button>
-
-    <div
-      id="tasks-filters"
-      class="min-w-0 flex-col gap-3 md:flex"
-      [class.flex]="filtersOpen()"
-      [class.hidden]="!filtersOpen()"
+    <app-filter-panel
+      [label]="i18n.t('tasks.filters')"
+      controlsId="tasks-filters"
+      [expanded]="filtersOpen()"
+      [activeCount]="activeFilterCount()"
+      (expandedChange)="filtersOpen.set($event)"
     >
       <div class="flex min-w-0 flex-wrap items-center gap-1.5">
         @for (option of statusOptions; track option.id) {
@@ -171,7 +146,7 @@
       </div>
 
       <p class="text-[10px] text-muted">{{ rangeLabel() }}</p>
-    </div>
+    </app-filter-panel>
   </form>
 
   @if (loading()) {
@@ -203,7 +178,7 @@
         >
           <button
             type="button"
-            class="mt-0.5 grid size-8 shrink-0 place-items-center rounded-xl border transition disabled:opacity-50"
+            class="mt-0.5 grid size-11 shrink-0 place-items-center rounded-xl border transition disabled:opacity-50"
             [class]="
               task.done
                 ? 'border-mint/30 bg-mint/15 text-mint'
@@ -213,25 +188,31 @@
             [attr.aria-label]="task.done ? i18n.t('tasks.markPending') : i18n.t('tasks.markDone')"
             (click)="toggle(task)"
           >
-            <fa-icon [icon]="icons['check']" class="text-[10px]" aria-hidden="true" />
+            <fa-icon [icon]="icons['check']" class="text-xs" aria-hidden="true" />
           </button>
 
           <div class="min-w-0 flex-1">
-            <p
-              class="text-sm font-semibold text-ink"
+            <button
+              type="button"
+              class="block max-w-full text-left text-sm font-semibold text-ink underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60"
               [class.line-through]="task.done"
               [class.text-muted]="task.done"
+              [attr.data-testid]="'task-open-' + task.id"
+              (click)="detailTask.set(task.detail)"
             >
-              {{ task.label }}
+              {{ task.detail.title || task.label }}
+            </button>
+            <p class="mt-0.5 text-xs text-muted" [attr.data-testid]="'task-author-' + task.id">
+              {{ i18n.t('block11.task.authorLine', { name: task.detail.createdByName || i18n.t('block11.task.unknownAuthor') }) }}
             </p>
-            <p class="mt-1 flex flex-wrap items-center gap-2 text-[10px] text-muted">
+            <p class="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted">
               @if (task.eventTitle) {
                 <span
                   class="inline-flex max-w-full min-w-0 items-center gap-1 rounded-full border border-line bg-surface px-2 py-0.5"
                 >
                   <fa-icon
                     [icon]="icons['calendar']"
-                    class="shrink-0 text-[8px]"
+                    class="shrink-0 text-[10px]"
                     aria-hidden="true"
                   />
                   <span class="truncate">{{ task.eventTitle }}</span>
@@ -241,14 +222,14 @@
                 <span
                   class="inline-flex max-w-full min-w-0 items-center gap-1 rounded-full border border-iris/30 bg-iris/10 px-2 py-0.5 text-iris"
                 >
-                  <fa-icon [icon]="icons['user']" class="shrink-0 text-[8px]" aria-hidden="true" />
+                  <fa-icon [icon]="icons['user']" class="shrink-0 text-[10px]" aria-hidden="true" />
                   <span class="truncate">{{ task.managerEmail }}</span>
                 </span>
               } @else {
                 <span
                   class="inline-flex items-center gap-1 rounded-full border border-brand/25 bg-brand/10 px-2 py-0.5 text-brand-strong"
                 >
-                  <fa-icon [icon]="icons['userCheck']" class="text-[8px]" aria-hidden="true" />
+                  <fa-icon [icon]="icons['userCheck']" class="text-[10px]" aria-hidden="true" />
                   {{ i18n.t('tasks.assignee.host') }}
                 </span>
               }
@@ -262,13 +243,22 @@
 
           <button
             type="button"
-            class="grid size-8 shrink-0 place-items-center rounded-xl border border-line bg-surface text-muted transition hover:border-coral/40 hover:text-coral disabled:opacity-50"
+            class="grid size-11 shrink-0 place-items-center rounded-xl border border-line bg-surface text-muted transition hover:border-brand/40 hover:text-ink"
+            [attr.aria-label]="i18n.t('block11.task.details')"
+            [attr.title]="i18n.t('block11.task.details')"
+            (click)="detailTask.set(task.detail)"
+          >
+            <fa-icon [icon]="icons['info']" aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            class="grid size-11 shrink-0 place-items-center rounded-xl border border-line bg-surface text-muted transition hover:border-coral/40 hover:text-coral disabled:opacity-50"
             [disabled]="busyId() === task.id"
             [attr.aria-label]="i18n.t('tasks.remove')"
             [attr.title]="i18n.t('tasks.remove')"
             (click)="remove(task)"
           >
-            <fa-icon [icon]="icons['trash']" class="text-[10px]" aria-hidden="true" />
+            <fa-icon [icon]="icons['trash']" class="text-xs" aria-hidden="true" />
           </button>
         </li>
       }
@@ -316,4 +306,12 @@
     (closed)="closeTaskDialog()"
     (submitted)="submitTask($event)"
   />
+
+  <app-mobile-fab
+    [label]="i18n.t('tasks.create')"
+    testId="create-task-fab"
+    (pressed)="openTaskDialog()"
+  />
 </section>
+
+<app-task-detail-dialog [task]="detailTask()" (closed)="detailTask.set(null)" />

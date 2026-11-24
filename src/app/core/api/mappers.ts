@@ -1,3 +1,4 @@
+import { normalizeManifest } from '../models/template-manifest';
 import {
   ApiActivity,
   ApiEvent,
@@ -86,6 +87,7 @@ export function emptyProfile(): HostProfile {
     coverUrl: null,
     emailVerified: false,
     profileComplete: false,
+    profileVisibility: 'private',
   };
 }
 
@@ -124,6 +126,11 @@ export function mapEvent(event: ApiEvent): HostEvent {
           }
         : null,
     accessRole: event.access_role ?? 'host',
+    visibility: event.visibility ?? 'private',
+    publicUrl: event.public_url ?? null,
+    showAttendeeCount: event.show_attendee_count ?? false,
+    minAge: event.min_age ?? null,
+    maxAge: event.max_age ?? null,
     createdAt: event.created_at,
     stats: event.stats
       ? {
@@ -148,12 +155,16 @@ export function mapInvitation(invitation: ApiInvitation): Guest {
     id: invitation.id,
     eventId: invitation.event_id,
     name: invitation.guest_name,
-    email: invitation.guest_email,
+    email: invitation.guest_email ?? '',
     phone: invitation.guest_phone,
     status: invitation.rsvp_status === 'accepted' ? 'confirmed' : invitation.rsvp_status,
     tableName: invitation.table_name,
     invitationUrl: invitation.invitation_url,
     openedAt: invitation.opened_at,
+    whatsappSharedAt: invitation.whatsapp_shared_at,
+    whatsappShareCount: invitation.whatsapp_share_count,
+    source: invitation.source ?? 'personal',
+    ageFlag: invitation.age_flag ?? false,
     message: invitation.guest_message ?? null,
     invitedAt: invitation.created_at,
     respondedAt: invitation.rsvp_responded_at,
@@ -267,6 +278,9 @@ export function mapTeam(team: ApiTeam): Team {
       avatarUrl: member.avatar_url,
     })),
     openTaskCount: team.open_task_count,
+    communityId: team.community_id ?? null,
+    creatorId: team.creator_id ?? null,
+    eventIds: team.event_ids ?? [team.event_id],
     createdAt: team.created_at,
     updatedAt: team.updated_at,
   };
@@ -308,7 +322,9 @@ export function mapTeamTask(task: ApiTask): TeamTask {
     priority: task.priority ?? 'normal',
     status: task.status ?? (task.done ? 'concluida' : 'por_fazer'),
     createdByHostId: task.created_by_host_id ?? null,
+    createdByName: task.created_by_name ?? null,
     completedByMemberId: task.completed_by_member_id ?? null,
+    completedByName: task.completed_by_name ?? null,
     completedAt: task.completed_at,
     archivedAt: task.archived_at ?? null,
     createdAt: task.created_at,
@@ -328,6 +344,7 @@ export function mapTask(task: ApiTask): WorkspaceTask {
     completedAt: task.completed_at,
     createdAt: task.created_at,
     updatedAt: task.updated_at,
+    detail: mapTeamTask(task),
   };
 }
 
@@ -340,6 +357,7 @@ export function mapTemplate(template: ApiTemplate): EventTemplate {
     previewImageUrl: template.preview_image_url,
     supportedFields: template.supported_fields,
     themes: template.themes,
+    manifest: normalizeManifest(template.manifest),
   };
 }
 
@@ -355,6 +373,7 @@ export function mapProfile(host: Host): HostProfile {
     coverUrl: host.profile.cover_url,
     emailVerified: host.email_verified,
     profileComplete: host.profile_complete,
+    profileVisibility: host.profile.profile_visibility ?? 'private',
   };
 }
 

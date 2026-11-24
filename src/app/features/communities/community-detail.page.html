@@ -1,0 +1,477 @@
+<section class="flex flex-col gap-4 md:gap-5">
+  <a routerLink="/comunidades" class="inline-flex min-h-11 items-center gap-2 self-start text-sm font-semibold text-muted transition hover:text-ink">
+    <fa-icon [icon]="icons['chevronLeft']" aria-hidden="true" />
+    {{ i18n.t('block11.detail.back') }}
+  </a>
+
+  @switch (state()) {
+    @case ('loading') {
+      <app-skeleton variant="detail" />
+    }
+    @case ('not_found') {
+      <div class="rounded-4xl border border-line bg-surface p-8 text-center shadow-card" data-testid="community-not-found">
+        <fa-icon [icon]="icons['lock']" class="text-2xl text-amber" aria-hidden="true" />
+        <p class="mt-3 text-base font-semibold text-ink">{{ i18n.t('block11.detail.notFound') }}</p>
+      </div>
+    }
+    @case ('error') {
+      <div class="rounded-4xl border border-coral/30 bg-coral/10 p-6 text-center" role="alert">
+        <p class="text-sm font-semibold text-coral">{{ i18n.t('block11.detail.loadError') }}</p>
+        <button type="button" class="ui-btn-secondary mt-3" (click)="load()">
+          <fa-icon [icon]="icons['refresh']" aria-hidden="true" />
+          {{ i18n.t('block11.list.retry') }}
+        </button>
+      </div>
+    }
+    @case ('ready') {
+      @if (detail(); as data) {
+        @let c = data.community;
+        @let perms = data.permissions;
+
+        <!-- Perfil: capa + avatar, como a página de perfil. -->
+        <article class="overflow-hidden rounded-4xl border border-line bg-surface shadow-card" data-testid="community-profile">
+          <div class="relative h-36 bg-gradient-to-br from-brand/35 via-surface-raised to-surface sm:h-48">
+            @if (c.cover_url) {
+              <img [src]="c.cover_url" alt="" class="size-full object-cover" />
+            }
+          </div>
+          <div class="relative flex flex-col gap-4 p-4 pt-0 sm:flex-row sm:items-end sm:justify-between sm:p-6 sm:pt-0">
+            <div class="flex min-w-0 items-end gap-3">
+              <span class="-mt-10 grid size-20 shrink-0 place-items-center overflow-hidden rounded-3xl border-4 border-surface bg-surface-raised text-2xl font-semibold text-brand-strong shadow-card">
+                @if (c.avatar_url) {
+                  <img [src]="c.avatar_url" alt="" class="size-full object-cover" />
+                } @else {
+                  {{ initials(c.name) }}
+                }
+              </span>
+              <div class="min-w-0 pb-1">
+                <h1 class="break-words font-display text-2xl font-semibold tracking-tight text-ink">{{ c.name }}</h1>
+                <p class="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted">
+                  <span class="ui-chip">
+                    <fa-icon [icon]="icons[c.visibility === 'public' ? 'globe' : 'lock']" aria-hidden="true" />
+                    {{ i18n.t(c.visibility === 'public' ? 'block11.visibility.public' : 'block11.visibility.private') }}
+                  </span>
+                  <span>{{ i18n.t('block11.list.members', { count: c.member_count }) }}</span>
+                  @if (c.my_role && c.my_status === 'active') {
+                    <span class="font-semibold text-brand-strong">{{ i18n.t('block11.detail.myRole', { role: roleLabel(c.my_role) }) }}</span>
+                  }
+                  @if (c.institution; as institution) {
+                    <a [routerLink]="['/instituicoes', institution.slug]" class="ui-chip-interactive" data-testid="community-institution">
+                      <fa-icon [icon]="icons['bank']" aria-hidden="true" />
+                      {{ i18n.t('block13.community.partOf', { name: institution.name }) }}
+                    </a>
+                  }
+                </p>
+              </div>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              @if (perms.canRequestToJoin && !c.my_pending_request) {
+                <button type="button" class="ui-btn" data-testid="community-join" (click)="joinOpen.set(true)">
+                  <fa-icon [icon]="icons['userPlus']" aria-hidden="true" />
+                  {{ i18n.t('block11.detail.join') }}
+                </button>
+              }
+              @if (c.my_pending_request) {
+                <button type="button" class="ui-btn-secondary" [disabled]="busy()" (click)="cancelRequest()">
+                  {{ i18n.t('block11.detail.cancelRequest') }}
+                </button>
+              }
+              @if (perms.canLeave) {
+                <button type="button" class="ui-btn-secondary" data-testid="community-leave" (click)="leaveOpen.set(true)">
+                  <fa-icon [icon]="icons['logout']" aria-hidden="true" />
+                  {{ i18n.t('block11.detail.leave') }}
+                </button>
+              }
+            </div>
+          </div>
+          @if (c.description) {
+            <p class="border-t border-line px-4 py-3 text-sm leading-6 text-muted sm:px-6">{{ c.description }}</p>
+          }
+        </article>
+
+        @if (perms.isInvited) {
+          <div class="flex flex-col gap-3 rounded-3xl border border-brand/30 bg-brand/10 p-4 sm:flex-row sm:items-center sm:justify-between" role="status" data-testid="community-invite-banner">
+            <p class="text-sm font-semibold text-ink">{{ i18n.t('block11.detail.inviteBanner') }}</p>
+            <div class="flex gap-2">
+              <button type="button" class="ui-btn-secondary" [disabled]="busy()" (click)="answerInvite(false)">{{ i18n.t('block11.detail.declineInvite') }}</button>
+              <button type="button" class="ui-btn" [disabled]="busy()" (click)="answerInvite(true)">{{ i18n.t('block11.detail.acceptInvite') }}</button>
+            </div>
+          </div>
+        }
+
+        @if (data.transfer; as transfer) {
+          <div class="flex flex-col gap-3 rounded-3xl border border-amber/30 bg-amber/10 p-4 sm:flex-row sm:items-center sm:justify-between" role="status" data-testid="community-transfer-banner">
+            <p class="text-sm font-semibold text-ink">
+              {{ transfer.direction === 'incoming' ? i18n.t('block11.transfer.pendingIncoming') : i18n.t('block11.transfer.pendingOutgoing') }}
+            </p>
+            <div class="flex flex-wrap gap-2">
+              <button type="button" class="ui-btn-secondary" [disabled]="busy()" (click)="cancelTransfer()">{{ i18n.t('block11.transfer.cancel') }}</button>
+              @if (transfer.direction === 'incoming' && transfer.status === 'pending_accept') {
+                <button type="button" class="ui-btn" [disabled]="busy()" data-testid="community-transfer-accept" (click)="acceptTransfer()">{{ i18n.t('block11.transfer.accept') }}</button>
+              }
+            </div>
+          </div>
+        }
+
+        <!-- Separadores (rail horizontal com scroll, sem barra visível). -->
+        <nav role="tablist" class="no-scrollbar -mx-1 flex gap-1 overflow-x-auto px-1" [attr.aria-label]="c.name">
+          @for (item of tabs(); track item.id) {
+            <button
+              type="button"
+              role="tab"
+              class="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-xl border px-3 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60"
+              [class]="tab() === item.id ? 'border-brand/30 bg-brand/15 text-ink' : 'border-line bg-surface text-muted hover:text-ink'"
+              [attr.aria-selected]="tab() === item.id"
+              [attr.data-testid]="'community-tab-' + item.id"
+              (click)="tab.set(item.id)"
+            >
+              {{ i18n.t(item.label) }}
+              @if (item.count !== undefined && item.count !== null) {
+                <span class="rounded-full bg-surface-raised px-2 text-xs text-muted">{{ item.count }}</span>
+              }
+            </button>
+          }
+        </nav>
+
+        @switch (tab()) {
+          @case ('summary') {
+            <section class="rounded-4xl border border-line bg-surface p-4 shadow-card sm:p-5">
+              <h2 class="text-sm font-semibold text-ink">{{ i18n.t('block11.summary.upcoming') }}</h2>
+              @if (upcoming().length === 0) {
+                <p class="mt-3 text-sm text-muted">{{ i18n.t('block11.summary.noEvents') }}</p>
+              } @else {
+                <ul class="mt-3 grid auto-rows-fr grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+                  @for (event of upcoming().slice(0, 3); track event.id) {
+                    <ng-container *ngTemplateOutlet="eventCard; context: { $implicit: event }" />
+                  }
+                </ul>
+              }
+            </section>
+          }
+          @case ('events') {
+            <section class="flex flex-col gap-4">
+              @if (perms.canCreateEvent) {
+                <button type="button" class="ui-btn self-start" data-testid="community-new-event" (click)="newEvent()">
+                  <fa-icon [icon]="icons['plus']" aria-hidden="true" />
+                  {{ i18n.t('block11.events.new') }}
+                </button>
+              }
+              @for (group of [{ label: 'block11.events.upcoming', items: upcoming() }, { label: 'block11.events.past', items: past() }]; track group.label) {
+                @if (group.items.length > 0) {
+                  <div>
+                    <h2 class="mb-2 text-sm font-semibold text-ink">{{ i18n.t($any(group.label)) }}</h2>
+                    <ul class="grid auto-rows-fr grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+                      @for (event of group.items; track event.id) {
+                        <ng-container *ngTemplateOutlet="eventCard; context: { $implicit: event }" />
+                      }
+                    </ul>
+                  </div>
+                }
+              }
+              @if (data.events.length === 0) {
+                <p class="rounded-3xl border border-dashed border-line p-6 text-center text-sm text-muted">{{ i18n.t('block11.summary.noEvents') }}</p>
+              }
+            </section>
+          }
+          @case ('teams') {
+            <section class="flex flex-col gap-3">
+              @if (perms.canCreateTeam) {
+                <a routerLink="/equipas" [queryParams]="{ nova: 1, comunidade: c.id }" class="ui-btn self-start">
+                  <fa-icon [icon]="icons['plus']" aria-hidden="true" />
+                  {{ i18n.t('block11.teams.new') }}
+                </a>
+              }
+              @if (data.teams.length === 0) {
+                <p class="rounded-3xl border border-dashed border-line p-6 text-center text-sm text-muted">{{ i18n.t('block11.teams.empty') }}</p>
+              } @else {
+                <ul class="grid auto-rows-fr grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+                  @for (team of data.teams; track team.id) {
+                    <li class="h-full min-w-0">
+                      <a
+                        [routerLink]="['/equipas', team.id]"
+                        class="flex h-full flex-col gap-2 rounded-3xl border border-line bg-surface p-4 shadow-card transition hover:border-brand/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60"
+                      >
+                        <span class="line-clamp-2 font-display text-base font-semibold text-ink">{{ team.name }}</span>
+                        <span class="mt-auto flex flex-wrap gap-x-3 text-xs text-muted">
+                          <span>{{ i18n.t('block11.teams.members', { count: team.member_count }) }}</span>
+                          <span>{{ i18n.t('block11.teams.events', { count: team.event_count }) }}</span>
+                        </span>
+                      </a>
+                    </li>
+                  }
+                </ul>
+              }
+            </section>
+          }
+          @case ('members') {
+            <section class="flex flex-col gap-3">
+              @if (perms.canInvite) {
+                <button type="button" class="ui-btn self-start" data-testid="community-invite" (click)="openInvite()">
+                  <fa-icon [icon]="icons['userPlus']" aria-hidden="true" />
+                  {{ i18n.t('block11.members.invite') }}
+                </button>
+              }
+              <ul class="grid auto-rows-fr grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+                @for (member of data.members; track member.id) {
+                  <li class="h-full min-w-0">
+                    <app-person-card
+                      [name]="member.display_name || member.email || roleLabel(member.role)"
+                      [avatarUrl]="member.avatar_url"
+                      [subtitle]="member.email || ''"
+                      [status]="member.status === 'invited' ? i18n.t('block11.members.invited') : null"
+                      [meta]="memberMeta(member)"
+                      [actions]="memberActions(member)"
+                      [actionsLabel]="i18n.t('common.moreActions')"
+                      (actionSelected)="onMemberAction(member, $event)"
+                    />
+                  </li>
+                }
+              </ul>
+            </section>
+          }
+          @case ('requests') {
+            <section class="flex flex-col gap-3">
+              @if (requests().length === 0) {
+                <p class="rounded-3xl border border-dashed border-line p-6 text-center text-sm text-muted">{{ i18n.t('block11.requests.empty') }}</p>
+              } @else {
+                <ul class="grid auto-rows-fr grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+                  @for (request of requests(); track request.id) {
+                    <li class="h-full min-w-0">
+                      <app-person-card
+                        [name]="request.display_name || request.email"
+                        [avatarUrl]="request.avatar_url"
+                        [subtitle]="request.email"
+                        [meta]="request.message ? [{ icon: 'envelope', label: request.message }] : []"
+                        [primaryAction]="{ id: 'decide', label: i18n.t('block11.requests.approve'), icon: icons['check'] }"
+                        (primaryTriggered)="decideTarget.set(request)"
+                      />
+                    </li>
+                  }
+                </ul>
+              }
+            </section>
+          }
+          @case ('shares') {
+            <section class="rounded-4xl border border-line bg-surface p-4 shadow-card sm:p-5">
+              <h2 class="text-sm font-semibold text-ink">
+                {{ perms.canViewAllReferrals ? i18n.t('block11.shares.all') : i18n.t('block11.shares.mine') }}
+              </h2>
+              <p class="mt-1 text-xs text-muted">{{ i18n.t('block11.shares.hint') }}</p>
+              @if (referrals() === null) {
+                <app-skeleton variant="table" />
+              } @else if (referrals()!.length === 0) {
+                <p class="mt-3 text-sm text-muted">{{ i18n.t('block11.shares.empty') }}</p>
+              } @else {
+                <ul class="mt-3 divide-y divide-line">
+                  @for (stat of referrals(); track stat.member_id) {
+                    <li class="flex flex-wrap items-center justify-between gap-2 py-2.5 text-sm">
+                      <span class="min-w-0 truncate font-semibold text-ink">{{ stat.display_name || '—' }}</span>
+                      <span class="flex gap-3 text-xs text-muted">
+                        <span>{{ i18n.t('block11.shares.invitations', { count: stat.invitations }) }}</span>
+                        <span class="font-semibold text-brand-strong">{{ i18n.t('block11.shares.accepted', { count: stat.accepted }) }}</span>
+                      </span>
+                    </li>
+                  }
+                </ul>
+              }
+            </section>
+          }
+          @case ('settings') {
+            <section class="grid gap-3 md:grid-cols-2">
+              <article class="flex flex-col gap-3 rounded-4xl border border-line bg-surface p-4 shadow-card sm:p-5">
+                <h2 class="text-sm font-semibold text-ink">{{ i18n.t('block11.settings.edit') }}</h2>
+                <button type="button" class="ui-btn-secondary self-start" data-testid="community-edit" (click)="editOpen.set(true)">
+                  <fa-icon [icon]="icons['pen']" aria-hidden="true" />
+                  {{ i18n.t('block11.settings.edit') }}
+                </button>
+              </article>
+              @if (perms.canTransfer) {
+                <article class="flex flex-col gap-3 rounded-4xl border border-line bg-surface p-4 shadow-card sm:p-5">
+                  <h2 class="text-sm font-semibold text-ink">{{ i18n.t('block11.settings.transferTitle') }}</h2>
+                  <p class="text-xs leading-5 text-muted">{{ i18n.t('block11.settings.transferHint') }}</p>
+                  <button type="button" class="ui-btn-secondary self-start" data-testid="community-transfer" (click)="openTransfer()">
+                    <fa-icon [icon]="icons['key']" aria-hidden="true" />
+                    {{ i18n.t('block11.transfer.title') }}
+                  </button>
+                </article>
+              }
+              @if (perms.canDelete) {
+                <article class="flex flex-col gap-3 rounded-4xl border border-coral/30 bg-coral/5 p-4 shadow-card sm:p-5 md:col-span-2">
+                  <h2 class="text-sm font-semibold text-coral">{{ i18n.t('block11.settings.delete') }}</h2>
+                  <p class="text-xs leading-5 text-muted">{{ i18n.t('block11.settings.deleteBody') }}</p>
+                  <button type="button" class="ui-btn-danger self-start" (click)="deleteTyped.set(''); deleteOpen.set(true)">
+                    <fa-icon [icon]="icons['trash']" aria-hidden="true" />
+                    {{ i18n.t('block11.settings.delete') }}
+                  </button>
+                </article>
+              }
+            </section>
+          }
+        }
+
+        <!-- Cartão de evento reutilizado no resumo e na lista de eventos. -->
+        <ng-template #eventCard let-event>
+          <li class="h-full min-w-0">
+            <article class="flex h-full flex-col gap-2 rounded-3xl border border-line bg-surface p-4 shadow-card" [attr.data-testid]="'community-event-' + event.id">
+              <div class="flex flex-wrap items-start justify-between gap-2">
+                <h3 class="min-w-0 flex-1 line-clamp-2 font-display text-base font-semibold text-ink">{{ event.title }}</h3>
+                <span class="ui-chip shrink-0">{{ i18n.t(event.visibility === 'public' ? 'block11.events.publicBadge' : 'block11.events.privateBadge') }}</span>
+              </div>
+              <p class="text-xs text-muted">{{ i18n.dateTime(event.starts_at, 'Africa/Luanda') }}</p>
+              <p class="text-xs font-semibold text-brand-strong">{{ i18n.t('block11.events.confirmed', { count: event.accepted_count }) }}</p>
+              <div class="mt-auto flex flex-wrap gap-2 border-t border-line pt-3">
+                @if (perms.canEdit) {
+                  <a [routerLink]="['/eventos', event.id]" class="ui-btn-secondary">{{ i18n.t('block11.list.open') }}</a>
+                }
+                @if (perms.canShare && event.public_url) {
+                  <button type="button" class="ui-btn-secondary" [attr.data-testid]="'community-share-' + event.id" (click)="copyShare(event)">
+                    <fa-icon [icon]="icons['copy']" aria-hidden="true" />
+                    {{ i18n.t('block11.events.copyShare') }}
+                  </button>
+                }
+              </div>
+            </article>
+          </li>
+        </ng-template>
+
+        <!-- Modais -->
+        <app-community-form-dialog [open]="editOpen()" [community]="c" (saved)="onSaved()" (closed)="editOpen.set(false)" />
+
+        <app-modal [open]="joinOpen()" [title]="i18n.t('block11.detail.join')" size="sm" (closed)="joinOpen.set(false)">
+          <form class="flex flex-col gap-4" (submit)="$event.preventDefault(); requestToJoin()">
+            <label class="block">
+              <span class="mb-1.5 block text-xs font-semibold text-muted">{{ i18n.t('block11.detail.joinMessage') }}</span>
+              <textarea rows="3" maxlength="500" class="w-full rounded-xl border border-line bg-surface-raised px-3 py-2.5 text-sm text-ink outline-none focus:border-brand/50" [value]="joinMessage()" (input)="joinMessage.set($any($event.target).value)"></textarea>
+            </label>
+            <div class="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end">
+              <button type="button" class="ui-btn-secondary" (click)="joinOpen.set(false)">{{ i18n.t('block11.form.cancel') }}</button>
+              <button type="submit" class="ui-btn" [disabled]="busy()" data-testid="community-join-submit">{{ i18n.t('block11.detail.join') }}</button>
+            </div>
+          </form>
+        </app-modal>
+
+        <app-modal [open]="inviteOpen()" [title]="i18n.t('block11.invite.title')" size="sm" (closed)="inviteOpen.set(false)">
+          <form class="flex flex-col gap-4" novalidate (submit)="sendInvite($event)">
+            <p class="text-xs text-muted">{{ i18n.t('block11.invite.contactHint') }}</p>
+            <label class="block">
+              <span class="mb-1.5 block text-xs font-semibold text-muted">{{ i18n.t('block11.invite.email') }}</span>
+              <input type="email" inputmode="email" class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink outline-none focus:border-brand/50" data-testid="community-invite-email" [value]="invite().email" (input)="patchInvite({ email: $any($event.target).value })" />
+            </label>
+            <label class="block">
+              <span class="mb-1.5 block text-xs font-semibold text-muted">{{ i18n.t('block11.invite.phone') }}</span>
+              <input type="tel" appPhoneMask class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink outline-none focus:border-brand/50" [value]="invite().phone" (input)="patchInvite({ phone: $any($event.target).value })" />
+            </label>
+            @if (can()?.canChangeRoles) {
+              <label class="block">
+                <span class="mb-1.5 block text-xs font-semibold text-muted">{{ i18n.t('block11.invite.role') }}</span>
+                <select class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink outline-none focus:border-brand/50" [value]="invite().role" (change)="patchInvite({ role: $any($event.target).value })">
+                  <option value="member">{{ i18n.t('block11.role.member') }}</option>
+                  <option value="manager">{{ i18n.t('block11.role.manager') }}</option>
+                </select>
+              </label>
+            }
+            @if (inviteError()) {
+              <p class="text-xs text-coral" role="alert">{{ inviteError() }}</p>
+            }
+            <div class="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end">
+              <button type="button" class="ui-btn-secondary" (click)="inviteOpen.set(false)">{{ i18n.t('block11.form.cancel') }}</button>
+              <button type="submit" class="ui-btn" [disabled]="busy()" data-testid="community-invite-submit">{{ i18n.t('block11.invite.send') }}</button>
+            </div>
+          </form>
+        </app-modal>
+
+        <app-modal [open]="!!decideTarget()" [title]="i18n.t('block11.requests.decideTitle', { name: decideTarget()?.display_name || decideTarget()?.email || '' })" size="sm" (closed)="decideTarget.set(null)">
+          <div class="flex flex-col gap-4">
+            <p class="text-sm leading-6 text-muted">{{ i18n.t('block11.requests.decideBody', { name: decideTarget()?.display_name || decideTarget()?.email || '' }) }}</p>
+            @if (decideTarget()?.message; as message) {
+              <p class="rounded-2xl border border-line bg-surface-raised p-3 text-sm text-ink">{{ message }}</p>
+            }
+            <div class="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end">
+              <button type="button" class="ui-btn-secondary" [disabled]="busy()" data-testid="community-request-reject" (click)="decide('reject')">{{ i18n.t('block11.requests.reject') }}</button>
+              <button type="button" class="ui-btn" [disabled]="busy()" data-testid="community-request-approve" (click)="decide('approve')">{{ i18n.t('block11.requests.approve') }}</button>
+            </div>
+          </div>
+        </app-modal>
+
+        <app-modal [open]="transferOpen()" [title]="i18n.t('block11.transfer.title')" size="sm" (closed)="transferOpen.set(false)">
+          @if (transferStep() === 'choose') {
+            <form class="flex flex-col gap-4" (submit)="startTransfer($event)">
+              @if (transferCandidates().length === 0) {
+                <p class="text-sm text-muted">{{ i18n.t('block11.transfer.noCandidates') }}</p>
+              } @else {
+                <label class="block">
+                  <span class="mb-1.5 block text-xs font-semibold text-muted">{{ i18n.t('block11.transfer.choose') }}</span>
+                  <select class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink outline-none focus:border-brand/50" data-testid="community-transfer-member" [value]="transferMember()" (change)="transferMember.set($any($event.target).value)">
+                    @for (member of transferCandidates(); track member.id) {
+                      <option [value]="member.id">{{ member.display_name || member.email }} · {{ roleLabel(member.role) }}</option>
+                    }
+                  </select>
+                  <span class="mt-1 block text-xs text-muted">{{ i18n.t('block11.transfer.chooseHint') }}</span>
+                </label>
+              }
+              @if (transferError()) {
+                <p class="text-xs text-coral" role="alert">{{ transferError() }}</p>
+              }
+              <div class="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end">
+                <button type="button" class="ui-btn-secondary" (click)="transferOpen.set(false)">{{ i18n.t('block11.form.cancel') }}</button>
+                <button type="submit" class="ui-btn" [disabled]="busy() || transferCandidates().length === 0">{{ i18n.t('block11.transfer.sendCode') }}</button>
+              </div>
+            </form>
+          } @else {
+            <form class="flex flex-col gap-4" (submit)="verifyTransfer($event)">
+              <p class="text-sm text-muted">{{ i18n.t('block11.transfer.codeSent') }}</p>
+              <label class="block">
+                <span class="mb-1.5 block text-xs font-semibold text-muted">{{ i18n.t('block11.transfer.code') }}</span>
+                <input type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" class="h-11 w-40 rounded-xl border border-line bg-surface-raised px-3 text-center font-mono text-lg tracking-[0.3em] text-ink outline-none focus:border-brand/50" data-testid="community-transfer-code" [value]="transferCode()" (input)="transferCode.set($any($event.target).value.replace(/\D/g, '').slice(0, 6))" />
+              </label>
+              @if (transferError()) {
+                <p class="text-xs text-coral" role="alert">{{ transferError() }}</p>
+              }
+              <div class="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end">
+                <button type="button" class="ui-btn-secondary" (click)="transferOpen.set(false)">{{ i18n.t('block11.form.cancel') }}</button>
+                <button type="submit" class="ui-btn" [disabled]="busy()">{{ i18n.t('block11.transfer.confirm') }}</button>
+              </div>
+            </form>
+          }
+        </app-modal>
+
+        <app-modal [open]="deleteOpen()" [title]="i18n.t('block11.settings.delete')" size="sm" (closed)="deleteOpen.set(false)">
+          <form class="flex flex-col gap-4" (submit)="confirmDelete($event)">
+            <p class="rounded-2xl border border-coral/30 bg-coral/10 p-3 text-sm leading-6 text-coral">{{ i18n.t('block11.settings.deleteBody') }}</p>
+            <label class="block">
+              <span class="mb-1.5 block text-xs font-semibold text-muted">{{ i18n.t('block11.settings.deleteLabel') }}</span>
+              <input type="text" autocomplete="off" class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink outline-none focus:border-coral/50" [value]="deleteTyped()" (input)="deleteTyped.set($any($event.target).value)" />
+              <span class="mt-1 block text-xs text-muted">{{ i18n.t('block11.settings.deleteHint', { name: c.name }) }}</span>
+            </label>
+            <div class="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end">
+              <button type="button" class="ui-btn-secondary" (click)="deleteOpen.set(false)">{{ i18n.t('block11.form.cancel') }}</button>
+              <button type="submit" class="ui-btn-danger" [disabled]="busy() || deleteTyped().trim() !== c.name.trim()">
+                <fa-icon [icon]="icons['trash']" aria-hidden="true" />
+                {{ i18n.t('block11.settings.delete') }}
+              </button>
+            </div>
+          </form>
+        </app-modal>
+
+        <app-confirm-dialog
+          [open]="leaveOpen()"
+          [title]="i18n.t('block11.detail.leave')"
+          [message]="i18n.t('block11.detail.leaveConfirm')"
+          [confirmLabel]="i18n.t('block11.detail.leave')"
+          [cancelLabel]="i18n.t('block11.form.cancel')"
+          (confirmed)="leave()"
+          (cancelled)="leaveOpen.set(false)"
+        />
+        <app-confirm-dialog
+          [open]="!!removeTarget()"
+          [title]="i18n.t('block11.members.remove')"
+          [message]="i18n.t('block11.members.removeConfirm', { name: removeTarget()?.display_name || removeTarget()?.email || '' })"
+          [confirmLabel]="i18n.t('block11.members.remove')"
+          [cancelLabel]="i18n.t('block11.form.cancel')"
+          (confirmed)="confirmRemove()"
+          (cancelled)="removeTarget.set(null)"
+        />
+      }
+    }
+  }
+</section>

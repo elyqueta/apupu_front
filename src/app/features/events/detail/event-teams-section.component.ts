@@ -1,16 +1,18 @@
-import { Component, inject, input, output } from '@angular/core';
+import { Component, inject, input, output, signal } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TeamsRepository } from '../../../core/data/teams.repository';
 import { I18nService } from '../../../core/i18n/i18n.service';
 import { TranslationKey } from '../../../core/i18n/translations';
-import { EventPermissions, Team } from '../../../core/models/models';
+import { EventPermissions, Team, TeamMember } from '../../../core/models/models';
 import { ICONS } from '../../../core/ui/icons';
 import { AvatarStackComponent } from '../../../shared/components/avatar-stack.component';
 import { SkeletonComponent } from '../../../shared/components/skeleton.component';
+import { TeamMemberDetailDialogComponent } from '../../../shared/components/team-member-detail-dialog.component';
 
 /** Cartões das equipas do evento, com membros e tarefas abertas. */
 @Component({
   selector: 'app-event-teams-section',
-  imports: [FaIconComponent, AvatarStackComponent, SkeletonComponent],
+  imports: [FaIconComponent, AvatarStackComponent, SkeletonComponent, TeamMemberDetailDialogComponent],
   template: `
     <article
       class="rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl"
@@ -61,7 +63,7 @@ import { SkeletonComponent } from '../../../shared/components/skeleton.component
           }
         </div>
       } @else {
-        <ul class="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        <ul class="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
           @for (team of teams(); track team.id) {
             <li class="min-w-0">
               <article
@@ -105,11 +107,28 @@ import { SkeletonComponent } from '../../../shared/components/skeleton.component
                 </div>
 
                 @if (team.membersPreview.length > 0) {
-                  <app-avatar-stack
-                    [names]="previewNames(team)"
-                    [images]="previewImages(team)"
-                    [max]="3"
-                  />
+                  <div class="flex min-w-0 items-center gap-2">
+                    <app-avatar-stack
+                      [names]="previewNames(team)"
+                      [images]="previewImages(team)"
+                      [ids]="previewIds(team)"
+                      [max]="3"
+                      [selectable]="true"
+                      [selectLabel]="i18n.t('block9.team.viewMember')"
+                      (memberSelected)="openMemberDetail(team.id, $event, previewAvatar(team, $event))"
+                    />
+                    @if (team.membersPreview[0]; as firstMember) {
+                      <button
+                        type="button"
+                        class="max-w-[9rem] truncate text-xs text-ink underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60"
+                        [attr.title]="firstMember.displayName ?? i18n.t('teams.previewFallback')"
+                        [attr.aria-label]="i18n.t('block9.team.viewMember') + ': ' + (firstMember.displayName ?? i18n.t('teams.previewFallback'))"
+                        (click)="openMemberDetail(team.id, firstMember.id, firstMember.avatarUrl)"
+                      >
+                        {{ firstMember.displayName ?? i18n.t('teams.previewFallback') }}
+                      </button>
+                    }
+                  </div>
                 }
 
                 <button
@@ -126,6 +145,14 @@ import { SkeletonComponent } from '../../../shared/components/skeleton.component
           }
         </ul>
       }
+
+      <app-team-member-detail-dialog
+        [open]="memberDetailOpen()"
+        [member]="memberDetail()"
+        [avatarUrl]="memberDetailAvatar()"
+        [loading]="memberDetailLoading()"
+        (closed)="memberDetailOpen.set(false)"
+      />
     </article>
   `,
 })
@@ -140,6 +167,12 @@ export class EventTeamsSectionComponent {
 
   protected readonly i18n = inject(I18nService);
   protected readonly icons = ICONS;
+  private readonly teamsRepository = inject(TeamsRepository);
+
+  protected readonly memberDetailOpen = signal(false);
+  protected readonly memberDetail = signal<TeamMember | null>(null);
+  protected readonly memberDetailAvatar = signal<string | null>(null);
+  protected readonly memberDetailLoading = signal(false);
 
   protected categoryLabel(team: Team): string {
     return this.i18n.t(`teamCategory.${team.category}` as TranslationKey);
@@ -161,5 +194,32 @@ export class EventTeamsSectionComponent {
 
   protected previewImages(team: Team): (string | null)[] {
     return team.membersPreview.map((member) => member.avatarUrl);
+  }
+
+  protected previewIds(team: Team): string[] {
+    return team.membersPreview.map((member) => member.id);
+  }
+
+  protected previewAvatar(team: Team, memberId: string): string | null {
+    return team.membersPreview.find((member) => member.id === memberId)?.avatarUrl ?? null;
+  }
+
+  protected async openMemberDetail(
+    teamId: string,
+    memberId: string,
+    avatarUrl: string | null,
+  ): Promise<void> {
+    this.memberDetailAvatar.set(avatarUrl);
+    this.memberDetail.set(null);
+    this.memberDetailLoading.set(true);
+    this.memberDetailOpen.set(true);
+    try {
+      const page = await this.teamsRepository.listMembers(teamId, { page: 1, pageSize: 100 });
+      this.memberDetail.set(page.items.find((member) => member.id === memberId) ?? null);
+    } catch {
+      this.memberDetailOpen.set(false);
+    } finally {
+      this.memberDetailLoading.set(false);
+    }
   }
 }

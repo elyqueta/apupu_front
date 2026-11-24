@@ -73,6 +73,11 @@ export class CsrfTokenStore {
     if (path.startsWith('/public/invitations/')) {
       return 'guest';
     }
+    // Link aberto do evento (Bloco 10): a confirmação com conta usa o CSRF
+    // derivado da sessão `apupu_auth`; sem conta o servidor ignora o cabeçalho.
+    if (path.startsWith('/public/events/')) {
+      return 'auth';
+    }
     if (path === '/host/session') {
       return null;
     }

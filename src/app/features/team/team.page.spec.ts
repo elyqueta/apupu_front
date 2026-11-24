@@ -287,4 +287,54 @@ describe('TeamPage', () => {
       context.fixture.nativeElement.querySelector(`[data-testid="team-card-${TEAM_ID}"]`).textContent,
     ).not.toContain('@');
   });
+
+  it('abre o detalhe do membro ao tocar no avatar do cartão da equipa', async () => {
+    const context = setup();
+    http = context.http;
+    const request = http.match((req) => req.url === `${BASE}/host/teams`);
+    await flushBootstrap(context, undefined, undefined, request);
+
+    const grid = context.fixture.nativeElement.querySelector('ul.grid');
+    expect(grid.className).toContain('grid-cols-1');
+    expect(grid.className).toContain('md:grid-cols-2');
+    expect(grid.className).toContain('xl:grid-cols-3');
+
+    const avatarButton = context.fixture.nativeElement.querySelector(
+      `[data-testid="avatar-member-member-2"]`,
+    );
+    expect(avatarButton.getAttribute('aria-label')).toContain('Ver membro');
+    avatarButton.click();
+
+    const membersRequest = http.expectOne(
+      (req) => req.url === `${BASE}/host/teams/${TEAM_ID}/members`,
+    );
+    expect(membersRequest.request.method).toBe('GET');
+    membersRequest.flush(
+      pageOf([
+        {
+          id: 'member-2',
+          team_id: TEAM_ID,
+          email: 'rui@exemplo.pt',
+          phone: null,
+          display_name: 'Rui Costa',
+          role: 'membro',
+          status: 'ativo',
+          origin: 'email',
+          is_host: false,
+          open_task_count: 3,
+          has_event_access: true,
+          joined_at: null,
+          created_at: '2026-01-01T00:00:00Z',
+        },
+      ]),
+    );
+    await settle(context.fixture);
+
+    const modal = context.fixture.nativeElement.querySelector('[data-testid="app-modal"]');
+    expect(modal.getAttribute('data-presentation')).toBe('sheet');
+    const detail = context.fixture.nativeElement.querySelector('[data-testid="team-member-detail"]');
+    expect(detail.textContent).toContain('Rui Costa');
+    expect(detail.textContent).toContain('rui@exemplo.pt');
+    expect(detail.textContent).toContain('3 por concluir');
+  });
 });

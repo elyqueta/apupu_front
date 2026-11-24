@@ -8,14 +8,18 @@ import { AuthService } from '../../core/api/auth.service';
 import { toApiError } from '../../core/api/api-error';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { TranslationKey } from '../../core/i18n/translations';
+import { EventMenuBridgeService } from '../../core/services/event-menu-bridge.service';
 import { SearchGroup, SearchService, SearchSuggestion } from '../../core/services/search.service';
 import { ToastService } from '../../core/services/toast.service';
 import { WorkspaceStore } from '../../core/services/workspace.store';
 import { ICONS } from '../../core/ui/icons';
 import { NotificationPresenter } from '../../shared/services/notification.presenter';
 import { HostNotification } from '../../core/models/models';
+import { EVENT_TABS } from '../../features/events/detail/detail.models';
 import { AvatarComponent } from '../../shared/components/avatar.component';
 import { BrandComponent } from '../../shared/components/brand.component';
+import { EventMenuDrawerComponent } from '../../shared/components/event-menu-drawer.component';
+import { EventSectionItem } from '../../shared/components/event-section-shell.component';
 import { LogoComponent } from '../../shared/components/logo.component';
 import { PreferenceControlsComponent } from '../../shared/components/preference-controls.component';
 import { SearchSuggestionsComponent } from '../../shared/components/search-suggestions.component';
@@ -41,6 +45,7 @@ interface NavItem {
     PreferenceControlsComponent,
     SearchSuggestionsComponent,
     SkeletonComponent,
+    EventMenuDrawerComponent,
   ],
   templateUrl: './shell.component.html',
 })
@@ -53,10 +58,15 @@ export class ShellComponent {
   private readonly toasts = inject(ToastService);
   private readonly notificationPresenter = inject(NotificationPresenter);
   private readonly searchService = inject(SearchService);
+  protected readonly eventMenuBridge = inject(EventMenuBridgeService);
 
   protected readonly mobileOpen = signal(false);
   protected readonly sidebarCollapsed = signal(false);
   protected readonly notificationsOpen = signal(false);
+  protected readonly eventMenuOpen = signal(false);
+  protected readonly isEventDetail = signal(false);
+  protected readonly eventBackLink = signal('/eventos');
+  protected readonly eventBackLabel = signal<TranslationKey>('eventDetail.backToEvents');
   protected readonly searchTerm = signal('');
   protected readonly searchOpen = signal(false);
   protected readonly activeSuggestionId = signal<string | null>(null);
@@ -84,6 +94,9 @@ export class ShellComponent {
     { path: '/mensagens', labelKey: 'nav.messages', icon: ICONS['envelopeOpen'], exact: false },
     { path: '/convidados', labelKey: 'nav.guests', icon: ICONS['guests'], exact: false },
     { path: '/equipas', labelKey: 'nav.team', icon: ICONS['guestGroup'], exact: false },
+    { path: '/comunidades', labelKey: 'nav.communities', icon: ICONS['globe'], exact: false },
+    { path: '/instituicoes', labelKey: 'nav.institutions', icon: ICONS['bank'], exact: false },
+    { path: '/amigos', labelKey: 'nav.friends', icon: ICONS['userPlus'], exact: false },
     { path: '/templates', labelKey: 'nav.templates', icon: ICONS['templates'], exact: false },
     { path: '/relatorios', labelKey: 'nav.reports', icon: ICONS['reports'], exact: false },
     {
@@ -104,6 +117,15 @@ export class ShellComponent {
     { path: '/convidados', labelKey: 'nav.guests', icon: ICONS['guests'], exact: false },
     { path: '/tarefas', labelKey: 'nav.tasks', icon: ICONS['checklist'], exact: false },
   ];
+
+  /** Os mesmos destinos do rail, reutilizados no drawer da barra superior. */
+  protected readonly eventMenuSections = computed<EventSectionItem[]>(() =>
+    EVENT_TABS.map((tab) => ({
+      id: tab.id,
+      label: this.i18n.t(tab.labelKey),
+      icon: ICONS[tab.icon],
+    })),
+  );
 
   protected readonly notifications = computed(() => this.store.notifications());
   protected readonly unreadNotifications = this.store.unreadNotifications;
@@ -178,10 +200,18 @@ export class ShellComponent {
         this.updatePageTitle();
         this.mobileOpen.set(false);
         this.notificationsOpen.set(false);
+        this.eventMenuOpen.set(false);
         this.mobileSearchOpen.set(false);
         this.closeSearch();
       });
     this.updatePageTitle();
+  }
+
+  /** Navega para a secção escolhida no drawer, mantendo o URL partilhável. */
+  protected onEventMenuSection(id: string): void {
+    const path = this.router.url.split('?')[0].split('#')[0];
+    const query = id === 'resumo' ? '' : `?separador=${encodeURIComponent(id)}`;
+    void this.router.navigateByUrl(`${path}${query}`);
   }
 
   /** Alterna o menu lateral no desktop e guarda a preferência localmente. */
@@ -404,7 +434,17 @@ export class ShellComponent {
 
   private updatePageTitle(): void {
     const url = this.router.url.split('?')[0].split('#')[0];
-    if (url.startsWith('/eventos')) {
+    const eventDetail = /^\/eventos\/[^/]+/.test(url) || /^\/gestao\/evento\/[^/]+/.test(url);
+    this.isEventDetail.set(eventDetail);
+    if (eventDetail) {
+      const management = url.startsWith('/gestao');
+      this.eventBackLink.set(management ? '/gestao' : '/eventos');
+      this.eventBackLabel.set(
+        management ? 'eventDetail.backToManagement' : 'eventDetail.backToEvents',
+      );
+      this.pageTitle.set('nav.events');
+      this.skeletonVariant.set('detail');
+    } else if (url.startsWith('/eventos')) {
       this.pageTitle.set('nav.events');
       this.skeletonVariant.set(url.split('/').filter(Boolean).length > 1 ? 'detail' : 'cards');
     } else if (url.startsWith('/tarefas')) {
@@ -425,6 +465,15 @@ export class ShellComponent {
     } else if (url.startsWith('/equipas')) {
       this.pageTitle.set('nav.team');
       this.skeletonVariant.set('cards');
+    } else if (url.startsWith('/amigos')) {
+      this.pageTitle.set('nav.friends');
+      this.skeletonVariant.set('cards');
+    } else if (url.startsWith('/comunidades')) {
+      this.pageTitle.set('nav.communities');
+      this.skeletonVariant.set(url.split('/').filter(Boolean).length > 1 ? 'detail' : 'cards');
+    } else if (url.startsWith('/instituicoes')) {
+      this.pageTitle.set('nav.institutions');
+      this.skeletonVariant.set(url.split('/').filter(Boolean).length > 1 ? 'detail' : 'cards');
     } else if (url.startsWith('/templates')) {
       this.pageTitle.set('nav.templates');
       this.skeletonVariant.set('cards');

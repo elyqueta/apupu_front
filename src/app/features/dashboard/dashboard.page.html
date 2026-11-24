@@ -439,45 +439,69 @@
         </div>
       </div>
 
-      <div class="mt-5">
+      <div class="relative mt-3">
+        @if (activeChartDay(); as day) {
+          <div
+            role="status"
+            class="pointer-events-none absolute top-0 z-10 -translate-x-1/2 whitespace-nowrap rounded-lg border border-line bg-surface-solid px-2 py-1 text-[11px] font-semibold text-ink shadow-card"
+            [style.left.%]="Math.min(93, Math.max(7, (activeDay() ?? 0) * 14 + 7))"
+          >
+            {{ day.ariaLabel }}
+          </div>
+        }
         <svg
-          viewBox="0 0 100 34"
+          viewBox="0 0 100 36"
           preserveAspectRatio="none"
-          class="h-32 w-full"
+          class="h-40 w-full"
           role="img"
           [attr.aria-label]="i18n.t('dashboard.chartTitle')"
         >
-          <line x1="0" y1="33.5" x2="100" y2="33.5" class="stroke-line" stroke-width="0.3" />
+          <line x1="0" y1="35.5" x2="100" y2="35.5" class="stroke-line" stroke-width="0.3" />
           @for (day of week(); track $index) {
-            <rect
-              [attr.x]="$index * 14 + 3"
-              [attr.y]="32 - day.height"
-              [attr.width]="8"
-              [attr.height]="day.height"
-              rx="2"
-              class="fill-brand/70"
-            />
-            <rect
-              [attr.x]="$index * 14 + 3"
-              [attr.y]="32 - day.height"
-              [attr.width]="8"
-              [attr.height]="Math.min(day.height, 4)"
-              rx="2"
-              class="fill-brand"
-            />
+            <g
+              role="img"
+              tabindex="0"
+              [attr.aria-label]="day.ariaLabel"
+              class="cursor-pointer outline-none"
+              (mouseenter)="setActiveDay($index)"
+              (mouseleave)="setActiveDay(null)"
+              (focus)="setActiveDay($index)"
+              (blur)="setActiveDay(null)"
+              (click)="setActiveDay($index)"
+            >
+              <rect [attr.x]="$index * 14" y="0" width="14" height="36" fill="transparent" />
+              @if (day.value === 0) {
+                <rect
+                  [attr.x]="$index * 14 + 3"
+                  y="35"
+                  width="8"
+                  height="0.8"
+                  rx="0.4"
+                  class="fill-line"
+                />
+              } @else {
+                <rect
+                  [attr.x]="$index * 14 + 3"
+                  [attr.y]="35 - day.height"
+                  width="8"
+                  [attr.height]="day.height"
+                  rx="2"
+                  [attr.class]="activeDay() === $index ? 'fill-brand' : 'fill-brand/70'"
+                />
+              }
+            </g>
           }
         </svg>
-        <div class="mt-2 grid grid-cols-7 gap-1 text-center">
+        <div class="mt-1 grid grid-cols-7 gap-1 text-center">
           @for (day of week(); track $index) {
             <div>
               <p
-                class="text-[9px] font-semibold uppercase tracking-[0.14em] text-muted"
-                [attr.aria-label]="day.label"
+                class="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted"
                 [attr.title]="day.label"
               >
                 {{ day.label.slice(0, 3) }}
               </p>
-              <p class="mt-0.5 text-[11px] font-semibold text-ink">{{ day.value }}</p>
+              <p class="mt-0.5 text-[11px] font-semibold tabular-nums text-ink">{{ day.value }}</p>
             </div>
           }
         </div>
@@ -553,23 +577,60 @@
           </a>
         </div>
       } @else {
-        <ul class="mt-4 grid min-w-0 gap-3 sm:grid-cols-2">
-          @for (entry of filteredGuests(); track entry.guest.id) {
-            <li class="min-w-0">
-              <app-person-card
-                [name]="entry.guest.name"
-                [subtitle]="subtitleFor(entry.guest)"
-                [status]="entry.guest.status"
-                [meta]="metaFor(entry)"
-                [actions]="guestActions(entry)"
-                [primaryAction]="primaryFor(entry)"
-                [actionsLabel]="i18n.t('guests.tableActions')"
-                (actionSelected)="onGuestAction($event, entry)"
-                (primaryTriggered)="onGuestAction($event, entry)"
-              />
-            </li>
-          }
-        </ul>
+        <div class="mt-4 min-w-0">
+          <div class="flex items-center justify-between gap-3">
+            <p class="text-[11px] font-semibold tabular-nums text-muted" aria-live="polite">
+              {{
+                i18n.t('block9.dashboard.carouselPosition', {
+                  current: carouselIndex(),
+                  total: filteredGuests().length,
+                })
+              }}
+            </p>
+            <div class="hidden items-center gap-2 md:flex">
+              <button
+                type="button"
+                class="ui-icon-button"
+                [attr.aria-label]="i18n.t('block9.dashboard.carouselPrevious')"
+                (click)="moveCarousel(-1)"
+              >
+                <fa-icon [icon]="icons['chevronLeft']" aria-hidden="true" />
+              </button>
+              <button
+                type="button"
+                class="ui-icon-button"
+                [attr.aria-label]="i18n.t('block9.dashboard.carouselNext')"
+                (click)="moveCarousel(1)"
+              >
+                <fa-icon [icon]="icons['chevronRight']" aria-hidden="true" />
+              </button>
+            </div>
+          </div>
+          <ul
+            #guestCarousel
+            class="no-scrollbar mt-3 flex snap-x snap-mandatory gap-3 overflow-x-auto pb-1"
+            tabindex="0"
+            [attr.aria-label]="i18n.t('dashboard.pendingTitle')"
+            (scroll)="onCarouselScroll()"
+            (keydown)="onCarouselKeydown($event)"
+          >
+            @for (entry of filteredGuests(); track entry.guest.id) {
+              <li class="min-w-[17rem] max-w-[calc(100vw-3rem)] shrink-0 snap-start sm:min-w-[20rem]">
+                <app-person-card
+                  [name]="entry.guest.name"
+                  [subtitle]="subtitleFor(entry.guest)"
+                  [status]="entry.guest.status"
+                  [meta]="metaFor(entry)"
+                  [actions]="guestActions(entry)"
+                  [primaryAction]="primaryFor(entry)"
+                  [actionsLabel]="i18n.t('guests.tableActions')"
+                  (actionSelected)="onGuestAction($event, entry)"
+                  (primaryTriggered)="onGuestAction($event, entry)"
+                />
+              </li>
+            }
+          </ul>
+        </div>
       }
     </section>
   </div>

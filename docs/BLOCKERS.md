@@ -58,3 +58,22 @@
 | Auditoria — bottom sheet | `docs/AUDIT.md:227–229` afirma que não existe bottom sheet. | Drift documental: `app-modal` já implementa bottom sheet, foco e Escape desde o Bloco 1; reutilizado sem novo componente. |
 | Passo 5 — ação no link inativo | A regra prevê “Falar com o anfitrião” quando existir contacto público, mas a resposta genérica (`404 invitation_not_found` / `Convite não encontrado.`) não devolve qualquer dado do anfitrião. | Manter a página inativa apenas com o texto genérico e o botão “Tentar de novo”; não inventar contacto nem diferenciar invalidado/expirado/revogado. | Aceite: motivo e contacto nunca são expostos em link inativo. O contacto está disponível no modal do anfitrião de um convite ativo. |
 | Passo 4 — verificação automática | Não existe captura automatizada de contraste, tamanho de texto ou alvos de toque no projeto. | Revisão das classes Tailwind em `invitation.page.html` e `parts/`; nenhum `text-[9px]`/`text-[10px]`/`text-[11px]`, botões com `h-11`/`h-12` ou `size-11`. | Recomenda-se confirmação manual em 360 px com tema claro e escuro antes do merge. |
+
+## Bloco 9 — UI mobile
+
+**Bloqueios:** nenhum.
+
+### Observações (fora do âmbito, não bloqueiam)
+
+| Passo / área | Observação | Estado / decisão |
+|---|---|---|
+| Passo 6 — e2e | `E2E_EMAIL`, `E2E_PASSWORD` e `E2E_BASE_URL` não estão definidos neste ambiente. | Os 24 testes Playwright (4 projetos: 360×640 e 1440×900 × claro/escuro) terminam `skipped` com exit 0; os binários do Chromium também não foram descarregados. Para executar: definir as três variáveis e correr `npx playwright install chromium` antes de `npm run e2e`. |
+| Passo 6 — dados | O cenário “Adicionar convidado” preenche apenas o telefone e submete com nome/email vazios. | A validação do formulário impede criar convidados de teste; o modal é fechado com “Cancelar”. |
+| Passo 6 — admin | `/admin/utilizadores` exige conta com papel de super admin. | O e2e pressupõe que as credenciais fornecidas têm esse papel; sem ele, a rota não mostra os controlos. |
+| Qualidade — lint | `npm run lint` termina com **0 erros** e **24 avisos** preexistentes. | Aceite conforme `REGRAS-GERAIS.md` §5; nenhum aviso novo introduzido. |
+| Passo 3 — portal | O menu de ações é montado no `body`; o estilo depende de `position: fixed` e de `getBoundingClientRect()`. | Coberto por Vitest (abertura para cima e limite direito) e por Playwright (dentro do ecrã, ao lado do botão, primeiro/último cartão). |
+| Verificação visual | Não existe captura automatizada de contraste, tamanho de texto ou alvos de toque. | Critérios revisados nas classes Tailwind: `text-xs` ou superior, alvos `size-11`/`h-11` ou superior, tokens claros/escuros e 320 px–desktop. Confirmação manual recomendada no resumo final. |
+
+## Observações — Bloco 11 (24/11/2026)
+
+- **Auditoria:** o tipo `AUDIT_ACTIONS` do backend inclui `event_cancelled`, `event_cancel_otp_requested`, `admin_event_cancelled`, `event_cover_updated`, `event_cover_removed` e `activity_deleted`, mas o `CHECK host_audit_log_action_check` (migrações 0023/0027/0029) não as aceita. Essas linhas de auditoria falham ao inserir. Não alterei, porque está fora do âmbito; a correção é acrescentá-las ao `CHECK` numa migração própria.

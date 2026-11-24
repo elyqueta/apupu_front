@@ -16,11 +16,14 @@ import { ICONS } from '../../core/ui/icons';
 import { ActionMenuItem } from '../../shared/components/action-menu.component';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog.component';
 import { GuestDialogComponent } from '../../shared/components/guest-dialog.component';
+import { MobileFabComponent } from '../../shared/components/mobile-fab.component';
 import { PageHeaderComponent } from '../../shared/components/page-header.component';
 import { PersonCardComponent, PersonMetaItem, PersonPrimaryAction } from '../../shared/components/person-card.component';
+import { LinkCopyService } from '../../shared/services/link-copy.service';
 import { SkeletonComponent } from '../../shared/components/skeleton.component';
 import { StatCardComponent } from '../../shared/components/stat-card.component';
 import { StatGridComponent } from '../../shared/components/stat-grid.component';
+import { whatsappSharedLabel } from '../../shared/services/whatsapp-share.presenter';
 
 type StatusFilter = 'all' | RsvpStatus;
 
@@ -41,6 +44,7 @@ const SEARCH_DEBOUNCE_MS = 300;
     FaIconComponent,
     ConfirmDialogComponent,
     GuestDialogComponent,
+    MobileFabComponent,
     PageHeaderComponent,
     PersonCardComponent,
     SkeletonComponent,
@@ -58,6 +62,7 @@ export class GuestsPage {
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
   private readonly share = inject(ShareService);
+  private readonly linkCopy = inject(LinkCopyService);
   private readonly reports = inject(ReportsRepository);
   private readonly downloads = inject(DownloadService);
 
@@ -264,6 +269,13 @@ export class GuestsPage {
           : this.i18n.t('guests.notResponded'),
       },
     ];
+    const shared = whatsappSharedLabel(this.i18n, entry.guest.whatsappSharedAt);
+    if (shared) {
+      meta.push({ icon: 'whatsapp', label: shared });
+    }
+    if (entry.guest.source === 'public_link') {
+      meta.push({ icon: 'globe', label: this.i18n.t('block10.guest.publicLink') });
+    }
     return meta;
   }
 
@@ -301,7 +313,22 @@ export class GuestsPage {
   protected onPrimary(action: string, entry: GuestListEntry): void {
     if (action === 'whatsapp') {
       this.forwardWhatsApp(entry.guest, entry.event.title);
+    } else if (action === 'copy') {
+      void this.linkCopy.copy(entry.guest.invitationUrl);
     }
+  }
+
+  /** Email e/ou telefone (confirmações pelo link aberto podem ter só um). */
+  protected contactLine(guest: Guest): string {
+    return [guest.email, guest.phone].filter(Boolean).join(' · ');
+  }
+
+  /** "Copiar" ao lado do WhatsApp, sempre que há link individual. */
+  protected secondaryFor(entry: GuestListEntry): PersonPrimaryAction | null {
+    if (!this.isHostFor(entry.event.id) || !entry.guest.invitationUrl || entry.guest.source !== 'personal') {
+      return null;
+    }
+    return this.linkCopy.action();
   }
 
   protected onMenuAction(action: string, entry: GuestListEntry): void {
@@ -339,6 +366,22 @@ export class GuestsPage {
     const url = this.share.whatsappUrl(guest.phone, text);
     if (url) {
       this.share.openExternal(url);
+      void this.recordShare(guest);
+    }
+  }
+
+  /** Actualiza a lista sem recarregar; um erro de registo não impede novo envio. */
+  private async recordShare(guest: Guest): Promise<void> {
+    if (!guest.invitationUrl) {
+      return;
+    }
+    try {
+      const updated = await this.store.markWhatsappShared(guest);
+      this.items.update((items) =>
+        items.map((entry) => (entry.guest.id === updated.id ? { ...entry, guest: updated } : entry)),
+      );
+    } catch {
+      // A partilha no WhatsApp já foi aberta; não mostrar erro ao anfitrião.
     }
   }
 

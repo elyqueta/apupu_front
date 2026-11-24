@@ -203,14 +203,14 @@
           <li class="min-w-0">
             <app-person-card
               [name]="entry.guest.name"
-              [subtitle]="
-                entry.guest.email +
-                (entry.guest.phone ? ' · ' + entry.guest.phone : '')
-              "
+              [subtitle]="contactLine(entry.guest)"
               [status]="entry.guest.status"
               [meta]="metaFor(entry)"
               [actions]="actionsFor(entry)"
               [primaryAction]="primaryFor(entry)"
+              [secondaryAction]="secondaryFor(entry)"
+              [flag]="entry.guest.ageFlag ? i18n.t('block10.guest.ageFlag') : null"
+              [flagHint]="i18n.t('block10.guest.ageFlagHint')"
               [actionsLabel]="i18n.t('guests.tableActions')"
               (actionSelected)="onMenuAction($event, entry)"
               (primaryTriggered)="onPrimary($event, entry)"

@@ -56,13 +56,23 @@ export interface PersonPrimaryAction {
           @if (subtitle() && !compact()) {
             <p class="mt-0.5 truncate text-xs text-muted" [title]="subtitle()">{{ subtitle() }}</p>
           }
+          @if (flag(); as alert) {
+            <span
+              class="mt-1.5 inline-flex min-h-6 items-center gap-1.5 rounded-full border border-coral/30 bg-coral/10 px-2 text-xs font-semibold text-coral"
+              [attr.title]="flagHint() || null"
+              data-testid="person-card-flag"
+            >
+              <fa-icon [icon]="icons['warning']" class="text-[10px]" aria-hidden="true" />
+              {{ alert }}
+            </span>
+          }
         </div>
       </div>
 
       @if (!compact() && meta().length > 0) {
         <ul class="mt-3 space-y-1.5 border-t border-line/70 pt-3">
           @for (item of meta(); track $index) {
-            <li class="flex min-w-0 items-center gap-2 text-[11px] text-muted">
+            <li class="flex min-w-0 items-center gap-2 text-xs text-muted">
               <fa-icon [icon]="iconFor(item.icon)" class="w-3 shrink-0 text-xs" aria-hidden="true" />
               <span class="min-w-0 truncate">{{ item.label }}</span>
             </li>
@@ -70,12 +80,13 @@ export interface PersonPrimaryAction {
         </ul>
       }
 
-      @if ((actions().length > 0 || primaryAction()) && !compact()) {
+      @if ((actions().length > 0 || primaryAction() || secondaryAction()) && !compact()) {
         <div class="mt-3 flex items-center justify-between gap-2 border-t border-line/70 pt-3">
+          <div class="flex min-w-0 items-center gap-2">
           @if (primaryAction(); as primary) {
             <button
               type="button"
-              class="inline-flex h-10 min-w-0 items-center gap-2 rounded-xl bg-brand px-3 text-xs font-semibold text-on-secondary transition hover:bg-secondary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60 disabled:cursor-not-allowed disabled:opacity-50"
+              class="inline-flex h-11 min-w-0 items-center gap-2 rounded-xl bg-brand px-3 text-xs font-semibold text-on-secondary transition hover:bg-secondary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60 disabled:cursor-not-allowed disabled:opacity-50"
               [disabled]="primary.disabled"
               [attr.title]="primary.disabled ? primary.hint || null : primary.hint || null"
               (click)="triggerPrimary($event, primary)"
@@ -85,9 +96,23 @@ export interface PersonPrimaryAction {
               }
               <span class="min-w-0 truncate">{{ primary.label }}</span>
             </button>
-          } @else {
-            <span></span>
           }
+          @if (secondaryAction(); as secondary) {
+            <button
+              type="button"
+              class="ui-icon-button"
+              [attr.aria-label]="secondary.hint || secondary.label"
+              [attr.title]="secondary.hint || secondary.label"
+              [attr.data-testid]="'person-card-' + secondary.id"
+              [disabled]="secondary.disabled"
+              (click)="triggerPrimary($event, secondary)"
+            >
+              @if (secondary.icon) {
+                <fa-icon [icon]="secondary.icon" aria-hidden="true" />
+              }
+            </button>
+          }
+          </div>
           @if (actions().length > 0) {
             <app-action-menu
               [items]="actions()"
@@ -116,6 +141,11 @@ export class PersonCardComponent {
   readonly meta = input<PersonMetaItem[]>([]);
   readonly actions = input<ActionMenuItem[]>([]);
   readonly primaryAction = input<PersonPrimaryAction | null>(null);
+  /** Ação secundária só com ícone ao lado da principal (ex.: copiar link). */
+  readonly secondaryAction = input<PersonPrimaryAction | null>(null);
+  /** Selo de alerta curto (ex.: "Idade alterada"). */
+  readonly flag = input<string | null>(null);
+  readonly flagHint = input<string>('');
   readonly highlight = input(false);
   readonly compact = input(false);
   readonly clickable = input(false);

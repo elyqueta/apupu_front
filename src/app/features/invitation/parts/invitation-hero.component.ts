@@ -42,9 +42,16 @@ import { InvitationEventView } from '../invitation.models';
           <p class="text-xs font-semibold uppercase tracking-[0.18em] text-brand-strong">
             {{ i18n.t('invitation.youAreInvited') }}
           </p>
-          <h1 class="mt-1 font-display text-2xl font-semibold tracking-tight text-ink sm:text-3xl">
-            {{ i18n.t('invitation.guestGreeting', { name: guestName() }) }}
-          </h1>
+          @if (guestName()) {
+            <h1 class="mt-1 font-display text-2xl font-semibold tracking-tight text-ink sm:text-3xl">
+              {{ i18n.t('invitation.guestGreeting', { name: guestName() }) }}
+            </h1>
+          } @else {
+            <!-- Link aberto: sem convidado conhecido, o título do evento é o cabeçalho. -->
+            <h1 class="mt-1 font-display text-2xl font-semibold tracking-tight text-ink sm:text-3xl">
+              {{ event().title }}
+            </h1>
+          }
           @if (event().coverUrl) {
             <h2 class="mt-2 font-display text-xl font-semibold text-ink">{{ event().title }}</h2>
             <p class="mt-1 text-sm text-muted">

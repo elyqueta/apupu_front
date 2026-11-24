@@ -122,6 +122,13 @@ export const routes: Routes = [
           import('./features/invitation/invitation.page').then((m) => m.InvitationPage),
       },
       {
+        // Link aberto de um evento público (Bloco 10).
+        path: 'e/:slug',
+        title: pageTitle('route.publicEvent'),
+        loadComponent: () =>
+          import('./features/public-event/public-event.page').then((m) => m.PublicEventPage),
+      },
+      {
         path: 'isy',
         title: 'Convite · Isilda Manuel',
         loadComponent: () =>

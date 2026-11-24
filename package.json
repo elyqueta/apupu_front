@@ -30,7 +30,6 @@
     "@fortawesome/free-regular-svg-icons": "^7.3.1",
     "@fortawesome/free-solid-svg-icons": "^7.3.1",
     "express": "^5.1.0",
-    "leaflet": "^1.9.4",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0"
   },
@@ -42,7 +41,6 @@
     "@playwright/test": "^1.65.1",
     "@tailwindcss/postcss": "^4.1.12",
     "@types/express": "^5.0.1",
-    "@types/leaflet": "^1.9.12",
     "@types/node": "^20.17.19",
     "angular-eslint": "22.8.0",
     "eslint": "^10.14.0",

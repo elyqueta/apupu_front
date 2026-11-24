@@ -480,7 +480,7 @@
                   <span
                     class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted"
                   >
-                    {{ i18n.t('create.field.venue') }} <span class="text-coral">*</span>
+                    {{ i18n.t('create.field.venue') }} @if (!hasExactLocation()) { <span class="text-coral">*</span> }
                   </span>
                   <input
                     type="text"
@@ -497,7 +497,7 @@
                   <span
                     class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted"
                   >
-                    {{ i18n.t('create.field.city') }} <span class="text-coral">*</span>
+                    {{ i18n.t('create.field.city') }} @if (!hasExactLocation()) { <span class="text-coral">*</span> }
                   </span>
                   <input
                     type="text"
@@ -1403,4 +1403,17 @@
       </aside>
     </div>
   }
+
+  <app-modal
+    [open]="!!pendingSaveLocation()"
+    [title]="i18n.t('block14.location.saveTitle')"
+    size="sm"
+    (closed)="dismissPreferredLocation()"
+  >
+    <p class="text-sm leading-6 text-muted">{{ i18n.t('block14.location.saveBody') }}</p>
+    <div class="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+      <button type="button" class="ui-btn-secondary" (click)="dismissPreferredLocation()">{{ i18n.t('block14.location.saveDismiss') }}</button>
+      <button type="button" class="ui-btn" (click)="savePreferredLocation()">{{ i18n.t('block14.location.saveConfirm') }}</button>
+    </div>
+  </app-modal>
 </section>

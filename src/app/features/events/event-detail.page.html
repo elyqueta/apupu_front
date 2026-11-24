@@ -107,11 +107,11 @@
       </label>
       <div class="grid gap-4 sm:grid-cols-2">
         <label class="block">
-          <span class="mb-1.5 block text-xs font-semibold text-muted">{{ i18n.t('eventDetail.fieldVenue') }}</span>
+          <span class="mb-1.5 block text-xs font-semibold text-muted">{{ i18n.t('eventDetail.fieldVenue') }} @if (!hasExactLocation()) { <span class="text-coral">*</span> }</span>
           <input type="text" formControlName="venue" class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink outline-none focus:border-brand/50" />
         </label>
         <label class="block">
-          <span class="mb-1.5 block text-xs font-semibold text-muted">{{ i18n.t('eventDetail.fieldCity') }}</span>
+          <span class="mb-1.5 block text-xs font-semibold text-muted">{{ i18n.t('eventDetail.fieldCity') }} @if (!hasExactLocation()) { <span class="text-coral">*</span> }</span>
           <input type="text" formControlName="city" class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink outline-none focus:border-brand/50" />
         </label>
       </div>
@@ -185,6 +185,19 @@
     (picked)="onMapPicked($event)"
     (closed)="closeMapPicker()"
   />
+
+  <app-modal
+    [open]="!!pendingSaveLocation()"
+    [title]="i18n.t('block14.location.saveTitle')"
+    size="sm"
+    (closed)="dismissPreferredLocation()"
+  >
+    <p class="text-sm leading-6 text-muted">{{ i18n.t('block14.location.saveBody') }}</p>
+    <div class="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+      <button type="button" class="ui-btn-secondary" (click)="dismissPreferredLocation()">{{ i18n.t('block14.location.saveDismiss') }}</button>
+      <button type="button" class="ui-btn" (click)="savePreferredLocation()">{{ i18n.t('block14.location.saveConfirm') }}</button>
+    </div>
+  </app-modal>
 
   <app-delete-event-dialog
     [open]="deleteOpen()"

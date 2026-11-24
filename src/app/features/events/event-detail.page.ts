@@ -79,8 +79,9 @@ import {
   ageRangeError,
   parseAge,
 } from '../../shared/components/event-visibility-fields.component';
-import { MapPickerDialogComponent, MapPoint, roundCoord } from '../../shared/components/map-picker-dialog.component';
+import { MapPickerDialogComponent, MapPickResult, reverseGeocodeGoogle, roundCoord } from '../../shared/components/map-picker-dialog.component';
 import { extractYoutubeId } from '../../core/utils/youtube';
+import { readPreferredLocation, writePreferredLocation, type PreferredLocation } from '../../core/utils/preferred-location';
 import { PublicLinkCardComponent } from '../../shared/components/public-link-card.component';
 import { EventVisibility } from '../../core/models/models';
 
@@ -192,6 +193,7 @@ export class EventDetailPage {
   protected readonly credentialsOpen = signal(false);
   protected readonly editModalOpen = signal(false);
   protected readonly mapPickerOpen = signal(false);
+  protected readonly pendingSaveLocation = signal<PreferredLocation | null>(null);
   protected readonly deleteOpen = signal(false);
   protected readonly deleteBusy = signal(false);
   protected readonly deleteError = signal('');
@@ -459,8 +461,8 @@ export class EventDetailPage {
 
   protected readonly settingsForm = this.fb.group({
     title: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(120)]],
-    venue: ['', [Validators.required, Validators.maxLength(120)]],
-    city: ['', [Validators.required, Validators.maxLength(80)]],
+    venue: ['', [Validators.maxLength(120)]],
+    city: ['', [Validators.maxLength(80)]],
     youtubeVideoUrl: [''],
     latitude: this.fb.control<number | null>(null),
     longitude: this.fb.control<number | null>(null),
@@ -526,6 +528,7 @@ export class EventDetailPage {
           maxAge: event.maxAge === null ? '' : String(event.maxAge),
         },
       });
+      this.syncLocationValidators();
     });
     effect(() => {
       const event = this.event();
@@ -1378,17 +1381,54 @@ export class EventDetailPage {
     return typeof v.latitude === 'number' && typeof v.longitude === 'number';
   }
 
+  private syncLocationValidators(): void {
+    const hasExact = this.hasExactLocation();
+    const venue = this.settingsForm.controls.venue;
+    const city = this.settingsForm.controls.city;
+    venue.setValidators([Validators.maxLength(120), ...(hasExact ? [] : [Validators.required])]);
+    city.setValidators([Validators.maxLength(80), ...(hasExact ? [] : [Validators.required])]);
+    venue.updateValueAndValidity({ emitEvent: false });
+    city.updateValueAndValidity({ emitEvent: false });
+  }
+
+  private promptSaveLocation(lat: number, lng: number, city?: string, venue?: string): void {
+    const saved = readPreferredLocation();
+    if (saved && saved.latitude === lat && saved.longitude === lng) return;
+    this.pendingSaveLocation.set({
+      latitude: lat,
+      longitude: lng,
+      city: city ?? (this.settingsForm.controls.city.value.trim() || undefined),
+      venue: venue ?? (this.settingsForm.controls.venue.value.trim() || undefined),
+      placeLabel: this.settingsForm.controls.placeLabel.value.trim() || undefined,
+    });
+  }
+
+  protected savePreferredLocation(): void {
+    const pending = this.pendingSaveLocation();
+    if (pending) writePreferredLocation(pending);
+    this.pendingSaveLocation.set(null);
+  }
+
+  protected dismissPreferredLocation(): void {
+    this.pendingSaveLocation.set(null);
+  }
+
   protected openMapPicker(): void { this.mapPickerOpen.set(true); }
   protected closeMapPicker(): void { this.mapPickerOpen.set(false); }
-  protected onMapPicked(point: MapPoint): void {
+  protected onMapPicked(point: MapPickResult): void {
     this.settingsForm.controls.latitude.setValue(point.latitude);
     this.settingsForm.controls.longitude.setValue(point.longitude);
+    if (point.city) this.settingsForm.controls.city.setValue(point.city);
+    if (point.venue) this.settingsForm.controls.venue.setValue(point.venue);
+    this.syncLocationValidators();
     this.closeMapPicker();
+    this.promptSaveLocation(point.latitude, point.longitude, point.city, point.venue);
   }
   protected removeExactLocation(): void {
     this.settingsForm.controls.latitude.setValue(null);
     this.settingsForm.controls.longitude.setValue(null);
     this.settingsForm.controls.placeLabel.setValue('');
+    this.syncLocationValidators();
   }
   protected useMyLocation(): void {
     if (typeof navigator === 'undefined' || !navigator.geolocation) {
@@ -1397,8 +1437,24 @@ export class EventDetailPage {
     }
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        this.settingsForm.controls.latitude.setValue(roundCoord(pos.coords.latitude));
-        this.settingsForm.controls.longitude.setValue(roundCoord(pos.coords.longitude));
+        const lat = roundCoord(pos.coords.latitude);
+        const lng = roundCoord(pos.coords.longitude);
+        this.settingsForm.controls.latitude.setValue(lat);
+        this.settingsForm.controls.longitude.setValue(lng);
+        this.syncLocationValidators();
+        this.promptSaveLocation(lat, lng);
+        void reverseGeocodeGoogle(lat, lng).then((address) => {
+          if (address.city) this.settingsForm.controls.city.setValue(address.city);
+          if (address.venue) this.settingsForm.controls.venue.setValue(address.venue);
+          const pending = this.pendingSaveLocation();
+          if (pending && pending.latitude === lat && pending.longitude === lng) {
+            this.pendingSaveLocation.set({
+              ...pending,
+              city: address.city ?? pending.city,
+              venue: address.venue ?? pending.venue,
+            });
+          }
+        });
       },
       () => this.toasts.error(this.i18n.t('block14.location.error')),
       { enableHighAccuracy: true, timeout: 10_000 },

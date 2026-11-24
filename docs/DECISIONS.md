@@ -272,3 +272,15 @@ Mapeamento feito antes de alterar código. O frontend parte de `feat/bloco-3-det
 | Ajuda em Markdown. | `src/content/docs/*.md` carregados como texto pelo builder do Angular (`"loader": { ".md": "text" }` em `angular.json`, sem dependências) e um renderer mínimo próprio (títulos, listas, negrito, links internos/https; texto sempre escapado). `docs/GUIA-UTILIZADOR.md` gerado a partir dos mesmos ficheiros. **Exige reiniciar o `ng serve`** depois de mudar de branch. | Pedido do bloco, sem dependência pesada. |
 | `app-brand`. | Passa a ligar para `/` (feed) em vez de `/painel`. | `/` é a página inicial; visitantes não eram mandados para o login. |
 | Destino pós-login. | `/` (feed) por defeito, também no Google; `returnUrl` continua a mandar. | Regra do bloco. |
+
+## Bloco 13 — Instituições (24/11/2026)
+
+| Dúvida | Escolha | Motivo |
+|---|---|---|
+| Quem confirma com OTP. | Só o **criador da instituição** confirma com código (6 dígitos, `purpose = 'institution_link'`, email `instituicao_codigo`) ligar **e** remover uma comunidade. O responsável da comunidade pede ou aceita o convite sem código. | "Nenhuma comunidade é ligada sem OTP do criador"; o pedido parte de quem tem menos poder. |
+| Sair da instituição. | O responsável da comunidade pode sair **sem OTP** (ação no detalhe, com confirmação). | Sair só reduz o alcance da instituição; não exige o consentimento do criador. |
+| Fluxo dos pedidos. | `pending` → (convite: a comunidade aceita) → o criador aprova (`awaiting_otp`, código enviado) → confirma o código (liga/desliga numa transação). Um pedido aberto por comunidade e instituição (`institution_request_open`). Uma comunidade só pertence a uma instituição (`community_has_institution`). | Estados explícitos e auditados em `host_audit_log`. |
+| Instituição privada. | 404 para quem não é criador nem responsável de uma comunidade associada; comunidades privadas da instituição só aparecem ao criador e ao próprio responsável. | Mesma regra de não revelar existência dos blocos 11/12. |
+| Feed. | No separador "Comunidades", a primeira página começa com até 6 instituições públicas (`type: 'institution'`), com cartão do mesmo tamanho dos de comunidade. O cartão abre `/instituicoes/:slug` (área autenticada; visitantes passam pelo login). | Sem página pública própria neste bloco. |
+| Correção do feed (avatar, excerto, data). | Commit `cb53190` ficou na branch do Bloco 13 do back porque já descendia da do 12. | Registo. |
+| Perfil da comunidade. | O DTO da comunidade passa a ter `institution { name, slug }`; o detalhe autenticado mostra "Faz parte de …" com ligação. A página pública `/comunidade/:slug` ainda não mostra (fica para depois). | Âmbito do bloco. |

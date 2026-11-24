@@ -57,6 +57,12 @@ export interface HostEvent {
   /** Limites de idade (opcionais); nunca mostrados publicamente. */
   minAge: number | null;
   maxAge: number | null;
+  /** Bloco 14: vídeo (só ID YouTube), localização exata e mesas. */
+  youtubeVideoId: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  placeLabel: string | null;
+  useTables: boolean;
   createdAt: string;
   stats?: EventStats;
 }
@@ -289,6 +295,12 @@ export interface CreateEventInput {
   maxAge?: number | null;
   /** Bloco 11: evento da comunidade (`null` = pessoal). */
   communityId?: string | null;
+  /** Bloco 14 */
+  youtubeVideoId?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  placeLabel?: string | null;
+  useTables?: boolean;
 }
 
 export interface AddGuestResult {

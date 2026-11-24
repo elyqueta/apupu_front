@@ -109,6 +109,9 @@ export interface ApiEvent {
   max_age?: number | null;
   /** Papel de quem consulta o evento; ausente na vista pública. */
   access_role?: ApiEventAccessRole;
+  /** Bloco 14: vídeo de convite (só o ID) e mesas. */
+  youtube_video_id?: string | null;
+  use_tables?: boolean;
   created_at: string;
   updated_at: string;
   stats?: EventStats;
@@ -512,6 +515,8 @@ export interface CreateEventRequest {
     min_age?: number | null;
     max_age?: number | null;
     community_id?: string | null;
+    youtube_video_id?: string | null;
+    use_tables?: boolean;
   };
   guests: Array<{
     name: string;

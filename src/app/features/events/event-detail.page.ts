@@ -79,6 +79,8 @@ import {
   ageRangeError,
   parseAge,
 } from '../../shared/components/event-visibility-fields.component';
+import { MapPickerDialogComponent, MapPoint, roundCoord } from '../../shared/components/map-picker-dialog.component';
+import { extractYoutubeId } from '../../core/utils/youtube';
 import { PublicLinkCardComponent } from '../../shared/components/public-link-card.component';
 import { EventVisibility } from '../../core/models/models';
 
@@ -129,6 +131,7 @@ function isoDaysAgo(days: number): string {
     EventVisibilityFieldsComponent,
     PublicLinkCardComponent,
     DeleteEventDialogComponent,
+    MapPickerDialogComponent,
   ],
   templateUrl: './event-detail.page.html',
 })
@@ -188,6 +191,7 @@ export class EventDetailPage {
   protected readonly credentials = signal<ManagerCreationResult | null>(null);
   protected readonly credentialsOpen = signal(false);
   protected readonly editModalOpen = signal(false);
+  protected readonly mapPickerOpen = signal(false);
   protected readonly deleteOpen = signal(false);
   protected readonly deleteBusy = signal(false);
   protected readonly deleteError = signal('');
@@ -457,6 +461,11 @@ export class EventDetailPage {
     title: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(120)]],
     venue: ['', [Validators.required, Validators.maxLength(120)]],
     city: ['', [Validators.required, Validators.maxLength(80)]],
+    youtubeVideoUrl: [''],
+    latitude: this.fb.control<number | null>(null),
+    longitude: this.fb.control<number | null>(null),
+    placeLabel: [''],
+    useTables: [false],
     message: ['', [Validators.required, Validators.maxLength(1200)]],
     rules: ['', [Validators.maxLength(800)]],
     dressCode: ['', [Validators.maxLength(160)]],
@@ -502,6 +511,11 @@ export class EventDetailPage {
         title: event.title,
         venue: event.venue,
         city: event.city,
+        youtubeVideoUrl: event.youtubeVideoId ? `https://www.youtube.com/watch?v=${event.youtubeVideoId}` : '',
+        latitude: event.latitude,
+        longitude: event.longitude,
+        placeLabel: event.placeLabel ?? '',
+        useTables: event.useTables,
         message: event.message,
         rules: event.rules,
         dressCode: event.dressCode,
@@ -1353,18 +1367,63 @@ export class EventDetailPage {
     }
   }
 
+  protected youtubeUrlError(): string {
+    const raw = this.settingsForm.controls.youtubeVideoUrl.value.trim();
+    if (!raw) return '';
+    return extractYoutubeId(raw) ? '' : this.i18n.t('block14.video.invalid');
+  }
+
+  protected hasExactLocation(): boolean {
+    const v = this.settingsForm.getRawValue();
+    return typeof v.latitude === 'number' && typeof v.longitude === 'number';
+  }
+
+  protected openMapPicker(): void { this.mapPickerOpen.set(true); }
+  protected closeMapPicker(): void { this.mapPickerOpen.set(false); }
+  protected onMapPicked(point: MapPoint): void {
+    this.settingsForm.controls.latitude.setValue(point.latitude);
+    this.settingsForm.controls.longitude.setValue(point.longitude);
+    this.closeMapPicker();
+  }
+  protected removeExactLocation(): void {
+    this.settingsForm.controls.latitude.setValue(null);
+    this.settingsForm.controls.longitude.setValue(null);
+    this.settingsForm.controls.placeLabel.setValue('');
+  }
+  protected useMyLocation(): void {
+    if (typeof navigator === 'undefined' || !navigator.geolocation) {
+      this.toasts.error(this.i18n.t('block14.location.error'));
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        this.settingsForm.controls.latitude.setValue(roundCoord(pos.coords.latitude));
+        this.settingsForm.controls.longitude.setValue(roundCoord(pos.coords.longitude));
+      },
+      () => this.toasts.error(this.i18n.t('block14.location.error')),
+      { enableHighAccuracy: true, timeout: 10_000 },
+    );
+  }
+
   protected async saveSettings(): Promise<void> {
     if (this.settingsForm.invalid) {
       this.settingsForm.markAllAsTouched();
       return;
     }
-    const { visibilitySettings, ...fields } = this.settingsForm.getRawValue();
+    const { visibilitySettings, youtubeVideoUrl, ...fields } = this.settingsForm.getRawValue();
+    const ytError = this.youtubeUrlError();
+    if (ytError) {
+      this.settingsForm.controls.youtubeVideoUrl.markAsTouched();
+      this.toasts.error(ytError);
+      return;
+    }
     if (ageRangeError(visibilitySettings.minAge, visibilitySettings.maxAge)) {
       return;
     }
     try {
       await this.store.updateEvent(this.eventId(), {
         ...fields,
+        youtubeVideoId: extractYoutubeId(youtubeVideoUrl) ?? null,
         visibility: visibilitySettings.visibility,
         showAttendeeCount:
           visibilitySettings.visibility === 'public' && visibilitySettings.showAttendeeCount,

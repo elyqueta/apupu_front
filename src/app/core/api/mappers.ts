@@ -131,6 +131,11 @@ export function mapEvent(event: ApiEvent): HostEvent {
     showAttendeeCount: event.show_attendee_count ?? false,
     minAge: event.min_age ?? null,
     maxAge: event.max_age ?? null,
+    youtubeVideoId: event.youtube_video_id ?? null,
+    latitude: event.location.latitude ?? null,
+    longitude: event.location.longitude ?? null,
+    placeLabel: event.location.place_label ?? null,
+    useTables: event.use_tables ?? false,
     createdAt: event.created_at,
     stats: event.stats
       ? {
@@ -385,12 +390,15 @@ export function locationFromInput(input: CreateEventInput): EventLocation {
     type: 'venue',
     name: input.venue,
     address: input.city || null,
+    latitude: input.latitude ?? null,
+    longitude: input.longitude ?? null,
+    place_label: input.placeLabel ?? null,
   };
 }
 
 export function locationFromView(
   current: HostEvent,
-  patch: { venue?: string; city?: string },
+  patch: { venue?: string; city?: string; latitude?: number | null; longitude?: number | null; placeLabel?: string | null },
 ): EventLocation {
   if (current.onlineLink) {
     return { type: 'online', online_url: current.onlineLink };
@@ -399,6 +407,9 @@ export function locationFromView(
     type: 'venue',
     name: patch.venue ?? current.venue,
     address: patch.city ?? current.city,
+    latitude: patch.latitude !== undefined ? patch.latitude : current.latitude,
+    longitude: patch.longitude !== undefined ? patch.longitude : current.longitude,
+    place_label: patch.placeLabel !== undefined ? patch.placeLabel : current.placeLabel,
   };
 }
 

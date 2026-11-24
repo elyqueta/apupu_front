@@ -45,6 +45,11 @@ export type EventUpdatePatch = Partial<
     | 'showAttendeeCount'
     | 'minAge'
     | 'maxAge'
+    | 'youtubeVideoId'
+    | 'latitude'
+    | 'longitude'
+    | 'placeLabel'
+    | 'useTables'
   >
 >;
 
@@ -118,6 +123,8 @@ export class EventsRepository extends CachedRepository<HostEvent[]> {
         cover_url: input.coverUrl,
         visibility: input.visibility ?? 'private',
         show_attendee_count: input.visibility === 'public' ? (input.showAttendeeCount ?? false) : false,
+        youtube_video_id: input.youtubeVideoId ?? null,
+        use_tables: input.useTables ?? false,
         min_age: input.minAge ?? null,
         max_age: input.maxAge ?? null,
         community_id: input.communityId ?? null,
@@ -151,10 +158,21 @@ export class EventsRepository extends CachedRepository<HostEvent[]> {
     if (patch.showAttendeeCount !== undefined) body['show_attendee_count'] = patch.showAttendeeCount;
     if (patch.minAge !== undefined) body['min_age'] = patch.minAge;
     if (patch.maxAge !== undefined) body['max_age'] = patch.maxAge;
-    if (patch.venue !== undefined || patch.city !== undefined) {
+    if (patch.youtubeVideoId !== undefined) body['youtube_video_id'] = patch.youtubeVideoId;
+    if (patch.useTables !== undefined) body['use_tables'] = patch.useTables;
+    if (
+      patch.venue !== undefined ||
+      patch.city !== undefined ||
+      patch.latitude !== undefined ||
+      patch.longitude !== undefined ||
+      patch.placeLabel !== undefined
+    ) {
       body['location'] = locationFromView(current, {
         venue: patch.venue,
         city: patch.city,
+        latitude: patch.latitude,
+        longitude: patch.longitude,
+        placeLabel: patch.placeLabel,
       });
     }
     const response = await this.api.patch<ApiEvent>(

@@ -297,6 +297,18 @@ export const routes: Routes = [
         loadComponent: () => import('./features/team/team.page').then((m) => m.TeamPage),
       },
       {
+        path: 'comunidades',
+        title: pageTitle('route.communities'),
+        loadComponent: () =>
+          import('./features/communities/communities.page').then((m) => m.CommunitiesPage),
+      },
+      {
+        path: 'comunidades/:slug',
+        title: pageTitle('route.community'),
+        loadComponent: () =>
+          import('./features/communities/community-detail.page').then((m) => m.CommunityDetailPage),
+      },
+      {
         path: 'convites',
         title: 'Conto Contigo · Meus convites',
         loadComponent: () =>

@@ -584,13 +584,14 @@
                 </label>
               </div>
 
-              <app-map-picker-dialog
-                [open]="mapPickerOpen()"
-                [initial]="hasExactLocation() ? { latitude: formValue().latitude!, longitude: formValue().longitude! } : null"
-                (picked)="onMapPicked($event)"
-                (closed)="closeMapPicker()"
-              />
             </article>
+
+            <app-map-picker-dialog
+              [open]="mapPickerOpen()"
+              [initial]="hasExactLocation() ? { latitude: formValue().latitude!, longitude: formValue().longitude! } : null"
+              (picked)="onMapPicked($event)"
+              (closed)="closeMapPicker()"
+            />
           }
 
           @case (1) {

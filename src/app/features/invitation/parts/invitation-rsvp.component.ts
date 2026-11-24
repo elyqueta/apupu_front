@@ -114,6 +114,10 @@ import { InvitationResponseStatus } from '../invitation.models';
           <p class="mt-4 rounded-2xl border border-coral/30 bg-coral/10 p-4 text-xs leading-5 text-coral">
             {{ i18n.t('invitation.cancelledText') }}
           </p>
+        } @else if (eventStatus() === 'completed') {
+          <p class="mt-4 rounded-2xl border border-line bg-surface-raised p-4 text-xs leading-5 text-muted">
+            {{ i18n.t('block15.invitation.completedText') }}
+          </p>
         } @else if (blocked()) {
           <p class="mt-4 rounded-2xl border border-line bg-surface-raised p-4 text-xs leading-5 text-muted">
             {{ i18n.t('invitation.deadlinePassedText') }}

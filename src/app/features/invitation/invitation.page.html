@@ -36,25 +36,30 @@
         />
       } @else {
       <main class="flex flex-1 flex-col gap-4 py-5">
-        <app-invitation-hero
-          [event]="view.event"
-          [guestName]="view.guest.name"
-          [countdownDays]="countdownDays()"
-          (coverOpen)="openCover()"
-        />
+        @if (isGratitude()) {
+          <app-gratitude-invitation [event]="view.event" [manifest]="view.event.manifest" />
+          <app-invitation-share [token]="token()" />
+        } @else {
+          <app-invitation-hero
+            [event]="view.event"
+            [guestName]="view.guest.name"
+            [countdownDays]="countdownDays()"
+            (coverOpen)="openCover()"
+          />
 
-        <app-invitation-share [token]="token()" />
+          <app-invitation-share [token]="token()" />
 
-        <app-invitation-key-info
-          [event]="view.event"
-          [deadlinePassed]="deadlinePassed()"
-          (openHost)="hostOpen.set(true)"
-          (openLocation)="locationOpen.set(true)"
-        />
+          <app-invitation-key-info
+            [event]="view.event"
+            [deadlinePassed]="deadlinePassed()"
+            (openHost)="hostOpen.set(true)"
+            (openLocation)="locationOpen.set(true)"
+          />
 
-        <app-invitation-video [videoId]="view.event.youtubeVideoId" [eventTitle]="view.event.title" />
+          <app-invitation-video [videoId]="view.event.youtubeVideoId" [eventTitle]="view.event.title" />
 
-        <app-invitation-organizers [event]="view.event" />
+          <app-invitation-organizers [event]="view.event" />
+        }
 
         <app-invitation-reply
           [answer]="view.guest.answer"

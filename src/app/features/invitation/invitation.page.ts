@@ -33,6 +33,7 @@ import { InvitationRsvpComponent } from './parts/invitation-rsvp.component';
 import { InvitationRsvpDialogComponent } from './parts/invitation-rsvp-dialog.component';
 import { InvitationShareComponent } from './parts/invitation-share.component';
 import { InvitationWelcomeComponent } from './parts/invitation-welcome.component';
+import { GratitudeInvitationComponent } from './parts/gratitude-invitation.component';
 
 @Component({
   selector: 'app-invitation-page',
@@ -57,6 +58,7 @@ import { InvitationWelcomeComponent } from './parts/invitation-welcome.component
     InvitationHostDialogComponent,
     InvitationLocationDialogComponent,
     InvitationRsvpDialogComponent,
+    GratitudeInvitationComponent,
   ],
   templateUrl: './invitation.page.html',
 })
@@ -83,6 +85,10 @@ export class InvitationPage {
   protected readonly eventCancelled = computed(
     () => this.invitation()?.event.status === 'cancelled',
   );
+  protected readonly isGratitude = computed(() => {
+    const event = this.invitation()?.event;
+    return event?.templateSlug === 'gratitude' || event?.manifest?.ornaments?.frame === 'gratitude';
+  });
   protected readonly showWelcome = signal(false);
 
   protected readonly saving = signal(false);

@@ -1,7 +1,8 @@
 import { Component, computed, inject, input, output } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { FeedCommunity, FeedEvent, FeedPerson } from '../../core/data/social.repository';
+import { FeedCommunity,
+  FeedInstitution, FeedEvent, FeedPerson } from '../../core/data/social.repository';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { ICONS } from '../../core/ui/icons';
 import { AvatarComponent } from '../../shared/components/avatar.component';
@@ -104,6 +105,42 @@ export class FeedCommunityCardComponent {
   protected readonly i18n = inject(I18nService);
   protected readonly icons = ICONS;
   readonly community = input.required<FeedCommunity>();
+}
+
+/** Bloco 13: cartão de instituição (mesmo tamanho dos de comunidade). */
+@Component({
+  selector: 'app-feed-institution-card',
+  imports: [RouterLink, FaIconComponent],
+  template: `
+    <article class="flex h-full min-w-0 flex-col overflow-hidden rounded-4xl border border-line bg-surface shadow-card transition hover:border-brand/40" [attr.data-testid]="'feed-institution-' + institution().slug">
+      <div class="relative h-24 shrink-0 bg-gradient-to-br from-amber/35 via-surface-raised to-surface">
+        @if (institution().cover_url) {
+          <img [src]="institution().cover_url" alt="" class="size-full object-cover" loading="lazy" />
+        }
+        <span class="absolute -bottom-6 left-4 grid size-12 place-items-center overflow-hidden rounded-2xl border-2 border-surface bg-surface-raised text-lg font-semibold text-brand-strong shadow-card">
+          @if (institution().avatar_url) {
+            <img [src]="institution().avatar_url" alt="" class="size-full object-cover" />
+          } @else {
+            <fa-icon [icon]="icons['bank']" aria-hidden="true" />
+          }
+        </span>
+      </div>
+      <div class="flex flex-1 flex-col gap-2 p-4 pt-8">
+        <h3 class="line-clamp-2 font-display text-base font-semibold text-ink">{{ institution().name }}</h3>
+        <p class="line-clamp-2 min-h-10 text-xs leading-5 text-muted">{{ institution().description || '' }}</p>
+        <p class="flex items-center gap-2 text-xs text-muted">
+          <span class="ui-chip"><fa-icon [icon]="icons['bank']" aria-hidden="true" /> {{ i18n.t('block13.feed.institution') }}</span>
+          {{ i18n.t('block13.list.communities', { count: institution().community_count }) }}
+        </p>
+        <a [routerLink]="['/instituicoes', institution().slug]" class="ui-btn-secondary mt-auto w-full">{{ i18n.t('block13.list.open') }}</a>
+      </div>
+    </article>
+  `,
+})
+export class FeedInstitutionCardComponent {
+  protected readonly i18n = inject(I18nService);
+  protected readonly icons = ICONS;
+  readonly institution = input.required<FeedInstitution>();
 }
 
 /** Pessoa: sem conta, o clique abre o convite a criar conta (`open`). */

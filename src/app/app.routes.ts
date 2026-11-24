@@ -337,6 +337,18 @@ export const routes: Routes = [
           import('./features/communities/community-detail.page').then((m) => m.CommunityDetailPage),
       },
       {
+        path: 'instituicoes',
+        title: pageTitle('route.institutions'),
+        loadComponent: () =>
+          import('./features/institutions/institutions.page').then((m) => m.InstitutionsPage),
+      },
+      {
+        path: 'instituicoes/:slug',
+        title: pageTitle('route.institution'),
+        loadComponent: () =>
+          import('./features/institutions/institution-detail.page').then((m) => m.InstitutionDetailPage),
+      },
+      {
         path: 'convites',
         title: 'Conto Contigo · Meus convites',
         loadComponent: () =>

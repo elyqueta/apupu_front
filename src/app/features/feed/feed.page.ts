@@ -7,6 +7,7 @@ import { AuthService } from '../../core/api/auth.service';
 import { ApiCommunity, CommunitiesRepository } from '../../core/data/communities.repository';
 import {
   FeedCommunity,
+  FeedInstitution,
   FeedEvent,
   FeedItem,
   FeedPerson,
@@ -23,7 +24,12 @@ import { BrandComponent } from '../../shared/components/brand.component';
 import { ModalComponent } from '../../shared/components/modal.component';
 import { PreferenceControlsComponent } from '../../shared/components/preference-controls.component';
 import { SkeletonComponent } from '../../shared/components/skeleton.component';
-import { FeedCommunityCardComponent, FeedPersonCardComponent, eventPath } from './feed-cards.component';
+import {
+  FeedCommunityCardComponent,
+  FeedInstitutionCardComponent,
+  FeedPersonCardComponent,
+  eventPath,
+} from './feed-cards.component';
 import { FeedPostComponent } from './feed-post.component';
 
 const CATEGORIES = ['wedding', 'birthday', 'corporate', 'baby', 'other'] as const;
@@ -52,6 +58,7 @@ const CATEGORIES = ['wedding', 'birthday', 'corporate', 'baby', 'other'] as cons
     SkeletonComponent,
     FeedPostComponent,
     FeedCommunityCardComponent,
+    FeedInstitutionCardComponent,
     FeedPersonCardComponent,
   ],
   templateUrl: './feed.page.html',
@@ -106,6 +113,9 @@ export class FeedPage {
   protected readonly myName = computed(() => this.me()?.profile?.display_name || this.me()?.email || '');
 
   protected readonly events = computed(() => this.items().filter((item): item is FeedEvent => item.type === 'event'));
+  protected readonly institutions = computed(() =>
+    this.items().filter((item): item is FeedInstitution => item.type === 'institution'),
+  );
   protected readonly communities = computed(() =>
     this.items().filter((item): item is FeedCommunity => item.type === 'community'),
   );

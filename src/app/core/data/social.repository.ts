@@ -38,6 +38,18 @@ export interface FeedCommunity {
   member_count: number;
 }
 
+/** Bloco 13: instituição pública mostrada no separador "Comunidades". */
+export interface FeedInstitution {
+  type: 'institution';
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  avatar_url: string | null;
+  cover_url: string | null;
+  community_count: number;
+}
+
 export interface FeedPerson {
   type: 'person';
   id: string;
@@ -46,7 +58,7 @@ export interface FeedPerson {
   cover_url: string | null;
 }
 
-export type FeedItem = FeedEvent | FeedCommunity | FeedPerson;
+export type FeedItem = FeedEvent | FeedCommunity | FeedInstitution | FeedPerson;
 
 export interface FeedPage<T = FeedItem> {
   items: T[];

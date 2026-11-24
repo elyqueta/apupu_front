@@ -55,6 +55,12 @@
                   @if (c.my_role && c.my_status === 'active') {
                     <span class="font-semibold text-brand-strong">{{ i18n.t('block11.detail.myRole', { role: roleLabel(c.my_role) }) }}</span>
                   }
+                  @if (c.institution; as institution) {
+                    <a [routerLink]="['/instituicoes', institution.slug]" class="ui-chip-interactive" data-testid="community-institution">
+                      <fa-icon [icon]="icons['bank']" aria-hidden="true" />
+                      {{ i18n.t('block13.community.partOf', { name: institution.name }) }}
+                    </a>
+                  }
                 </p>
               </div>
             </div>

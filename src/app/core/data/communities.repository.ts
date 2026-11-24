@@ -19,6 +19,8 @@ export interface ApiCommunity {
   my_role: CommunityRole | null;
   my_status: 'active' | 'invited' | 'left' | 'removed' | null;
   my_pending_request: boolean;
+  /** Instituição a que pertence (Bloco 13). */
+  institution?: { name: string; slug: string } | null;
   url: string;
   created_at: string;
 }

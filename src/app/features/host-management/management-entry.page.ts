@@ -1,4 +1,5 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, PLATFORM_ID, inject, signal } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -68,10 +69,31 @@ export class ManagementEntryPage {
     },
   ];
 
+  private readonly browser = isPlatformBrowser(inject(PLATFORM_ID));
+
   constructor() {
     this.route.paramMap.pipe(takeUntilDestroyed()).subscribe((params) => {
       this.token.set(params.get('token') ?? '');
+      if (!params.get('token')) {
+        void this.resumeRememberedSession();
+      }
     });
+  }
+
+  /**
+   * Sessão persistente de quem entrou com link + código: o navegador
+   * lembra o evento e volta a entrar enquanto a sessão (cookie HttpOnly)
+   * for válida. Se um gestor revogou o acesso, a lembrança é apagada.
+   */
+  private async resumeRememberedSession(): Promise<void> {
+    const eventId = readRememberedEvent(this.browser);
+    if (!eventId) return;
+    try {
+      await this.api.get<ApiEvent>(`/host/events/${encodeURIComponent(eventId)}`);
+      await this.router.navigate(['/gestao/evento', eventId], { replaceUrl: true });
+    } catch {
+      rememberEvent(this.browser, null);
+    }
   }
 
   protected updateCode(value: string): void {
@@ -95,6 +117,7 @@ export class ManagementEntryPage {
         code,
       });
       this.code.set('');
+      rememberEvent(this.browser, response.event.id);
       if (!response.email_has_account && response.email) {
         this.accountPrompt.set({
           eventId: response.event.id,
@@ -179,4 +202,28 @@ export function normalizeAccessCode(value: string): string {
     .toLocaleUpperCase()
     .replace(/[^A-Z0-9]/g, '')
     .slice(0, ACCESS_CODE_LENGTH);
+}
+
+const REMEMBERED_EVENT_KEY = 'apupu.manage.lastEvent';
+
+function readRememberedEvent(browser: boolean): string | null {
+  if (!browser) return null;
+  try {
+    return localStorage.getItem(REMEMBERED_EVENT_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function rememberEvent(browser: boolean, eventId: string | null): void {
+  if (!browser) return;
+  try {
+    if (eventId) {
+      localStorage.setItem(REMEMBERED_EVENT_KEY, eventId);
+    } else {
+      localStorage.removeItem(REMEMBERED_EVENT_KEY);
+    }
+  } catch {
+    // Sem armazenamento local (modo privado): a sessão continua no cookie.
+  }
 }

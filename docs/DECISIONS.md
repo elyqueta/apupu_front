@@ -284,3 +284,13 @@ Mapeamento feito antes de alterar código. O frontend parte de `feat/bloco-3-det
 | Feed. | No separador "Comunidades", a primeira página começa com até 6 instituições públicas (`type: 'institution'`), com cartão do mesmo tamanho dos de comunidade. O cartão abre `/instituicoes/:slug` (área autenticada; visitantes passam pelo login). | Sem página pública própria neste bloco. |
 | Correção do feed (avatar, excerto, data). | Commit `cb53190` ficou na branch do Bloco 13 do back porque já descendia da do 12. | Registo. |
 | Perfil da comunidade. | O DTO da comunidade passa a ter `institution { name, slug }`; o detalhe autenticado mostra "Faz parte de …" com ligação. A página pública `/comunidade/:slug` ainda não mostra (fica para depois). | Âmbito do bloco. |
+
+## Bloco 14 — Convite: vídeo, mapa, organizadores, templates iniciais e PDF (24/11/2026)
+
+| Dúvida | Escolha | Motivo |
+|---|---|---|
+| Rascunhos do assistente. | Usa a API dedicada `/host/event-drafts` (entidade separada, já implementada no back) em vez de criar eventos com `status=draft`. O front faz autosave com debounce de 2 s, guarda ao avançar passo, retoma por `?draft=` e elimina por confirmação. | Back já entregue com `event_drafts`; evita criar eventos reais antes de publicar e mantém "nunca no feed/pesquisa/notificações". |
+| Vídeo no formulário. | O utilizador cola URL/ID; o front extrai e envia só o `youtube_video_id` (11 chars) via `extractYoutubeId`, com erro claro em pt-PT. | Spec: nunca guardar URL livre. |
+| Localização exata. | Botões "Usar a minha localização" (Geolocation API) e "Escolher no mapa" (Leaflet + OSM, lazy, sem chave) no wizard e no modal de edição; "Remover localização exata" limpa lat/lng/placeLabel. Coordenadas enviadas em `location.latitude/longitude/place_label`. | Spec do bloco; Leaflet autorizado. |
+| `useTables`. | Toggle "Ativar mesas (atribuir mesa aos convidados)" no wizard e no modal de edição; enviado como `use_tables` no create/update. | PDF do convite mostra Mesa só quando ativo (back). |
+| Eventos: separador Rascunhos. | Adicionado filtro "Rascunhos" na página `/eventos` que lista `/host/event-drafts` com Retomar/Eliminar (confirmação em modal `dialog size="sm"`). | Critério de aceitação do bloco. |

@@ -23,7 +23,8 @@ import {
 import { ToastService } from '../../core/services/toast.service';
 import { WorkspaceStore } from '../../core/services/workspace.store';
 import { ICONS } from '../../core/ui/icons';
-import { TemplateArtworkComponent } from '../../shared/components/template-artwork.component';
+import { TemplatePreviewComponent } from '../../shared/components/template-preview.component';
+import { DEFAULT_MANIFEST, TemplateManifest } from '../../core/models/template-manifest';
 import { PhoneMaskDirective } from '../../shared/directives/phone-mask.directive';
 import {
   EventVisibilityFieldsComponent,
@@ -48,7 +49,7 @@ interface WizardStep {
     RouterLink,
     ReactiveFormsModule,
     FaIconComponent,
-    TemplateArtworkComponent,
+    TemplatePreviewComponent,
     PhoneMaskDirective,
     EventVisibilityFieldsComponent,
   ],
@@ -266,6 +267,10 @@ export class CreateEventPage {
   protected selectTemplate(id: TemplateId): void {
     this.form.controls.templateId.setValue(id);
     this.store.selectedTemplate.set(id);
+  }
+
+  protected manifestFor(id: TemplateId | null): TemplateManifest {
+    return this.store.templates().find((template) => template.id === id)?.manifest ?? DEFAULT_MANIFEST;
   }
 
   protected templateName(id: TemplateId | null): string {

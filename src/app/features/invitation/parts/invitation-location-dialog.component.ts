@@ -46,6 +46,12 @@ import { InvitationEventView } from '../invitation.models';
           <div class="rounded-2xl border border-line bg-surface-raised p-4">
             <p class="text-xs font-semibold text-muted">{{ i18n.t('invitation.address') }}</p>
             <p class="mt-1 text-sm leading-6 text-ink">{{ fullAddress() }}</p>
+            @if (hasCoordinates()) {
+              <p class="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-mint" data-testid="invitation-exact-location">
+                <fa-icon [icon]="icons['mapPin']" aria-hidden="true" />
+                {{ i18n.t('block14.location.exact') }}
+              </p>
+            }
           </div>
           <div class="flex flex-col gap-2 sm:flex-row">
             <button
@@ -92,7 +98,18 @@ export class InvitationLocationDialogComponent {
     return [event.address, event.city].filter((part) => part && part !== event.address).join(', ') || event.address;
   });
 
-  protected readonly mapsUrl = computed(
+  protected readonly hasCoordinates = computed(
+    () => this.event().latitude !== null && this.event().longitude !== null,
+  );
+
+  /** Bloco 14: com coordenadas, o Google Maps abre no ponto exato. */
+  protected readonly mapsUrl = computed(() =>
+    this.hasCoordinates()
+      ? `https://www.google.com/maps/search/?api=1&query=${this.event().latitude},${this.event().longitude}`
+      : this.addressMapsUrl(),
+  );
+
+  private readonly addressMapsUrl = computed(
     () =>
       `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(this.fullAddress())}`,
   );

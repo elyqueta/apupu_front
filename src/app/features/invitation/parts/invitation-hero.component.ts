@@ -4,13 +4,13 @@ import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { I18nService } from '../../../core/i18n/i18n.service';
 import { TranslationKey } from '../../../core/i18n/translations';
 import { EVENT_TYPE_ICONS, ICONS } from '../../../core/ui/icons';
-import { TemplateArtworkComponent } from '../../../shared/components/template-artwork.component';
+import { TemplatePreviewComponent } from '../../../shared/components/template-preview.component';
 import { InvitationEventView } from '../invitation.models';
 
 /** Capa, título, tipo e anfitrião: sempre visíveis ao abrir o convite. */
 @Component({
   selector: 'app-invitation-hero',
-  imports: [FaIconComponent, TemplateArtworkComponent],
+  imports: [FaIconComponent, TemplatePreviewComponent],
   template: `
     <article class="overflow-hidden rounded-4xl border border-line bg-surface shadow-card">
       @if (event().coverUrl; as cover) {
@@ -28,12 +28,13 @@ import { InvitationEventView } from '../invitation.models';
           />
         </button>
       } @else {
-        <app-template-artwork
-          [templateId]="event().templateId"
+        <app-template-preview
+          [manifest]="event().manifest"
           variant="hero"
+          [kicker]="i18n.t('block14.preview.kicker')"
           [title]="event().title"
           [subtitle]="i18n.t('invitation.hostedBy', { name: event().hostName })"
-          class="block h-56 sm:h-72"
+          class="h-56 sm:h-72"
         />
       }
 

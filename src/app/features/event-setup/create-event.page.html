@@ -371,11 +371,11 @@
                         loading="lazy"
                       />
                     } @else {
-                      <app-template-artwork
-                        [templateId]="formValue().templateId"
+                      <app-template-preview
+                        [manifest]="manifestFor(formValue().templateId)"
                         variant="cover"
-                        [showIcon]="false"
-                        class="block"
+                        [kicker]="i18n.t('block14.preview.kicker')"
+                        [title]="previewTitle()"
                       />
                     }
                   </div>
@@ -571,11 +571,12 @@
                       "
                       (click)="selectTemplate(template.id)"
                     >
-                      <app-template-artwork
-                        [templateId]="template.id"
+                      <app-template-preview
+                        [manifest]="template.manifest"
                         variant="thumb"
-                        [showIcon]="false"
-                        class="block h-28"
+                        [title]="i18n.t('block14.preview.sampleTitle')"
+                        [label]="template.name"
+                        class="h-28 overflow-hidden"
                       />
                       <span class="flex items-start justify-between gap-2 p-3">
                         <span class="min-w-0">
@@ -1209,9 +1210,10 @@
           class="overflow-hidden rounded-4xl border border-line bg-surface shadow-card backdrop-blur-2xl"
         >
           <div class="relative h-44 overflow-hidden sm:h-56">
-            <app-template-artwork
-              [templateId]="formValue().templateId"
+            <app-template-preview
+              [manifest]="manifestFor(formValue().templateId)"
               variant="hero"
+              [animate]="true"
               [kicker]="typeLabel()"
               [title]="previewTitle()"
               [subtitle]="

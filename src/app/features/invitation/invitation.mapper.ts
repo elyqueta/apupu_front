@@ -1,5 +1,6 @@
 import { ApiRsvpStatus, PublicEvent, PublicInvitation } from '../../core/api/api.models';
 import { EventStatus, RsvpStatus } from '../../core/models/models';
+import { normalizeManifest } from '../../core/models/template-manifest';
 import { InvitationEventView, InvitationView } from './invitation.models';
 
 /** Converte o DTO público na vista usada pelas peças do convite. */
@@ -68,6 +69,27 @@ export function mapPublicEventView(event: PublicEvent): InvitationEventView {
             accountReference: contribution.account_reference,
           }
         : null,
+    manifest: normalizeManifest(event.template?.manifest),
+    templateSlug: event.template?.slug ?? null,
+    youtubeVideoId: event.youtube_video_id ?? null,
+    latitude: location.latitude ?? null,
+    longitude: location.longitude ?? null,
+    placeLabel: location.place_label ?? null,
+    organizers: (event.organizers ?? []).map((organizer) => ({
+      name: organizer.display_name,
+      avatarUrl: organizer.avatar_url,
+      role: organizer.role,
+      email: organizer.email,
+      phone: organizer.phone,
+    })),
+    community: event.community
+      ? {
+          name: event.community.name,
+          slug: event.community.slug,
+          avatarUrl: event.community.avatar_url,
+          isPublic: event.community.visibility === 'public',
+        }
+      : null,
   };
 }
 

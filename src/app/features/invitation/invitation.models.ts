@@ -1,4 +1,14 @@
 import { EventStatus, EventType, RsvpStatus } from '../../core/models/models';
+import { TemplateManifest } from '../../core/models/template-manifest';
+
+/** Bloco 14: organizador visível no convite (responsável primeiro). */
+export interface InvitationOrganizer {
+  name: string;
+  avatarUrl: string | null;
+  role: 'owner' | 'manager';
+  email: string | null;
+  phone: string | null;
+}
 
 /** Dados bancários mostrados apenas quando a contribuição está ativa. */
 export interface InvitationBankDetails {
@@ -32,6 +42,15 @@ export interface InvitationEventView {
   status: EventStatus;
   contributionEnabled: boolean;
   bankDetails: InvitationBankDetails | null;
+  /** Bloco 14 */
+  manifest: TemplateManifest;
+  templateSlug: string | null;
+  youtubeVideoId: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  placeLabel: string | null;
+  organizers: InvitationOrganizer[];
+  community: { name: string; slug: string; avatarUrl: string | null; isPublic: boolean } | null;
 }
 
 /** Dados do convidado apenas para o token aberto. */

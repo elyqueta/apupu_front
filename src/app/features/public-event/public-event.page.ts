@@ -1,3 +1,5 @@
+import { InvitationOrganizersComponent } from '../invitation/parts/invitation-organizers.component';
+import { InvitationVideoComponent } from '../invitation/parts/invitation-video.component';
 import { Component, computed, effect, inject, input, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -45,6 +47,8 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 @Component({
   selector: 'app-public-event-page',
   imports: [
+    InvitationVideoComponent,
+    InvitationOrganizersComponent,
     ReactiveFormsModule,
     RouterLink,
     FaIconComponent,

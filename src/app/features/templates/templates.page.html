@@ -2,7 +2,7 @@
   <header class="flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
     <div class="min-w-0">
       <p
-        class="hidden text-[10px] font-semibold uppercase tracking-[0.26em] text-brand-strong md:block"
+        class="hidden text-xs font-semibold uppercase tracking-[0.26em] text-brand-strong md:block"
       >
         {{ i18n.t('templates.eyebrow') }}
       </p>
@@ -50,12 +50,12 @@
         </span>
         <div>
           <p class="text-xs font-semibold text-ink">{{ i18n.t('templates.bannerTitle') }}</p>
-          <p class="mt-0.5 max-w-3xl text-[11px] leading-5 text-muted">
+          <p class="mt-0.5 max-w-3xl text-xs leading-5 text-muted">
             {{ i18n.t('templates.bannerText') }}
           </p>
         </div>
       </div>
-      <span class="shrink-0 text-[10px] font-semibold uppercase tracking-[0.16em] text-amber">
+      <span class="shrink-0 text-xs font-semibold uppercase tracking-[0.16em] text-amber">
         {{ i18n.t('templates.count', { count: templates().length }) }}
       </span>
     </div>
@@ -65,25 +65,27 @@
         class="relative overflow-hidden rounded-4xl border border-line bg-surface shadow-card backdrop-blur-2xl"
       >
         <div class="relative min-h-80 overflow-hidden p-6 sm:min-h-96">
-          <app-template-artwork
-            [templateId]="selected()"
+          <app-template-preview
+            [manifest]="selectedManifest()"
             variant="hero"
-            [kicker]="selectedMeta().tag"
-            [title]="selectedMeta().name"
-            [subtitle]="selectedMeta().description"
+            [animate]="true"
+            [kicker]="i18n.t('block14.preview.kicker')"
+            [title]="i18n.t('block14.preview.sampleTitle')"
+            [subtitle]="i18n.t('block14.preview.sampleSubtitle')"
+            [label]="selectedMeta().name"
             class="absolute inset-0"
           />
           <div class="relative flex h-full items-start justify-between gap-3">
             <span
-              class="inline-flex items-center gap-2 rounded-full border border-line bg-surface px-3 py-1.5 text-[10px] font-semibold text-muted"
+              class="inline-flex items-center gap-2 rounded-full border border-line bg-surface px-3 py-1.5 text-xs font-semibold text-muted"
             >
-              <fa-icon [icon]="icons['eye']" class="text-[10px]" aria-hidden="true" />
+              <fa-icon [icon]="icons['eye']" class="text-xs" aria-hidden="true" />
               {{ i18n.t('templates.previewLabel') }}
             </span>
             <span
-              class="inline-flex items-center gap-1.5 rounded-full border border-brand/25 bg-secondary-soft px-2.5 py-1 text-[10px] font-semibold text-brand-strong"
+              class="inline-flex items-center gap-1.5 rounded-full border border-brand/25 bg-secondary-soft px-2.5 py-1 text-xs font-semibold text-brand-strong"
             >
-              <fa-icon [icon]="icons['check']" class="text-[9px]" aria-hidden="true" />
+              <fa-icon [icon]="icons['check']" class="text-xs" aria-hidden="true" />
               {{ i18n.t('templates.selected') }}
             </span>
           </div>
@@ -98,7 +100,7 @@
             routerLink="/criar-evento"
             class="inline-flex h-10 items-center gap-2 rounded-xl bg-brand hover:bg-secondary-hover px-3.5 text-xs font-semibold text-on-secondary transition"
           >
-            <fa-icon [icon]="icons['sparkles']" class="text-[11px]" aria-hidden="true" />
+            <fa-icon [icon]="icons['sparkles']" class="text-xs" aria-hidden="true" />
             {{ i18n.t('create.selectTemplate') }}
           </a>
         </div>
@@ -112,12 +114,12 @@
               selected() === template.id ? 'border-brand/45 ' : 'border-line hover:border-brand/40'
             "
           >
-            <app-template-artwork
-              [templateId]="template.id"
+            <app-template-preview
+              [manifest]="template.manifest"
               variant="thumb"
-              [kicker]="tag(template.id)"
-              [showIcon]="true"
-              class="block"
+              [kicker]="i18n.t('block14.preview.kicker')"
+              [title]="i18n.t('block14.preview.sampleTitle')"
+              [label]="template.name"
             />
 
             <div class="flex flex-1 flex-col gap-3 p-4">
@@ -127,7 +129,7 @@
                     {{ name(template.id) }}
                   </h3>
                   <p
-                    class="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-brand-strong"
+                    class="mt-0.5 text-xs font-semibold uppercase tracking-[0.16em] text-brand-strong"
                   >
                     {{ tag(template.id) }}
                   </p>
@@ -136,16 +138,20 @@
                   <span
                     class="grid size-7 shrink-0 place-items-center rounded-lg bg-mint/15 text-mint"
                   >
-                    <fa-icon [icon]="icons['check']" class="text-[10px]" aria-hidden="true" />
+                    <fa-icon [icon]="icons['check']" class="text-xs" aria-hidden="true" />
                   </span>
                 }
               </div>
 
-              <p class="text-[11px] leading-5 text-muted">{{ template.description }}</p>
+              <p class="text-xs leading-5 text-muted">{{ template.description }}</p>
+              <span class="ui-chip self-start" [attr.data-testid]="'template-open-' + template.slug">
+                <fa-icon [icon]="icons['sparkles']" aria-hidden="true" />
+                {{ i18n.t('block14.open.label') }}: {{ i18n.t(openStyleKey(template.manifest.open_style)) }}
+              </span>
 
               <button
                 type="button"
-                class="mt-auto inline-flex h-9 items-center justify-center gap-2 rounded-lg border px-3 text-[11px] font-semibold transition"
+                class="mt-auto inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border px-3 text-xs font-semibold transition"
                 [class]="
                   selected() === template.id
                     ? 'border-brand/30 bg-brand/15 text-ink'
@@ -154,10 +160,10 @@
                 (click)="select(template.id)"
               >
                 @if (selected() === template.id) {
-                  <fa-icon [icon]="icons['check']" class="text-[10px]" aria-hidden="true" />
+                  <fa-icon [icon]="icons['check']" class="text-xs" aria-hidden="true" />
                   {{ i18n.t('templates.selected') }}
                 } @else {
-                  <fa-icon [icon]="icons['palette']" class="text-[10px]" aria-hidden="true" />
+                  <fa-icon [icon]="icons['palette']" class="text-xs" aria-hidden="true" />
                   {{ i18n.t('templates.use') }}
                 }
               </button>
@@ -169,13 +175,13 @@
 
     <section class="rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl">
       <div class="flex items-center justify-between gap-3">
-        <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-brand-strong">
+        <p class="text-xs font-semibold uppercase tracking-[0.2em] text-brand-strong">
           {{ i18n.t('templates.howTitle') }}
         </p>
         <span
           class="grid size-8 place-items-center rounded-lg border border-line bg-surface-raised text-muted"
         >
-          <fa-icon [icon]="icons['templates']" class="text-[11px]" aria-hidden="true" />
+          <fa-icon [icon]="icons['templates']" class="text-xs" aria-hidden="true" />
         </span>
       </div>
 
@@ -190,7 +196,7 @@
               </span>
               <p class="text-xs font-semibold text-ink">{{ i18n.t(step) }}</p>
             </div>
-            <p class="mt-2 text-[11px] leading-5 text-muted">{{ i18n.t(stepTexts[i]) }}</p>
+            <p class="mt-2 text-xs leading-5 text-muted">{{ i18n.t(stepTexts[i]) }}</p>
           </article>
         }
       </div>

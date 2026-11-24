@@ -89,6 +89,8 @@ import {
   faCompass,
   faEllipsisVertical,
   faHouse,
+  faPlay,
+  faLocationCrosshairs,
 } from '@fortawesome/free-solid-svg-icons';
 import { faFacebook, faGoogle, faWhatsapp } from '@fortawesome/free-brands-svg-icons';
 
@@ -97,6 +99,8 @@ export const ICONS: Record<string, IconDefinition> = {
   ellipsisVertical: faEllipsisVertical,
   home: faHouse,
   compass: faCompass,
+  play: faPlay,
+  crosshairs: faLocationCrosshairs,
   dashboard: faGaugeHigh,
   dashboardAlt: faTableCellsLarge,
   events: faCalendarDays,

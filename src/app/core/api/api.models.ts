@@ -59,6 +59,10 @@ export interface EventLocation {
   name?: string;
   address?: string | null;
   online_url?: string;
+  /** Bloco 14: localização exata (ambas ou nenhuma). */
+  latitude?: number | null;
+  longitude?: number | null;
+  place_label?: string | null;
 }
 
 export interface EventContribution {
@@ -205,6 +209,20 @@ export interface PublicEvent {
   contribution: EventContribution;
   rsvp_deadline: string | null;
   status: ApiEventStatus;
+  /** Bloco 14 */
+  youtube_video_id?: string | null;
+  template?: { slug: string; name: string; manifest: unknown } | null;
+  organizers?: ApiOrganizer[];
+  community?: { name: string; slug: string; avatar_url: string | null; visibility: string } | null;
+}
+
+/** Bloco 14: organizador visível no convite (nunca membros). */
+export interface ApiOrganizer {
+  display_name: string;
+  avatar_url: string | null;
+  role: 'owner' | 'manager';
+  email: string | null;
+  phone: string | null;
 }
 
 /** Link aberto de um evento público (`GET /public/events/:slug`, Bloco 10). */
@@ -412,6 +430,7 @@ export interface ApiTemplate {
   supported_fields: string[];
   themes: Array<{ mode: 'light' | 'dark'; palette: string }>;
   is_active: boolean;
+  manifest?: unknown;
 }
 
 export interface PublicInvitation {

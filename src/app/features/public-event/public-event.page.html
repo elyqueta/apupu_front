@@ -66,6 +66,9 @@
                 (openLocation)="locationOpen.set(true)"
               />
 
+              <app-invitation-video [videoId]="view.youtubeVideoId" [eventTitle]="view.title" />
+              <app-invitation-organizers [event]="view" />
+
               <div class="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)]">
                 <app-invitation-details-menu (open)="detailsOpen.set(true)" />
 

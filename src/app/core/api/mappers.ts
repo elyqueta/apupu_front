@@ -1,3 +1,4 @@
+import { normalizeManifest } from '../models/template-manifest';
 import {
   ApiActivity,
   ApiEvent,
@@ -356,6 +357,7 @@ export function mapTemplate(template: ApiTemplate): EventTemplate {
     previewImageUrl: template.preview_image_url,
     supportedFields: template.supported_fields,
     themes: template.themes,
+    manifest: normalizeManifest(template.manifest),
   };
 }
 

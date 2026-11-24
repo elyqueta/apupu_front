@@ -1,3 +1,5 @@
+import { TemplateManifest } from './template-manifest';
+
 export type EventType = 'wedding' | 'birthday' | 'corporate' | 'baby' | 'other';
 
 export type EventStatus = 'draft' | 'published' | 'scheduled' | 'completed' | 'cancelled';
@@ -186,6 +188,8 @@ export interface EventTemplate {
   previewImageUrl: string | null;
   supportedFields: string[];
   themes: Array<{ mode: 'light' | 'dark'; palette: string }>;
+  /** Bloco 14: aparência, abertura e PDF. */
+  manifest: TemplateManifest;
 }
 
 export interface EventActivity {

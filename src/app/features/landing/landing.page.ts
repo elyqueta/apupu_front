@@ -54,13 +54,10 @@ export class LandingPage {
     // utilizador troca PT/EN na própria landing.
     effect(() => this.applySeo());
 
-    // Em SSR não existe sessão de browser; a verificação só corre no cliente.
+    // Bloco 12: a landing vive em `/sobre` e abre também com sessão iniciada
+    // (o redirect para `/painel` do Bloco 6 foi removido; `/` é o feed).
     if (isPlatformBrowser(this.platformId)) {
-      void this.auth.restoreSession().then((host) => {
-        if (host) {
-          void this.router.navigate(['/painel'], { replaceUrl: true });
-        }
-      });
+      void this.auth.restoreSession();
     }
   }
 

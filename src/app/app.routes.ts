@@ -20,10 +20,33 @@ export const routes: Routes = [
     component: PublicShellComponent,
     children: [
       {
+        // Bloco 12: `/` é o feed público; a landing passa para `/sobre`.
         path: '',
         pathMatch: 'full',
+        title: pageTitle('route.feed'),
+        loadComponent: () => import('./features/feed/feed.page').then((m) => m.FeedPage),
+      },
+      {
+        path: 'sobre',
         title: pageTitle('route.home'),
         loadComponent: () => import('./features/landing/landing.page').then((m) => m.LandingPage),
+      },
+      {
+        path: 'pessoas/:id',
+        // Título definido pela página (nome da pessoa).
+        loadComponent: () => import('./features/feed/person.page').then((m) => m.PersonPage),
+      },
+      {
+        // Comunidade pública em modo limitado (sem conta).
+        path: 'comunidade/:slug',
+        // Título definido pela página (nome da comunidade).
+        loadComponent: () =>
+          import('./features/feed/public-community.page').then((m) => m.PublicCommunityPage),
+      },
+      {
+        path: 'ajuda',
+        title: pageTitle('route.help'),
+        loadComponent: () => import('./features/help/help.page').then((m) => m.HelpPage),
       },
       {
         path: 'entrar',
@@ -295,6 +318,11 @@ export const routes: Routes = [
         path: 'equipas',
         title: 'Conto Contigo · Equipas',
         loadComponent: () => import('./features/team/team.page').then((m) => m.TeamPage),
+      },
+      {
+        path: 'amigos',
+        title: pageTitle('route.friends'),
+        loadComponent: () => import('./features/feed/friends.page').then((m) => m.FriendsPage),
       },
       {
         path: 'comunidades',

@@ -855,6 +855,7 @@ export class AuthPage {
    */
   private resolveDestination(): string {
     const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
-    return returnUrl?.startsWith('/') && !returnUrl.startsWith('//') ? returnUrl : '/painel';
+    // Bloco 12: depois de entrar/registar, o destino por defeito é o feed (`/`).
+    return returnUrl?.startsWith('/') && !returnUrl.startsWith('//') ? returnUrl : '/';
   }
 }

@@ -10,7 +10,7 @@ import { LogoComponent } from './logo.component';
   selector: 'app-brand',
   imports: [RouterLink, LogoComponent],
   template: `
-    <a routerLink="/painel" class="group inline-flex items-center" aria-label="Conto Contigo">
+    <a routerLink="/" class="group inline-flex items-center" aria-label="Conto Contigo">
       <span class="hidden min-[480px]:block">
         <app-logo variant="horizontal" [height]="32" class="dark:hidden" />
         <app-logo variant="horizontal" theme="white" [height]="32" class="hidden dark:block" />

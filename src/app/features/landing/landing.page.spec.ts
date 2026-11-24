@@ -151,7 +151,7 @@ describe('LandingPage', () => {
     );
   });
 
-  it('redireciona para o painel quando já existe sessão', async () => {
+  it('não redireciona para o painel quando já existe sessão (Bloco 12)', async () => {
     TestBed.configureTestingModule({
       imports: [LandingPage],
       providers: [
@@ -168,7 +168,8 @@ describe('LandingPage', () => {
     fixture.detectChanges();
     await fixture.whenStable();
 
-    expect(redirect).toHaveBeenCalledWith(['/painel'], { replaceUrl: true });
+    // Bloco 12: a landing vive em `/sobre` e abre também com sessão (sem redirect).
+    expect(redirect).not.toHaveBeenCalled();
     fixture.destroy();
   });
 });

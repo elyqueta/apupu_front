@@ -94,10 +94,10 @@ import { SupportDialogComponent } from './support-dialog.component';
             class="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-muted"
             [attr.aria-label]="i18n.t('app.name')"
           >
-            <a routerLink="/" fragment="como-funciona" class="min-h-11 inline-flex items-center transition hover:text-ink">
+            <a routerLink="/sobre" fragment="como-funciona" class="min-h-11 inline-flex items-center transition hover:text-ink">
               {{ i18n.t('landing.nav.how') }}
             </a>
-            <a routerLink="/" fragment="sobre" class="min-h-11 inline-flex items-center transition hover:text-ink">
+            <a routerLink="/sobre" fragment="sobre" class="min-h-11 inline-flex items-center transition hover:text-ink">
               {{ i18n.t('landing.nav.about') }}
             </a>
             <button

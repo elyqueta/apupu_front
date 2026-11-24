@@ -46,9 +46,20 @@ export interface HostEvent {
   bankDetails: BankDetails | null;
   /** Papel de quem consulta o evento: o anfitrião ou um gestor. */
   accessRole: EventAccessRole;
+  /** Bloco 10: privado (só convites individuais) ou público (link aberto). */
+  visibility: EventVisibility;
+  /** Link aberto do evento; `null` quando é privado. */
+  publicUrl: string | null;
+  /** O nº de confirmados só aparece no link aberto quando permitido. */
+  showAttendeeCount: boolean;
+  /** Limites de idade (opcionais); nunca mostrados publicamente. */
+  minAge: number | null;
+  maxAge: number | null;
   createdAt: string;
   stats?: EventStats;
 }
+
+export type EventVisibility = 'public' | 'private';
 
 /**
  * Gestor de um evento, identificado pelo email. Pode não ter conta: nesse
@@ -131,6 +142,10 @@ export interface Guest {
   /** Última partilha iniciada no WhatsApp; não confirma envio nem leitura. */
   whatsappSharedAt: string | null;
   whatsappShareCount: number;
+  /** Origem: convite individual ou confirmação pelo link aberto do evento. */
+  source: 'personal' | 'public_link';
+  /** Selo "Idade alterada": confirmou depois de mudar a data de nascimento. */
+  ageFlag: boolean;
   /** Mensagem opcional deixada ao responder ao convite. */
   message?: string | null;
   invitedAt: string;
@@ -262,6 +277,10 @@ export interface CreateEventInput {
   contributionEnabled: boolean;
   bankDetails: BankDetails | null;
   guests: GuestInput[];
+  visibility?: EventVisibility;
+  showAttendeeCount?: boolean;
+  minAge?: number | null;
+  maxAge?: number | null;
 }
 
 export interface AddGuestResult {
@@ -280,6 +299,8 @@ export interface HostProfile {
   coverUrl: string | null;
   emailVerified: boolean;
   profileComplete: boolean;
+  /** Privado por defeito: um perfil privado não aparece em pesquisas. */
+  profileVisibility: 'public' | 'private';
 }
 
 /* ------------------------------------------------------------------ */

@@ -24,6 +24,12 @@ import { WorkspaceStore } from '../../core/services/workspace.store';
 import { ICONS } from '../../core/ui/icons';
 import { TemplateArtworkComponent } from '../../shared/components/template-artwork.component';
 import { PhoneMaskDirective } from '../../shared/directives/phone-mask.directive';
+import {
+  EventVisibilityFieldsComponent,
+  ageRangeError,
+  parseAge,
+} from '../../shared/components/event-visibility-fields.component';
+import { EventVisibility } from '../../core/models/models';
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const COVER_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
@@ -43,6 +49,7 @@ interface WizardStep {
     FaIconComponent,
     TemplateArtworkComponent,
     PhoneMaskDirective,
+    EventVisibilityFieldsComponent,
   ],
   templateUrl: './create-event.page.html',
 })
@@ -104,6 +111,12 @@ export class CreateEventPage {
     bankName: [''],
     accountName: [''],
     iban: [''],
+    visibilitySettings: this.fb.group({
+      visibility: this.fb.control<EventVisibility>('private'),
+      showAttendeeCount: [false],
+      minAge: [''],
+      maxAge: [''],
+    }),
     guests: this.fb.array([this.guestGroup()]),
   });
 
@@ -400,6 +413,12 @@ export class CreateEventPage {
       bankName: '',
       accountName: '',
       iban: '',
+      visibilitySettings: {
+        visibility: 'private',
+        showAttendeeCount: false,
+        minAge: '',
+        maxAge: '',
+      },
     });
     this.form.controls.guests.clear();
     this.form.controls.guests.push(this.guestGroup());
@@ -455,6 +474,10 @@ export class CreateEventPage {
         return false;
       }
       if (this.form.controls.contributionEnabled.value && !this.contributionReady()) {
+        return false;
+      }
+      const ages = this.form.controls.visibilitySettings.getRawValue();
+      if (ageRangeError(ages.minAge, ages.maxAge)) {
         return false;
       }
       return true;
@@ -533,6 +556,12 @@ export class CreateEventPage {
       contributionEnabled: value.contributionEnabled,
       bankDetails,
       guests,
+      visibility: value.visibilitySettings.visibility,
+      showAttendeeCount:
+        value.visibilitySettings.visibility === 'public' &&
+        value.visibilitySettings.showAttendeeCount,
+      minAge: parseAge(value.visibilitySettings.minAge),
+      maxAge: parseAge(value.visibilitySettings.maxAge),
     };
   }
 

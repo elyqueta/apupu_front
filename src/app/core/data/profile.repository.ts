@@ -11,6 +11,7 @@ export interface ProfileUpdateInput {
   locale: string;
   timezone: string;
   avatar_url?: string | null;
+  profile_visibility?: 'public' | 'private';
 }
 
 /**
@@ -29,6 +30,16 @@ export class ProfileRepository extends CachedRepository<HostProfile> {
 
   async save(input: ProfileUpdateInput): Promise<HostProfile> {
     const response = await this.api.patch<HostEnvelope>('/host/profile', input);
+    const profile = mapProfile(response.host);
+    this.setData(profile);
+    return profile;
+  }
+
+  /** Perfil público/privado (Bloco 10). Privado por defeito. */
+  async setVisibility(visibility: 'public' | 'private'): Promise<HostProfile> {
+    const response = await this.api.patch<HostEnvelope>('/host/profile', {
+      profile_visibility: visibility,
+    });
     const profile = mapProfile(response.host);
     this.setData(profile);
     return profile;

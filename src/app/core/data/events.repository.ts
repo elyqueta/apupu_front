@@ -32,7 +32,20 @@ interface EventCreateEnvelope {
 }
 
 export type EventUpdatePatch = Partial<
-  Pick<HostEvent, 'title' | 'venue' | 'city' | 'message' | 'rules' | 'dressCode' | 'status'>
+  Pick<
+    HostEvent,
+    | 'title'
+    | 'venue'
+    | 'city'
+    | 'message'
+    | 'rules'
+    | 'dressCode'
+    | 'status'
+    | 'visibility'
+    | 'showAttendeeCount'
+    | 'minAge'
+    | 'maxAge'
+  >
 >;
 
 /**
@@ -103,6 +116,10 @@ export class EventsRepository extends CachedRepository<HostEvent[]> {
         contribution: contributionFromInput(input),
         rsvp_deadline: input.rsvpDeadline,
         cover_url: input.coverUrl,
+        visibility: input.visibility ?? 'private',
+        show_attendee_count: input.visibility === 'public' ? (input.showAttendeeCount ?? false) : false,
+        min_age: input.minAge ?? null,
+        max_age: input.maxAge ?? null,
       },
       guests: input.guests.map((guest) => ({
         name: guest.name,
@@ -129,6 +146,10 @@ export class EventsRepository extends CachedRepository<HostEvent[]> {
     if (patch.status !== undefined) {
       body['status'] = patch.status === 'published' ? 'scheduled' : patch.status;
     }
+    if (patch.visibility !== undefined) body['visibility'] = patch.visibility;
+    if (patch.showAttendeeCount !== undefined) body['show_attendee_count'] = patch.showAttendeeCount;
+    if (patch.minAge !== undefined) body['min_age'] = patch.minAge;
+    if (patch.maxAge !== undefined) body['max_age'] = patch.maxAge;
     if (patch.venue !== undefined || patch.city !== undefined) {
       body['location'] = locationFromView(current, {
         venue: patch.venue,
@@ -144,8 +165,14 @@ export class EventsRepository extends CachedRepository<HostEvent[]> {
     return updated;
   }
 
-  async remove(eventId: string): Promise<void> {
-    await this.api.delete(`/host/events/${encodeURIComponent(eventId)}`);
+  /**
+   * Remove o evento (remoção lógica). Com convidados confirmados o
+   * servidor exige `confirmName` igual ao título.
+   */
+  async remove(eventId: string, confirmName?: string): Promise<void> {
+    await this.api.deleteWithBody(`/host/events/${encodeURIComponent(eventId)}`, {
+      ...(confirmName !== undefined ? { confirm_name: confirmName } : {}),
+    });
     this.mutate((events) => (events ?? []).filter((event) => event.id !== eventId));
   }
 

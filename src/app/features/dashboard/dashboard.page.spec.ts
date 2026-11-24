@@ -26,6 +26,8 @@ function guest(id: string, status: RsvpStatus, phone: string | null): Guest {
     openedAt: null,
     whatsappSharedAt: new Date(Date.now() - 2 * 86_400_000).toISOString(),
     whatsappShareCount: 1,
+    source: 'personal',
+    ageFlag: false,
     invitedAt: new Date(Date.now() - 3 * 86_400_000).toISOString(),
     respondedAt: null,
   };

@@ -86,6 +86,7 @@ export function emptyProfile(): HostProfile {
     coverUrl: null,
     emailVerified: false,
     profileComplete: false,
+    profileVisibility: 'private',
   };
 }
 
@@ -124,6 +125,11 @@ export function mapEvent(event: ApiEvent): HostEvent {
           }
         : null,
     accessRole: event.access_role ?? 'host',
+    visibility: event.visibility ?? 'private',
+    publicUrl: event.public_url ?? null,
+    showAttendeeCount: event.show_attendee_count ?? false,
+    minAge: event.min_age ?? null,
+    maxAge: event.max_age ?? null,
     createdAt: event.created_at,
     stats: event.stats
       ? {
@@ -148,7 +154,7 @@ export function mapInvitation(invitation: ApiInvitation): Guest {
     id: invitation.id,
     eventId: invitation.event_id,
     name: invitation.guest_name,
-    email: invitation.guest_email,
+    email: invitation.guest_email ?? '',
     phone: invitation.guest_phone,
     status: invitation.rsvp_status === 'accepted' ? 'confirmed' : invitation.rsvp_status,
     tableName: invitation.table_name,
@@ -156,6 +162,8 @@ export function mapInvitation(invitation: ApiInvitation): Guest {
     openedAt: invitation.opened_at,
     whatsappSharedAt: invitation.whatsapp_shared_at,
     whatsappShareCount: invitation.whatsapp_share_count,
+    source: invitation.source ?? 'personal',
+    ageFlag: invitation.age_flag ?? false,
     message: invitation.guest_message ?? null,
     invitedAt: invitation.created_at,
     respondedAt: invitation.rsvp_responded_at,
@@ -357,6 +365,7 @@ export function mapProfile(host: Host): HostProfile {
     coverUrl: host.profile.cover_url,
     emailVerified: host.email_verified,
     profileComplete: host.profile_complete,
+    profileVisibility: host.profile.profile_visibility ?? 'private',
   };
 }
 

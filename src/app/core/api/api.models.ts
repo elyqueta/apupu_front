@@ -39,6 +39,8 @@ export interface HostProfileData {
   timezone: string;
   avatar_url: string | null;
   cover_url: string | null;
+  /** `private` por defeito; um perfil privado não aparece em pesquisas. */
+  profile_visibility?: 'public' | 'private';
 }
 
 export interface Host {
@@ -93,6 +95,14 @@ export interface ApiEvent {
   contribution: EventContribution;
   rsvp_deadline: string | null;
   status: ApiEventStatus;
+  /** Bloco 10: `private` (só convites individuais) ou `public` (link aberto). */
+  visibility?: 'public' | 'private';
+  /** Link aberto do evento; `null` quando é privado. */
+  public_url?: string | null;
+  show_attendee_count?: boolean;
+  /** Limites de idade: só na vista de gestão. */
+  min_age?: number | null;
+  max_age?: number | null;
   /** Papel de quem consulta o evento; ausente na vista pública. */
   access_role?: ApiEventAccessRole;
   created_at: string;
@@ -104,8 +114,15 @@ export interface ApiInvitation {
   id: string;
   event_id: string;
   guest_name: string;
-  guest_email: string;
+  /** `null` em confirmações pelo link aberto feitas só com telefone. */
+  guest_email: string | null;
   guest_phone: string | null;
+  /** `personal` (convite individual) ou `public_link` (link aberto). */
+  source?: 'personal' | 'public_link';
+  guest_age?: number | null;
+  /** Selo "Idade alterada". */
+  age_flag?: boolean;
+  age_flag_reason?: 'birth_date_changed' | null;
   table_name: string | null;
   /** Mensagem opcional deixada pelo convidado ao responder. */
   guest_message?: string | null;
@@ -188,6 +205,34 @@ export interface PublicEvent {
   contribution: EventContribution;
   rsvp_deadline: string | null;
   status: ApiEventStatus;
+}
+
+/** Link aberto de um evento público (`GET /public/events/:slug`, Bloco 10). */
+export interface ApiOpenEvent extends PublicEvent {
+  slug: string;
+  has_age_restriction: boolean;
+  rsvp_deadline_passed: boolean;
+  /** Só existe quando o anfitrião tornou público o nº de confirmados. */
+  attendee_count?: number;
+}
+
+export interface ApiOpenEventViewer {
+  name: string;
+  email: string;
+  phone: string | null;
+  has_birth_date: boolean;
+  rsvp_status: ApiRsvpStatus | null;
+}
+
+export interface ApiOpenEventEnvelope {
+  event: ApiOpenEvent;
+  viewer: ApiOpenEventViewer | null;
+  csrf_token: string | null;
+}
+
+export interface ApiOpenEventRsvpResult {
+  event: ApiOpenEvent;
+  rsvp: { name: string; status: ApiRsvpStatus; responded_at: string | null };
 }
 
 export interface ApiActivity {
@@ -435,6 +480,10 @@ export interface CreateEventRequest {
     contribution: EventContribution;
     rsvp_deadline?: string | null;
     cover_url?: string | null;
+    visibility?: 'public' | 'private';
+    show_attendee_count?: boolean;
+    min_age?: number | null;
+    max_age?: number | null;
   };
   guests: Array<{
     name: string;

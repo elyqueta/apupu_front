@@ -69,15 +69,42 @@ export class ShareService {
     this.document.defaultView?.open(url, '_blank', 'noopener,noreferrer');
   }
 
+  /**
+   * Copia texto para a área de transferência. Usa a Clipboard API e, quando
+   * não está disponível (contexto não seguro, WebView antiga), recorre a
+   * `document.execCommand('copy')` com um `textarea` temporário.
+   */
   async copy(text: string): Promise<boolean> {
-    if (!this.browser || !navigator.clipboard?.writeText) {
+    if (!this.browser) {
       return false;
     }
+    if (navigator.clipboard?.writeText) {
+      try {
+        await navigator.clipboard.writeText(text);
+        return true;
+      } catch {
+        // continua para o fallback
+      }
+    }
+    return this.copyWithExecCommand(text);
+  }
+
+  private copyWithExecCommand(text: string): boolean {
+    const doc = this.document;
+    const area = doc.createElement('textarea');
+    area.value = text;
+    area.setAttribute('readonly', '');
+    area.style.position = 'fixed';
+    area.style.top = '-1000px';
+    area.style.opacity = '0';
+    doc.body.appendChild(area);
+    area.select();
     try {
-      await navigator.clipboard.writeText(text);
-      return true;
+      return doc.execCommand('copy');
     } catch {
       return false;
+    } finally {
+      area.remove();
     }
   }
 

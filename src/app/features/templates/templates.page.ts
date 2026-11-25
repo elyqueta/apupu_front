@@ -9,14 +9,14 @@ import { ToastService } from '../../core/services/toast.service';
 import { WorkspaceStore } from '../../core/services/workspace.store';
 import { ICONS } from '../../core/ui/icons';
 import { ModalComponent } from '../../shared/components/modal.component';
-import { TemplatePreviewComponent } from '../../shared/components/template-preview.component';
+import { TemplateRendererComponent, TemplateRenderData } from '../../shared/components/template-renderer.component';
 import { OPEN_STYLES, OpenStyle } from '../../core/models/template-manifest';
 
 type TemplateCategory = 'all' | 'system' | 'user';
 
 @Component({
   selector: 'app-templates-page',
-  imports: [RouterLink, FaIconComponent, ModalComponent, TemplatePreviewComponent],
+  imports: [RouterLink, FaIconComponent, ModalComponent, TemplateRendererComponent],
   templateUrl: './templates.page.html',
 })
 export class TemplatesPage {
@@ -69,6 +69,20 @@ export class TemplatesPage {
     if (!template) return null;
     return { ...template.manifest, open_style: this.previewOpenStyle() };
   });
+
+  protected sampleData(template: EventTemplate): TemplateRenderData {
+    return {
+      title: this.i18n.t('block14.preview.sampleTitle'),
+      hostName: this.i18n.t('block14.preview.kicker'),
+      startsAt: '2026-12-20T16:00:00.000Z',
+      city: 'Luanda',
+      venue: 'Igreja Cristã Reino Church',
+      message: template.description ?? '',
+      dressCode: 'Traje africano',
+      templateSlug: template.slug,
+      type: 'other',
+    };
+  }
 
   protected readonly previewModalOpen = computed(() => this.previewTemplateId() !== null);
 

@@ -95,13 +95,14 @@
             [attr.aria-label]="i18n.t('block15.templates.preview') + ': ' + template.name"
             (click)="openPreview(template)"
           >
-            <app-template-preview
+            <app-template-renderer
               [manifest]="template.manifest"
-              variant="thumb"
+              [data]="sampleData(template)"
+              mode="preview"
+              previewVariant="thumb"
               [kicker]="i18n.t('block14.preview.kicker')"
-              [title]="i18n.t('block14.preview.sampleTitle')"
               [label]="template.name"
-              class="absolute inset-0"
+              class="absolute inset-0 block h-full"
             />
             <span class="absolute bottom-2 right-2 inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl border border-line bg-surface/90 text-muted shadow-card backdrop-blur-sm">
               <fa-icon [icon]="icons['eye']" aria-hidden="true" />
@@ -182,13 +183,13 @@
   @if (previewTemplate(); as template) {
     <div class="flex flex-col gap-4">
       <div class="overflow-hidden rounded-3xl border border-line bg-surface-raised">
-        <app-template-preview
-          [manifest]="previewManifest()"
-          variant="hero"
+        <app-template-renderer
+          [manifest]="previewManifest()!"
+          [data]="sampleData(template)"
+          mode="preview"
+          previewVariant="hero"
           [animate]="previewAnimate()"
           [kicker]="i18n.t('block14.preview.kicker')"
-          [title]="i18n.t('block14.preview.sampleTitle')"
-          [subtitle]="i18n.t('block14.preview.sampleSubtitle')"
           [label]="template.name"
           class="block min-h-[18rem] sm:min-h-[24rem]"
         />

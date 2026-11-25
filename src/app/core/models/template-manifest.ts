@@ -8,6 +8,8 @@ export type OpenStyle = 'none' | 'envelope' | 'curtain' | 'fade' | 'fold';
 export type CoverMode = 'hero' | 'framed' | 'none';
 export type LayoutBlock = 'title' | 'host' | 'datetime' | 'location' | 'deadline' | 'message';
 
+import type { TemplateDocument } from './template-document';
+
 export interface TemplateManifest {
   version: 1;
   palette: { bg: string; surface: string; ink: string; accent: string; muted: string };
@@ -24,6 +26,8 @@ export interface TemplateManifest {
     qr_destination?: 'event' | 'invite' | 'custom';
     qr_custom_url?: string;
   };
+  /** Bloco 15, Passo 2: documento de blocos (fonte única para editor/convite/PDF). */
+  document?: TemplateDocument;
 }
 
 export const DEFAULT_MANIFEST: TemplateManifest = {

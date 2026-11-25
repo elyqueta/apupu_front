@@ -37,7 +37,7 @@
       } @else {
       <main class="flex flex-1 flex-col gap-4 py-5">
         @if (isGratitude()) {
-          <app-gratitude-invitation [event]="view.event" [manifest]="view.event.manifest" />
+          <app-template-renderer [manifest]="view.event.manifest" [data]="renderData()!" mode="invite" />
           <app-invitation-share [token]="token()" />
         } @else {
           <app-invitation-hero

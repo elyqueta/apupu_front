@@ -32,6 +32,16 @@ export const BLOCK15_KEYS_PT = {
   'block15.greeting.morning': 'Bom dia, {name}',
   'block15.greeting.afternoon': 'Boa tarde, {name}',
   'block15.greeting.evening': 'Boa noite, {name}',
+  'block15.guest.kind': 'Tipo de convidado',
+  'block15.guest.kind.male': 'Homem',
+  'block15.guest.kind.female': 'Mulher',
+  'block15.guest.kind.couple': 'Casal',
+  'block15.guest.kind.family': 'Família',
+  'block15.guest.kind.neutral': 'Prefiro não indicar',
+  'block15.guest.companionName': 'Nome do cônjuge',
+  'block15.guest.companionPlaceholder': 'Ex.: Maria Silva',
+  'block15.guest.partySize': 'Número de pessoas',
+  'block15.guest.partySizeHint': 'Opcional. Casal conta 2 por defeito.',
 } as const;
 
 export const BLOCK15_KEYS_EN: Record<keyof typeof BLOCK15_KEYS_PT, string> = {
@@ -67,4 +77,40 @@ export const BLOCK15_KEYS_EN: Record<keyof typeof BLOCK15_KEYS_PT, string> = {
   'block15.greeting.morning': 'Good morning, {name}',
   'block15.greeting.afternoon': 'Good afternoon, {name}',
   'block15.greeting.evening': 'Good evening, {name}',
+  'block15.guest.kind': 'Guest type',
+  'block15.guest.kind.male': 'Man',
+  'block15.guest.kind.female': 'Woman',
+  'block15.guest.kind.couple': 'Couple',
+  'block15.guest.kind.family': 'Family',
+  'block15.guest.kind.neutral': 'Prefer not to say',
+  'block15.guest.companionName': 'Spouse name',
+  'block15.guest.companionPlaceholder': 'E.g. Maria Silva',
+  'block15.guest.partySize': 'Number of people',
+  'block15.guest.partySizeHint': 'Optional. Couples count as 2 by default.',
 };
+
+export type GuestKindValue = 'male' | 'female' | 'couple' | 'family' | null | undefined;
+
+export function guestAddress(
+  kind: GuestKindValue,
+  name: string,
+  locale: 'pt-PT' | 'en' = 'pt-PT',
+): string {
+  const n = name.trim();
+  if (locale === 'en') {
+    if (kind === 'couple') return n ? `Dear ${n}` : 'Dear guests';
+    if (kind === 'family') return n ? `Dear ${n}` : 'Dear family';
+    if (kind === 'female') return n ? `Dear ${n}` : 'Dear guest';
+    if (kind === 'male') return n ? `Dear ${n}` : 'Dear guest';
+    return n ? `Dear ${n}` : 'Dear guest';
+  }
+  if (kind === 'couple') return n || 'Convidados especiais';
+  if (kind === 'family') return n || 'Família convidada';
+  if (kind === 'female') return n || 'Convidada';
+  if (kind === 'male') return n || 'Convidado';
+  return n || 'Convidado(a)';
+}
+
+export function guestPlural(kind: GuestKindValue): boolean {
+  return kind === 'couple' || kind === 'family';
+}

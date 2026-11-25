@@ -53,6 +53,9 @@ export interface ApiGuestInvitation {
   rsvp_status: ApiRsvpStatus;
   rsvp_responded_at: string | null;
   table_name: string | null;
+  guest_kind?: 'male' | 'female' | 'couple' | 'family' | null;
+  guest_companion_name?: string | null;
+  guest_party_size?: number | null;
   invitation_url: string | null;
   invitation_url_expires_at: string | null;
   created_at: string;
@@ -165,6 +168,9 @@ export function mapInvitation(invitation: ApiInvitation): Guest {
     phone: invitation.guest_phone,
     status: invitation.rsvp_status === 'accepted' ? 'confirmed' : invitation.rsvp_status,
     tableName: invitation.table_name,
+    guestKind: invitation.guest_kind ?? null,
+    companionName: invitation.guest_companion_name ?? null,
+    partySize: invitation.guest_party_size ?? null,
     invitationUrl: invitation.invitation_url,
     openedAt: invitation.opened_at,
     whatsappSharedAt: invitation.whatsapp_shared_at,
@@ -196,6 +202,9 @@ export function mapGuestInvitation(invitation: ApiGuestInvitation): GuestInvitat
     status: invitation.rsvp_status === 'accepted' ? 'confirmed' : invitation.rsvp_status,
     eventStatus: invitation.event.status === 'scheduled' ? 'published' : invitation.event.status,
     tableName: invitation.table_name,
+    guestKind: invitation.guest_kind ?? null,
+    companionName: invitation.guest_companion_name ?? null,
+    partySize: invitation.guest_party_size ?? null,
     invitationUrl: invitation.invitation_url,
     invitedAt: invitation.created_at,
     respondedAt: invitation.rsvp_responded_at,

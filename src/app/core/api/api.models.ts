@@ -124,6 +124,9 @@ export interface ApiInvitation {
   /** `null` em confirmações pelo link aberto feitas só com telefone. */
   guest_email: string | null;
   guest_phone: string | null;
+  guest_kind?: 'male' | 'female' | 'couple' | 'family' | null;
+  guest_companion_name?: string | null;
+  guest_party_size?: number | null;
   /** `personal` (convite individual) ou `public_link` (link aberto). */
   source?: 'personal' | 'public_link';
   guest_age?: number | null;

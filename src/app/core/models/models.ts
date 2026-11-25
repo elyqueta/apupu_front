@@ -135,6 +135,8 @@ export interface TeamManager extends EventManager {
   event: TeamEventSummary;
 }
 
+export type GuestKind = 'male' | 'female' | 'couple' | 'family';
+
 export interface Guest {
   id: string;
   eventId: string;
@@ -143,6 +145,9 @@ export interface Guest {
   phone: string | null;
   status: RsvpStatus;
   tableName: string | null;
+  guestKind: GuestKind | null;
+  companionName: string | null;
+  partySize: number | null;
   /** URL absoluto para partilhar; `null` quando o convite foi revogado. */
   invitationUrl: string | null;
   /** Primeira abertura do link do convite; `null` se nunca foi aberto. */
@@ -183,6 +188,9 @@ export interface GuestInvitation {
   /** Estado efetivo do evento (Bloco 15). */
   eventStatus: EventStatus;
   tableName: string | null;
+  guestKind: GuestKind | null;
+  companionName: string | null;
+  partySize: number | null;
   /** Link individual do convite; `null` quando ainda não está disponível. */
   invitationUrl: string | null;
   invitedAt: string;
@@ -269,6 +277,9 @@ export interface GuestInput {
   name: string;
   email: string;
   phone: string | null;
+  guestKind?: GuestKind | null;
+  companionName?: string | null;
+  partySize?: number | null;
 }
 
 export interface CreateEventInput {

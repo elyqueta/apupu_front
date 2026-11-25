@@ -2,8 +2,9 @@ import { Component, computed, effect, inject, input, output, signal } from '@ang
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { I18nService } from '../../core/i18n/i18n.service';
+import { TranslationKey } from '../../core/i18n/translations';
 import { toApiError } from '../../core/api/api-error';
-import { Guest } from '../../core/models/models';
+import { Guest, GuestKind } from '../../core/models/models';
 import { WorkspaceStore } from '../../core/services/workspace.store';
 import { ToastService } from '../../core/services/toast.service';
 import { ICONS } from '../../core/ui/icons';
@@ -80,6 +81,66 @@ import { ModalComponent } from './modal.component';
                 }}</span>
               }
             </label>
+
+            <label class="block">
+              <span
+                class="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.16em] text-muted"
+              >
+                {{ i18n.t('block15.guest.kind') }}
+              </span>
+              <span class="relative block">
+                <select
+                  formControlName="guestKind"
+                  class="h-11 w-full appearance-none rounded-xl border border-line bg-surface-raised px-3 pr-10 text-sm text-ink outline-none transition focus:border-brand/50"
+                >
+                  @for (kind of guestKinds; track kind.value) {
+                    <option [value]="kind.value">{{ i18n.t(kind.labelKey) }}</option>
+                  }
+                </select>
+                <fa-icon
+                  [icon]="icons['chevronDown']"
+                  class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted"
+                />
+              </span>
+            </label>
+
+            @if (form.controls.guestKind.value === 'couple') {
+              <label class="block">
+                <span
+                  class="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.16em] text-muted"
+                >
+                  {{ i18n.t('block15.guest.companionName') }}
+                </span>
+                <input
+                  type="text"
+                  formControlName="companionName"
+                  class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink outline-none transition placeholder:text-muted/60 focus:border-brand/50"
+                  [placeholder]="i18n.t('block15.guest.companionPlaceholder')"
+                />
+              </label>
+            }
+
+            @if (form.controls.guestKind.value === 'family' || form.controls.guestKind.value === 'couple') {
+              <label class="block">
+                <span
+                  class="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.16em] text-muted"
+                >
+                  {{ i18n.t('block15.guest.partySize') }}
+                  <span class="font-normal normal-case tracking-normal text-muted/70">
+                    ({{ i18n.t('common.optional') }})
+                  </span>
+                </span>
+                <input
+                  type="number"
+                  min="1"
+                  max="50"
+                  formControlName="partySize"
+                  class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink outline-none transition placeholder:text-muted/60 focus:border-brand/50"
+                  [placeholder]="form.controls.guestKind.value === 'couple' ? '2' : ''"
+                />
+                <span class="mt-1 block text-xs text-muted">{{ i18n.t('block15.guest.partySizeHint') }}</span>
+              </label>
+            }
 
             <label class="block">
               <span
@@ -182,11 +243,22 @@ export class GuestDialogComponent {
   protected readonly isEdit = computed(() => this.guest() !== null);
   protected readonly contactLocked = computed(() => Boolean(this.guest()?.openedAt));
 
+  protected readonly guestKinds: { value: GuestKind | ''; labelKey: TranslationKey }[] = [
+    { value: '', labelKey: 'block15.guest.kind.neutral' },
+    { value: 'male', labelKey: 'block15.guest.kind.male' },
+    { value: 'female', labelKey: 'block15.guest.kind.female' },
+    { value: 'couple', labelKey: 'block15.guest.kind.couple' },
+    { value: 'family', labelKey: 'block15.guest.kind.family' },
+  ];
+
   protected readonly form = this.fb.group({
     eventId: ['', Validators.required],
     name: ['', [Validators.required, Validators.minLength(2)]],
     email: ['', [Validators.required, Validators.email]],
     phone: [''],
+    guestKind: ['' as GuestKind | ''],
+    companionName: [''],
+    partySize: [null as number | null],
   });
 
   constructor() {
@@ -200,6 +272,9 @@ export class GuestDialogComponent {
         name: guest?.name ?? '',
         email: guest?.email ?? '',
         phone: guest?.phone ?? '',
+        guestKind: (guest?.guestKind ?? '') as GuestKind | '',
+        companionName: guest?.companionName ?? '',
+        partySize: guest?.partySize ?? null,
       });
 
       if (this.contactLocked()) {
@@ -231,10 +306,22 @@ export class GuestDialogComponent {
     this.saving.set(true);
     this.error.set('');
     const value = this.form.getRawValue();
+    const guestKind = (value.guestKind || null) as GuestKind | null;
+    const partyRaw = value.partySize;
+    const partySize =
+      partyRaw === null || partyRaw === undefined || partyRaw === ('' as unknown)
+        ? null
+        : Number(partyRaw);
     const input = {
       name: value.name,
       email: value.email,
       phone: value.phone || null,
+      guestKind,
+      companionName: guestKind === 'couple' ? (value.companionName || null) : null,
+      partySize:
+        guestKind === 'family' || guestKind === 'couple'
+          ? (Number.isFinite(partySize) && partySize! > 0 ? partySize : guestKind === 'couple' ? 2 : null)
+          : null,
     };
 
     try {

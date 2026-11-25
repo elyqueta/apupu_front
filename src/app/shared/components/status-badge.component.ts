@@ -38,6 +38,7 @@ export class StatusBadgeComponent {
       case 'scheduled':
       case 'agendado':
       case 'concluida':
+      case 'ativo':
         return 'border-mint/30 bg-mint/15 text-mint';
       case 'declined':
       case 'cancelled':
@@ -49,6 +50,8 @@ export class StatusBadgeComponent {
       case 'pending':
       case 'por_fazer':
       case 'rascunho':
+      case 'convite_pendente':
+      case 'convite_telefone':
         return 'border-amber/30 bg-amber/15 text-amber';
       case 'em_curso':
         return 'border-iris/30 bg-iris/10 text-iris';
@@ -68,6 +71,8 @@ export class StatusBadgeComponent {
       case 'pending':
       case 'por_fazer':
       case 'rascunho':
+      case 'convite_pendente':
+      case 'convite_telefone':
         return ICONS['clock'];
       case 'completed':
       case 'concluido':
@@ -78,6 +83,7 @@ export class StatusBadgeComponent {
       case 'published':
       case 'scheduled':
       case 'agendado':
+      case 'ativo':
         return ICONS['paperPlane'];
       default:
         return ICONS['pen'];

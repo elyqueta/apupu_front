@@ -34,7 +34,7 @@ import { ActionMenuComponent, ActionMenuItem } from '../../shared/components/act
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog.component';
 import { ModalComponent } from '../../shared/components/modal.component';
 import { PageHeaderComponent } from '../../shared/components/page-header.component';
-import { PersonCardComponent, PersonMetaItem } from '../../shared/components/person-card.component';
+import { PersonMetaItem } from '../../shared/components/person-card.component';
 import { SkeletonComponent } from '../../shared/components/skeleton.component';
 import { StatCardComponent } from '../../shared/components/stat-card.component';
 import { StatGridComponent } from '../../shared/components/stat-grid.component';
@@ -76,7 +76,6 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     StatGridComponent,
     ActionMenuComponent,
     PageHeaderComponent,
-    PersonCardComponent,
     ConfirmDialogComponent,
     ModalComponent,
     PhoneMaskDirective,
@@ -241,6 +240,7 @@ export class TeamDetailPage {
   protected readonly memberModalOpen = signal(false);
   protected readonly memberModalSaving = signal(false);
   protected readonly memberModalError = signal('');
+  protected readonly selectedMember = signal<TeamMember | null>(null);
   protected readonly memberForm = this.fb.group({
     displayName: [''],
     email: ['', Validators.email],
@@ -554,6 +554,21 @@ export class TeamDetailPage {
 
   protected memberContact(member: TeamMember): string {
     return member.email ?? member.phone ?? member.displayName ?? '';
+  }
+
+  protected openMemberDetail(member: TeamMember): void {
+    this.selectedMember.set(member);
+  }
+
+  protected closeMemberDetail(): void {
+    this.selectedMember.set(null);
+  }
+
+  protected memberInitials(member: TeamMember): string {
+    const name = this.memberName(member).trim();
+    const parts = name.split(/\s+/).filter(Boolean);
+    const initials = (parts[0]?.[0] ?? '') + (parts[1]?.[0] ?? '');
+    return (initials || name.slice(0, 2)).toUpperCase();
   }
 
   protected memberName(member: TeamMember): string {

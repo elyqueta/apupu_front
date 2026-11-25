@@ -323,18 +323,31 @@
             <p class="mt-4 text-sm text-muted">{{ i18n.t('teamDetail.membersEmpty') }}</p>
           </div>
         } @else {
-          <ul class="grid auto-rows-fr grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
-            @for (member of members(); track member.id) {
-              <li class="h-full min-w-0" [attr.data-testid]="'member-' + member.id">
-                <app-person-card
-                  [name]="memberName(member)"
-                  [subtitle]="memberSubtitle(member)"
-                  [status]="i18n.t(memberStatusLabel(member.status))"
-                  [meta]="memberMeta(member)"
-                  [actions]="memberActions(member)"
-                  [actionsLabel]="i18n.t('common.moreActions')"
-                  (actionSelected)="onMemberAction(member, $event)"
-                />
+          <ul class="overflow-hidden rounded-3xl border border-line bg-surface shadow-card" data-testid="team-members-list">
+            @for (member of members(); track member.id; let last = $last) {
+              <li [attr.data-testid]="'member-' + member.id">
+                <button
+                  type="button"
+                  class="flex w-full cursor-pointer items-center gap-3 px-4 py-3 text-left transition hover:bg-surface-raised/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand/40"
+                  [class.border-b]="!last"
+                  [class.border-line]="!last"
+                  (click)="openMemberDetail(member)"
+                >
+                  <span class="relative grid size-12 shrink-0 place-items-center overflow-hidden rounded-full border border-brand/20 bg-brand/10 text-sm font-semibold text-brand-strong">
+                    {{ memberInitials(member) }}
+                  </span>
+                  <div class="min-w-0 flex-1">
+                    <div class="flex items-center gap-2">
+                      <p class="truncate text-sm font-semibold text-ink">{{ memberName(member) }}</p>
+                      <app-status-badge class="shrink-0" [value]="member.status" />
+                    </div>
+                    <p class="mt-0.5 truncate text-xs text-muted">
+                      {{ i18n.t(roleLabel(member.role)) }}
+                      @if (memberSubtitle(member)) { <span class="text-muted/60"> · </span>{{ memberSubtitle(member) }} }
+                    </p>
+                  </div>
+                  <fa-icon [icon]="icons['chevronRight']" class="shrink-0 text-xs text-muted" aria-hidden="true" />
+                </button>
               </li>
             }
           </ul>
@@ -667,6 +680,47 @@
     </app-modal>
   }
 </section>
+
+<app-modal [open]="!!selectedMember()" [title]="selectedMember() ? memberName(selectedMember()!) : ''" size="md" (closed)="closeMemberDetail()">
+  @if (selectedMember(); as member) {
+    <div class="flex flex-col gap-4">
+      <div class="flex items-center gap-4">
+        <span class="grid size-16 shrink-0 place-items-center rounded-full border border-brand/20 bg-brand/10 text-lg font-semibold text-brand-strong">
+          {{ memberInitials(member) }}
+        </span>
+        <div class="min-w-0">
+          <p class="text-base font-semibold text-ink">{{ memberName(member) }}</p>
+          <p class="text-sm text-muted">{{ memberSubtitle(member) || i18n.t(roleLabel(member.role)) }}</p>
+          <div class="mt-2"><app-status-badge [value]="member.status" /></div>
+        </div>
+      </div>
+
+      <dl class="grid gap-3 rounded-2xl border border-line bg-surface-raised/40 p-4 text-sm">
+        <div class="flex justify-between gap-3"><dt class="text-muted">{{ i18n.t('teamDetail.fieldRole') }}</dt><dd class="font-medium text-ink">{{ i18n.t(roleLabel(member.role)) }}</dd></div>
+        <div class="flex justify-between gap-3"><dt class="text-muted">{{ i18n.t('teamDetail.fieldEmail') }}</dt><dd class="font-medium text-ink break-all">{{ member.email || '—' }}</dd></div>
+        <div class="flex justify-between gap-3"><dt class="text-muted">{{ i18n.t('teamDetail.fieldPhone') }}</dt><dd class="font-medium text-ink">{{ member.phone || '—' }}</dd></div>
+      </dl>
+
+      @if (memberActions(member).length > 0) {
+        <div class="flex flex-col gap-2">
+          @for (action of memberActions(member); track action.id) {
+            <button
+              type="button"
+              class="flex min-h-11 w-full cursor-pointer items-center gap-3 rounded-xl border border-line px-4 py-2 text-left text-sm font-medium text-ink transition hover:bg-surface-raised disabled:cursor-not-allowed disabled:opacity-50"
+              [class.border-coral/30]="action.tone === 'danger'"
+              [class.text-coral]="action.tone === 'danger'"
+              [disabled]="action.disabled"
+              (click)="onMemberAction(member, action.id); closeMemberDetail()"
+            >
+              @if (action.icon) { <fa-icon [icon]="action.icon" class="text-sm" aria-hidden="true" /> }
+              <span>{{ action.label }}</span>
+            </button>
+          }
+        </div>
+      }
+    </div>
+  }
+</app-modal>
 
 <app-task-detail-dialog [task]="detailTask()" (closed)="detailTask.set(null)" />
 

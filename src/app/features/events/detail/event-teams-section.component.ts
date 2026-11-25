@@ -63,9 +63,9 @@ import { TeamMemberDetailDialogComponent } from '../../../shared/components/team
           }
         </div>
       } @else {
-        <ul class="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+        <ul class="mt-4 flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 [scrollbar-width:thin]">
           @for (team of teams(); track team.id) {
-            <li class="min-w-0">
+            <li class="w-[min(20rem,calc(100vw-3.5rem))] shrink-0 snap-start sm:w-[21rem]">
               <article
                 class="group flex h-full min-w-0 flex-col overflow-hidden rounded-3xl border border-line bg-surface-raised/50 shadow-card transition hover:border-brand/30 hover:shadow-md"
               >

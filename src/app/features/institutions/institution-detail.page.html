@@ -97,7 +97,12 @@
     <section class="flex flex-col gap-3">
       <h2 class="font-display text-lg font-semibold text-ink">{{ i18n.t('block13.detail.communities') }}</h2>
       @if (detail()!.communities.length === 0) {
-        <p class="rounded-4xl border border-dashed border-line bg-surface/60 p-6 text-center text-sm text-muted">{{ i18n.t('block13.detail.noCommunities') }}</p>
+        <div class="flex flex-col items-center justify-center gap-3 rounded-4xl border border-dashed border-line bg-surface/60 px-6 py-10 text-center">
+          <span class="grid size-12 place-items-center rounded-2xl border border-brand/20 bg-brand/10 text-brand-strong">
+            <fa-icon [icon]="icons['communities']" class="text-lg" aria-hidden="true" />
+          </span>
+          <p class="text-sm text-muted">{{ i18n.t('block13.detail.noCommunities') }}</p>
+        </div>
       } @else {
         <ul class="grid auto-rows-fr grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
           @for (community of detail()!.communities; track community.id) {
@@ -134,7 +139,12 @@
     <section class="flex flex-col gap-3">
       <h2 class="font-display text-lg font-semibold text-ink">{{ i18n.t('block13.detail.events') }}</h2>
       @if (detail()!.events.length === 0) {
-        <p class="rounded-4xl border border-dashed border-line bg-surface/60 p-6 text-center text-sm text-muted">{{ i18n.t('block13.detail.noEvents') }}</p>
+        <div class="flex flex-col items-center justify-center gap-3 rounded-4xl border border-dashed border-line bg-surface/60 px-6 py-10 text-center">
+          <span class="grid size-12 place-items-center rounded-2xl border border-brand/20 bg-brand/10 text-brand-strong">
+            <fa-icon [icon]="icons['events']" class="text-lg" aria-hidden="true" />
+          </span>
+          <p class="text-sm text-muted">{{ i18n.t('block13.detail.noEvents') }}</p>
+        </div>
       } @else {
         <ul class="grid auto-rows-fr grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
           @for (event of detail()!.events; track event.id) {

@@ -168,10 +168,12 @@
     </section>
 
     @if (isCreator()) {
-      <section class="rounded-4xl border border-coral/30 bg-coral/5 p-4 md:p-5">
-        <h2 class="text-sm font-semibold text-coral">{{ i18n.t('block13.detail.delete') }}</h2>
-        <p class="mt-1 text-xs leading-5 text-muted">{{ i18n.t('block13.detail.deleteBody') }}</p>
-        <button type="button" class="ui-btn-danger mt-3" data-testid="institution-delete" (click)="deleteName.set(''); deleteOpen.set(true)">
+      <section class="flex flex-col gap-4 rounded-4xl border border-coral/30 bg-coral/5 p-4 sm:flex-row sm:items-center sm:justify-between md:p-5">
+        <div class="min-w-0">
+          <h2 class="text-sm font-semibold text-coral">{{ i18n.t('block13.detail.delete') }}</h2>
+          <p class="mt-1 text-xs leading-5 text-muted">{{ i18n.t('block13.detail.deleteBody') }}</p>
+        </div>
+        <button type="button" class="ui-btn-danger shrink-0 self-start sm:self-center" data-testid="institution-delete" (click)="deleteName.set(''); deleteOpen.set(true)">
           <fa-icon [icon]="icons['trash']" aria-hidden="true" />
           {{ i18n.t('block13.detail.delete') }}
         </button>

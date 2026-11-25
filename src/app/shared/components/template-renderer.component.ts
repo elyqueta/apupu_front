@@ -1,8 +1,6 @@
 import { Component, computed, inject, input, output } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { I18nService } from '../../core/i18n/i18n.service';
-import { ICONS } from '../../core/ui/icons';
 import { TemplateManifest, fontFamily, manifestStyle } from '../../core/models/template-manifest';
 import { TemplateBlock } from '../../core/models/template-document';
 import { GratitudeInvitationComponent } from '../../features/invitation/parts/gratitude-invitation.component';
@@ -28,7 +26,7 @@ export interface TemplateRenderData {
 
 @Component({
   selector: 'app-template-renderer',
-  imports: [GratitudeInvitationComponent, TemplatePreviewComponent, FaIconComponent],
+  imports: [GratitudeInvitationComponent, TemplatePreviewComponent],
   template: `
     @if (isGratitude()) {
       <div class="relative">
@@ -189,7 +187,6 @@ export interface TemplateRenderData {
 })
 export class TemplateRendererComponent {
   protected readonly i18n = inject(I18nService);
-  protected readonly icons = ICONS;
   private readonly sanitizer = inject(DomSanitizer);
 
   readonly manifest = input.required<TemplateManifest>();

@@ -1,13 +1,12 @@
 import { Component, computed, effect, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { ICONS } from '../../core/ui/icons';
 import { TemplatesRepository } from '../../core/data/templates.repository';
 import { EventTemplate } from '../../core/models/models';
 import { TemplateBlock, TemplateDocument, createBlockId } from '../../core/models/template-document';
-import { TemplateManifest } from '../../core/models/template-manifest';
+import { DEFAULT_MANIFEST, TemplateManifest } from '../../core/models/template-manifest';
 import { TemplateRenderData, TemplateRendererComponent } from '../../shared/components/template-renderer.component';
 import { PageHeaderComponent } from '../../shared/components/page-header.component';
 
@@ -40,14 +39,14 @@ function sampleData(template: EventTemplate): TemplateRenderData {
     venue: 'Morro Bento, Gamek à Direita',
     message: 'A tua presença tornará este momento ainda mais especial.',
     dressCode: 'TRAJE AFRICANO',
-    type: template.category,
+    type: 'other',
     templateSlug: template.slug,
   };
 }
 
 @Component({
   selector: 'app-template-editor-page',
-  imports: [RouterLink, FormsModule, FaIconComponent, TemplateRendererComponent, PageHeaderComponent],
+  imports: [RouterLink, FormsModule, TemplateRendererComponent, PageHeaderComponent],
   template: `
     <div class="min-h-screen bg-canvas text-ink">
       <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6">
@@ -165,7 +164,7 @@ export class TemplateEditorPage {
 
   protected readonly manifest = computed<TemplateManifest>(() => {
     const tpl = this.template();
-    const base = tpl?.manifest ?? ({ layout: { blocks: [] }, palette: { bg: '#fff', fg: '#111', accent: '#999', muted: '#666' }, fonts: { display: 'sans', body: 'sans' }, ornaments: { frame: 'none', corners: 'none', dividers: 'none' }, cover: 'none', open_style: 'fade', pdf: { frame: 'none', qr_position: 'bottom-right', show_ornaments: true } } as TemplateManifest);
+    const base = tpl?.manifest ?? DEFAULT_MANIFEST;
     return { ...base, document: this.document() };
   });
 
@@ -190,8 +189,8 @@ export class TemplateEditorPage {
     this.loading.set(true);
     this.error.set('');
     try {
-      const items = await this.templates.list();
-      const tpl = items.find((t) => t.slug === slug) ?? null;
+      const items = await this.templates.load();
+      const tpl = items.find((t: EventTemplate) => t.slug === slug) ?? null;
       if (!tpl) {
         this.error.set('Modelo não encontrado.');
         return;

@@ -47,6 +47,9 @@ export const BLOCK15_KEYS_PT = {
   'block15.invitation.shareMessagePlural': 'Olá! Têm um convite especial: {url}',
   'block15.guests.whatsappMessagePlural': 'Olá {name}! Aqui está o vosso convite para {event}.',
   'block15.guests.whatsappMessageWithLinkPlural': 'Olá {name}! Aqui está o vosso convite para {event}: {url}',
+  'block15.teams.lastActivity': 'Última atividade',
+  'block15.teams.chat': 'Conversar',
+  'block15.teams.chatSoon': 'O chat da equipa estará disponível em breve.',
 } as const;
 
 export const BLOCK15_KEYS_EN: Record<keyof typeof BLOCK15_KEYS_PT, string> = {
@@ -97,6 +100,9 @@ export const BLOCK15_KEYS_EN: Record<keyof typeof BLOCK15_KEYS_PT, string> = {
   'block15.invitation.shareMessagePlural': 'Hello! You have a special invitation: {url}',
   'block15.guests.whatsappMessagePlural': 'Hi {name}! Here is your invitation for {event}.',
   'block15.guests.whatsappMessageWithLinkPlural': 'Hi {name}! Here is your invitation for {event}: {url}',
+  'block15.teams.lastActivity': 'Last activity',
+  'block15.teams.chat': 'Chat',
+  'block15.teams.chatSoon': 'Team chat will be available soon.',
 };
 
 export type GuestKindValue = 'male' | 'female' | 'couple' | 'family' | null | undefined;

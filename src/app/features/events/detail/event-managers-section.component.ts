@@ -53,10 +53,10 @@ type ManagerLinkStatus = 'active' | 'expired' | 'revoked' | 'blocked' | 'pending
       } @else if (managers().length === 0) {
         <p class="rounded-2xl border border-dashed border-line p-4 text-xs text-muted">{{ i18n.t('eventDetail.managersEmptyPanel') }}</p>
       } @else {
-        <ul class="flex flex-col gap-2">
+        <ul class="grid grid-cols-1 gap-3 sm:grid-cols-2">
           @for (manager of managers(); track manager.id) {
-            <li>
-              <app-person-card [name]="nameOf(manager)" [subtitle]="teamLabel(manager)"
+            <li class="min-w-0">
+              <app-person-card variant="rich" [name]="nameOf(manager)" [subtitle]="teamLabel(manager)"
                 [meta]="metaFor(manager)" [actions]="actionsFor(manager)"
                 [actionsLabel]="i18n.t('common.moreActions')" (actionSelected)="onAction(manager, $event)" />
             </li>

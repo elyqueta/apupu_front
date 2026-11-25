@@ -23,7 +23,7 @@ type State = 'loading' | 'ready' | 'not_found' | 'error';
   selector: 'app-public-community-page',
   imports: [RouterLink, FaIconComponent, BrandComponent, SkeletonComponent, FeedEventCardComponent],
   template: `
-    <div class="mx-auto flex min-h-dvh max-w-5xl flex-col gap-4 px-4 pb-16 pt-4 sm:px-6">
+    <div class="mx-auto flex min-h-dvh max-w-6xl flex-col gap-4 px-4 pb-16 pt-4 sm:px-6">
       <header class="flex items-center justify-between gap-3">
         <a routerLink="/" class="ui-icon-button" [attr.aria-label]="i18n.t('block12.feed.title')">
           <fa-icon [icon]="icons['chevronLeft']" aria-hidden="true" />
@@ -73,7 +73,7 @@ type State = 'loading' | 'ready' | 'not_found' | 'error';
                   <p class="text-sm text-muted">{{ i18n.t('block12.profile.noEvents') }}</p>
                 </div>
               } @else {
-                <ul class="grid auto-rows-fr grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                <ul class="grid auto-rows-fr grid-cols-1 gap-4 sm:grid-cols-2">
                   @for (event of c.events; track event.id) { <li class="h-full min-w-0"><app-feed-event-card [event]="event" /></li> }
                 </ul>
               }
@@ -81,7 +81,7 @@ type State = 'loading' | 'ready' | 'not_found' | 'error';
             @if (past().length > 0) {
               <section data-testid="public-community-past">
                 <h2 class="mb-2 text-sm font-semibold text-ink">{{ i18n.t('block12.profile.pastEvents') }}</h2>
-                <ul class="grid auto-rows-fr grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                <ul class="grid auto-rows-fr grid-cols-1 gap-4 sm:grid-cols-2">
                   @for (event of past(); track event.id) { <li class="h-full min-w-0"><app-feed-event-card [event]="event" /></li> }
                 </ul>
               </section>

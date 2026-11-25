@@ -24,7 +24,7 @@ export function eventPath(event: Pick<FeedEvent, 'slug'>): string {
   imports: [RouterLink, FaIconComponent, StatusBadgeComponent, TemplateArtworkComponent],
   template: `
     <article
-      class="group flex h-full min-w-0 flex-col overflow-hidden rounded-4xl border border-line bg-surface shadow-card transition hover:border-brand/40"
+      class="group flex h-full min-w-0 flex-col overflow-hidden rounded-4xl border border-line bg-surface shadow-card transition duration-200 hover:-translate-y-0.5 hover:border-brand/40 hover:shadow-lg"
       [attr.data-testid]="'feed-event-' + event().id"
     >
       <a [routerLink]="path()" class="relative block aspect-[4/3] overflow-hidden bg-surface-raised" [attr.aria-label]="event().title">
@@ -33,7 +33,8 @@ export function eventPath(event: Pick<FeedEvent, 'slug'>): string {
         } @else {
           <app-template-artwork [templateId]="event().template.id" variant="cover" [title]="event().title" class="block size-full" />
         }
-        <span class="absolute left-3 top-3 inline-flex max-w-[75%] items-center gap-1.5 rounded-full border border-white/20 bg-black/40 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur-md">
+        <div class="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/45 to-transparent"></div>
+        <span class="absolute left-3 top-3 inline-flex max-w-[75%] items-center gap-1.5 rounded-full border border-white/20 bg-black/45 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur-md">
           <fa-icon [icon]="icons['calendar']" aria-hidden="true" />
           <span class="truncate">{{ dateLabel() }}</span>
         </span>
@@ -43,26 +44,35 @@ export function eventPath(event: Pick<FeedEvent, 'slug'>): string {
           </span>
         }
         @if (event().attendee_count !== undefined) {
-          <span class="absolute bottom-3 right-3 inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-black/40 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur-md">
+          <span class="absolute bottom-3 right-3 inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-black/45 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur-md">
             <fa-icon [icon]="icons['guests']" aria-hidden="true" />
             {{ i18n.t('block12.feed.confirmed', { count: event().attendee_count ?? 0 }) }}
           </span>
         }
       </a>
-      <div class="flex flex-1 flex-col gap-2 p-4">
+      <div class="flex flex-1 flex-col gap-3 p-4">
         <h3 class="line-clamp-2 font-display text-base font-semibold leading-snug text-ink" [title]="event().title">{{ event().title }}</h3>
-        <p class="flex min-w-0 items-center gap-1.5 text-xs text-muted">
-          <fa-icon [icon]="icons[event().online ? 'globe' : 'location']" aria-hidden="true" />
-          <span class="truncate">{{ event().online ? i18n.t('block12.feed.online') : event().location || '—' }}</span>
-        </p>
-        <p class="truncate text-xs text-muted">
-          @if (event().community; as community) {
-            <a [routerLink]="['/comunidade', community.slug]" class="font-semibold text-brand-strong hover:underline">{{ community.name }}</a>
-            ·
-          }
-          {{ i18n.t('block12.feed.byHost', { name: event().host_name }) }}
-        </p>
-        <a [routerLink]="path()" class="ui-btn mt-auto w-full" [attr.data-testid]="'feed-event-open-' + event().id">
+        <div class="flex flex-col gap-1.5 text-xs text-muted">
+          <p class="flex min-w-0 items-center gap-2">
+            <span class="grid size-6 shrink-0 place-items-center rounded-lg bg-surface-raised text-[11px] text-muted">
+              <fa-icon [icon]="icons[event().online ? 'globe' : 'location']" aria-hidden="true" />
+            </span>
+            <span class="truncate">{{ event().online ? i18n.t('block12.feed.online') : event().location || '—' }}</span>
+          </p>
+          <p class="flex min-w-0 items-center gap-2">
+            <span class="grid size-6 shrink-0 place-items-center rounded-lg bg-surface-raised text-[11px] text-muted">
+              <fa-icon [icon]="icons['user']" aria-hidden="true" />
+            </span>
+            <span class="truncate">
+              @if (event().community; as community) {
+                <a [routerLink]="['/comunidade', community.slug]" class="font-semibold text-brand-strong hover:underline">{{ community.name }}</a>
+                <span class="text-muted"> · </span>
+              }
+              {{ i18n.t('block12.feed.byHost', { name: event().host_name }) }}
+            </span>
+          </p>
+        </div>
+        <a [routerLink]="path()" class="ui-btn-secondary mt-auto w-full justify-center" [attr.data-testid]="'feed-event-open-' + event().id">
           {{ i18n.t('block12.feed.viewEvent') }}
           <fa-icon [icon]="icons['chevronRight']" aria-hidden="true" />
         </a>

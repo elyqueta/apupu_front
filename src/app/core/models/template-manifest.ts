@@ -3,7 +3,7 @@
  * (`src/types/templateManifest.ts`). O convite, o catálogo e o PDF lêem o
  * mesmo manifesto; um manifesto inválido cai no neutro.
  */
-export type TemplateFont = 'sans' | 'serif' | 'cap' | 'script' | 'condensed';
+export type TemplateFont = 'sans' | 'serif' | 'cap' | 'script' | 'condensed' | 'anton';
 export type OpenStyle = 'none' | 'envelope' | 'curtain' | 'fade' | 'fold';
 export type CoverMode = 'hero' | 'framed' | 'none';
 export type LayoutBlock = 'title' | 'host' | 'datetime' | 'location' | 'deadline' | 'message';
@@ -42,7 +42,7 @@ export const DEFAULT_MANIFEST: TemplateManifest = {
 };
 
 const HEX = /^#[0-9A-Fa-f]{6}$/;
-const FONTS: TemplateFont[] = ['sans', 'serif', 'cap', 'script', 'condensed'];
+const FONTS: TemplateFont[] = ['sans', 'serif', 'cap', 'script', 'condensed', 'anton'];
 export const OPEN_STYLES: OpenStyle[] = ['none', 'envelope', 'curtain', 'fade', 'fold'];
 const OPEN: OpenStyle[] = OPEN_STYLES;
 
@@ -73,6 +73,8 @@ export function fontFamily(font: TemplateFont): string {
       return "'Pinyon Script', Georgia, 'Times New Roman', serif";
     case 'condensed':
       return "Oswald, 'Arial Narrow', Arial, sans-serif";
+    case 'anton':
+      return "Anton, Oswald, 'Arial Narrow', Arial, sans-serif";
     default:
       return "Figtree, Arial, Helvetica, sans-serif";
   }

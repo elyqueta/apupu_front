@@ -71,6 +71,20 @@ export class TemplatesPage {
   });
 
   protected sampleData(template: EventTemplate): TemplateRenderData {
+    const isGratitude = template.slug === 'gratitude' || template.manifest.ornaments.frame === 'gratitude';
+    if (isGratitude) {
+      return {
+        title: 'GRATITUDE',
+        hostName: 'IGREJA CRISTÃ REINO-CHURCH',
+        startsAt: '2026-12-20T13:00:00.000Z', // 14:00 Africa/Luanda
+        city: 'Luanda',
+        venue: 'Igreja Cristã Reino Church',
+        message: '',
+        dressCode: 'TRAJE AFRICANO',
+        templateSlug: template.slug,
+        type: 'other',
+      };
+    }
     return {
       title: this.i18n.t('block14.preview.sampleTitle'),
       hostName: this.i18n.t('block14.preview.kicker'),

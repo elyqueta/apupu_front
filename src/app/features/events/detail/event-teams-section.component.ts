@@ -67,79 +67,104 @@ import { TeamMemberDetailDialogComponent } from '../../../shared/components/team
           @for (team of teams(); track team.id) {
             <li class="min-w-0">
               <article
-                class="flex h-full min-w-0 flex-col gap-3 rounded-2xl border border-line bg-surface-raised/50 p-4 shadow-card"
+                class="group flex h-full min-w-0 flex-col overflow-hidden rounded-3xl border border-line bg-surface-raised/50 shadow-card transition hover:border-brand/30 hover:shadow-md"
               >
-                <div class="flex min-w-0 items-start justify-between gap-2">
-                  <div class="min-w-0">
-                    <p class="truncate text-sm font-semibold text-ink">{{ team.name }}</p>
-                    <p class="mt-0.5 truncate text-xs text-muted">{{ categoryLabel(team) }}</p>
-                  </div>
+                <!-- Cover / team photo -->
+                <div class="relative h-32 shrink-0 overflow-hidden bg-gradient-to-br from-brand/30 via-aqua/15 to-secondary/25 sm:h-36">
+                  @if (team.photoUrl) {
+                    <img
+                      [src]="team.photoUrl"
+                      [alt]="team.name"
+                      class="absolute inset-0 size-full object-cover transition duration-500 group-hover:scale-[1.03]"
+                      loading="lazy"
+                    />
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/45 via-black/5 to-transparent"></div>
+                  } @else {
+                    <div class="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.22),transparent_45%),radial-gradient(circle_at_80%_80%,rgba(255,255,255,0.12),transparent_40%)]"></div>
+                    <div class="absolute inset-0 flex items-center justify-center">
+                      <span class="grid size-14 place-items-center rounded-2xl border border-white/20 bg-white/10 text-white/90 backdrop-blur-sm">
+                        <fa-icon [icon]="icons['guestGroup']" class="text-2xl" aria-hidden="true" />
+                      </span>
+                    </div>
+                  }
+
                   <span
-                    class="grid size-9 shrink-0 place-items-center rounded-xl border border-brand/25 bg-brand/15 text-brand-strong"
+                    class="absolute right-3 top-3 inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-semibold backdrop-blur-sm"
+                    [class]="team.openTaskCount > 0 ? 'border-amber/30 bg-amber/20 text-amber' : 'border-white/20 bg-black/20 text-white'"
                   >
-                    <fa-icon [icon]="icons['guestGroup']" class="text-sm" aria-hidden="true" />
-                  </span>
-                </div>
-
-                @if (team.description) {
-                  <p class="text-xs leading-5 text-muted">{{ team.description }}</p>
-                }
-
-                @if (managerName(team); as name) {
-                  <p class="flex min-w-0 items-center gap-1.5 text-xs text-muted">
-                    <fa-icon [icon]="icons['user']" class="shrink-0 text-xs" aria-hidden="true" />
-                    <span class="min-w-0 truncate">{{ i18n.t('eventDetail.teamManager', { name }) }}</span>
-                  </p>
-                }
-
-                <div class="flex flex-wrap items-center gap-x-3 gap-y-2 text-xs text-muted">
-                  <span class="inline-flex items-center gap-1.5">
-                    <fa-icon [icon]="icons['guestGroup']" class="text-xs" aria-hidden="true" />
-                    {{ i18n.t('teams.memberCount', { count: team.memberCount }) }}
-                  </span>
-                  <span
-                    class="inline-flex items-center gap-1.5"
-                    [class.text-amber]="team.openTaskCount > 0"
-                  >
-                    <fa-icon [icon]="icons['checklist']" class="text-xs" aria-hidden="true" />
+                    <fa-icon [icon]="icons['checklist']" class="text-[10px]" aria-hidden="true" />
                     {{ i18n.t('eventDetail.teamOpenTasks', { count: team.openTaskCount }) }}
                   </span>
+
+                  <div class="absolute inset-x-0 bottom-0 p-3">
+                    <p class="truncate text-sm font-semibold text-white drop-shadow-sm">{{ team.name }}</p>
+                    <p class="truncate text-[11px] text-white/80">{{ categoryLabel(team) }}</p>
+                  </div>
                 </div>
 
-                @if (team.membersPreview.length > 0) {
-                  <div class="flex min-w-0 items-center gap-2">
-                    <app-avatar-stack
-                      [names]="previewNames(team)"
-                      [images]="previewImages(team)"
-                      [ids]="previewIds(team)"
-                      [max]="3"
-                      [selectable]="true"
-                      [selectLabel]="i18n.t('block9.team.viewMember')"
-                      (memberSelected)="openMemberDetail(team.id, $event, previewAvatar(team, $event))"
-                    />
-                    @if (team.membersPreview[0]; as firstMember) {
+                <div class="flex min-w-0 flex-1 flex-col gap-3 p-4">
+                  @if (team.description) {
+                    <p class="line-clamp-2 text-xs leading-5 text-muted">{{ team.description }}</p>
+                  }
+
+                  <div class="flex items-center gap-3 rounded-2xl border border-line/70 bg-surface/60 px-3 py-2.5">
+                    @if (team.membersPreview[0]; as manager) {
                       <button
                         type="button"
-                        class="max-w-[9rem] truncate text-xs text-ink underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60"
-                        [attr.title]="firstMember.displayName ?? i18n.t('teams.previewFallback')"
-                        [attr.aria-label]="i18n.t('block9.team.viewMember') + ': ' + (firstMember.displayName ?? i18n.t('teams.previewFallback'))"
-                        (click)="openMemberDetail(team.id, firstMember.id, firstMember.avatarUrl)"
+                        class="relative grid size-10 shrink-0 place-items-center overflow-hidden rounded-full border border-brand/25 bg-brand/15 text-xs font-bold text-brand-strong transition hover:border-brand/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60"
+                        [attr.aria-label]="i18n.t('block9.team.viewMember') + ': ' + (manager.displayName ?? i18n.t('teams.previewFallback'))"
+                        (click)="openMemberDetail(team.id, manager.id, manager.avatarUrl)"
                       >
-                        {{ firstMember.displayName ?? i18n.t('teams.previewFallback') }}
+                        @if (manager.avatarUrl) {
+                          <img [src]="manager.avatarUrl" [alt]="manager.displayName ?? ''" class="absolute inset-0 size-full object-cover" loading="lazy" />
+                        } @else {
+                          {{ (manager.displayName ?? '?').charAt(0).toUpperCase() }}
+                        }
                       </button>
+                      <div class="min-w-0 flex-1">
+                        <p class="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted">{{ i18n.t('teamRole.gestor') }}</p>
+                        <p class="truncate text-xs font-medium text-ink">{{ manager.displayName ?? i18n.t('teams.previewFallback') }}</p>
+                      </div>
+                    } @else {
+                      <span class="grid size-10 shrink-0 place-items-center rounded-full border border-line bg-surface-raised text-muted">
+                        <fa-icon [icon]="icons['user']" class="text-sm" aria-hidden="true" />
+                      </span>
+                      <div class="min-w-0 flex-1">
+                        <p class="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted">{{ i18n.t('teamRole.gestor') }}</p>
+                        <p class="truncate text-xs text-muted">—</p>
+                      </div>
                     }
+                    <span class="inline-flex shrink-0 items-center gap-1 rounded-full bg-surface-raised px-2.5 py-1 text-[11px] font-semibold text-ink">
+                      <fa-icon [icon]="icons['guestGroup']" class="text-[10px] text-muted" aria-hidden="true" />
+                      {{ team.memberCount }}
+                    </span>
                   </div>
-                }
 
-                <button
-                  type="button"
-                  class="mt-auto inline-flex h-11 w-full items-center justify-center gap-1.5 rounded-xl border border-line bg-surface px-3 text-xs font-semibold text-ink transition hover:border-brand/40 hover:text-brand-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60"
-                  [attr.aria-label]="i18n.t('teams.openTeamAria', { name: team.name })"
-                  (click)="openTeam.emit(team)"
-                >
-                  {{ i18n.t('eventDetail.teamOpen') }}
-                  <fa-icon [icon]="icons['chevronRight']" class="text-xs" aria-hidden="true" />
-                </button>
+                  @if (team.membersPreview.length > 0) {
+                    <div class="flex min-w-0 items-center justify-between gap-2">
+                      <app-avatar-stack
+                        [names]="previewNames(team)"
+                        [images]="previewImages(team)"
+                        [ids]="previewIds(team)"
+                        [max]="4"
+                        [selectable]="true"
+                        [selectLabel]="i18n.t('block9.team.viewMember')"
+                        (memberSelected)="openMemberDetail(team.id, $event, previewAvatar(team, $event))"
+                      />
+                      <span class="shrink-0 text-[11px] text-muted">{{ i18n.t('teams.memberCount', { count: team.memberCount }) }}</span>
+                    </div>
+                  }
+
+                  <button
+                    type="button"
+                    class="mt-auto inline-flex h-11 w-full cursor-pointer items-center justify-center gap-1.5 rounded-xl border border-line bg-surface px-3 text-xs font-semibold text-ink transition hover:border-brand/40 hover:bg-brand/5 hover:text-brand-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60"
+                    [attr.aria-label]="i18n.t('teams.openTeamAria', { name: team.name })"
+                    (click)="openTeam.emit(team)"
+                  >
+                    {{ i18n.t('eventDetail.teamOpen') }}
+                    <fa-icon [icon]="icons['chevronRight']" class="text-xs" aria-hidden="true" />
+                  </button>
+                </div>
               </article>
             </li>
           }

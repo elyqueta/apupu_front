@@ -16,6 +16,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DOCUMENT, isPlatformBrowser } from '@angular/common';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
+import { guestPlural } from '../../core/i18n/block15-keys';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { TranslationKey } from '../../core/i18n/translations';
 import { ApiClient } from '../../core/api/api-client';
@@ -1523,9 +1524,10 @@ export class EventDetailPage {
    * revogado a API devolve `null` e a mensagem segue sem link.
    */
   protected forwardWhatsApp(guest: Guest): void {
+    const plural = guestPlural(guest.guestKind);
     const key = guest.invitationUrl
-      ? 'guests.whatsappMessageWithLink'
-      : 'guests.whatsappMessage';
+      ? plural ? 'block15.guests.whatsappMessageWithLinkPlural' : 'guests.whatsappMessageWithLink'
+      : plural ? 'block15.guests.whatsappMessagePlural' : 'guests.whatsappMessage';
     const text = this.i18n.t(key, {
       name: guest.name,
       event: this.event()?.title ?? '',

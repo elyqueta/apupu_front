@@ -455,6 +455,9 @@ export interface PublicInvitation {
     message_answered_at?: string | null;
     rsvp_status: ApiRsvpStatus;
     rsvp_responded_at: string | null;
+    guest_kind?: 'male' | 'female' | 'couple' | 'family' | null;
+    guest_companion_name?: string | null;
+    guest_party_size?: number | null;
   };
   rsvp_deadline_passed: boolean;
   csrf_token?: string;

@@ -63,6 +63,9 @@ export interface InvitationGuestView {
   /** Resposta do anfitrião à mensagem deixada pelo convidado. */
   answer: string | null;
   answeredAt: string | null;
+  guestKind: 'male' | 'female' | 'couple' | 'family' | null;
+  companionName: string | null;
+  partySize: number | null;
 }
 
 export interface InvitationView {

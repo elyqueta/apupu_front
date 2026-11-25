@@ -31,6 +31,7 @@
           [coverUrl]="view.event.coverUrl"
           [manifest]="view.event.manifest"
           [guestName]="view.guest.name"
+          [guestKind]="view.guest.guestKind"
           [eventTitle]="view.event.title"
           (continue)="continueToInvitation()"
         />
@@ -38,7 +39,7 @@
       <main class="flex flex-1 flex-col gap-4 py-5">
         @if (isGratitude()) {
           <app-template-renderer [manifest]="view.event.manifest" [data]="renderData()!" mode="invite" />
-          <app-invitation-share [token]="token()" />
+          <app-invitation-share [token]="token()" [guestKind]="view.guest.guestKind" />
         } @else {
           <app-invitation-hero
             [event]="view.event"
@@ -47,7 +48,7 @@
             (coverOpen)="openCover()"
           />
 
-          <app-invitation-share [token]="token()" />
+          <app-invitation-share [token]="token()" [guestKind]="view.guest.guestKind" />
 
           <app-invitation-key-info
             [event]="view.event"

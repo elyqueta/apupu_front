@@ -42,6 +42,11 @@ export const BLOCK15_KEYS_PT = {
   'block15.guest.companionPlaceholder': 'Ex.: Maria Silva',
   'block15.guest.partySize': 'Número de pessoas',
   'block15.guest.partySizeHint': 'Opcional. Casal conta 2 por defeito.',
+  'block15.invitation.welcomeTitlePlural': 'Têm um convite especial',
+  'block15.invitation.welcomeMessagePlural': 'Olá, {name}! Têm um convite especial.',
+  'block15.invitation.shareMessagePlural': 'Olá! Têm um convite especial: {url}',
+  'block15.guests.whatsappMessagePlural': 'Olá {name}! Aqui está o vosso convite para {event}.',
+  'block15.guests.whatsappMessageWithLinkPlural': 'Olá {name}! Aqui está o vosso convite para {event}: {url}',
 } as const;
 
 export const BLOCK15_KEYS_EN: Record<keyof typeof BLOCK15_KEYS_PT, string> = {
@@ -87,6 +92,11 @@ export const BLOCK15_KEYS_EN: Record<keyof typeof BLOCK15_KEYS_PT, string> = {
   'block15.guest.companionPlaceholder': 'E.g. Maria Silva',
   'block15.guest.partySize': 'Number of people',
   'block15.guest.partySizeHint': 'Optional. Couples count as 2 by default.',
+  'block15.invitation.welcomeTitlePlural': 'You have a special invitation',
+  'block15.invitation.welcomeMessagePlural': 'Hello, {name}! You have a special invitation.',
+  'block15.invitation.shareMessagePlural': 'Hello! You have a special invitation: {url}',
+  'block15.guests.whatsappMessagePlural': 'Hi {name}! Here is your invitation for {event}.',
+  'block15.guests.whatsappMessageWithLinkPlural': 'Hi {name}! Here is your invitation for {event}: {url}',
 };
 
 export type GuestKindValue = 'male' | 'female' | 'couple' | 'family' | null | undefined;

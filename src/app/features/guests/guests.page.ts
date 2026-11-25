@@ -7,6 +7,7 @@ import { toApiError } from '../../core/api/api-error';
 import { GuestListEntry, GuestsQuery } from '../../core/data/guests.repository';
 import { ReportsRepository } from '../../core/data/reports.repository';
 import { Guest, RsvpStatus } from '../../core/models/models';
+import { guestPlural } from '../../core/i18n/block15-keys';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { DownloadService } from '../../core/services/download.service';
 import { ShareService } from '../../core/services/share.service';
@@ -357,7 +358,10 @@ export class GuestsPage {
    * revogado a API devolve `null` e a mensagem segue sem link.
    */
   protected forwardWhatsApp(guest: Guest, eventTitle: string): void {
-    const key = guest.invitationUrl ? 'guests.whatsappMessageWithLink' : 'guests.whatsappMessage';
+    const plural = guestPlural(guest.guestKind);
+    const key = guest.invitationUrl
+      ? plural ? 'block15.guests.whatsappMessageWithLinkPlural' : 'guests.whatsappMessageWithLink'
+      : plural ? 'block15.guests.whatsappMessagePlural' : 'guests.whatsappMessage';
     const text = this.i18n.t(key, {
       name: guest.name,
       event: eventTitle,

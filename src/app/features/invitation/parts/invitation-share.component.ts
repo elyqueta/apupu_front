@@ -1,5 +1,6 @@
 import { Component, inject, input } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { guestPlural, GuestKindValue } from '../../../core/i18n/block15-keys';
 import { I18nService } from '../../../core/i18n/i18n.service';
 import { ShareService } from '../../../core/services/share.service';
 import { ToastService } from '../../../core/services/toast.service';
@@ -49,6 +50,7 @@ export class InvitationShareComponent {
   private readonly toasts = inject(ToastService);
 
   readonly token = input.required<string>();
+  readonly guestKind = input<GuestKindValue>(null);
 
   protected async copyLink(): Promise<void> {
     const copied = await this.share.copy(this.share.absoluteUrl(`/convite/${this.token()}`));
@@ -60,7 +62,10 @@ export class InvitationShareComponent {
 
   protected shareWhatsapp(): void {
     const url = this.share.absoluteUrl(`/convite/${this.token()}`);
-    const text = this.i18n.t('invitation.shareMessage', { url });
+    const key = guestPlural(this.guestKind())
+      ? 'block15.invitation.shareMessagePlural'
+      : 'invitation.shareMessage';
+    const text = this.i18n.t(key, { url });
     this.share.openExternal(this.share.whatsappShareUrl(text));
   }
 }

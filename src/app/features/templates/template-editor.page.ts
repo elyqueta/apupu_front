@@ -1,5 +1,5 @@
 import { Component, computed, effect, inject, signal } from '@angular/core';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { ICONS } from '../../core/ui/icons';
@@ -46,13 +46,11 @@ function sampleData(template: EventTemplate): TemplateRenderData {
 
 @Component({
   selector: 'app-template-editor-page',
-  imports: [RouterLink, FormsModule, TemplateRendererComponent, PageHeaderComponent],
+  imports: [FormsModule, TemplateRendererComponent, PageHeaderComponent],
   template: `
     <div class="min-h-screen bg-canvas text-ink">
       <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6">
-        <app-page-header [title]="i18n.t('block15.editor.title')" [subtitle]="template()?.name || ''">
-          <a routerLink="/modelos" class="ui-btn-secondary cursor-pointer">{{ i18n.t('common.back') }}</a>
-        </app-page-header>
+        <app-page-header [title]="i18n.t('block15.editor.title')" [subtitle]="template()?.name || ''" [backLink]="'/templates'" />
 
         @if (loading()) {
           <div class="mt-6 rounded-3xl border border-line bg-surface p-8 text-sm text-muted">A carregar…</div>
@@ -147,7 +145,6 @@ export class TemplateEditorPage {
   protected readonly i18n = inject(I18nService);
   protected readonly icons = ICONS;
   private readonly route = inject(ActivatedRoute);
-  private readonly router = inject(Router);
   private readonly templates = inject(TemplatesRepository);
 
   protected readonly loading = signal(true);

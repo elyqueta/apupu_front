@@ -50,6 +50,12 @@ export const BLOCK15_KEYS_PT = {
   'block15.teams.lastActivity': 'Última atividade',
   'block15.teams.chat': 'Conversar',
   'block15.teams.chatSoon': 'O chat da equipa estará disponível em breve.',
+  'block15.teams.photo': 'Foto da equipa',
+  'block15.teams.photoHint': 'JPEG, PNG ou WebP. Visível para os membros da equipa.',
+  'block15.teams.photoChange': 'Alterar foto',
+  'block15.teams.photoRemove': 'Remover foto',
+  'block15.teams.photoUpdated': 'Foto da equipa atualizada.',
+  'block15.teams.photoRemoved': 'Foto da equipa removida.',
 } as const;
 
 export const BLOCK15_KEYS_EN: Record<keyof typeof BLOCK15_KEYS_PT, string> = {
@@ -103,6 +109,12 @@ export const BLOCK15_KEYS_EN: Record<keyof typeof BLOCK15_KEYS_PT, string> = {
   'block15.teams.lastActivity': 'Last activity',
   'block15.teams.chat': 'Chat',
   'block15.teams.chatSoon': 'Team chat will be available soon.',
+  'block15.teams.photo': 'Team photo',
+  'block15.teams.photoHint': 'JPEG, PNG or WebP. Visible to team members.',
+  'block15.teams.photoChange': 'Change photo',
+  'block15.teams.photoRemove': 'Remove photo',
+  'block15.teams.photoUpdated': 'Team photo updated.',
+  'block15.teams.photoRemoved': 'Team photo removed.',
 };
 
 export type GuestKindValue = 'male' | 'female' | 'couple' | 'family' | null | undefined;

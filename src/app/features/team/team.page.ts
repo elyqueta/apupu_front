@@ -133,6 +133,7 @@ export class TeamPage {
 
   /** Modal de detalhe da equipa (Passo 5 Bloco 15). */
   protected readonly teamDetail = signal<Team | null>(null);
+  protected readonly photoBusy = signal(false);
 
   /** Eventos a que o utilizador tem acesso; a API decide a lista. */
   protected readonly events = this.workspace.events;
@@ -601,6 +602,39 @@ export class TeamPage {
 
   protected closeTeamDetail(): void {
     this.teamDetail.set(null);
+  }
+
+  protected async onTeamPhotoSelected(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    const team = this.teamDetail();
+    if (!file || !team || this.photoBusy()) return;
+    this.photoBusy.set(true);
+    try {
+      const updated = await this.repository.uploadPhoto(team.id, file);
+      this.teamDetail.set(updated);
+      this.store.upsert(updated);
+    } catch (error) {
+      this.toasts.error(toApiError(error).message);
+    } finally {
+      this.photoBusy.set(false);
+    }
+  }
+
+  protected async removeTeamPhoto(): Promise<void> {
+    const team = this.teamDetail();
+    if (!team?.photoUrl || this.photoBusy()) return;
+    this.photoBusy.set(true);
+    try {
+      const updated = await this.repository.removePhoto(team.id);
+      this.teamDetail.set(updated);
+      this.store.upsert(updated);
+    } catch (error) {
+      this.toasts.error(toApiError(error).message);
+    } finally {
+      this.photoBusy.set(false);
+    }
   }
 
   /**

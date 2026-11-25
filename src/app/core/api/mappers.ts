@@ -298,6 +298,8 @@ export function mapTeam(team: ApiTeam): Team {
     communityId: team.community_id ?? null,
     creatorId: team.creator_id ?? null,
     eventIds: team.event_ids ?? [team.event_id],
+    photoUrl: team.photo_url ?? null,
+    photoPublicId: team.photo_public_id ?? null,
     createdAt: team.created_at,
     updatedAt: team.updated_at,
   };

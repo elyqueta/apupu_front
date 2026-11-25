@@ -315,6 +315,8 @@ export interface ApiTeam {
   creator_id?: string | null;
   event_ids?: string[];
   event_count?: number;
+  photo_url?: string | null;
+  photo_public_id?: string | null;
   created_at: string;
   updated_at: string;
 }

@@ -395,6 +395,8 @@ export interface Team {
   creatorId: string | null;
   /** Eventos geridos pela equipa (inclui o principal). */
   eventIds: string[];
+  photoUrl: string | null;
+  photoPublicId: string | null;
   createdAt: string;
   updatedAt: string;
 }

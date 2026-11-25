@@ -106,6 +106,8 @@ export class TeamDetailPage {
   protected readonly teamEventsSelected = signal<string[]>([]);
   protected readonly teamEventsSaving = signal(false);
   protected readonly leaveOpen = signal(false);
+  protected readonly photoUploading = signal(false);
+  protected readonly photoRemoving = signal(false);
   protected readonly isCreator = computed(() => {
     const team = this.team();
     const me = this.auth.host();
@@ -165,6 +167,39 @@ export class TeamDetailPage {
       void this.router.navigate(['/equipas']);
     } catch {
       this.toasts.error(this.i18n.t('block11.common.error'));
+    }
+  }
+
+  protected async onTeamPhotoSelected(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    const team = this.team();
+    if (!file || !team || this.photoUploading()) return;
+    this.photoUploading.set(true);
+    try {
+      const updated = await this.repository.uploadPhoto(team.id, file);
+      this.team.set({ ...updated, myRole: team.myRole });
+      this.toasts.success(this.i18n.t('block15.teams.photoUpdated'));
+    } catch (error) {
+      this.toasts.error(toApiError(error).message);
+    } finally {
+      this.photoUploading.set(false);
+    }
+  }
+
+  protected async removeTeamPhoto(): Promise<void> {
+    const team = this.team();
+    if (!team || !team.photoUrl || this.photoRemoving()) return;
+    this.photoRemoving.set(true);
+    try {
+      const updated = await this.repository.removePhoto(team.id);
+      this.team.set({ ...updated, myRole: team.myRole });
+      this.toasts.success(this.i18n.t('block15.teams.photoRemoved'));
+    } catch (error) {
+      this.toasts.error(toApiError(error).message);
+    } finally {
+      this.photoRemoving.set(false);
     }
   }
 

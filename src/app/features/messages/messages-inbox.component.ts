@@ -94,7 +94,13 @@ type AnsweredFilter = NonNullable<MessagesQuery['answered']>;
       } @else if (error()) {
         <p role="alert" class="rounded-2xl border border-coral/25 bg-coral/5 p-4 text-xs leading-6 text-coral">{{ error() }}</p>
       } @else if (items().length === 0) {
-        <p class="rounded-2xl border border-line bg-surface p-6 text-center text-xs text-muted">{{ i18n.t('messages.empty') }}</p>
+        <div class="flex flex-col items-center justify-center rounded-4xl border border-dashed border-line bg-surface/60 px-5 py-10 text-center backdrop-blur-2xl sm:px-6 sm:py-16">
+          <span class="grid size-14 place-items-center rounded-2xl border border-brand/25 bg-brand/15 text-brand-strong">
+            <fa-icon [icon]="icons['envelopeOpen']" class="text-xl" aria-hidden="true" />
+          </span>
+          <h3 class="mt-4 font-display text-lg font-semibold text-ink">{{ i18n.t('messages.emptyTitle') }}</h3>
+          <p class="mt-1.5 max-w-md text-sm leading-6 text-muted">{{ i18n.t('messages.empty') }}</p>
+        </div>
       } @else {
         <ul class="flex flex-col gap-3">
           @for (item of items(); track item.invitationId) {

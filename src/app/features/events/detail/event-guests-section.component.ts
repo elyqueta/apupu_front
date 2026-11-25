@@ -131,6 +131,7 @@ import { GUEST_FILTERS, GuestFilter } from './detail.models';
               @for (entry of entries(); track entry.guest.id) {
                 <li class="h-full min-w-0">
                   <app-person-card
+                    variant="rich"
                     [name]="entry.guest.name"
                     [subtitle]="contactLine(entry.guest)"
                     [status]="entry.guest.status"

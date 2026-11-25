@@ -56,6 +56,7 @@ export const BLOCK15_KEYS_PT = {
   'block15.teams.photoRemove': 'Remover foto',
   'block15.teams.photoUpdated': 'Foto da equipa atualizada.',
   'block15.teams.photoRemoved': 'Foto da equipa removida.',
+  'block15.video.fullscreen': 'Ecrã inteiro',
 } as const;
 
 export const BLOCK15_KEYS_EN: Record<keyof typeof BLOCK15_KEYS_PT, string> = {
@@ -115,6 +116,7 @@ export const BLOCK15_KEYS_EN: Record<keyof typeof BLOCK15_KEYS_PT, string> = {
   'block15.teams.photoRemove': 'Remove photo',
   'block15.teams.photoUpdated': 'Team photo updated.',
   'block15.teams.photoRemoved': 'Team photo removed.',
+  'block15.video.fullscreen': 'Fullscreen',
 };
 
 export type GuestKindValue = 'male' | 'female' | 'couple' | 'family' | null | undefined;

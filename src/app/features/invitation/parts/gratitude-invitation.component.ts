@@ -261,8 +261,8 @@ interface GratitudeFields {
           <g data-testid="gratitude-info" font-family="Figtree, Arial, sans-serif" fill="#111111">
             <!-- separadores dourados -->
             <line x1="276" y1="846" x2="276" y2="936" stroke="#D4A017" stroke-width="2" />
-            <line x1="430" y1="846" x2="430" y2="936" stroke="#D4A017" stroke-width="2" />
-            <line x1="748" y1="846" x2="748" y2="936" stroke="#D4A017" stroke-width="2" />
+            <line x1="424" y1="846" x2="424" y2="936" stroke="#D4A017" stroke-width="2" />
+            <line x1="740" y1="846" x2="740" y2="936" stroke="#D4A017" stroke-width="2" />
 
             <!-- Data -->
             <g transform="translate(72,872)">
@@ -274,14 +274,14 @@ interface GratitudeFields {
             </g>
 
             <!-- Hora -->
-            <g transform="translate(318,870)">
+            <g transform="translate(296,870)">
               <circle cx="22" cy="22" r="22" fill="none" stroke="#111111" stroke-width="3" />
               <path d="M22 10 V24 L33 32" fill="none" stroke="#111111" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
-              <text x="56" y="32" font-size="44" font-weight="500" fill="#111111">{{ f().time }}</text>
+              <text x="52" y="32" font-size="40" font-weight="500" fill="#111111">{{ f().time }}</text>
             </g>
 
             <!-- Local -->
-            <g transform="translate(462,862)">
+            <g transform="translate(468,862)">
               <path d="M22 0 C10 0 0 10 0 22 C0 40 22 62 22 62 C22 62 44 40 44 22 C44 10 34 0 22 0 Z" fill="none" stroke="#111111" stroke-width="3" />
               <circle cx="22" cy="22" r="8" fill="none" stroke="#111111" stroke-width="3" />
               <text x="56" y="18" font-size="18" font-weight="700" fill="#111111">LOCAL:</text>
@@ -292,8 +292,8 @@ interface GratitudeFields {
 
             <!-- QR -->
             <g data-testid="gratitude-qr">
-              <text x="885" y="842" text-anchor="middle" font-size="24" font-weight="700" fill="#111111">{{ f().qrLabel }}</text>
-              <rect x="820" y="852" width="130" height="130" rx="14" fill="#FFFFFF" stroke="#D4A017" stroke-width="3" />
+              <text x="863" y="842" text-anchor="middle" font-size="24" font-weight="700" fill="#111111">{{ f().qrLabel }}</text>
+              <rect x="798" y="852" width="130" height="130" rx="14" fill="#FFFFFF" stroke="#D4A017" stroke-width="3" />
             </g>
           </g>
 
@@ -304,8 +304,8 @@ interface GratitudeFields {
               <g transform="translate(322,1120)" fill="#D49A1A">
                 <path d="M-30 -24 L-11 -38 L11 -38 L30 -24 L42 -6 L26 2 L26 40 L-26 40 L-26 2 L-42 -6 Z" />
               </g>
-              <text x="540" y="1100" text-anchor="middle" font-size="20" font-family="Figtree, Arial, sans-serif" font-weight="700" fill="#111111" letter-spacing="1">DRESS-CODE:</text>
-              <text x="540" y="1142" text-anchor="middle" font-size="50" font-family="Oswald, Arial Narrow, sans-serif" font-weight="700" fill="#111111">{{ f().dressCode }}</text>
+              <text x="540" y="1098" text-anchor="middle" font-size="20" font-family="Figtree, Arial, sans-serif" font-weight="700" fill="#111111" letter-spacing="1">DRESS-CODE:</text>
+              <text x="540" y="1152" text-anchor="middle" font-size="50" font-family="Oswald, Arial Narrow, sans-serif" font-weight="700" fill="#111111">{{ f().dressCode }}</text>
             </g>
           }
           </g>
@@ -393,7 +393,7 @@ export class GratitudeInvitationComponent {
   protected readonly contentTransform = computed(() => (this.f().logoUrl ? '' : 'translate(0,-110)'));
   protected readonly qrOverlayStyle = computed(() => {
     const topPct = this.f().logoUrl ? 67.5 : 67.5 - (110 / 1280) * 100;
-    return `left:81.05%; top:${topPct}%; width:11.13%; aspect-ratio:1;`;
+    return `left:78.91%; top:${topPct}%; width:11.13%; aspect-ratio:1;`;
   });
 
   protected readonly titleLines = computed(() => this.fitTitle(this.f().title));

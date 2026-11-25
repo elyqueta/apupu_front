@@ -1,6 +1,8 @@
 import { Component, computed, inject, input, output } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { guestPlural, GuestKindValue } from '../../../core/i18n/block15-keys';
 import { I18nService } from '../../../core/i18n/i18n.service';
+import { TranslationKey } from '../../../core/i18n/translations';
 import { EventStatus, RsvpStatus } from '../../../core/models/models';
 import { ICONS } from '../../../core/ui/icons';
 import { InvitationResponseStatus } from '../invitation.models';
@@ -170,6 +172,7 @@ export class InvitationRsvpComponent {
   readonly email = input('');
   readonly emailHasAccount = input(false);
   readonly accountDismissed = input(false);
+  readonly guestKind = input<GuestKindValue>(null);
 
   readonly respond = output<InvitationResponseStatus>();
   readonly createAccount = output<boolean>();
@@ -199,21 +202,23 @@ export class InvitationRsvpComponent {
   });
 
   protected readonly statusLabel = computed(() => {
+    const plural = guestPlural(this.guestKind());
     if (this.status() === 'confirmed') {
-      return this.i18n.t('invitation.alreadyConfirmed');
+      return this.i18n.t((plural ? 'block15.invitation.alreadyConfirmedPlural' : 'invitation.alreadyConfirmed') as TranslationKey);
     }
     return this.status() === 'declined'
-      ? this.i18n.t('invitation.alreadyDeclined')
-      : this.i18n.t('invitation.pendingTitle');
+      ? this.i18n.t((plural ? 'block15.invitation.alreadyDeclinedPlural' : 'invitation.alreadyDeclined') as TranslationKey)
+      : this.i18n.t((plural ? 'block15.invitation.pendingTitlePlural' : 'invitation.pendingTitle') as TranslationKey);
   });
 
   protected readonly statusDetail = computed(() => {
+    const plural = guestPlural(this.guestKind());
     if (this.status() === 'confirmed') {
-      return this.i18n.t('invitation.confirmedText');
+      return this.i18n.t((plural ? 'block15.invitation.confirmedTextPlural' : 'invitation.confirmedText') as TranslationKey);
     }
     return this.status() === 'declined'
-      ? this.i18n.t('invitation.declinedText')
-      : this.i18n.t('invitation.pendingText');
+      ? this.i18n.t((plural ? 'block15.invitation.declinedTextPlural' : 'invitation.declinedText') as TranslationKey)
+      : this.i18n.t((plural ? 'block15.invitation.pendingTextPlural' : 'invitation.pendingText') as TranslationKey);
   });
 
   protected readonly statusTextClass = computed(() => {

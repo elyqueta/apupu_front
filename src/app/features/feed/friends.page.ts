@@ -53,7 +53,13 @@ type Tab = 'friends' | 'incoming' | 'outgoing';
           <button type="button" class="ui-btn-secondary mt-3" (click)="load()">{{ i18n.t('block12.feed.retry') }}</button>
         </div>
       } @else if (current().length === 0) {
-        <p class="rounded-4xl border border-dashed border-line p-8 text-center text-sm text-muted" data-testid="friends-empty">{{ i18n.t(emptyKey()) }}</p>
+        <div class="flex flex-col items-center justify-center rounded-4xl border border-dashed border-line bg-surface/60 px-5 py-10 text-center backdrop-blur-2xl sm:px-6 sm:py-16" data-testid="friends-empty">
+          <span class="grid size-14 place-items-center rounded-2xl border border-brand/25 bg-brand/15 text-brand-strong">
+            <fa-icon [icon]="icons['guestGroup']" class="text-xl" aria-hidden="true" />
+          </span>
+          <h3 class="mt-4 font-display text-lg font-semibold text-ink">{{ i18n.t(emptyTitleKey()) }}</h3>
+          <p class="mt-1.5 max-w-md text-sm leading-6 text-muted">{{ i18n.t(emptyHintKey()) }}</p>
+        </div>
       } @else {
         <ul class="grid auto-rows-fr grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
           @for (entry of current(); track entry.id) {
@@ -105,6 +111,20 @@ export class FriendsPage {
   protected readonly current = computed(() => this.lists()?.[this.tab()] ?? []);
   protected readonly emptyKey = computed<TranslationKey>(() =>
     this.tab() === 'friends' ? 'block12.friends.empty' : this.tab() === 'incoming' ? 'block12.friends.emptyIncoming' : 'block12.friends.emptyOutgoing',
+  );
+  protected readonly emptyTitleKey = computed<TranslationKey>(() =>
+    this.tab() === 'friends'
+      ? 'block12.friends.emptyTitle'
+      : this.tab() === 'incoming'
+        ? 'block12.friends.emptyIncomingTitle'
+        : 'block12.friends.emptyOutgoingTitle',
+  );
+  protected readonly emptyHintKey = computed<TranslationKey>(() =>
+    this.tab() === 'friends'
+      ? 'block12.friends.emptyHint'
+      : this.tab() === 'incoming'
+        ? 'block12.friends.emptyIncomingHint'
+        : 'block12.friends.emptyOutgoingHint',
   );
 
   constructor() {

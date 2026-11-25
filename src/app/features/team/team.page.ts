@@ -33,9 +33,9 @@ import { TeamsStore } from '../../core/services/teams.store';
 import { ToastService } from '../../core/services/toast.service';
 import { WorkspaceStore } from '../../core/services/workspace.store';
 import { ICONS } from '../../core/ui/icons';
-import { AvatarStackComponent } from '../../shared/components/avatar-stack.component';
 import { FilterPanelComponent } from '../../shared/components/filter-panel.component';
 import { MobileFabComponent } from '../../shared/components/mobile-fab.component';
+import { ModalComponent } from '../../shared/components/modal.component';
 import { PageHeaderComponent } from '../../shared/components/page-header.component';
 import { SkeletonComponent } from '../../shared/components/skeleton.component';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
@@ -85,9 +85,9 @@ interface ManagerGroup {
     FaIconComponent,
     SkeletonComponent,
     StatusBadgeComponent,
-    AvatarStackComponent,
     FilterPanelComponent,
     MobileFabComponent,
+    ModalComponent,
     PageHeaderComponent,
     StatCardComponent,
     StatGridComponent,
@@ -130,6 +130,10 @@ export class TeamPage {
   protected readonly memberDetail = signal<TeamMember | null>(null);
   protected readonly memberDetailAvatar = signal<string | null>(null);
   protected readonly memberDetailLoading = signal(false);
+
+  /** Modal de detalhe da equipa (Passo 5 Bloco 15). */
+  protected readonly teamDetail = signal<Team | null>(null);
+  protected readonly photoBusy = signal(false);
 
   /** Eventos a que o utilizador tem acesso; a API decide a lista. */
   protected readonly events = this.workspace.events;
@@ -584,6 +588,53 @@ export class TeamPage {
 
   protected previewAvatar(team: Team, memberId: string): string | null {
     return team.membersPreview.find((member) => member.id === memberId)?.avatarUrl ?? null;
+  }
+
+  protected teamInitials(team: Team): string {
+    const parts = team.name.trim().split(/\s+/).filter(Boolean);
+    const initials = (parts[0]?.[0] ?? '') + (parts[1]?.[0] ?? '');
+    return (initials || team.name.slice(0, 2)).toUpperCase();
+  }
+
+  protected openTeamDetail(team: Team): void {
+    this.teamDetail.set(team);
+  }
+
+  protected closeTeamDetail(): void {
+    this.teamDetail.set(null);
+  }
+
+  protected async onTeamPhotoSelected(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    const team = this.teamDetail();
+    if (!file || !team || this.photoBusy()) return;
+    this.photoBusy.set(true);
+    try {
+      const updated = await this.repository.uploadPhoto(team.id, file);
+      this.teamDetail.set(updated);
+      this.store.upsert(updated);
+    } catch (error) {
+      this.toasts.error(toApiError(error).message);
+    } finally {
+      this.photoBusy.set(false);
+    }
+  }
+
+  protected async removeTeamPhoto(): Promise<void> {
+    const team = this.teamDetail();
+    if (!team?.photoUrl || this.photoBusy()) return;
+    this.photoBusy.set(true);
+    try {
+      const updated = await this.repository.removePhoto(team.id);
+      this.teamDetail.set(updated);
+      this.store.upsert(updated);
+    } catch (error) {
+      this.toasts.error(toApiError(error).message);
+    } finally {
+      this.photoBusy.set(false);
+    }
   }
 
   /**

@@ -49,6 +49,33 @@
       <p class="mt-3 max-w-2xl text-sm leading-6 text-muted">{{ currentTeam.description }}</p>
     }
 
+    <section class="mt-3 flex flex-wrap items-center gap-4 rounded-3xl border border-line bg-surface p-4 shadow-card" data-testid="team-photo-section">
+      <div class="relative size-20 shrink-0 overflow-hidden rounded-full border border-brand/25 bg-brand/12 text-brand-strong">
+        @if (currentTeam.photoUrl) {
+          <img [src]="currentTeam.photoUrl" [alt]="currentTeam.name" class="h-full w-full object-cover" />
+        } @else {
+          <span class="grid h-full w-full place-items-center text-xl font-semibold">{{ currentTeam.name.slice(0, 2).toUpperCase() }}</span>
+        }
+      </div>
+      <div class="min-w-0 flex-1">
+        <p class="text-sm font-semibold text-ink">{{ i18n.t('block15.teams.photo') }}</p>
+        <p class="mt-0.5 text-xs text-muted">{{ i18n.t('block15.teams.photoHint') }}</p>
+      </div>
+      @if (canManage()) {
+        <div class="flex flex-wrap gap-2">
+          <label class="ui-btn-secondary cursor-pointer">
+            <input type="file" accept="image/jpeg,image/png,image/webp" class="sr-only" (change)="onTeamPhotoSelected($event)" [disabled]="photoUploading()" />
+            {{ photoUploading() ? i18n.t('eventDetail.exporting') : i18n.t('block15.teams.photoChange') }}
+          </label>
+          @if (currentTeam.photoUrl) {
+            <button type="button" class="ui-btn-secondary" [disabled]="photoRemoving()" (click)="removeTeamPhoto()">
+              {{ photoRemoving() ? i18n.t('eventDetail.exporting') : i18n.t('block15.teams.photoRemove') }}
+            </button>
+          }
+        </div>
+      }
+    </section>
+
     <!-- Bloco 11: eventos geridos pela equipa e saída da equipa. -->
     <section class="mt-3 flex flex-col gap-3 rounded-3xl border border-line bg-surface p-4 shadow-card" data-testid="team-events">
       <div class="flex flex-wrap items-start justify-between gap-2">

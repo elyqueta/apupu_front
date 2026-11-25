@@ -3,10 +3,12 @@
  * (`src/types/templateManifest.ts`). O convite, o catálogo e o PDF lêem o
  * mesmo manifesto; um manifesto inválido cai no neutro.
  */
-export type TemplateFont = 'sans' | 'serif' | 'cap' | 'script';
+export type TemplateFont = 'sans' | 'serif' | 'cap' | 'script' | 'condensed' | 'anton';
 export type OpenStyle = 'none' | 'envelope' | 'curtain' | 'fade' | 'fold';
 export type CoverMode = 'hero' | 'framed' | 'none';
 export type LayoutBlock = 'title' | 'host' | 'datetime' | 'location' | 'deadline' | 'message';
+
+import type { TemplateDocument } from './template-document';
 
 export interface TemplateManifest {
   version: 1;
@@ -16,7 +18,16 @@ export interface TemplateManifest {
   layout: { align: 'left' | 'center'; blocks: LayoutBlock[] };
   cover: CoverMode;
   open_style: OpenStyle;
-  pdf: { frame: 'none' | 'single' | 'double'; qr_position: string; show_ornaments: boolean };
+  pdf: {
+    frame: 'none' | 'single' | 'double';
+    qr_position: string;
+    show_ornaments: boolean;
+    qr_label?: string;
+    qr_destination?: 'event' | 'invite' | 'custom';
+    qr_custom_url?: string;
+  };
+  /** Bloco 15, Passo 2: documento de blocos (fonte única para editor/convite/PDF). */
+  document?: TemplateDocument;
 }
 
 export const DEFAULT_MANIFEST: TemplateManifest = {
@@ -31,8 +42,9 @@ export const DEFAULT_MANIFEST: TemplateManifest = {
 };
 
 const HEX = /^#[0-9A-Fa-f]{6}$/;
-const FONTS: TemplateFont[] = ['sans', 'serif', 'cap', 'script'];
-const OPEN: OpenStyle[] = ['none', 'envelope', 'curtain', 'fade', 'fold'];
+const FONTS: TemplateFont[] = ['sans', 'serif', 'cap', 'script', 'condensed', 'anton'];
+export const OPEN_STYLES: OpenStyle[] = ['none', 'envelope', 'curtain', 'fade', 'fold'];
+const OPEN: OpenStyle[] = OPEN_STYLES;
 
 /** Validação defensiva (o back já valida; isto evita CSS injetado). */
 export function normalizeManifest(raw: unknown): TemplateManifest {
@@ -59,6 +71,10 @@ export function fontFamily(font: TemplateFont): string {
       return "Cinzel, Georgia, 'Times New Roman', serif";
     case 'script':
       return "'Pinyon Script', Georgia, 'Times New Roman', serif";
+    case 'condensed':
+      return "Oswald, 'Arial Narrow', Arial, sans-serif";
+    case 'anton':
+      return "Anton, Oswald, 'Arial Narrow', Arial, sans-serif";
     default:
       return "Figtree, Arial, Helvetica, sans-serif";
   }

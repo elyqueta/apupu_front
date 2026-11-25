@@ -29,11 +29,8 @@ export interface EventSectionItem {
   selector: 'app-event-section-shell',
   imports: [RouterLink, FaIconComponent, ModalComponent],
   template: `
-    <!--
-      No mobile a barra superior da app já tem voltar e o menu do evento
-      (com "Adicionar convidado"), por isso este cabeçalho só aparece no desktop.
-    -->
-    <header class="sticky top-0 z-30 hidden border-b border-line bg-surface/85 backdrop-blur-xl lg:block">
+    <!-- Cabeçalho da secção oculto em todos os tamanhos (navegação na barra superior/rail). -->
+    <header class="hidden">
       <div
         class="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-3 sm:px-6 lg:flex-row lg:items-center lg:gap-5"
       >

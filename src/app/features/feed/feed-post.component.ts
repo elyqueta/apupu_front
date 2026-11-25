@@ -7,6 +7,7 @@ import { ShareService } from '../../core/services/share.service';
 import { ICONS } from '../../core/ui/icons';
 import { AvatarComponent } from '../../shared/components/avatar.component';
 import { ModalComponent } from '../../shared/components/modal.component';
+import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
 import { TemplateArtworkComponent } from '../../shared/components/template-artwork.component';
 import { LinkCopyService } from '../../shared/services/link-copy.service';
 
@@ -23,7 +24,7 @@ import { LinkCopyService } from '../../shared/services/link-copy.service';
  */
 @Component({
   selector: 'app-feed-post',
-  imports: [RouterLink, FaIconComponent, AvatarComponent, ModalComponent, TemplateArtworkComponent],
+  imports: [RouterLink, FaIconComponent, AvatarComponent, ModalComponent, StatusBadgeComponent, TemplateArtworkComponent],
   template: `
     <!-- Mobile: imersivo -->
     <article
@@ -70,6 +71,9 @@ import { LinkCopyService } from '../../shared/services/link-copy.service';
             }
             <span class="inline-flex items-center gap-1.5"><fa-icon [icon]="icons[event().online ? 'globe' : 'location']" aria-hidden="true" /> <span class="max-w-[10rem] truncate">{{ place() }}</span></span>
           </p>
+          @if (event().status) {
+            <div class="mt-2"><app-status-badge [value]="event().status!" /></div>
+          }
           <h3 class="mt-2 line-clamp-2 font-display text-lg font-semibold leading-snug">{{ event().title }}</h3>
           @if (caption()) {
             <p class="mt-1 line-clamp-2 text-sm text-white/85">{{ caption() }}</p>
@@ -99,6 +103,9 @@ import { LinkCopyService } from '../../shared/services/link-copy.service';
       </header>
 
       <div class="mt-3">
+        @if (event().status) {
+          <div class="mb-2"><app-status-badge [value]="event().status!" /></div>
+        }
         <h3 class="font-display text-lg font-semibold text-ink">{{ event().title }}</h3>
         @if (caption()) {
           <p class="mt-1 line-clamp-3 text-sm leading-6 text-ink/90">{{ caption() }}</p>

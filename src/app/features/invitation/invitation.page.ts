@@ -33,6 +33,7 @@ import { InvitationRsvpComponent } from './parts/invitation-rsvp.component';
 import { InvitationRsvpDialogComponent } from './parts/invitation-rsvp-dialog.component';
 import { InvitationShareComponent } from './parts/invitation-share.component';
 import { InvitationWelcomeComponent } from './parts/invitation-welcome.component';
+import { TemplateRendererComponent, TemplateRenderData } from '../../shared/components/template-renderer.component';
 
 @Component({
   selector: 'app-invitation-page',
@@ -57,6 +58,7 @@ import { InvitationWelcomeComponent } from './parts/invitation-welcome.component
     InvitationHostDialogComponent,
     InvitationLocationDialogComponent,
     InvitationRsvpDialogComponent,
+    TemplateRendererComponent,
   ],
   templateUrl: './invitation.page.html',
 })
@@ -83,6 +85,32 @@ export class InvitationPage {
   protected readonly eventCancelled = computed(
     () => this.invitation()?.event.status === 'cancelled',
   );
+  protected readonly isGratitude = computed(() => {
+    const event = this.invitation()?.event;
+    return event?.templateSlug === 'gratitude' || event?.manifest?.ornaments?.frame === 'gratitude';
+  });
+
+  protected readonly renderData = computed<TemplateRenderData | null>(() => {
+    const view = this.invitation();
+    if (!view) return null;
+    const e = view.event;
+    return {
+      title: e.title,
+      hostName: e.hostName,
+      startsAt: e.startsAt,
+      endsAt: e.endsAt,
+      timezone: e.timezone,
+      city: e.city,
+      venue: e.venue,
+      onlineLink: e.onlineLink,
+      message: e.message,
+      dressCode: e.dressCode,
+      rsvpDeadline: e.rsvpDeadline,
+      coverUrl: e.coverUrl,
+      type: e.type,
+      templateSlug: e.templateSlug,
+    };
+  });
   protected readonly showWelcome = signal(false);
 
   protected readonly saving = signal(false);

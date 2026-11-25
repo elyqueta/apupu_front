@@ -1,5 +1,6 @@
-import { Component, inject, input, output } from '@angular/core';
+import { Component, computed, inject, input, output } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { guestPlural, GuestKindValue } from '../../../core/i18n/block15-keys';
 import { I18nService } from '../../../core/i18n/i18n.service';
 import { ICONS } from '../../../core/ui/icons';
 import { DEFAULT_MANIFEST, TemplateManifest } from '../../../core/models/template-manifest';
@@ -44,10 +45,10 @@ import { TemplatePreviewComponent } from '../../../shared/components/template-pr
             {{ i18n.t('invitation.eyebrow') }}
           </p>
           <h1 class="font-display text-2xl font-semibold tracking-tight text-ink sm:text-3xl">
-            {{ i18n.t('invitation.welcomeTitle') }}
+            {{ i18n.t(welcomeTitleKey()) }}
           </h1>
           <p class="max-w-sm text-sm leading-6 text-muted">
-            {{ i18n.t('invitation.welcomeMessage', { name: guestName() }) }}
+            {{ i18n.t(welcomeMessageKey(), { name: guestName() }) }}
           </p>
           <button
             type="button"
@@ -70,7 +71,17 @@ export class InvitationWelcomeComponent {
   readonly coverUrl = input<string | null>(null);
   readonly manifest = input<TemplateManifest>(DEFAULT_MANIFEST);
   readonly guestName = input('');
+  readonly guestKind = input<GuestKindValue>(null);
   readonly eventTitle = input('');
 
   readonly continue = output<void>();
+
+  protected readonly welcomeTitleKey = computed(() =>
+    guestPlural(this.guestKind()) ? 'block15.invitation.welcomeTitlePlural' : 'invitation.welcomeTitle',
+  );
+  protected readonly welcomeMessageKey = computed(() =>
+    guestPlural(this.guestKind())
+      ? 'block15.invitation.welcomeMessagePlural'
+      : 'invitation.welcomeMessage',
+  );
 }

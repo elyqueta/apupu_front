@@ -2,6 +2,7 @@ import { Component, computed, ElementRef, inject, signal, viewChild } from '@ang
 import { Router, RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
+import { guestPlural } from '../../core/i18n/block15-keys';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { toApiError } from '../../core/api/api-error';
 import { TranslationKey } from '../../core/i18n/translations';
@@ -117,6 +118,16 @@ export class DashboardPage {
   );
 
   protected readonly firstName = computed(() => this.store.profile().name.split(' ')[0]);
+  protected readonly greeting = computed(() => {
+    const hour = new Date().getHours();
+    const key =
+      hour >= 5 && hour < 12
+        ? 'block15.greeting.morning'
+        : hour >= 12 && hour < 19
+          ? 'block15.greeting.afternoon'
+          : 'block15.greeting.evening';
+    return this.i18n.t(key as TranslationKey, { name: this.firstName() });
+  });
   protected readonly guestNames = computed(() =>
     this.store
       .guests()
@@ -337,9 +348,10 @@ export class DashboardPage {
   }
 
   protected sendWhatsApp(entry: GuestEntry): void {
+    const plural = guestPlural(entry.guest.guestKind);
     const key = entry.guest.invitationUrl
-      ? 'guests.whatsappMessageWithLink'
-      : 'guests.whatsappMessage';
+      ? plural ? 'block15.guests.whatsappMessageWithLinkPlural' : 'guests.whatsappMessageWithLink'
+      : plural ? 'block15.guests.whatsappMessagePlural' : 'guests.whatsappMessage';
     const text = this.i18n.t(key, {
       name: entry.guest.name,
       event: entry.event.title,

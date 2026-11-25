@@ -7,9 +7,9 @@
         {{ i18n.t('dashboard.eyebrow') }}
       </p>
       <h2
-        class="mt-1.5 hidden font-display text-2xl font-semibold tracking-tight text-ink sm:text-3xl md:block"
+        class="mt-1.5 truncate font-display text-base font-semibold tracking-tight text-ink sm:text-2xl md:text-3xl"
       >
-        {{ i18n.t('dashboard.greeting', { name: firstName() }) }}
+        {{ greeting() }}
       </h2>
       <p class="text-[13px] leading-5 text-muted md:mt-1.5 md:max-w-2xl md:text-sm md:leading-6">
         {{ i18n.t('dashboard.subtitle') }}
@@ -300,7 +300,20 @@
       </div>
 
       @if (tasks().length === 0) {
-        <p class="mt-6 text-sm text-muted">{{ i18n.t('dashboard.tasksEmpty') }}</p>
+        <div class="mt-6 flex flex-col items-center justify-center rounded-3xl border border-dashed border-line bg-surface-raised/30 px-4 py-8 text-center">
+          <span class="grid size-12 place-items-center rounded-2xl border border-brand/25 bg-brand/12 text-brand-strong">
+            <fa-icon [icon]="icons['checklist']" class="text-lg" aria-hidden="true" />
+          </span>
+          <h3 class="mt-4 text-sm font-semibold text-ink">{{ i18n.t('dashboard.tasksEmptyTitle') }}</h3>
+          <p class="mt-1 max-w-xs text-xs leading-5 text-muted">{{ i18n.t('dashboard.tasksEmptyText') }}</p>
+          <a
+            routerLink="/tarefas"
+            class="mt-4 inline-flex h-10 items-center gap-2 rounded-xl bg-brand px-4 text-xs font-semibold text-on-secondary transition hover:bg-secondary-hover"
+          >
+            <fa-icon [icon]="icons['plus']" class="text-[10px]" aria-hidden="true" />
+            {{ i18n.t('dashboard.tasksEmptyAction') }}
+          </a>
+        </div>
       } @else {
         <ul class="mt-4 flex flex-col gap-1">
           @for (task of tasks(); track task.id) {
@@ -423,7 +436,7 @@
   <div
     class="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-4 xl:grid-cols-[minmax(0,1.75fr)_minmax(0,1fr)]"
   >
-    <section class="rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl">
+    <section class="flex min-h-0 flex-col rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl xl:col-span-2">
       <div class="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-brand-strong">
@@ -439,7 +452,7 @@
         </div>
       </div>
 
-      <div class="relative mt-3">
+      <div class="relative mt-3 flex min-h-0 flex-1 flex-col">
         @if (activeChartDay(); as day) {
           <div
             role="status"
@@ -452,7 +465,7 @@
         <svg
           viewBox="0 0 100 36"
           preserveAspectRatio="none"
-          class="h-40 w-full"
+          class="min-h-[10rem] w-full flex-1"
           role="img"
           [attr.aria-label]="i18n.t('dashboard.chartTitle')"
         >

@@ -7,7 +7,6 @@ import { of } from 'rxjs';
 import { API_BASE_URL } from '../../core/api/api-config';
 import { ApiHostEventManager, ApiTeam } from '../../core/api/api.models';
 import { ToastService } from '../../core/services/toast.service';
-import { AvatarStackComponent } from '../../shared/components/avatar-stack.component';
 import { TeamPage } from './team.page';
 
 const BASE = 'http://localhost:3000/api/v1';
@@ -258,7 +257,7 @@ describe('TeamPage', () => {
     expect(context.fixture.nativeElement.textContent).toContain('gestor@exemplo.pt');
   });
 
-  it('mostra barra x/y concluídas e pilha de avatares no cartão', async () => {
+  it('mostra linha da equipa com contagens e última atividade', async () => {
     const context = setup();
     http = context.http;
 
@@ -267,43 +266,38 @@ describe('TeamPage', () => {
     expect(request[0].request.method).toBe('GET');
     await flushBootstrap(context, undefined, undefined, request);
 
-    const progress = context.fixture.nativeElement.querySelector(
-      `[data-testid="team-progress-${TEAM_ID}"]`,
+    const card = context.fixture.nativeElement.querySelector(
+      `[data-testid="team-card-${TEAM_ID}"]`,
     );
-    expect(progress.textContent).toContain('5/7 concluídas');
-    const bar = progress.querySelector('[role="progressbar"] > div');
-    expect(bar.getAttribute('style')).toMatch(/width/);
+    expect(card).toBeTruthy();
+    expect(card.textContent).toContain('Cozinha');
+    expect(card.textContent).toContain('Casamento da Ana');
+    expect(card.textContent).toContain('3 membros');
+    expect(card.textContent).toContain('2 por fazer');
+    expect(card.textContent).toContain('Última atividade');
+    expect(card.textContent).not.toContain('@');
 
-    const avatars = context.fixture.nativeElement.querySelector(
-      `[data-testid="team-avatars-${TEAM_ID}"] app-avatar-stack`,
-    );
-    expect(avatars).toBeTruthy();
-    expect(
-      context.fixture.debugElement.queryAll(
-        (debug) => debug.componentInstance instanceof AvatarStackComponent,
-      ).length,
-    ).toBeGreaterThan(0);
-    expect(
-      context.fixture.nativeElement.querySelector(`[data-testid="team-card-${TEAM_ID}"]`).textContent,
-    ).not.toContain('@');
+    const list = context.fixture.nativeElement.querySelector('[data-testid="teams-list"]');
+    expect(list).toBeTruthy();
   });
 
-  it('abre o detalhe do membro ao tocar no avatar do cartão da equipa', async () => {
+  it('abre detalhe da equipa e mostra detalhe do membro ao tocar no preview', async () => {
     const context = setup();
     http = context.http;
     const request = http.match((req) => req.url === `${BASE}/host/teams`);
     await flushBootstrap(context, undefined, undefined, request);
 
-    const grid = context.fixture.nativeElement.querySelector('ul.grid');
-    expect(grid.className).toContain('grid-cols-1');
-    expect(grid.className).toContain('md:grid-cols-2');
-    expect(grid.className).toContain('xl:grid-cols-3');
-
-    const avatarButton = context.fixture.nativeElement.querySelector(
-      `[data-testid="avatar-member-member-2"]`,
+    const teamRow = context.fixture.nativeElement.querySelector(
+      `[data-testid="team-card-${TEAM_ID}"]`,
     );
-    expect(avatarButton.getAttribute('aria-label')).toContain('Ver membro');
-    avatarButton.click();
+    teamRow.click();
+    await settle(context.fixture);
+
+    const memberButton = context.fixture.nativeElement.querySelector(
+      '[data-testid="team-member-preview-member-2"]',
+    );
+    expect(memberButton).toBeTruthy();
+    memberButton.click();
 
     const membersRequest = http.expectOne(
       (req) => req.url === `${BASE}/host/teams/${TEAM_ID}/members`,
@@ -330,8 +324,6 @@ describe('TeamPage', () => {
     );
     await settle(context.fixture);
 
-    const modal = context.fixture.nativeElement.querySelector('[data-testid="app-modal"]');
-    expect(modal.getAttribute('data-presentation')).toBe('sheet');
     const detail = context.fixture.nativeElement.querySelector('[data-testid="team-member-detail"]');
     expect(detail.textContent).toContain('Rui Costa');
     expect(detail.textContent).toContain('rui@exemplo.pt');

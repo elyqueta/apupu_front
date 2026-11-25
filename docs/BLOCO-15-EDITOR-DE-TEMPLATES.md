@@ -1,103 +1,173 @@
-# Bloco 15 — Editor de templates por blocos
+# Bloco 15 — Editor de templates, Gratitude, convidados por género, feed social e eventos passados
 
-> Depende do Bloco 14 (manifesto de template, renderer, catálogo). Branch: `feat/bloco-15-editor-templates`. Backend e frontend. Lê primeiro `REGRAS-GERAIS.md`, `docs/DECISIONS.md` (Blocos 9 e 14) e o manifesto v1 do Bloco 14.
+> Lê primeiro `REGRAS-GERAIS.md`, `docs/AUDIT.md` e os relatórios dos blocos anteriores. Depende dos blocos 9–14 (UI mobile, visibilidade, comunidades, feed, instituições, convite/PDF). Branch: `feat/bloco-15-templates`.
+> O agente que executa **não vê imagens**: todas as referências visuais vêm descritas em texto abaixo. Textos visíveis em pt-PT, com chaves `pt-AO`/`en` em ficheiro próprio (`block15-keys.ts`). Sem dependências novas, exceto se o bloco as pedir.
 
-## Objetivo
+## Prioridade e ordem
 
-O anfitrião personaliza o convite **por blocos** (título, data, local…), escolhendo estilo e ordem, com pré-visualização em direto, sobretudo no telemóvel. Pode guardar o resultado como **template próprio**, privado ou publicado para todos. O convite online, o PDF e os cartões de eventos realizados usam o **mesmo manifesto**.
+1. **Passo 1 (urgente, prazo: evento real em 20/12/2026 — o primeiro evento público do protótipo)**: template **Gratitude**, fontes persistentes no PDF, QR no estilo pedido, estados de evento. Estes têm de ficar **verdes e limpos** antes do resto.
+2. Passos 2–5: editor Canva, convidados por género, saudação, equipas em filas.
+3. Passos 6–8: feed (desktop + mobile), reações e comentários, gráfico semanal.
+4. Passo 9: catálogo de templates (mais de 20 a chegar noutro ficheiro).
 
-## Regras de produto (decididas)
+Se algo bloquear, regista em `docs/BLOCKERS.md` e segue; nunca deixes o Passo 1 por fechar.
 
-- Edição **por blocos** (sem arrastar livre). Edição livre tipo Canva fica para uma fase futura.
-- O anfitrião pode editar o convite **até o evento terminar** (`ends_at`; sem `ends_at`, fim do dia de `starts_at` no fuso do evento).
-- **Rascunhos automáticos**: tudo o que se edita é guardado sozinho (ver Passo 5).
-- Templates próprios: ao guardar, o anfitrião escolhe **Privado (só eu)** ou **Publicado (para todos)**; pode mudar depois. Publicados aparecem no catálogo no separador "Da comunidade" com o nome do autor.
-- Moderação: o super admin pode **despublicar** qualquer template; qualquer utilizador com conta pode **denunciar** um template publicado. Template despublicado volta a privado do autor; eventos que já o usam **não mudam** (têm snapshot).
-- **Snapshot por evento**: ao escolher um template, o evento guarda uma cópia do manifesto (`events.template_snapshot`). Editar o convite do evento altera só o snapshot; editar o template original não altera eventos existentes. O convite online, o PDF e os cartões de eventos passados leem o snapshot.
-- Elementos **obrigatórios** que nunca se apagam nem se escondem: **título**, **quem convidou** (anfitrião/organização), **data e hora**, **local** (ou "Evento online") e **prazo de resposta** (quando definido). Os restantes blocos podem ser ocultados.
+---
 
-## Passo 1 — Modelo de dados (backend)
+## Passo 1 — Núcleo obrigatório
 
-Migração reversível:
-- `templates`: acrescentar `owner_id uuid null` (null = template da plataforma), `visibility text not null default 'private'` (`private | public`), `status text not null default 'ready'` (`draft | ready`), `version int not null default 1`, `reported_count int not null default 0`, `unpublished_by uuid null`, `unpublished_at timestamptz null`.
-- `events.template_snapshot jsonb null` (+ `template_id` mantém-se como origem).
-- `template_assets (id, template_id null, owner_id, event_id null, url, public_id, width, height, bytes, kind background|image|ornament, created_at)` — todos os uploads com `public_id` (para o apagar no Cloudinary quando o asset é removido ou o template eliminado, como no Bloco 5, Parte G).
-- `template_reports (id, template_id, reporter_id, reason text, created_at)`; um por utilizador e template.
-- `template_versions (id, template_id, version, manifest jsonb, created_at)` — últimas 20 por template (histórico).
+### 1.1 Template "Gratitude" (réplica fiel do flyer)
 
-## Passo 2 — Manifesto: blocos (v1.1, compatível com o v1)
+Formato: cartaz vertical 4:5 (1024×1280 como proporção de referência). Fundo creme claro (`#FFF6EA` aproximado) com brilho radial suave ao centro e **padrão geométrico africano** muito subtil (losangos/triângulos em tom creme mais escuro) nos cantos superior direito e inferior esquerdo.
 
-Acrescentar ao manifesto `blocks: Block[]`:
-- `Block = { id, type, visible, required, style, content? }`.
-- `type`: `cover`, `title`, `host`, `datetime`, `location`, `rsvp_deadline`, `message`, `video`, `organizers`, `custom_text`, `divider`, `image`.
-- `style` (valores **discretos**, nunca CSS livre): `font` (um dos tokens do manifesto), `size` (`sm|md|lg|xl|2xl`), `weight` (`regular|medium|bold`), `align` (`left|center|right`), `color` (`ink|accent|muted|on_accent` — tokens da paleta), `transform` (`none|uppercase`), `spacing_after` (`none|sm|md|lg`).
-- `content` só para `custom_text` (texto simples, máx. 280 caracteres, sem HTML), `image` (referência a `template_assets`, `alt` obrigatório) e `divider` (`line|ornament|dots`).
-- `order` é a posição no array. `required: true` para título, anfitrião, data/hora, local e prazo.
-- Schema Zod no back e tipos no front; validação estrita (rejeitar chaves desconhecidas, tamanho máx. do manifesto 64 KB, máx. 20 blocos).
-- Migrar os 6 templates iniciais para a forma com `blocks`.
+Elementos, de cima para baixo:
+- **Moldura de canto**: faixa curva diagonal no canto superior esquerdo e outra no inferior direito, com **fita dourada** (gradiente dourado, bordo brilhante) e preenchimento em padrão africano (triângulos e zigue-zagues em vermelho, verde, amarelo e laranja).
+- **Logótipo circular** centrado no topo (imagem enviada pelo anfitrião; coroa dourada dentro de coroa de espinhos). Bloco "imagem de logótipo" opcional.
+- Linha de organização em maiúsculas espaçadas: `IGREJA CRISTÃ REINO-CHURCH` (campo editável "Organização").
+- Linha de subtítulo em negrito condensado preto: `FESTIVAL DE ADOLESCENTES` (campo "Subtítulo").
+- **Título gigante** `GRATITUDE`: letras grossas e condensadas, **preenchidas com o padrão africano multicolor** (vermelho, verde, amarelo, laranja, contorno preto fino). Implementar com `background-clip: text` sobre uma imagem/SVG de padrão incluído nos assets, com fallback de cor sólida. Tem de ocupar quase a largura toda.
+- Ano em itálico caligráfico vermelho escuro por baixo, à direita do centro: `2026` (campo "Linha de destaque").
+- **Linha de informação** (4 colunas separadas por traços verticais dourados): ícone calendário + `20/12`; ícone relógio + `14:00`; ícone pin + `LOCAL: Igreja Cristã Reino Church`; e, à direita, **QR code** dentro de um cartão branco com borda dourada arredondada e legenda `Informação` por cima. O QR é o do evento (Passo 1.3).
+- **Pílula de dress code** centrada em baixo: borda dourada, fundo creme, ícone de t-shirt dourada à esquerda, texto `DRESS-CODE:` pequeno por cima de `TRAJE AFRICANO` em negrito grande.
 
-## Passo 3 — Renderer único
+Regras:
+- Todos os textos acima são **campos editáveis**, preenchidos pelos dados do evento (nome, data, hora, local, dress code) com sobreposição manual no editor.
+- O padrão africano e as fitas são assets SVG incluídos no projeto (cria-os de forma simples e geométrica; não copies a imagem do flyer).
+- Tem de funcionar como **convite digital** (tela vertical em telemóvel) **e** como **PDF** com o mesmo aspeto. Teste visual comparando os dois.
+- Criar o template como "oficial da plataforma" (`kind = 'system'`), selecionável como qualquer outro.
 
-- `TemplateRendererComponent` (front) que recebe manifesto + dados do evento e desenha o convite. Usado por: palco do editor, convite público, catálogo, cartões de eventos realizados e pré-visualização no wizard.
-- Renderer do PDF (back, `pdfkit`) lê o mesmo manifesto: percorre `blocks` por ordem, em fluxo, com quebra de linha e altura variável (sem sobreposição), mapeando fontes/paleta/ornamentos. Testes de texto extraído e render de um exemplo por template.
-- Fontes: conjunto curado de **10 fontes** self-hosted (woff2, `font-display: swap`, subset latin + acentos pt), com fallback. Lista em `DECISIONS.md`; registar as mesmas no PDF.
+### 1.2 Fontes e fotos persistentes (PDF fiel ao editor)
 
-## Passo 4 — UX do editor (mobile first)
+Problema: o PDF não respeita as fontes/foto escolhidas. Regras:
+- Cada bloco do template guarda `fontFamily`, `fontWeight`, `fontStyle`, `fontSize`, `color`, `letterSpacing`, `align` no documento do template (JSON), **não** em CSS solto.
+- O backend gera o PDF **a partir do mesmo JSON** (mesmo modelo de blocos). Regista as fontes usadas, **embute os ficheiros de fonte** (TTF/WOFF2 locais em `assets/fonts`, nunca CDN no PDF) e falha com erro claro se faltar uma; nunca substituir silenciosamente por outra.
+- Catálogo de fontes **fechado e local** (inclui pelo menos: uma condensada grossa para títulos, serifa elegante, script caligráfico, sans moderna). Documenta a lista em `docs/DECISIONS.md`.
+- Imagens (capa, fotos, logótipo) usadas no PDF são as mesmas do editor, na resolução original.
+- Teste automatizado: gerar PDF de um template com 3 fontes e verificar que as fontes aparecem embutidas (`pdffonts` ou leitura do objeto de fontes).
 
-Rota `/eventos/:eventId/convite/editar` e `/modelos/:templateId/editar` (modelo próprio). Cabeçalho com "Voltar", título, estado do rascunho ("Guardado há instantes"), botões **Desfazer / Refazer** e **Pré-visualizar**.
+### 1.3 QR code no estilo das referências
 
-- **Mobile (< `lg`)**: pré-visualização do convite ocupa a parte superior (altura ~55 dvh, com scroll próprio), por baixo um **painel de controlos** com separadores: **Blocos | Estilo | Fundo | Abertura | PDF**. O painel nunca tapa a pré-visualização inteira e tem botão para expandir/recolher.
-- **Desktop (≥ `lg`)**: três colunas (lista de blocos | palco central como uma "folha" | propriedades), colapsáveis (padrão do Bloco 9).
-- **Blocos**: lista com ícone, nome e interruptor de visível (desativado nos obrigatórios, com `disabledHint`); **reordenar** com botões subir/descer (44 px, acessíveis por teclado) e alça de arrastar opcional; tocar num bloco abre o seu editor em **modal `dialog`** (Bloco 9): fonte, tamanho, peso, alinhamento, cor, maiúsculas, espaçamento; para `custom_text` o texto; para `image` o upload e o `alt`. Adicionar bloco (`custom_text`, `divider`, `image`) em modal.
-- **Estilo**: escolher paleta (presets do template + "Personalizada" com 5 cores), fontes de display e de corpo, moldura/ornamentos disponíveis no template. **Verificador de contraste** (texto/fundo ≥ 4,5:1): aviso claro com sugestão automática; não bloquear.
-- **Fundo**: cor sólida, gradiente de 2 cores ou imagem enviada (com sobreposição para legibilidade); regra do Bloco 5 mantém-se: **nunca texto por cima da capa** do evento.
-- **Abertura**: escolher `open_style` (`none | envelope | curtain | fade | fold`) com pré-visualização da animação.
-- **PDF**: pré-visualização do estilo do PDF (moldura, posição do QR) lida do mesmo manifesto.
-- Estados obrigatórios: a carregar (`app-skeleton`), erro com "Tentar de novo", sucesso por toast; texto em pt-PT e `en`; tudo ≥ 12 px, alvos ≥ 44 px, `aria-label` em ícones, claro/escuro **na interface do editor** (o convite mantém sempre a paleta do template).
+Estilo: QR dentro de **cartão arredondado** (branco, borda fina dourada ou da cor do template), com **ícone da plataforma ao centro**, nível de correção de erros alto, legenda curta por cima (`Informação`, `Confirmar presença`, etc.), cantos dos módulos ligeiramente arredondados. No Gratitude o QR abre o link público do evento (WhatsApp ou convite, à escolha do anfitrião: campo "Destino do QR": link do evento / link do convite / URL personalizada).
+- No editor, o QR é um **bloco posicionável** (arrastar, redimensionar, estilo do cartão); posição por defeito conforme o template.
+- Presente no convite digital (visível ao rolar) e no PDF.
 
-## Passo 5 — Rascunhos, histórico e conflitos
+### 1.4 Estado automático "Passado"
 
-- **Guardar automático**: debounce 2 s após cada alteração e ao sair da página (`visibilitychange`/`pagehide`); estado visível ("A guardar…" / "Guardado" / "Falhou, a tentar de novo"). Em falha de rede, mantém em memória e repete com backoff.
-- Evento: o rascunho grava `events.template_snapshot` (o evento já está em rascunho ou publicado; edições a um evento publicado aplicam-se **só depois de "Aplicar alterações"** para o convidado não ver estados intermédios).
-- Modelo próprio: grava em `templates` com `status = 'draft'` até "Guardar template".
-- **Histórico**: botão "Versões" (modal `sheet` de leitura) com as últimas 20; "Restaurar" cria nova versão.
-- **Conflitos**: `updated_at`/`version` como `if_version`; se mudou noutro dispositivo, modal a perguntar "Manter a minha versão / Carregar a versão guardada".
-- Desfazer/refazer em sessão (pilha de 50 comandos).
+- Quando `ends_at` (ou, sem fim, o fim do dia de `starts_at` no fuso do evento) passa, o evento fica `completed` automaticamente: job periódico no backend (ex. de 15 em 15 min) **e** cálculo derivado na leitura, para nunca depender só do job.
+- Ordenação em `/eventos`, "Meus convites", feed e perfis: **ativos/futuros primeiro** (por data ascendente), depois **passados**, depois **cancelados**.
+- Evento passado: banner "Evento terminado"; tudo em modo leitura exceto **galeria** (adicionar/remover fotos). Reutiliza o guard de evento cancelado (`requireActiveEvent`) com uma variante `allowGallery`. Não implementes a galeria completa se não existir: cria só o ponto de extensão e o estado, e regista.
+- Badges: `Ativo`, `Terminado`, `Cancelado` com `app-status-badge`.
 
-## Passo 6 — Templates próprios e catálogo
+**Aceitação do Passo 1:** Gratitude criado e idêntico em convite e PDF; PDF com as fontes escolhidas; QR estilizado; ordenação correta; testes verdes.
 
-- "Guardar como meu template" (modal `dialog`): nome, descrição curta, categoria (aniversário, casamento, igreja, jovens, corporativo, outro), visibilidade (**Privado** / **Publicado para todos**, com aviso "Qualquer pessoa poderá usar este template. Não inclui os seus dados do evento.").
-- Ao publicar, guardar **só** o manifesto (nunca título, nomes, datas, local ou contactos do evento; os blocos de dados ficam com marcadores dinâmicos). Assets enviados (imagens) incluem-se com `alt`.
-- Catálogo `/modelos`: separadores **Plataforma | Da comunidade | Os meus**; pesquisa, filtro por categoria e ordenação (recentes, mais usados); pré-visualização pelo renderer; ações no menu de três pontinhos (usar, duplicar, editar, publicar/tornar privado, eliminar com confirmação, denunciar). Contador "usado em N eventos" (só contagem).
-- Eliminar template próprio **não** afeta eventos existentes (snapshot) e apaga os seus assets órfãos.
+---
 
-## Passo 7 — Uploads de imagens (seguro)
+## Passo 2 — Editor de templates tipo Canva
 
-- Aceitar `image/png`, `image/jpeg`, `image/webp`; **máx. 5 MB**; validar tipo pelo conteúdo (magic bytes), não só pela extensão; redimensionar no servidor para ≤ 2000 px no maior lado; remover metadados EXIF/GPS.
-- Máx. **10 assets por template** e **50 por utilizador**; rate limit no endpoint; guardar `public_id`; apagar no Cloudinary ao remover (best-effort, como no Bloco 5) e incluir no script de limpeza de órfãs.
-- Nenhum SVG enviado pelo utilizador (risco de script); ornamentos vêm só do template da plataforma.
+Comportamento pretendido (o utilizador não pode aprender nada novo; padrão Canva):
+- Ao **escolher um template**, ele aparece logo como **exemplo preenchido** (com dados fictícios realistas) no centro, como uma folha. O utilizador substitui o conteúdo clicando nos blocos.
+- **Modelos em feed**: a galeria de modelos usa o padrão do feed do Canva (grelha de cartões grandes com pré-visualização, categorias em chips no topo: Casamento, Aniversário, Igreja/Comunidade, Empresa, Conferência, Outro; pesquisa; "Meus templates").
+- **O que o anfitrião vê ao editar é exatamente o que o convidado vê** e o que sai no PDF: um único renderizador de blocos (`TemplateRenderer`) usado nos três sítios. Proibido ter três implementações.
+- Painel lateral/bottom sheet de propriedades do bloco selecionado: texto, fonte, tamanho, cor, alinhamento, imagem, ordem (subir/descer). Editável até o evento terminar. Rascunho automático.
+- Tipos de bloco: texto, título, data/hora, local (com mapa), contagem decrescente, linha do tempo/programa, dress code, presentes, imagem/galeria, música/vídeo, QR, botões (Confirmar presença, Localização, Lista de presentes), mensagem, separador/ornamento.
+- Em telemóvel: edição por toque, painel como bottom sheet; alvos ≥ 44 px.
 
-## Passo 8 — Backend: rotas e moderação
+**Aceitação:** editar texto e fonte no editor reflete-se idêntico no convite público e no PDF.
 
-- `GET/POST /host/templates`, `GET/PATCH/DELETE /host/templates/:id`, `POST /host/templates/:id/duplicate`, `POST /host/templates/:id/publish`, `POST /host/templates/:id/unpublish`, `POST /host/templates/:id/report`, `GET /host/templates/:id/versions`, `POST …/versions/:version/restore`.
-- `PUT /host/events/:eventId/template-snapshot` (permissão de edição do evento; bloqueado após o fim do evento e em evento cancelado com `event_cancelled`), `POST /host/events/:eventId/template-snapshot/apply`.
-- `POST /host/template-assets` (multipart), `DELETE /host/template-assets/:id`.
-- Admin (`requireSuperAdmin`, auditoria): `GET /admin/templates?status=&reported=`, `POST /admin/templates/:id/unpublish` (com motivo). Nova aba "Modelos" no `/admin` com denúncias.
-- Permissões: só o dono edita/elimina/publica o seu template; gestores de comunidade editam o convite dos eventos da comunidade; utilizadores só veem templates `public` de outros.
-- Todos os erros no envelope padrão, pt-PT, sem detalhes técnicos.
+---
 
-## Critérios de aceitação
+## Passo 3 — Género e tipo de convidado
 
-- [ ] Editar por blocos: ordem, visibilidade (exceto obrigatórios), estilo discreto, texto e imagens; pré-visualização em direto em 360 px sem ser tapada.
-- [ ] Títulos, anfitrião, data/hora, local e prazo nunca se apagam nem ocultam.
-- [ ] Rascunhos automáticos, desfazer/refazer, histórico de 20 versões e deteção de conflitos.
-- [ ] Snapshot por evento: editar o template original não muda eventos existentes; convite online, PDF e cartões de eventos passados leem o snapshot.
-- [ ] Template próprio guardado como privado ou publicado; publicado nunca contém dados do evento; super admin despublica; denúncias funcionam.
-- [ ] Uploads validados (tipo, tamanho, EXIF removido), com `public_id` e limpeza de órfãos.
-- [ ] Verificador de contraste presente; acessível por teclado (reordenar, modais).
-- [ ] Testes: schema do manifesto (rejeita lixo), renderer, PDF (sem sobreposição com texto longo), permissões, uploads, e2e Playwright do fluxo "escolher template → editar → publicar convite" em 360×640.
-- [ ] `build`, `lint`, `test`, `typecheck` verdes; migrações reversíveis; `docs/REPORT-BLOCO-15.md`.
+Novo campo `guest_kind` (enum) no convite/convidado, escolhido no `app-guest-dialog`:
+
+| Valor | Quando | Tratamento no texto |
+|---|---|---|
+| `male` | Homem | "convidado" |
+| `female` | Mulher | "convidada" |
+| `couple` | Casal | "convidados especiais" |
+| `family` | Família | "convidados" (forma neutra e natural; ex. "Família Silva, estão convidados") |
+
+- **Casal**: o formulário abre um segundo campo "Nome do cônjuge"; alternativas aceites: dois nomes, ou um único campo "Casal + apelido" (ex. "Casal Silva"). O utilizador escolhe; sem validação rígida.
+- **Família**: um só campo de nome (ex. "Família Silva") e, opcionalmente, número de pessoas.
+- A flexão aplica-se **em todos os sítios**: convite público (saudação, "Tens um convite especial" → "Têm um convite especial" no plural), e-mails, notificações, PDF, WhatsApp, lista de convidados.
+- Implementar numa função única `guestAddress(kind, name)` com tabela de textos em `block15-keys.ts` (pt-PT e en), sem condicionais espalhadas.
+- Migração reversível; convidados existentes ficam `guest_kind = null` e usam o tratamento neutro "convidado(a)".
+- Contagem de lugares: casal conta 2 por defeito; família editável.
+
+---
+
+## Passo 4 — Saudação por hora
+
+- No painel do anfitrião: "Bom dia, {nome}" (05:00–11:59), "Boa tarde, {nome}" (12:00–18:59), "Boa noite, {nome}" (19:00–04:59), calculado no **fuso do utilizador** (`Intl`, com `Africa/Luanda` por defeito).
+- **Visível também em mobile** (hoje só aparece em desktop): linha no topo do painel, tamanho ≥ 14 px, sem cortar o nome (truncar com reticências).
+- Reutiliza para o feed (cabeçalho do cartão do utilizador).
+
+---
+
+## Passo 5 — Equipas em filas tipo WhatsApp
+
+- `/equipas` passa de grelha de cartões para **lista de filas** (uma linha por equipa): foto da equipa (avatar circular, iniciais por omissão), nome, última atividade/tarefas abertas e contagem de membros, badge de papel. Filas **clicáveis**.
+- Ao clicar: **modal** (centrado em desktop; em mobile abre da forma já definida para modais de leitura) com foto grande da equipa, descrição, membros (avatar + papel), tarefas abertas e botão "Abrir equipa".
+- **Foto da equipa**: upload/remoção (reutiliza o fluxo do Cloudinary e apaga o asset anterior; mesma regra do avatar). Campo `photo_url`/`photo_public_id` em `teams`.
+- Preparar o desenho para o **chat da equipa** futuro: reservar na fila uma linha de pré-visualização "última mensagem" (escondida enquanto não houver chat) e no modal um botão "Conversar" desativado com `disabledHint`. Não implementar o chat.
+- Manter filtros e pesquisa já existentes.
+
+---
+
+## Passo 6 — Feed social (desktop e mobile)
+
+### Referências visuais (descrição, o agente não vê as imagens)
+
+**Mobile (referência "Babagang" + loja de moda)**: topo com título/logótipo ao centro, botão de menu à esquerda e sino à direita (círculos brancos de 44 px); **fila de "stories"** (círculos com anel) logo abaixo; **cartões de imagem grande com cantos muito arredondados** que ocupam a largura toda; **cabeçalho em vidro** (pílula translúcida, desfocada) sobre a imagem com avatar, nome, selo de verificado e @utilizador; botão "⋮" em círculo de vidro; **rodapé do cartão também em vidro** sobre a imagem com contagem de gosto, comentários e partilhas e legenda/hashtags; **barra de navegação flutuante** em pílula de vidro escura, com ícones (início, explorar, gosto/atividade, perfil), item ativo em círculo branco. Segunda referência: cartões de estatísticas coloridos no topo (azul/escuro), carrossel de stories, e ecrã de detalhe com título, preço e botão de ação verde-limão.
+
+**Estado atual (desktop)**: três colunas (perfil e atalhos à esquerda, feed no centro, "Próximos eventos" à direita) com muito espaço vazio nas laterais e no cartão de evento, cartões com imagem mal aproveitada (grande área vazia clara em vez de capa), chips Eventos/Comunidades/Pessoas e categorias, bloco "Partilhe um evento…". Problemas: espaço mal usado, sem reações nem comentários, cartão de evento sem capa visível.
+**Estado atual (mobile)**: cartão de evento com capa vazia (fundo claro) e texto de data/local/título por baixo de um degradê; barra inferior flutuante a tapar o fim do cartão; chips cortados à direita.
+
+### Requisitos
+
+1. **Cartão de evento no feed = cartão de vidro sobre a capa**: a imagem de capa ocupa o cartão todo (proporção 4:5 em mobile, 16:10 em desktop); **cabeçalho em vidro** (avatar, anfitrião/comunidade, selo, tempo); **rodapé em vidro** com título, data/hora, local, hashtags e ações. Sem capa: usa o **template renderizado** (miniatura do `TemplateRenderer`) como capa; nunca fundo vazio.
+2. **Templates apresentados no feed** em cartões de vidro: secção "Modelos" (carrossel horizontal e, em desktop, bloco na coluna direita) com miniaturas dos templates, nome, categoria e botão "Usar este modelo". Leva ao editor com o template já escolhido.
+3. **Reações e comentários**: reagir (gosto, com variantes simples: gosto, amei, parabéns), comentar (lista paginada, resposta de um nível, apagar o próprio, o responsável do evento/comunidade pode apagar), contadores no rodapé do cartão. Novas tabelas reversíveis `event_reactions` e `event_comments`; um utilizador tem no máximo uma reação por evento; rate limit; conteúdo texto simples ≤ 500 caracteres, sanitizado; respeitar visibilidade (só quem vê o evento reage/comenta; sem conta, só leitura e CTA para criar conta).
+4. **Aproveitamento de espaço (desktop)**: container até 1280 px, três colunas com larguras 300 / fluido / 340; colunas laterais com cartões úteis (atalhos, próximos eventos, modelos, comunidades sugeridas) em vez de vazio; cartão do centro com imagem de capa real. A coluna esquerda e direita ficam *sticky*.
+5. **Mobile**: stories no topo, cartões em ecrã quase completo, cabeçalho do feed compacto, chips com scroll horizontal e sombra de fade à direita, **padding inferior suficiente** para a barra flutuante não tapar o último cartão.
+6. **Links de regresso ao feed a partir do painel do anfitrião**: item "Feed" no menu lateral do painel, botão "Ver feed" no cabeçalho do painel e logótipo clicável que leva a `/` (feed). No feed já existe "Ir para o painel".
+7. **Padrão de informação fixo** em todas as caixas informativas, estados vazios e avisos do feed e painéis: **ícone + título + mensagem curta + botão de ação (quando fizer sentido)**. Cria o componente `app-info-block` e substitui os casos soltos; aplicar primeiro no feed, estados vazios e avisos de eventos passados/cancelados.
+8. Estados obrigatórios (skeleton, vazio, erro, sucesso), claro/escuro, 320 px, alvos ≥ 44 px, texto ≥ 12 px, tokens existentes (sem cores novas; o efeito vidro usa `bg-surface/60 backdrop-blur-xl border-line/40`).
+
+---
+
+## Passo 7 — Gráfico semanal do painel
+
+- O gráfico dos dias da semana (interativo) deve ocupar **toda a largura** do cartão principal em desktop (hoje usa ~50%). Container `w-full`, SVG com `viewBox` e `preserveAspectRatio` corretos, altura mínima 220 px, tooltip e foco por teclado mantidos. Verifica ao redimensionar e em mobile.
+
+---
+
+## Passo 8 — Página de perfil
+
+Fora do âmbito deste bloco (scroll e tamanho da página de perfil serão tratados à parte). Regista só observações.
+
+---
+
+## Passo 9 — Catálogo de templates iniciais
+
+O catálogo completo, **com uma descrição visual por template (T01–T19)**, está em `BLOCO-15B-CATALOGO-TEMPLATES.md`. Implementa-o a seguir ao Passo 1, pela ordem de entrega indicada nesse ficheiro. Gratitude (Passo 1.1) é o único template descrito aqui.
+
+---
+
+## Critérios de aceitação finais
+
+- [ ] Template **Gratitude** igual ao flyer (convite e PDF), com QR estilizado e campos editáveis.
+- [ ] Fontes, cores e fotos escolhidas aparecem **iguais** no editor, no convite e no PDF (fontes embutidas, teste automatizado).
+- [ ] QR em cartão arredondado com ícone da plataforma, posicionável no editor.
+- [ ] Eventos terminados marcados automaticamente; ordenação ativos → passados → cancelados em Eventos, Meus convites e feed; em passados só galeria.
+- [ ] Editor tipo Canva com exemplo preenchido ao escolher template, galeria em formato de feed e um único renderizador.
+- [ ] `guest_kind` (masculino, feminino, casal, família) com tratamento correto em convite, e-mail, PDF e WhatsApp; casal com segundo nome.
+- [ ] Saudação por hora, visível também em mobile.
+- [ ] Equipas em filas clicáveis com modal e foto da equipa (chat apenas desenhado).
+- [ ] Feed com cartões de vidro, templates apresentados, reações e comentários, melhor uso do ecrã, ligações de regresso ao feed e `app-info-block`.
+- [ ] Gráfico semanal a toda a largura.
+- [ ] `build`, `lint`, `test`, `typecheck` (front e back) verdes; migrações reversíveis; `docs/REPORT-BLOCO-15.md` escrito.
 
 ## Fora de âmbito
 
-Edição livre tipo Canva (arrastar/redimensionar/rodar), editor de animações, colaboração em tempo real, venda de templates, chat.
+Chat de equipa e amigos, galeria completa de eventos passados, página de perfil, Facebook login, envio automático por WhatsApp/SMS.

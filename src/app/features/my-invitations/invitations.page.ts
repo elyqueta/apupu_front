@@ -74,7 +74,7 @@ export class InvitationsPage {
           .toLocaleLowerCase(this.i18n.locale())
           .includes(term);
       })
-      .sort((a, b) => this.sortTime(a) - this.sortTime(b));
+      .sort((a, b) => this.compareInvitations(a, b));
   });
 
   constructor() {
@@ -116,7 +116,19 @@ export class InvitationsPage {
     return [invitation.venue, invitation.city].filter((part) => part.length > 0).join(', ');
   }
 
-  private sortTime(invitation: GuestInvitation): number {
-    return invitation.startsAt ? new Date(invitation.startsAt).getTime() : Number.POSITIVE_INFINITY;
+  private eventGroup(status: GuestInvitation['eventStatus']): number {
+    if (status === 'cancelled') return 2;
+    if (status === 'completed') return 1;
+    return 0;
+  }
+
+  private compareInvitations(a: GuestInvitation, b: GuestInvitation): number {
+    const ga = this.eventGroup(a.eventStatus);
+    const gb = this.eventGroup(b.eventStatus);
+    if (ga !== gb) return ga - gb;
+    const ta = a.startsAt ? new Date(a.startsAt).getTime() : Number.POSITIVE_INFINITY;
+    const tb = b.startsAt ? new Date(b.startsAt).getTime() : Number.POSITIVE_INFINITY;
+    if (ga === 0) return ta - tb;
+    return tb - ta;
   }
 }

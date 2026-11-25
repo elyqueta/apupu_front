@@ -109,6 +109,9 @@ export interface ApiEvent {
   max_age?: number | null;
   /** Papel de quem consulta o evento; ausente na vista pública. */
   access_role?: ApiEventAccessRole;
+  /** Bloco 14: vídeo de convite (só o ID) e mesas. */
+  youtube_video_id?: string | null;
+  use_tables?: boolean;
   created_at: string;
   updated_at: string;
   stats?: EventStats;
@@ -121,6 +124,9 @@ export interface ApiInvitation {
   /** `null` em confirmações pelo link aberto feitas só com telefone. */
   guest_email: string | null;
   guest_phone: string | null;
+  guest_kind?: 'male' | 'female' | 'couple' | 'family' | null;
+  guest_companion_name?: string | null;
+  guest_party_size?: number | null;
   /** `personal` (convite individual) ou `public_link` (link aberto). */
   source?: 'personal' | 'public_link';
   guest_age?: number | null;
@@ -309,6 +315,8 @@ export interface ApiTeam {
   creator_id?: string | null;
   event_ids?: string[];
   event_count?: number;
+  photo_url?: string | null;
+  photo_public_id?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -430,6 +438,7 @@ export interface ApiTemplate {
   supported_fields: string[];
   themes: Array<{ mode: 'light' | 'dark'; palette: string }>;
   is_active: boolean;
+  kind?: 'system' | 'user';
   manifest?: unknown;
 }
 
@@ -448,6 +457,9 @@ export interface PublicInvitation {
     message_answered_at?: string | null;
     rsvp_status: ApiRsvpStatus;
     rsvp_responded_at: string | null;
+    guest_kind?: 'male' | 'female' | 'couple' | 'family' | null;
+    guest_companion_name?: string | null;
+    guest_party_size?: number | null;
   };
   rsvp_deadline_passed: boolean;
   csrf_token?: string;
@@ -512,6 +524,8 @@ export interface CreateEventRequest {
     min_age?: number | null;
     max_age?: number | null;
     community_id?: string | null;
+    youtube_video_id?: string | null;
+    use_tables?: boolean;
   };
   guests: Array<{
     name: string;

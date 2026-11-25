@@ -12,6 +12,7 @@ export interface FeedEvent {
   starts_at: string;
   ends_at: string | null;
   timezone: string;
+  status?: 'scheduled' | 'published' | 'completed' | 'cancelled';
   location: string | null;
   online: boolean;
   cover_url: string | null;

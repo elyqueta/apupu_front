@@ -42,7 +42,7 @@ Pesquisa referências visuais de convites elegantes para refinar; não copies ar
 
 - Migração: `events.latitude numeric(9,6) null`, `events.longitude numeric(9,6) null`, `events.place_label text null`.
 - No modal de endereço do evento: botões **"Usar a minha localização"** (Geolocation API, pede permissão, erro simpático se negada) e **"Escolher no mapa"** (mapa com marcador arrastável; pesquisa por texto opcional).
-- Mapa: usar **Leaflet + OpenStreetMap** (sem chave; única dependência nova autorizada neste bloco, carregada de forma lazy só neste modal; respeitar atribuição OSM e CSP `img-src` para os tiles).  **Decidido pelo autor: Leaflet + OpenStreetMap.** Não uses Google Maps JS.
+- Mapa: **atualizado a pedido do autor (24/11/2026)** para **Google Maps JavaScript API + Geocoding** (chave em `environment.googleMapsApiKey` / env do front; não hardcodar). O seletor abre centrado no ponto já definido; ao confirmar, faz reverse geocoding para preencher `city`/`venue` automaticamente. A decisão anterior (Leaflet + OSM, sem chave) fica substituída por este pedido explícito.
 - No convite: "Abrir no Google Maps" usa `https://www.google.com/maps/search/?api=1&query=<lat>,<lng>` quando há coordenadas, senão o endereço (Bloco 4). "Copiar endereço" mantém-se. Mostrar a nota "Localização exata" quando há coordenadas.
 - Coordenadas só ficam visíveis a quem pode ver o convite; nunca no feed para eventos privados.
 

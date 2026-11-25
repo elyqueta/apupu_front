@@ -57,6 +57,12 @@ export interface HostEvent {
   /** Limites de idade (opcionais); nunca mostrados publicamente. */
   minAge: number | null;
   maxAge: number | null;
+  /** Bloco 14: vídeo (só ID YouTube), localização exata e mesas. */
+  youtubeVideoId: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  placeLabel: string | null;
+  useTables: boolean;
   createdAt: string;
   stats?: EventStats;
 }
@@ -129,6 +135,8 @@ export interface TeamManager extends EventManager {
   event: TeamEventSummary;
 }
 
+export type GuestKind = 'male' | 'female' | 'couple' | 'family';
+
 export interface Guest {
   id: string;
   eventId: string;
@@ -137,6 +145,9 @@ export interface Guest {
   phone: string | null;
   status: RsvpStatus;
   tableName: string | null;
+  guestKind: GuestKind | null;
+  companionName: string | null;
+  partySize: number | null;
   /** URL absoluto para partilhar; `null` quando o convite foi revogado. */
   invitationUrl: string | null;
   /** Primeira abertura do link do convite; `null` se nunca foi aberto. */
@@ -164,6 +175,7 @@ export interface GuestInvitation {
   title: string;
   hostName: string;
   startsAt: string | null;
+  endsAt: string | null;
   timezone: string;
   venue: string;
   city: string;
@@ -173,7 +185,12 @@ export interface GuestInvitation {
   /** Imagem de capa do evento, quando o anfitrião definiu uma. */
   coverUrl: string | null;
   status: RsvpStatus;
+  /** Estado efetivo do evento (Bloco 15). */
+  eventStatus: EventStatus;
   tableName: string | null;
+  guestKind: GuestKind | null;
+  companionName: string | null;
+  partySize: number | null;
   /** Link individual do convite; `null` quando ainda não está disponível. */
   invitationUrl: string | null;
   invitedAt: string;
@@ -190,6 +207,7 @@ export interface EventTemplate {
   themes: Array<{ mode: 'light' | 'dark'; palette: string }>;
   /** Bloco 14: aparência, abertura e PDF. */
   manifest: TemplateManifest;
+  kind?: 'system' | 'user';
 }
 
 export interface EventActivity {
@@ -259,6 +277,9 @@ export interface GuestInput {
   name: string;
   email: string;
   phone: string | null;
+  guestKind?: GuestKind | null;
+  companionName?: string | null;
+  partySize?: number | null;
 }
 
 export interface CreateEventInput {
@@ -289,6 +310,12 @@ export interface CreateEventInput {
   maxAge?: number | null;
   /** Bloco 11: evento da comunidade (`null` = pessoal). */
   communityId?: string | null;
+  /** Bloco 14 */
+  youtubeVideoId?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  placeLabel?: string | null;
+  useTables?: boolean;
 }
 
 export interface AddGuestResult {
@@ -368,6 +395,8 @@ export interface Team {
   creatorId: string | null;
   /** Eventos geridos pela equipa (inclui o principal). */
   eventIds: string[];
+  photoUrl: string | null;
+  photoPublicId: string | null;
   createdAt: string;
   updatedAt: string;
 }

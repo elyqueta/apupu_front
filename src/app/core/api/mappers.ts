@@ -53,6 +53,9 @@ export interface ApiGuestInvitation {
   rsvp_status: ApiRsvpStatus;
   rsvp_responded_at: string | null;
   table_name: string | null;
+  guest_kind?: 'male' | 'female' | 'couple' | 'family' | null;
+  guest_companion_name?: string | null;
+  guest_party_size?: number | null;
   invitation_url: string | null;
   invitation_url_expires_at: string | null;
   created_at: string;
@@ -62,6 +65,7 @@ export interface ApiGuestInvitation {
     | 'title'
     | 'host_name'
     | 'starts_at'
+    | 'ends_at'
     | 'timezone'
     | 'location'
     | 'status'
@@ -131,6 +135,11 @@ export function mapEvent(event: ApiEvent): HostEvent {
     showAttendeeCount: event.show_attendee_count ?? false,
     minAge: event.min_age ?? null,
     maxAge: event.max_age ?? null,
+    youtubeVideoId: event.youtube_video_id ?? null,
+    latitude: event.location.latitude ?? null,
+    longitude: event.location.longitude ?? null,
+    placeLabel: event.location.place_label ?? null,
+    useTables: event.use_tables ?? false,
     createdAt: event.created_at,
     stats: event.stats
       ? {
@@ -159,6 +168,9 @@ export function mapInvitation(invitation: ApiInvitation): Guest {
     phone: invitation.guest_phone,
     status: invitation.rsvp_status === 'accepted' ? 'confirmed' : invitation.rsvp_status,
     tableName: invitation.table_name,
+    guestKind: invitation.guest_kind ?? null,
+    companionName: invitation.guest_companion_name ?? null,
+    partySize: invitation.guest_party_size ?? null,
     invitationUrl: invitation.invitation_url,
     openedAt: invitation.opened_at,
     whatsappSharedAt: invitation.whatsapp_shared_at,
@@ -179,6 +191,7 @@ export function mapGuestInvitation(invitation: ApiGuestInvitation): GuestInvitat
     title: invitation.event.title,
     hostName: invitation.event.host_name,
     startsAt: invitation.event.starts_at,
+    endsAt: invitation.event.ends_at ?? null,
     timezone: invitation.event.timezone,
     venue: location.type === 'venue' ? (location.name ?? '') : '',
     city: location.type === 'venue' ? (location.address ?? '') : '',
@@ -187,7 +200,11 @@ export function mapGuestInvitation(invitation: ApiGuestInvitation): GuestInvitat
     templateId: invitation.event.template_id,
     coverUrl: invitation.event.cover_url,
     status: invitation.rsvp_status === 'accepted' ? 'confirmed' : invitation.rsvp_status,
+    eventStatus: invitation.event.status === 'scheduled' ? 'published' : invitation.event.status,
     tableName: invitation.table_name,
+    guestKind: invitation.guest_kind ?? null,
+    companionName: invitation.guest_companion_name ?? null,
+    partySize: invitation.guest_party_size ?? null,
     invitationUrl: invitation.invitation_url,
     invitedAt: invitation.created_at,
     respondedAt: invitation.rsvp_responded_at,
@@ -281,6 +298,8 @@ export function mapTeam(team: ApiTeam): Team {
     communityId: team.community_id ?? null,
     creatorId: team.creator_id ?? null,
     eventIds: team.event_ids ?? [team.event_id],
+    photoUrl: team.photo_url ?? null,
+    photoPublicId: team.photo_public_id ?? null,
     createdAt: team.created_at,
     updatedAt: team.updated_at,
   };
@@ -358,6 +377,7 @@ export function mapTemplate(template: ApiTemplate): EventTemplate {
     supportedFields: template.supported_fields,
     themes: template.themes,
     manifest: normalizeManifest(template.manifest),
+    kind: template.kind ?? 'user',
   };
 }
 
@@ -385,12 +405,15 @@ export function locationFromInput(input: CreateEventInput): EventLocation {
     type: 'venue',
     name: input.venue,
     address: input.city || null,
+    latitude: input.latitude ?? null,
+    longitude: input.longitude ?? null,
+    place_label: input.placeLabel ?? null,
   };
 }
 
 export function locationFromView(
   current: HostEvent,
-  patch: { venue?: string; city?: string },
+  patch: { venue?: string; city?: string; latitude?: number | null; longitude?: number | null; placeLabel?: string | null },
 ): EventLocation {
   if (current.onlineLink) {
     return { type: 'online', online_url: current.onlineLink };
@@ -399,6 +422,9 @@ export function locationFromView(
     type: 'venue',
     name: patch.venue ?? current.venue,
     address: patch.city ?? current.city,
+    latitude: patch.latitude !== undefined ? patch.latitude : current.latitude,
+    longitude: patch.longitude !== undefined ? patch.longitude : current.longitude,
+    place_label: patch.placeLabel !== undefined ? patch.placeLabel : current.placeLabel,
   };
 }
 

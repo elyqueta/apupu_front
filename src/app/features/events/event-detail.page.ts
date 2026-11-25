@@ -16,6 +16,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DOCUMENT, isPlatformBrowser } from '@angular/common';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
+import { guestPlural } from '../../core/i18n/block15-keys';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { TranslationKey } from '../../core/i18n/translations';
 import { ApiClient } from '../../core/api/api-client';
@@ -79,6 +80,9 @@ import {
   ageRangeError,
   parseAge,
 } from '../../shared/components/event-visibility-fields.component';
+import { MapPickerDialogComponent, MapPickResult, reverseGeocodeGoogle, roundCoord } from '../../shared/components/map-picker-dialog.component';
+import { extractYoutubeId } from '../../core/utils/youtube';
+import { readPreferredLocation, writePreferredLocation, type PreferredLocation } from '../../core/utils/preferred-location';
 import { PublicLinkCardComponent } from '../../shared/components/public-link-card.component';
 import { EventVisibility } from '../../core/models/models';
 
@@ -129,6 +133,7 @@ function isoDaysAgo(days: number): string {
     EventVisibilityFieldsComponent,
     PublicLinkCardComponent,
     DeleteEventDialogComponent,
+    MapPickerDialogComponent,
   ],
   templateUrl: './event-detail.page.html',
 })
@@ -188,6 +193,8 @@ export class EventDetailPage {
   protected readonly credentials = signal<ManagerCreationResult | null>(null);
   protected readonly credentialsOpen = signal(false);
   protected readonly editModalOpen = signal(false);
+  protected readonly mapPickerOpen = signal(false);
+  protected readonly pendingSaveLocation = signal<PreferredLocation | null>(null);
   protected readonly deleteOpen = signal(false);
   protected readonly deleteBusy = signal(false);
   protected readonly deleteError = signal('');
@@ -220,25 +227,29 @@ export class EventDetailPage {
     eventPermissionsFor(this.accessRole()),
   );
 
-  /** Evento cancelado: todas as escritas ficam bloqueadas na interface. */
+  /** Evento cancelado/terminado: escritas bloqueadas na interface. */
   protected readonly eventCancelled = computed(() => this.event()?.status === 'cancelled');
+  protected readonly eventCompleted = computed(() => this.event()?.status === 'completed');
 
   protected readonly effectivePermissions = computed<EventPermissions>(() => {
     const permissions = this.permissions();
-    if (!this.eventCancelled()) return permissions;
-    return {
-      ...permissions,
-      canEditEvent: false,
-      canManageGuests: false,
-      canManageTeams: false,
-      canManageManagers: false,
-      canCancelEvent: false,
-      canChangeEventStatus: false,
-      canEditExistingGuests: false,
-      canDeleteActivity: false,
-      canManageTasks: false,
-      canResendManageLink: false,
-    };
+    if (this.eventCancelled() || this.eventCompleted()) {
+      return {
+        ...permissions,
+        canEditEvent: false,
+        canManageGuests: false,
+        canManageTeams: false,
+        canManageManagers: false,
+        canCancelEvent: false,
+        canChangeEventStatus: false,
+        canEditExistingGuests: false,
+        canDeleteActivity: false,
+        canManageTasks: false,
+        canResendManageLink: false,
+        // Bloco 15: galeria permanece como ponto de extensão futuro.
+      };
+    }
+    return permissions;
   });
 
   protected readonly eventBadges = computed<string[]>(() => {
@@ -455,8 +466,13 @@ export class EventDetailPage {
 
   protected readonly settingsForm = this.fb.group({
     title: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(120)]],
-    venue: ['', [Validators.required, Validators.maxLength(120)]],
-    city: ['', [Validators.required, Validators.maxLength(80)]],
+    venue: ['', [Validators.maxLength(120)]],
+    city: ['', [Validators.maxLength(80)]],
+    youtubeVideoUrl: [''],
+    latitude: this.fb.control<number | null>(null),
+    longitude: this.fb.control<number | null>(null),
+    placeLabel: [''],
+    useTables: [false],
     message: ['', [Validators.required, Validators.maxLength(1200)]],
     rules: ['', [Validators.maxLength(800)]],
     dressCode: ['', [Validators.maxLength(160)]],
@@ -502,6 +518,11 @@ export class EventDetailPage {
         title: event.title,
         venue: event.venue,
         city: event.city,
+        youtubeVideoUrl: event.youtubeVideoId ? `https://www.youtube.com/watch?v=${event.youtubeVideoId}` : '',
+        latitude: event.latitude,
+        longitude: event.longitude,
+        placeLabel: event.placeLabel ?? '',
+        useTables: event.useTables,
         message: event.message,
         rules: event.rules,
         dressCode: event.dressCode,
@@ -512,6 +533,7 @@ export class EventDetailPage {
           maxAge: event.maxAge === null ? '' : String(event.maxAge),
         },
       });
+      this.syncLocationValidators();
     });
     effect(() => {
       const event = this.event();
@@ -1353,18 +1375,116 @@ export class EventDetailPage {
     }
   }
 
+  protected youtubeUrlError(): string {
+    const raw = this.settingsForm.controls.youtubeVideoUrl.value.trim();
+    if (!raw) return '';
+    return extractYoutubeId(raw) ? '' : this.i18n.t('block14.video.invalid');
+  }
+
+  protected hasExactLocation(): boolean {
+    const v = this.settingsForm.getRawValue();
+    return typeof v.latitude === 'number' && typeof v.longitude === 'number';
+  }
+
+  private syncLocationValidators(): void {
+    const hasExact = this.hasExactLocation();
+    const venue = this.settingsForm.controls.venue;
+    const city = this.settingsForm.controls.city;
+    venue.setValidators([Validators.maxLength(120), ...(hasExact ? [] : [Validators.required])]);
+    city.setValidators([Validators.maxLength(80), ...(hasExact ? [] : [Validators.required])]);
+    venue.updateValueAndValidity({ emitEvent: false });
+    city.updateValueAndValidity({ emitEvent: false });
+  }
+
+  private promptSaveLocation(lat: number, lng: number, city?: string, venue?: string): void {
+    const saved = readPreferredLocation();
+    if (saved && saved.latitude === lat && saved.longitude === lng) return;
+    this.pendingSaveLocation.set({
+      latitude: lat,
+      longitude: lng,
+      city: city ?? (this.settingsForm.controls.city.value.trim() || undefined),
+      venue: venue ?? (this.settingsForm.controls.venue.value.trim() || undefined),
+      placeLabel: this.settingsForm.controls.placeLabel.value.trim() || undefined,
+    });
+  }
+
+  protected savePreferredLocation(): void {
+    const pending = this.pendingSaveLocation();
+    if (pending) writePreferredLocation(pending);
+    this.pendingSaveLocation.set(null);
+  }
+
+  protected dismissPreferredLocation(): void {
+    this.pendingSaveLocation.set(null);
+  }
+
+  protected openMapPicker(): void { this.mapPickerOpen.set(true); }
+  protected closeMapPicker(): void { this.mapPickerOpen.set(false); }
+  protected onMapPicked(point: MapPickResult): void {
+    this.settingsForm.controls.latitude.setValue(point.latitude);
+    this.settingsForm.controls.longitude.setValue(point.longitude);
+    if (point.city) this.settingsForm.controls.city.setValue(point.city);
+    if (point.venue) this.settingsForm.controls.venue.setValue(point.venue);
+    this.syncLocationValidators();
+    this.closeMapPicker();
+    this.promptSaveLocation(point.latitude, point.longitude, point.city, point.venue);
+  }
+  protected removeExactLocation(): void {
+    this.settingsForm.controls.latitude.setValue(null);
+    this.settingsForm.controls.longitude.setValue(null);
+    this.settingsForm.controls.placeLabel.setValue('');
+    this.syncLocationValidators();
+  }
+  protected useMyLocation(): void {
+    if (typeof navigator === 'undefined' || !navigator.geolocation) {
+      this.toasts.error(this.i18n.t('block14.location.error'));
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const lat = roundCoord(pos.coords.latitude);
+        const lng = roundCoord(pos.coords.longitude);
+        this.settingsForm.controls.latitude.setValue(lat);
+        this.settingsForm.controls.longitude.setValue(lng);
+        this.syncLocationValidators();
+        this.promptSaveLocation(lat, lng);
+        void reverseGeocodeGoogle(lat, lng).then((address) => {
+          if (address.city) this.settingsForm.controls.city.setValue(address.city);
+          if (address.venue) this.settingsForm.controls.venue.setValue(address.venue);
+          const pending = this.pendingSaveLocation();
+          if (pending && pending.latitude === lat && pending.longitude === lng) {
+            this.pendingSaveLocation.set({
+              ...pending,
+              city: address.city ?? pending.city,
+              venue: address.venue ?? pending.venue,
+            });
+          }
+        });
+      },
+      () => this.toasts.error(this.i18n.t('block14.location.error')),
+      { enableHighAccuracy: true, timeout: 10_000 },
+    );
+  }
+
   protected async saveSettings(): Promise<void> {
     if (this.settingsForm.invalid) {
       this.settingsForm.markAllAsTouched();
       return;
     }
-    const { visibilitySettings, ...fields } = this.settingsForm.getRawValue();
+    const { visibilitySettings, youtubeVideoUrl, ...fields } = this.settingsForm.getRawValue();
+    const ytError = this.youtubeUrlError();
+    if (ytError) {
+      this.settingsForm.controls.youtubeVideoUrl.markAsTouched();
+      this.toasts.error(ytError);
+      return;
+    }
     if (ageRangeError(visibilitySettings.minAge, visibilitySettings.maxAge)) {
       return;
     }
     try {
       await this.store.updateEvent(this.eventId(), {
         ...fields,
+        youtubeVideoId: extractYoutubeId(youtubeVideoUrl) ?? null,
         visibility: visibilitySettings.visibility,
         showAttendeeCount:
           visibilitySettings.visibility === 'public' && visibilitySettings.showAttendeeCount,
@@ -1404,9 +1524,10 @@ export class EventDetailPage {
    * revogado a API devolve `null` e a mensagem segue sem link.
    */
   protected forwardWhatsApp(guest: Guest): void {
+    const plural = guestPlural(guest.guestKind);
     const key = guest.invitationUrl
-      ? 'guests.whatsappMessageWithLink'
-      : 'guests.whatsappMessage';
+      ? plural ? 'block15.guests.whatsappMessageWithLinkPlural' : 'guests.whatsappMessageWithLink'
+      : plural ? 'block15.guests.whatsappMessagePlural' : 'guests.whatsappMessage';
     const text = this.i18n.t(key, {
       name: guest.name,
       event: this.event()?.title ?? '',

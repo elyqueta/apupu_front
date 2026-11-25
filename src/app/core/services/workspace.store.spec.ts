@@ -143,7 +143,14 @@ describe('WorkspaceStore · guest creation', () => {
     expect(request.request.headers.get('X-CSRF-Token')).toBe('account-token');
     expect(request.request.headers.has('Authorization')).toBe(false);
     expect(request.request.withCredentials).toBe(true);
-    expect(request.request.body).toEqual({ name: 'Rui', email: 'rui@exemplo.pt', phone: null });
+    expect(request.request.body).toEqual({
+      name: 'Rui',
+      email: 'rui@exemplo.pt',
+      phone: null,
+      guest_kind: null,
+      companion_name: null,
+      party_size: null,
+    });
     request.flush({ data: invitationFixture() });
 
     const result = await promise;
@@ -173,6 +180,9 @@ describe('WorkspaceStore · guest creation', () => {
       name: 'Rui Silva',
       email: 'rui@exemplo.pt',
       phone: '+244900000000',
+      guest_kind: null,
+      companion_name: null,
+      party_size: null,
     });
     request.flush({
       data: invitationFixture({

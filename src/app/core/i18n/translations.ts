@@ -9,6 +9,7 @@ import { BLOCK11_KEYS_EN, BLOCK11_KEYS_PT } from './block11-keys';
 import { BLOCK12_KEYS_EN, BLOCK12_KEYS_PT } from './block12-keys';
 import { BLOCK13_KEYS_EN, BLOCK13_KEYS_PT } from './block13-keys';
 import { BLOCK14_KEYS_EN, BLOCK14_KEYS_PT } from './block14-keys';
+import { BLOCK15_KEYS_EN, BLOCK15_KEYS_PT } from './block15-keys';
 
 const PT_AO = {
   ...BLOCK5_KEYS_PT,
@@ -21,6 +22,7 @@ const PT_AO = {
   ...BLOCK12_KEYS_PT,
   ...BLOCK13_KEYS_PT,
   ...BLOCK14_KEYS_PT,
+  ...BLOCK15_KEYS_PT,
 
   'app.name': 'Conto Contigo',
   'app.tagline': 'Eventos & convites',
@@ -96,6 +98,7 @@ const PT_AO = {
   'common.results': 'resultados',
   'common.noResults': 'Nada por aqui',
   'common.copyError': 'Não foi possível copiar automaticamente.',
+  'common.error': 'Ocorreu um erro. Tente de novo.',
   'common.shareError': 'A partilha não está disponível neste dispositivo.',
   'common.more': 'mais',
   'common.moreActions': 'Mais ações',
@@ -158,6 +161,9 @@ const PT_AO = {
   'dashboard.tasksHint': 'Pequenos passos até ao grande dia.',
   'dashboard.tasksDone': '{done} de {total} concluídas',
   'dashboard.tasksEmpty': 'Tudo tratado. Respira e aproveita.',
+  'dashboard.tasksEmptyTitle': 'Ainda sem tarefas',
+  'dashboard.tasksEmptyText': 'Cria a tua checklist para organizar os próximos passos do evento.',
+  'dashboard.tasksEmptyAction': 'Criar tarefa',
   'dashboard.activityTitle': 'Atividade recente',
   'dashboard.activityHint': 'O que aconteceu enquanto preparavas o próximo evento.',
   'dashboard.activityEmpty': 'Ainda não há atividade.',
@@ -189,7 +195,8 @@ const PT_AO = {
   'status.draft': 'Rascunho',
   'status.published': 'Publicado',
   'status.scheduled': 'Agendado',
-  'status.completed': 'Concluído',
+  'status.active': 'Ativo',
+  'status.completed': 'Terminado',
   'status.cancelled': 'Cancelado',
 
   'statusHint.pending': 'Ainda não respondeu',
@@ -197,7 +204,7 @@ const PT_AO = {
   'statusHint.declined': 'Não poderá comparecer',
   'statusHint.draft': 'Ainda não publicado',
   'statusHint.published': 'Convites a decorrer',
-  'statusHint.completed': 'Evento concluído',
+  'statusHint.completed': 'Evento terminado',
   'statusHint.cancelled': 'Evento cancelado',
 
   'events.eyebrow': 'Portefólio',
@@ -207,7 +214,7 @@ const PT_AO = {
   'events.filter.all': 'Todos',
   'events.filter.published': 'Publicados',
   'events.filter.draft': 'Rascunhos',
-  'events.filter.completed': 'Concluídos',
+  'events.filter.completed': 'Terminados',
   'events.empty': 'Ainda não há eventos neste filtro',
   'events.emptyHint': 'Cria um evento para começares a reunir a tua lista de convidados.',
   'events.stat.active': 'Eventos ativos',
@@ -1529,6 +1536,7 @@ const EN: Record<TranslationKey, string> = {
   ...BLOCK12_KEYS_EN,
   ...BLOCK13_KEYS_EN,
   ...BLOCK14_KEYS_EN,
+  ...BLOCK15_KEYS_EN,
 
   'app.name': 'Conto Contigo',
   'app.tagline': 'Events & invitations',
@@ -1604,6 +1612,7 @@ const EN: Record<TranslationKey, string> = {
   'common.results': 'results',
   'common.noResults': 'Nothing here',
   'common.copyError': 'Could not copy automatically.',
+  'common.error': 'Something went wrong. Please try again.',
   'common.shareError': 'Sharing is not available on this device.',
   'common.more': 'more',
   'common.moreActions': 'More actions',
@@ -1667,6 +1676,9 @@ const EN: Record<TranslationKey, string> = {
   'dashboard.tasksHint': 'Small steps to the big day.',
   'dashboard.tasksDone': '{done} of {total} done',
   'dashboard.tasksEmpty': 'All done. Breathe and enjoy.',
+  'dashboard.tasksEmptyTitle': 'No tasks yet',
+  'dashboard.tasksEmptyText': 'Create your checklist to organize the next steps for your event.',
+  'dashboard.tasksEmptyAction': 'Create task',
   'dashboard.activityTitle': 'Recent activity',
   'dashboard.activityHint': 'What happened while you prepared the next event.',
   'dashboard.activityEmpty': 'No activity yet.',
@@ -1698,7 +1710,8 @@ const EN: Record<TranslationKey, string> = {
   'status.draft': 'Draft',
   'status.published': 'Published',
   'status.scheduled': 'Scheduled',
-  'status.completed': 'Completed',
+  'status.active': 'Active',
+  'status.completed': 'Finished',
   'status.cancelled': 'Cancelled',
 
   'statusHint.pending': 'Has not replied yet',
@@ -1706,7 +1719,7 @@ const EN: Record<TranslationKey, string> = {
   'statusHint.declined': 'Cannot attend',
   'statusHint.draft': 'Not published yet',
   'statusHint.published': 'Invitations live',
-  'statusHint.completed': 'Event completed',
+  'statusHint.completed': 'Event finished',
   'statusHint.cancelled': 'Event cancelled',
 
   'events.eyebrow': 'Portfolio',
@@ -1716,7 +1729,7 @@ const EN: Record<TranslationKey, string> = {
   'events.filter.all': 'All',
   'events.filter.published': 'Published',
   'events.filter.draft': 'Drafts',
-  'events.filter.completed': 'Completed',
+  'events.filter.completed': 'Finished',
   'events.empty': 'No events in this filter yet',
   'events.emptyHint': 'Create an event to start building your guest list.',
   'events.stat.active': 'Active events',

@@ -146,6 +146,23 @@ export class TeamsRepository {
     return mapTeam(team);
   }
 
+  async uploadPhoto(teamId: string, file: File): Promise<Team> {
+    const form = new FormData();
+    form.append('photo', file);
+    const team = await this.api.postForm<ApiTeam>(
+      `/host/teams/${encodeURIComponent(teamId)}/photo`,
+      form,
+    );
+    return mapTeam(team);
+  }
+
+  async removePhoto(teamId: string): Promise<Team> {
+    const team = await this.api.deleteWithData<ApiTeam>(
+      `/host/teams/${encodeURIComponent(teamId)}/photo`,
+    );
+    return mapTeam(team);
+  }
+
   async remove(teamId: string, options: DeleteTeamOptions = {}): Promise<DeleteTeamResult> {
     const result = await this.api.deleteWithData<ApiDeleteTeamResult>(
       `/host/teams/${encodeURIComponent(teamId)}`,

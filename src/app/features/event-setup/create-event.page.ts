@@ -32,6 +32,11 @@ import {
   parseAge,
 } from '../../shared/components/event-visibility-fields.component';
 import { EventVisibility } from '../../core/models/models';
+import { extractYoutubeId } from '../../core/utils/youtube';
+import { readPreferredLocation, writePreferredLocation, type PreferredLocation } from '../../core/utils/preferred-location';
+import { MapPickerDialogComponent, MapPickResult, reverseGeocodeGoogle, roundCoord } from '../../shared/components/map-picker-dialog.component';
+import { ModalComponent } from '../../shared/components/modal.component';
+import { EventDraftsRepository } from '../../core/data/event-drafts.repository';
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const COVER_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
@@ -52,6 +57,8 @@ interface WizardStep {
     TemplatePreviewComponent,
     PhoneMaskDirective,
     EventVisibilityFieldsComponent,
+    MapPickerDialogComponent,
+    ModalComponent,
   ],
   templateUrl: './create-event.page.html',
 })
@@ -77,6 +84,18 @@ export class CreateEventPage {
   protected readonly created = signal<HostEvent | null>(null);
   protected readonly coverFile = signal<File | null>(null);
   private readonly coverObjectUrl = signal<string | null>(null);
+
+  // Bloco 14 — localização exata e rascunhos
+  protected readonly mapPickerOpen = signal(false);
+  protected readonly pendingSaveLocation = signal<PreferredLocation | null>(null);
+  protected readonly draftId = signal<string | null>(null);
+  protected readonly draftSaving = signal(false);
+  protected readonly draftSavedAt = signal<string | null>(null);
+  protected readonly draftError = signal(false);
+  private draftTimer: ReturnType<typeof setTimeout> | null = null;
+  private draftSavingNow = false;
+  private draftLoading = false;
+  private readonly drafts = inject(EventDraftsRepository);
 
   protected readonly steps: WizardStep[] = [
     { id: 0, labelKey: 'create.step.event', icon: 'calendarPlus' },
@@ -106,9 +125,14 @@ export class CreateEventPage {
     time: ['18:00', Validators.required],
     endsAt: [''],
     timezone: ['Africa/Luanda', Validators.required],
-    venue: ['', [Validators.required, Validators.maxLength(120)]],
-    city: ['Luanda', [Validators.required, Validators.maxLength(80)]],
+    venue: ['', [Validators.maxLength(120)]],
+    city: ['Luanda', [Validators.maxLength(80)]],
     onlineLink: [''],
+    youtubeVideoUrl: [''],
+    latitude: this.fb.control<number | null>(null),
+    longitude: this.fb.control<number | null>(null),
+    placeLabel: [''],
+    useTables: [false],
     message: ['', [Validators.required, Validators.maxLength(1200)]],
     rules: ['', Validators.maxLength(800)],
     dressCode: ['', Validators.maxLength(160)],
@@ -201,6 +225,7 @@ export class CreateEventPage {
   protected readonly canSubmit = computed(() => this.contributionReady() && this.guestCount() >= 0);
 
   constructor() {
+    this.syncLocationValidators();
     void this.loadCommunities();
     this.store.load({ templates: true, profile: true });
     // Se os modelos chegarem depois de o formulário ser criado, aplica o
@@ -211,7 +236,23 @@ export class CreateEventPage {
         this.form.controls.templateId.setValue(templates[0].id);
       }
     });
-    this.destroyRef.onDestroy(() => this.revokeCoverObjectUrl());
+    const draftParam = this.route.snapshot.queryParamMap.get('draft');
+    if (draftParam) {
+      this.draftLoading = true;
+      void this.loadDraft(draftParam).finally(() => {
+        this.draftLoading = false;
+      });
+    }
+    this.form.valueChanges.subscribe(() => {
+      if (!this.draftLoading) this.scheduleDraftSave();
+    });
+    this.destroyRef.onDestroy(() => {
+      this.revokeCoverObjectUrl();
+      if (this.draftTimer) clearTimeout(this.draftTimer);
+      if (this.draftId() && !this.created() && this.draftSavedAt()) {
+        this.toasts.success(this.i18n.t('block14.drafts.saved'));
+      }
+    });
   }
 
   protected guestGroup() {
@@ -358,6 +399,7 @@ export class CreateEventPage {
     }
     this.formError.set('');
     this.step.update((current) => Math.min(3, current + 1));
+    void this.saveDraft();
   }
 
   protected previous(): void {
@@ -383,6 +425,11 @@ export class CreateEventPage {
           this.toasts.error(this.i18n.t('create.coverUploadFailed'));
         }
         this.setCoverFile(null);
+      }
+      const draftId = this.draftId();
+      if (draftId) {
+        this.draftId.set(null);
+        void this.drafts.remove(draftId).catch(() => undefined);
       }
       this.created.set(this.store.eventById(event.id) ?? event);
     } catch (error: unknown) {
@@ -500,7 +547,11 @@ export class CreateEventPage {
 
     if (step === 1) {
       this.form.controls.message.markAsTouched();
+      this.form.controls.youtubeVideoUrl.markAsTouched();
       if (this.form.controls.message.invalid) {
+        return false;
+      }
+      if (this.youtubeUrlError()) {
         return false;
       }
       if (this.form.controls.contributionEnabled.value && !this.contributionReady()) {
@@ -546,6 +597,181 @@ export class CreateEventPage {
     return true;
   }
 
+  protected youtubeUrlError(): string {
+    const raw = this.form.controls.youtubeVideoUrl.value.trim();
+    if (!raw) return '';
+    return extractYoutubeId(raw) ? '' : this.i18n.t('block14.video.invalid');
+  }
+
+  protected resolvedYoutubeId(): string | null {
+    return extractYoutubeId(this.form.controls.youtubeVideoUrl.value);
+  }
+
+  protected hasExactLocation(): boolean {
+    const v = this.form.getRawValue();
+    return typeof v.latitude === 'number' && typeof v.longitude === 'number';
+  }
+
+  private syncLocationValidators(): void {
+    const hasExact = this.hasExactLocation();
+    const venue = this.form.controls.venue;
+    const city = this.form.controls.city;
+    const venueValidators = [Validators.maxLength(120), ...(hasExact ? [] : [Validators.required])];
+    const cityValidators = [Validators.maxLength(80), ...(hasExact ? [] : [Validators.required])];
+    venue.setValidators(venueValidators);
+    city.setValidators(cityValidators);
+    venue.updateValueAndValidity({ emitEvent: false });
+    city.updateValueAndValidity({ emitEvent: false });
+  }
+
+  private promptSaveLocation(lat: number, lng: number, city?: string, venue?: string): void {
+    const saved = readPreferredLocation();
+    if (saved && saved.latitude === lat && saved.longitude === lng) return;
+    this.pendingSaveLocation.set({
+      latitude: lat,
+      longitude: lng,
+      city: city ?? (this.form.controls.city.value.trim() || undefined),
+      venue: venue ?? (this.form.controls.venue.value.trim() || undefined),
+      placeLabel: this.form.controls.placeLabel.value.trim() || undefined,
+    });
+  }
+
+  protected savePreferredLocation(): void {
+    const pending = this.pendingSaveLocation();
+    if (pending) writePreferredLocation(pending);
+    this.pendingSaveLocation.set(null);
+  }
+
+  protected dismissPreferredLocation(): void {
+    this.pendingSaveLocation.set(null);
+  }
+
+  protected openMapPicker(): void {
+    this.mapPickerOpen.set(true);
+  }
+
+  protected closeMapPicker(): void {
+    this.mapPickerOpen.set(false);
+  }
+
+  protected onMapPicked(point: MapPickResult): void {
+    this.form.controls.latitude.setValue(point.latitude);
+    this.form.controls.longitude.setValue(point.longitude);
+    this.form.controls.latitude.markAsDirty();
+    this.form.controls.longitude.markAsDirty();
+    if (point.city) this.form.controls.city.setValue(point.city);
+    if (point.venue) this.form.controls.venue.setValue(point.venue);
+    this.syncLocationValidators();
+    this.closeMapPicker();
+    this.scheduleDraftSave();
+    this.promptSaveLocation(point.latitude, point.longitude, point.city, point.venue);
+  }
+
+  protected removeExactLocation(): void {
+    this.form.controls.latitude.setValue(null);
+    this.form.controls.longitude.setValue(null);
+    this.form.controls.placeLabel.setValue('');
+    this.syncLocationValidators();
+    this.scheduleDraftSave();
+  }
+
+  protected useMyLocation(): void {
+    if (typeof navigator === 'undefined' || !navigator.geolocation) {
+      this.toasts.error(this.i18n.t('block14.location.error'));
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const lat = roundCoord(pos.coords.latitude);
+        const lng = roundCoord(pos.coords.longitude);
+        this.form.controls.latitude.setValue(lat);
+        this.form.controls.longitude.setValue(lng);
+        this.syncLocationValidators();
+        this.scheduleDraftSave();
+        this.promptSaveLocation(lat, lng);
+        void reverseGeocodeGoogle(lat, lng).then((address) => {
+          if (address.city) this.form.controls.city.setValue(address.city);
+          if (address.venue) this.form.controls.venue.setValue(address.venue);
+          if (address.city || address.venue) this.scheduleDraftSave();
+          const pending = this.pendingSaveLocation();
+          if (pending && pending.latitude === lat && pending.longitude === lng) {
+            this.pendingSaveLocation.set({
+              ...pending,
+              city: address.city ?? pending.city,
+              venue: address.venue ?? pending.venue,
+            });
+          }
+        });
+      },
+      () => this.toasts.error(this.i18n.t('block14.location.error')),
+      { enableHighAccuracy: true, timeout: 10_000 },
+    );
+  }
+
+  private scheduleDraftSave(): void {
+    if (this.created()) return;
+    if (this.draftTimer) clearTimeout(this.draftTimer);
+    this.draftTimer = setTimeout(() => void this.saveDraft(), 2000);
+  }
+
+  private async saveDraft(): Promise<void> {
+    if (this.created() || this.draftSavingNow) return;
+    this.draftSavingNow = true;
+    this.draftSaving.set(true);
+    this.draftError.set(false);
+    try {
+      const payload = this.buildDraftPayload();
+      const title = this.form.controls.title.value.trim() || null;
+      const id = this.draftId();
+      const saved = id
+        ? await this.drafts.update(id, { title, step: this.step(), payload })
+        : await this.drafts.create({ title, step: this.step(), payload });
+      this.draftId.set(saved.id);
+      this.draftSavedAt.set(saved.updatedAt);
+    } catch {
+      this.draftError.set(true);
+    } finally {
+      this.draftSavingNow = false;
+      this.draftSaving.set(false);
+    }
+  }
+
+  private buildDraftPayload(): Record<string, unknown> {
+    const raw = this.form.getRawValue();
+    // Não guardar ficheiro de capa local no rascunho (só URL).
+    return { ...raw, coverFile: null };
+  }
+
+  private async loadDraft(id: string): Promise<void> {
+    try {
+      const draft = await this.drafts.get(id);
+      const payload = (draft.payload ?? {}) as Record<string, unknown>;
+      this.form.patchValue(this.sanitizeDraftPayload(payload), { emitEvent: false });
+      const step = typeof draft.step === 'number' ? Math.max(0, Math.min(3, draft.step)) : 0;
+      this.step.set(step);
+      this.syncLocationValidators();
+      this.draftId.set(draft.id);
+      this.draftSavedAt.set(draft.updatedAt);
+    } catch {
+      this.toasts.error(this.i18n.t('block14.drafts.saveError'));
+    }
+  }
+
+  private sanitizeDraftPayload(payload: Record<string, unknown>): Record<string, unknown> {
+    // Only allow known keys; avoid injecting unexpected shapes.
+    const allowed = new Set([
+      'title','type','hostName','hostEmail','date','time','endsAt','timezone','venue','city','onlineLink',
+      'youtubeVideoUrl','latitude','longitude','placeLabel','useTables','message','rules','dressCode',
+      'rsvpDeadline','templateId','coverUrl','contributionEnabled','bankName','accountName','iban',
+      'visibilitySettings','guests',
+    ]);
+    const out: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(payload)) {
+      if (allowed.has(k)) out[k] = v;
+    }
+    return out;
+  }
+
   private buildInput(): CreateEventInput {
     const value = this.form.getRawValue();
     const guests: GuestInput[] = value.guests
@@ -564,6 +790,8 @@ export class CreateEventPage {
         }
       : null;
 
+    const online = value.onlineLink.trim() || null;
+    const youtubeVideoId = this.resolvedYoutubeId();
     return {
       title: value.title.trim(),
       type: value.type,
@@ -574,7 +802,7 @@ export class CreateEventPage {
       timezone: value.timezone,
       venue: value.venue.trim(),
       city: value.city.trim(),
-      onlineLink: value.onlineLink.trim() || null,
+      onlineLink: online,
       message: value.message.trim(),
       rules: value.rules.trim(),
       dressCode: value.dressCode.trim(),
@@ -593,6 +821,11 @@ export class CreateEventPage {
       minAge: parseAge(value.visibilitySettings.minAge),
       maxAge: parseAge(value.visibilitySettings.maxAge),
       communityId: this.communityId() || null,
+      youtubeVideoId,
+      latitude: online ? null : value.latitude,
+      longitude: online ? null : value.longitude,
+      placeLabel: online ? null : (value.placeLabel.trim() || null),
+      useTables: value.useTables,
     };
   }
 

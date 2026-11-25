@@ -3,4 +3,6 @@ export const environment = {
   apiBaseUrl: '/api/v1',
   /** OAuth passa pelo rewrite do Vercel: mesma origem, cookie HttpOnly. */
   oauthBaseUrl: '',
+  /** Google Maps Platform (Maps JavaScript API + Geocoding API). */
+  googleMapsApiKey: 'AIzaSyCemWsnwPtBQuJQEVVynOeFRxD_hzlG7Nc',
 };

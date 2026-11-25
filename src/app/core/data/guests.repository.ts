@@ -80,7 +80,14 @@ export class GuestsRepository extends CachedRepository<Guest[]> {
   async add(eventId: string, input: GuestInput): Promise<AddGuestResult> {
     const response = await this.api.post<ApiInvitation>(
       `/host/events/${encodeURIComponent(eventId)}/invitations`,
-      { name: input.name, email: input.email, phone: input.phone },
+      {
+        name: input.name,
+        email: input.email,
+        phone: input.phone,
+        guest_kind: input.guestKind ?? null,
+        companion_name: input.companionName ?? null,
+        party_size: input.partySize ?? null,
+      },
     );
     const guest = mapInvitation(response);
     this.mutate((guests) => [guest, ...(guests ?? [])]);
@@ -96,7 +103,14 @@ export class GuestsRepository extends CachedRepository<Guest[]> {
   async update(guest: Guest, input: GuestInput): Promise<Guest> {
     const response = await this.api.patch<ApiInvitation>(
       `/host/events/${encodeURIComponent(guest.eventId)}/invitations/${encodeURIComponent(guest.id)}`,
-      { name: input.name, email: input.email, phone: input.phone },
+      {
+        name: input.name,
+        email: input.email,
+        phone: input.phone,
+        guest_kind: input.guestKind ?? null,
+        companion_name: input.companionName ?? null,
+        party_size: input.partySize ?? null,
+      },
     );
     const updated = mapInvitation(response);
     this.mutate((guests) =>

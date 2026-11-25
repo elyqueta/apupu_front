@@ -11,6 +11,7 @@ import { ToastService } from '../../core/services/toast.service';
 import { WorkspaceStore } from '../../core/services/workspace.store';
 import { ICONS } from '../../core/ui/icons';
 import { AvatarComponent } from '../../shared/components/avatar.component';
+import { LogoComponent } from '../../shared/components/logo.component';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
 import { ProfileEditDialogComponent } from './profile-edit-dialog.component';
 
@@ -31,6 +32,7 @@ interface Metric {
     RouterLink,
     FaIconComponent,
     AvatarComponent,
+    LogoComponent,
     StatusBadgeComponent,
     ProfileEditDialogComponent,
   ],

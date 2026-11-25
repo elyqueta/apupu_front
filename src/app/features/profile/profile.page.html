@@ -238,8 +238,11 @@
           }
         </div>
       } @else {
-        <div class="mt-4 min-w-0 flex-1 overflow-x-auto">
-          <table class="w-full min-w-full border-collapse text-left text-sm">
+        <div class="relative mt-4 min-w-0 flex-1 overflow-x-auto">
+          <div class="pointer-events-none absolute bottom-2 right-2 select-none opacity-[0.06] sm:bottom-4 sm:right-4" aria-hidden="true">
+            <app-logo variant="symbol" [height]="112" theme="default" />
+          </div>
+          <table class="relative z-[1] w-full min-w-full border-collapse text-left text-sm">
             <thead>
               <tr class="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
                 <th class="pb-3 pr-3 font-semibold">{{ i18n.t('profile.table.name') }}</th>

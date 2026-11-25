@@ -307,3 +307,14 @@ Mapeamento feito antes de alterar código. O frontend parte de `feat/bloco-3-det
 | QR do convite. | PDF: QR estilizado com cartão arredondado, borda fina na cor do template, logótipo central, correção H, legenda e módulos arredondados (SVG). Destino respeita `manifest.pdf.qr_destination/qr_custom_url/qr_label`. Digital Gratitude: QR por imagem gerada via `api.qrserver.com` (sem nova dependência), respeitando label/destino custom ou URL atual. | Passo 1.3 mínimo; sem dependências novas. |
 | Gratitude template. | Template de sistema inserido por migração `1739900000034_bloco15_gratitude.js` com `kind=system`, manifesto próprio e `supported_fields` incluindo `dress_code`. Digital: componente dedicado `GratitudeInvitationComponent`. PDF: ramo dedicado em `invitationDocument.ts`. Passo 2 deve unificar num TemplateRenderer único. | Passo 1.1 urgente; fidelidade razoável ao flyer descrito em texto. |
 | `event_templates.kind`. | Coluna `kind` (`system|user`, default `user`) adicionada na migração do Gratitude; DTO/API/front expõem `kind`. | Necessário para distinguir templates oficiais de utilizador no Bloco 15. |
+
+## Gratitude editor/PDF defects (25/11/2026)
+
+| Dúvida | Escolha | Motivo |
+|---|---|---|
+| QR overflow em todos os templates | `drawQrWithLogo` força SVG com `width/height` explícitos e `assumePt`; QR padrão usa `resolveQrConfig` com tamanho limitado (`md/lg`, cap por largura). | Corrige QR gigante/transbordo no PDF. |
+| QR digital Gratitude | Substituído `api.qrserver.com` por gerador SVG local vendored (`qr-svg.util.ts`, baseado em qrcode-generator MIT) sem nova dependência npm. | Cumpre "QR escalável SVG vector", sem dependência externa em runtime. |
+| Logo/QR config | Campos adicionados a `manifest.pdf` (front+back schema): `logo_url/public_id/shape/size`, `qr_mode/whatsapp/custom/image/icon/size/label`. Editor guarda overrides em draft localStorage. | Permite edição no editor e render no digital/PDF. |
+| Upload de logo/QR no editor | Validação client-side (tipo/tamanho) e data URL no draft para preview; `public_id` fica `undefined` até endpoint Cloudinary dedicado existir. | Preview funcional; persistência Cloudinary com cleanup de asset fica como lacuna a fechar. |
+| LOGO placeholder | Removido do convite público/PDF; Gratitude mostra botão tracejado "Adicionar logótipo" apenas em `editorMode`. | Spec: sem "LOGO" no público/PDF. |
+| Artefacto | `docs/assets/gratitude-pdf-render.png` gerado por `renderInvitationPdf` + `pdftoppm`; `pdftotext` sem "LOGO". | Evidência mínima; validação visual completa Playwright/pdffonts ainda pendente. |

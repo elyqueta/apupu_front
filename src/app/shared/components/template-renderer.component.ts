@@ -30,7 +30,7 @@ export interface TemplateRenderData {
   template: `
     @if (isGratitude()) {
       <div class="relative">
-        <app-gratitude-invitation [event]="gratitudeEvent()" [manifest]="manifest()" />
+        <app-gratitude-invitation [event]="gratitudeEvent()" [manifest]="manifest()" [editorMode]="editable()" />
         @if (editable()) {
           <button
             type="button"

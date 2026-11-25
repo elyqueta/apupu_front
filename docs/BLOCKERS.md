@@ -87,3 +87,13 @@
 | Passo 1.1 — Fidelidade visual Gratitude | O flyer de referência foi descrito em texto (agente não vê imagens). A implementação usa SVG/CSS próprio com os elementos descritos. | Validar visualmente com o autor; ajustar no Passo 2 quando o TemplateRenderer único existir. |
 | Verificação — migração up/down em DB de teste | Não executei `migration up/down` numa DB de teste dedicada neste ambiente (requer DB de teste configurada e pode ser destrutivo). | Build/typecheck/testes passaram; migração é reversível por código (`down` remove Gratitude/kind). Confirmar em CI/DB de teste antes de merge. |
 | Verificação — lint/testes completos | Lint e suite completa de testes do front/back ainda por executar no fecho do Passo 1. | Executar antes de declarar Passo 1 verde; corrigir falhas reais. |
+
+## Gratitude editor/PDF (25/11/2026)
+
+| Passo / área | Observação | Estado / decisão |
+|---|---|---|
+| Logo/QR upload Cloudinary | Editor aceita upload e guarda data URL no draft; não existe endpoint dedicado para upload de asset de template com `public_id` e cleanup no replace/remove. | Implementar endpoint host/template asset seguindo padrão `teamPhoto.service`/Cloudinary, guardar `public_id` e destruir asset anterior sem bloquear operação principal. |
+| QR configurável em templates não-Gratitude (digital) | PDF padrão usa `resolveQrConfig`; renderer digital genérico ainda mostra placeholder de bloco QR, não QR real configurado. | Estender `TemplateRendererComponent`/blocos digitais no Passo 2. |
+| Testes exigidos pela spec | `e2e/gratitude.spec.ts` atualizado como fixture estática; não executados testes Playwright completos contra app, `pdffonts` embed check, nem `zbarimg`. | Executar em ambiente com deps Playwright/browser; registar resultados. |
+| Migrações em DB de teste | `1739900000034/0035/0036` up/down em DB de teste dedicada não executadas neste ambiente. | Validar antes de merge. |
+| Lint global | `npm run lint` tem erros preexistentes fora dos ficheiros alterados; ficheiros alterados nesta sessão sem erros de lint. | Não ampliar escopo; registar estado real. |

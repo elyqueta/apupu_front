@@ -300,7 +300,20 @@
       </div>
 
       @if (tasks().length === 0) {
-        <p class="mt-6 text-sm text-muted">{{ i18n.t('dashboard.tasksEmpty') }}</p>
+        <div class="mt-6 flex flex-col items-center justify-center rounded-3xl border border-dashed border-line bg-surface-raised/30 px-4 py-8 text-center">
+          <span class="grid size-12 place-items-center rounded-2xl border border-brand/25 bg-brand/12 text-brand-strong">
+            <fa-icon [icon]="icons['checklist']" class="text-lg" aria-hidden="true" />
+          </span>
+          <h3 class="mt-4 text-sm font-semibold text-ink">{{ i18n.t('dashboard.tasksEmptyTitle') }}</h3>
+          <p class="mt-1 max-w-xs text-xs leading-5 text-muted">{{ i18n.t('dashboard.tasksEmptyText') }}</p>
+          <a
+            routerLink="/tarefas"
+            class="mt-4 inline-flex h-10 items-center gap-2 rounded-xl bg-brand px-4 text-xs font-semibold text-on-secondary transition hover:bg-secondary-hover"
+          >
+            <fa-icon [icon]="icons['plus']" class="text-[10px]" aria-hidden="true" />
+            {{ i18n.t('dashboard.tasksEmptyAction') }}
+          </a>
+        </div>
       } @else {
         <ul class="mt-4 flex flex-col gap-1">
           @for (task of tasks(); track task.id) {

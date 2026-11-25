@@ -116,7 +116,7 @@ const PRIMARY_ACTION_CLASS = 'inline-flex h-11 items-center gap-2 rounded-2xl bg
               </button>
               @if (exportOpen()) {
                 <button type="button" class="fixed inset-0 z-20 cursor-default" [attr.aria-label]="i18n.t('common.close')" (click)="closeExport()"></button>
-                <div role="menu" class="absolute right-0 z-30 mt-2 w-[min(22rem,calc(100vw-2rem))] rounded-2xl border border-line bg-surface p-3 shadow-card">
+                <div role="menu" class="fixed left-3 right-3 top-1/2 z-30 max-h-[min(80dvh,32rem)] -translate-y-1/2 overflow-y-auto rounded-2xl border border-line bg-surface p-3 shadow-card sm:absolute sm:inset-auto sm:right-0 sm:top-full sm:mt-2 sm:max-h-none sm:w-[min(22rem,calc(100vw-2rem))] sm:translate-y-0">
                   <p class="text-xs font-semibold uppercase tracking-wider text-brand">{{ i18n.t('eventDetail.exportPeriodLabel') }}</p>
                   <p class="mt-1 text-xs text-muted">{{ i18n.t('eventDetail.exportPeriodHint') }}</p>
                   <div class="mt-3 grid grid-cols-2 gap-2">

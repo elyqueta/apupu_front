@@ -247,7 +247,7 @@ interface GratitudeFields {
           <!-- Linha de destaque (ano) -->
           <text
             x="512"
-            y="678"
+            [attr.y]="highlightY()"
             text-anchor="middle"
             font-size="90"
             font-family="'Cormorant Garamond', Georgia, serif"
@@ -262,7 +262,7 @@ interface GratitudeFields {
             <!-- separadores dourados -->
             <line x1="276" y1="846" x2="276" y2="936" stroke="#D4A017" stroke-width="2" />
             <line x1="430" y1="846" x2="430" y2="936" stroke="#D4A017" stroke-width="2" />
-            <line x1="730" y1="846" x2="730" y2="936" stroke="#D4A017" stroke-width="2" />
+            <line x1="748" y1="846" x2="748" y2="936" stroke="#D4A017" stroke-width="2" />
 
             <!-- Data -->
             <g transform="translate(72,872)">
@@ -281,19 +281,19 @@ interface GratitudeFields {
             </g>
 
             <!-- Local -->
-            <g transform="translate(468,862)">
+            <g transform="translate(462,862)">
               <path d="M22 0 C10 0 0 10 0 22 C0 40 22 62 22 62 C22 62 44 40 44 22 C44 10 34 0 22 0 Z" fill="none" stroke="#111111" stroke-width="3" />
               <circle cx="22" cy="22" r="8" fill="none" stroke="#111111" stroke-width="3" />
-              <text x="56" y="18" font-size="20" font-weight="700" fill="#111111">LOCAL:</text>
+              <text x="56" y="18" font-size="18" font-weight="700" fill="#111111">LOCAL:</text>
               @for (line of locationLines(); track line + '-' + $index) {
-                <text x="56" [attr.y]="42 + $index * 28" font-size="27" font-weight="700" fill="#111111">{{ line }}</text>
+                <text x="56" [attr.y]="40 + $index * 24" font-size="24" font-weight="700" fill="#111111">{{ line }}</text>
               }
             </g>
 
             <!-- QR -->
             <g data-testid="gratitude-qr">
-              <text x="877" y="842" text-anchor="middle" font-size="24" font-weight="700" fill="#111111">{{ f().qrLabel }}</text>
-              <rect x="812" y="852" width="130" height="130" rx="14" fill="#FFFFFF" stroke="#D4A017" stroke-width="3" />
+              <text x="885" y="842" text-anchor="middle" font-size="24" font-weight="700" fill="#111111">{{ f().qrLabel }}</text>
+              <rect x="820" y="852" width="130" height="130" rx="14" fill="#FFFFFF" stroke="#D4A017" stroke-width="3" />
             </g>
           </g>
 
@@ -393,15 +393,21 @@ export class GratitudeInvitationComponent {
   protected readonly contentTransform = computed(() => (this.f().logoUrl ? '' : 'translate(0,-110)'));
   protected readonly qrOverlayStyle = computed(() => {
     const topPct = this.f().logoUrl ? 67.5 : 67.5 - (110 / 1280) * 100;
-    return `left:80.27%; top:${topPct}%; width:11.13%; aspect-ratio:1;`;
+    return `left:81.05%; top:${topPct}%; width:11.13%; aspect-ratio:1;`;
   });
 
   protected readonly titleLines = computed(() => this.fitTitle(this.f().title));
+  protected readonly highlightY = computed(() => {
+    const lines = this.titleLines();
+    const last = lines[lines.length - 1];
+    const bottom = last.y + last.fontSize * 0.35;
+    return Math.min(760, Math.max(678, Math.ceil(bottom + 80)));
+  });
 
   protected readonly locationLines = computed(() => {
     const text = this.f().location.trim();
     if (!text) return ['Local a confirmar'];
-    const max = 22;
+    const max = 14;
     if (text.length <= max) return [text];
     const words = text.split(/\s+/);
     const lines: string[] = [];
@@ -411,7 +417,7 @@ export class GratitudeInvitationComponent {
       if (next.length <= max) cur = next;
       else {
         if (cur) lines.push(cur);
-        cur = w;
+        cur = w.length > max ? w.slice(0, max) : w;
       }
     }
     if (cur) lines.push(cur);

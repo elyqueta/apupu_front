@@ -1,5 +1,5 @@
 import { Component, computed, effect, inject, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TemplatesRepository } from '../../core/data/templates.repository';
 import { I18nService } from '../../core/i18n/i18n.service';
@@ -25,6 +25,7 @@ export class TemplatesPage {
   protected readonly icons = ICONS;
   private readonly toasts = inject(ToastService);
   private readonly templatesRepo = inject(TemplatesRepository);
+  private readonly router = inject(Router);
 
   protected readonly templates = this.store.templates;
   protected readonly selected = this.store.selectedTemplate;
@@ -131,6 +132,11 @@ export class TemplatesPage {
     );
   }
 
+  protected useTemplate(template: EventTemplate): void {
+    this.select(template.id);
+    void this.router.navigate(['/templates', template.slug, 'editar']);
+  }
+
   protected openPreview(template: EventTemplate): void {
     this.previewTemplateId.set(template.id);
     this.previewOpenStyle.set(template.manifest.open_style ?? 'fade');
@@ -143,10 +149,11 @@ export class TemplatesPage {
   }
 
   protected usePreviewTemplate(): void {
-    const id = this.previewTemplateId();
-    if (!id) return;
-    this.select(id);
+    const template = this.previewTemplate();
+    if (!template) return;
+    this.select(template.id);
     this.closePreview();
+    void this.router.navigate(['/templates', template.slug, 'editar']);
   }
 
   protected playPreviewAnimation(): void {

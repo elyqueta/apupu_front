@@ -360,6 +360,11 @@ export const routes: Routes = [
         loadComponent: () => import('./features/templates/templates.page').then((m) => m.TemplatesPage),
       },
       {
+        path: 'templates/:slug/editar',
+        title: 'Conto Contigo · Editar modelo',
+        loadComponent: () => import('./features/templates/template-editor.page').then((m) => m.TemplateEditorPage),
+      },
+      {
         path: 'relatorios',
         title: 'Conto Contigo · Relatórios',
         loadComponent: () => import('./features/reports/reports.page').then((m) => m.ReportsPage),

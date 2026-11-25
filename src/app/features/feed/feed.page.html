@@ -8,17 +8,19 @@
       <div class="flex flex-1 justify-center lg:flex-none lg:justify-start">
         <app-brand />
       </div>
-      <button
-        type="button"
-        class="hidden min-h-11 flex-1 items-center gap-2 rounded-full border border-line bg-surface px-4 text-sm text-muted transition hover:border-brand/40 hover:text-ink lg:flex lg:max-w-2xl"
-        [attr.aria-label]="i18n.t('block12.feed.search')"
-        data-testid="feed-search-open"
-        (click)="openSearch()"
-      >
-        <fa-icon [icon]="icons['search']" aria-hidden="true" />
-        <span class="truncate">{{ i18n.t('block12.feed.search') }}</span>
-      </button>
-      <nav class="hidden items-center gap-1 lg:ml-auto lg:flex" [attr.aria-label]="i18n.t('block12.feed.menu')">
+      <div class="hidden flex-1 justify-center px-4 lg:flex">
+        <button
+          type="button"
+          class="flex min-h-11 w-full max-w-2xl items-center gap-2 rounded-full border border-line bg-surface px-4 text-sm text-muted transition hover:border-brand/40 hover:text-ink"
+          [attr.aria-label]="i18n.t('block12.feed.search')"
+          data-testid="feed-search-open"
+          (click)="openSearch()"
+        >
+          <fa-icon [icon]="icons['search']" aria-hidden="true" />
+          <span class="truncate">{{ i18n.t('block12.feed.search') }}</span>
+        </button>
+      </div>
+      <nav class="hidden items-center gap-1 lg:flex" [attr.aria-label]="i18n.t('block12.feed.menu')">
         <a routerLink="/" class="inline-flex min-h-11 items-center gap-2 rounded-full bg-brand/15 px-4 text-sm font-semibold text-ink">
           <fa-icon [icon]="icons['home']" aria-hidden="true" /> {{ i18n.t('block12.feed.home') }}
         </a>

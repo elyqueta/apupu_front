@@ -29,6 +29,9 @@ export const BLOCK15_KEYS_PT = {
   'block15.templates.error': 'Não foi possível carregar os modelos.',
   'block15.templates.retry': 'Tentar novamente',
   'block15.templates.animate': 'Ver animação',
+  'block15.greeting.morning': 'Bom dia, {name}',
+  'block15.greeting.afternoon': 'Boa tarde, {name}',
+  'block15.greeting.evening': 'Boa noite, {name}',
 } as const;
 
 export const BLOCK15_KEYS_EN: Record<keyof typeof BLOCK15_KEYS_PT, string> = {
@@ -61,4 +64,7 @@ export const BLOCK15_KEYS_EN: Record<keyof typeof BLOCK15_KEYS_PT, string> = {
   'block15.templates.error': 'Could not load templates.',
   'block15.templates.retry': 'Try again',
   'block15.templates.animate': 'Play animation',
+  'block15.greeting.morning': 'Good morning, {name}',
+  'block15.greeting.afternoon': 'Good afternoon, {name}',
+  'block15.greeting.evening': 'Good evening, {name}',
 };

@@ -117,6 +117,16 @@ export class DashboardPage {
   );
 
   protected readonly firstName = computed(() => this.store.profile().name.split(' ')[0]);
+  protected readonly greeting = computed(() => {
+    const hour = new Date().getHours();
+    const key =
+      hour >= 5 && hour < 12
+        ? 'block15.greeting.morning'
+        : hour >= 12 && hour < 19
+          ? 'block15.greeting.afternoon'
+          : 'block15.greeting.evening';
+    return this.i18n.t(key as TranslationKey, { name: this.firstName() });
+  });
   protected readonly guestNames = computed(() =>
     this.store
       .guests()

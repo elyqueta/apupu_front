@@ -7,9 +7,9 @@
         {{ i18n.t('dashboard.eyebrow') }}
       </p>
       <h2
-        class="mt-1.5 hidden font-display text-2xl font-semibold tracking-tight text-ink sm:text-3xl md:block"
+        class="mt-1.5 truncate font-display text-base font-semibold tracking-tight text-ink sm:text-2xl md:text-3xl"
       >
-        {{ i18n.t('dashboard.greeting', { name: firstName() }) }}
+        {{ greeting() }}
       </h2>
       <p class="text-[13px] leading-5 text-muted md:mt-1.5 md:max-w-2xl md:text-sm md:leading-6">
         {{ i18n.t('dashboard.subtitle') }}
@@ -423,7 +423,7 @@
   <div
     class="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-4 xl:grid-cols-[minmax(0,1.75fr)_minmax(0,1fr)]"
   >
-    <section class="flex min-h-0 flex-col rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl">
+    <section class="flex min-h-0 flex-col rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl xl:col-span-2">
       <div class="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-brand-strong">

@@ -30,3 +30,13 @@
 11. **Bloco 4:** limpar a mensagem e voltar a responder; confirmar que a mensagem anterior desaparece no convite e na lista.
 12. **Bloco 4:** abrir um link inválido, um expirado e um revogado; confirmar em todos exatamente “Este convite já não está ativo.”, sem motivo, sem contacto e com “Tentar de novo”.
 13. **Bloco 4:** verificar tema claro/escuro e que nenhum texto do convite fica abaixo de 12 px nem nenhum alvo de toque abaixo de 44 px.
+
+
+## Bloco 15 — Templates, Gratitude, feed e eventos passados (em curso)
+
+**Branch:** `feat/bloco-15-templates` (front e back). **Data:** 2026-11-25. **Estado:** Passo 1 implementado e verificação automatizada verde; Passos 2–9 em progresso.
+
+- Passo 1: estado efetivo `completed/Terminado` (derivado + job 15 min), ordenação ativos→passados→cancelados, catálogo local de fontes PDF embutidas, QR estilizado, template sistema Gratitude (`kind=system`), correção UX `/templates` (modal preview, grelha estável, filtros).
+- Verificação: front `build/lint(0 erros)/test(57/241)/tsc` verdes; back `build/typecheck/lint(0 erros)/test(43 passed,6 skipped;404/89)` verdes; `bloco14.pdf.test.ts` inclui 3 fontes embutidas.
+- Pendências: validação visual manual Gratitude/PDF, migração up/down em DB de teste dedicada, relatório detalhado em `docs/REPORT-BLOCO-15.md`.
+- Sem push, merge, rebase ou eliminação de branches.

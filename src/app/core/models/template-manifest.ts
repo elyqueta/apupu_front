@@ -39,7 +39,8 @@ export const DEFAULT_MANIFEST: TemplateManifest = {
 
 const HEX = /^#[0-9A-Fa-f]{6}$/;
 const FONTS: TemplateFont[] = ['sans', 'serif', 'cap', 'script', 'condensed'];
-const OPEN: OpenStyle[] = ['none', 'envelope', 'curtain', 'fade', 'fold'];
+export const OPEN_STYLES: OpenStyle[] = ['none', 'envelope', 'curtain', 'fade', 'fold'];
+const OPEN: OpenStyle[] = OPEN_STYLES;
 
 /** Validação defensiva (o back já valida; isto evita CSS injetado). */
 export function normalizeManifest(raw: unknown): TemplateManifest {

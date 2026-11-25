@@ -67,6 +67,40 @@
 - Catálogo `/templates` usa preview genérico por manifesto; Gratitude pode parecer sem ornamentos específicos até Passo 2 unificar renderizadores.
 - Migração up/down em DB de teste dedicada pendente neste ambiente.
 
+## Atualização — Fidelidade Gratitude (25/11/2026)
+
+| Item | Estado | Evidência |
+|---|---|---|
+| Canvas 4:5 portrait, sem corte | ✔ | Front: SVG 1024x1280 `aspect-[4/5]` (`gratitude-invitation.component.ts`). PDF: 595.28x744.1 (4:5). |
+| Fundo/ornamentos/fitas douradas | ✔ | Glow radial, anéis subtis, padrão geométrico cantos 13% com máscara fade, duas fitas curvas com padrão africano e ledge dourada. |
+| Cabeçalho sem CONVITE/CELEBRAÇÃO ESPECIAL | ✔ | Logo bloco opcional (sem imagem fecha espaço), org/subtítulo conforme spec. |
+| Título GRADITUDE fit-to-width, padrão africano, contorno | ✔ | Anton OFL local embutida (front/back); fit 90%+ largura, máx. 2 linhas; padrão africano denso via SVG pattern+clipPath; fallback sólido. |
+| Ano 2026 itálico negrito vermelho | ✔ | Cormorant Garamond Bold com skew/italic, #B3121A, ~7% altura. |
+| Linha info 4 colunas, 3 separadores dourados, QR >=11% | ✔ | Data/hora/local/QR com ícones pretos, QR em cartão branco borda dourada, overlay QR escaneável com ícone centro. |
+| Dress code pill opcional | ✔ | Pílula creme, borda dourada, ícone t-shirt, texto DRESS-CODE/TRAJE AFRICANO. |
+| PreviewData Gratitude | ✔ | `templates.page.ts` sampleData Gratitude: GRADITUDE, IGREJA CRISTÃ REINO-CHURCH, 20/12 14:00 Africa/Luanda, TRAJE AFRICANO. |
+| Verificação Playwright 1024x1280 | ✔ | `apupu_front/e2e/gratitude.spec.ts`: bbox dentro do canvas, título >=88% largura, ordem vertical, QR >=11%, 3 separadores, título longo "O NOSSO DIA ESPECIAL" máx. 2 linhas sem corte. 2 testes passados. |
+| Captura | ✔ | `apupu_front/docs/assets/gratitude-render.png` (gerada pelo teste Playwright). |
+| PDF fontes embutidas + 1 página 4:5 | ✔ | `bloco14.pdf.test.ts`: Gratitude PDF 4:5, MediaBox `[0 0 595.28 744.1]`, 1 página, FontFile2/FontDescriptor, Anton/Figtree/CormorantGaramond. |
+
+### Commits Gratitude fidelity
+- Front `8815358` fix(templates): make gratitude layout faithful to flyer
+- Back `0f25553` fix(templates): render gratitude pdf faithful to flyer
+- Front `606bea6` test(templates): add gratitude fidelity checks
+- Back `e4a21cb` test(templates): cover gratitude pdf layout and fonts
+
+### Verificação (após fidelidade)
+- Front: `npm run build` ✔, `npm run lint` ✔ (0 erros), `npm test -- --watch=false` ✔ (57/241), `npx tsc --noEmit` ✔
+- Back: `npm run build` ✔, `npm run typecheck` ✔, `npm run lint` ✔ (0 erros), `npm run test` ✔ (43 passed, 6 skipped; 405 passed, 89 skipped)
+- PDF: `npx vitest run tests/bloco14.pdf.test.ts` ✔ (8 testes)
+- Playwright Gratitude: `npx playwright test e2e/gratitude.spec.ts --project=desktop-light` ✔ (2 passed)
+
+### Limitações / pendências
+- Teste Playwright usa `page.setContent` com SVG estático (não servidor Angular) para validar geometria/captura em ambiente sem app a correr; a componente Angular real usa a mesma estrutura.
+- "Cada elemento é bloco editável" no editor completo é Passo 2; Gratitude tem campos ligados a dados do evento/manifesto, mas o editor Canva de propriedades por bloco ainda não está implementado.
+- Logo do anfitrião: campo opcional suportado na renderização (fecha espaço sem imagem); falta UI de upload/campo dedicado no editor.
+- QR digital Gratitude usa `api.qrserver.com` (sem nova dependência) com ícone WhatsApp sobreposto; avaliar gerador local/offline.
+
 ## Próximos passos
 
 - Passo 2: TemplateRenderer único (editor, convite público, PDF) com documento de blocos, exemplo preenchido, painel de propriedades.

@@ -1,3 +1,4 @@
+// @ts-nocheck
 /* eslint-disable */
 /**
  * QR SVG gerador (vendored, sem dependência nova).

@@ -308,6 +308,14 @@ Mapeamento feito antes de alterar código. O frontend parte de `feat/bloco-3-det
 | Gratitude template. | Template de sistema inserido por migração `1739900000034_bloco15_gratitude.js` com `kind=system`, manifesto próprio e `supported_fields` incluindo `dress_code`. Digital: componente dedicado `GratitudeInvitationComponent`. PDF: ramo dedicado em `invitationDocument.ts`. Passo 2 deve unificar num TemplateRenderer único. | Passo 1.1 urgente; fidelidade razoável ao flyer descrito em texto. |
 | `event_templates.kind`. | Coluna `kind` (`system|user`, default `user`) adicionada na migração do Gratitude; DTO/API/front expõem `kind`. | Necessário para distinguir templates oficiais de utilizador no Bloco 15. |
 
+## Gratitude Tarefa A — layout proporcional e validação (26/11/2026)
+
+| Dúvida | Escolha | Motivo |
+|---|---|---|
+| Layout vertical Gratitude | PDF e digital usam coluna proporcional na zona útil entre fitas (top 10%–89%): [logo?]→org→subtítulo→título→ano→linha de informação→[dress?], com gaps em % da altura e centragem vertical por distribuição do espaço livre. | Corrige sobreposição org/subtítulo, vazio inferior e reequilíbrio sem logo/dress code. |
+| Linha de informação | Colunas com gap ≥2%W, gap interno ícone-texto 1.4%W, largura própria para local calculada a partir de `locColW`; local quebra em 2–3 linhas e reduz fonte até mínimo 12px equivalente; separadores dourados mesma altura, centrados, só entre colunas existentes. | Corrige "18:00 toca no pin" e local sobreposto. |
+| Validação | PDFs gerados por `renderInvitationPdf` para 4 casos (a sem logo/sem dress, b com logo/sem dress, c sem logo/com dress, d com logo/com dress + local longo). `pdftoppm` gerou `docs/assets/gratitude-a.png..d.png`; `pdftotext -bbox` confirmou ausência de sobreposição nos blocos consecutivos org/subtítulo/título/ano e espaço livre inferior a=17.3%, b=8.6% (sem dress ≤18%); c/d com dress. `pdftotext` sem "LOGO"; `pdffonts` embute Montserrat/Anton. | Evidência automatizada PDF; separadores/ícones vetoriais não aparecem no bbox de texto. |
+
 ## Gratitude editor/PDF defects (25/11/2026)
 
 | Dúvida | Escolha | Motivo |

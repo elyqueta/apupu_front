@@ -97,3 +97,5 @@
 | Testes exigidos pela spec | `e2e/gratitude.spec.ts` atualizado como fixture estática; não executados testes Playwright completos contra app, `pdffonts` embed check, nem `zbarimg`. | Executar em ambiente com deps Playwright/browser; registar resultados. |
 | Migrações em DB de teste | `1739900000034/0035/0036` up/down em DB de teste dedicada não executadas neste ambiente. | Validar antes de merge. |
 | Lint global | `npm run lint` tem erros preexistentes fora dos ficheiros alterados; ficheiros alterados nesta sessão sem erros de lint. | Não ampliar escopo; registar estado real. |
+| Validação digital Gratitude 1024×1280 | Capturas Playwright 1024×1280 do componente digital Gratitude para os 4 casos A não foram executadas neste ambiente; validação digital ficou por build + inspeção de layout/CSS. | Executar Playwright/e2e dedicado antes de fechar A visualmente; PDF já validado por bbox/pdftoppm/pdffonts. |
+| Validação bbox vetorial | `pdftotext -bbox` não cobre separadores/ícones/QR vetoriais. | Conferir visualmente `docs/assets/gratitude-a.png..d.png`; QR dentro do cartão verificado pelo layout calculado. |

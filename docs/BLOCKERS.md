@@ -59,6 +59,13 @@
 | Passo 5 — ação no link inativo | A regra prevê “Falar com o anfitrião” quando existir contacto público, mas a resposta genérica (`404 invitation_not_found` / `Convite não encontrado.`) não devolve qualquer dado do anfitrião. | Manter a página inativa apenas com o texto genérico e o botão “Tentar de novo”; não inventar contacto nem diferenciar invalidado/expirado/revogado. | Aceite: motivo e contacto nunca são expostos em link inativo. O contacto está disponível no modal do anfitrião de um convite ativo. |
 | Passo 4 — verificação automática | Não existe captura automatizada de contraste, tamanho de texto ou alvos de toque no projeto. | Revisão das classes Tailwind em `invitation.page.html` e `parts/`; nenhum `text-[9px]`/`text-[10px]`/`text-[11px]`, botões com `h-11`/`h-12` ou `size-11`. | Recomenda-se confirmação manual em 360 px com tema claro e escuro antes do merge. |
 
+## Bloco 15 — Task A Gratitude
+
+| Passo / área | Observação | Estado / decisão |
+|---|---|---|
+| Task A — PDF Gratitude (4 casos) | Layout proporcional PDF ajustado (`invitationDocument.ts`): grupos space-evenly na zona útil, ícone 5.4%W + gap 1.4%W, QR com margem sobre ribbon bezier, `infoCenter` ≤72% sem dress e ~71.2% com dress para d. Validação automatizada executada com `npm run build`, `npx tsx /tmp/opencode/render-gratitude.ts`, `pdftoppm -png -singlefile -r 144` e `pdftotext -bbox` + asserts geométricos: a-d PASS (sem overlaps bbox, sem fora da canvas, icon-text ok, QR acima da ribbon, title-year gap dentro de 3%H de layout; `gapTY` negativo pequeno tratado como artefacto de bbox). | PDF casos a-d validados por asserts; artefactos em `docs/assets/gratitude-a.png..d.png` e PDFs, caso d: `/home/elyqueta/Documentos/projectos/apupu/docs/assets/gratitude-d.pdf`. |
+| Task A — Digital Gratitude real 1024×1280 | CSS do componente `gratitude-invitation.component.ts` alinhado (content bottom 12.5%, space-evenly, padding 4cqw, gap título/ano 1.9cqw), front build passa. Spec `e2e/gratitude.spec.ts` (fixture HTML estática, não componente Angular real) passou em `desktop-light`, mas **não satisfaz** o critério "Validar com render real ... digital Playwright 1024×1280". Não foi possível executar Playwright contra render real do componente Angular/rota Gratitude com dados dos 4 casos neste ambiente. | **Bloqueia declaração de Task A green no digital.** Não declarar digital validado até executar render real 1024×1280 (rota/token/harness) ou registar evidência equivalente. |
+
 ## Bloco 9 — UI mobile
 
 **Bloqueios:** nenhum.

@@ -44,9 +44,9 @@ interface GratitudeFields {
     }
     .deco{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
     .content{
-      position:absolute;left:0;right:0;top:10%;bottom:11%;
-      display:flex;flex-direction:column;align-items:center;justify-content:center;
-      gap:1.4cqw;padding:0 5cqw;text-align:center;
+      position:absolute;left:0;right:0;top:10%;bottom:12.5%;
+      display:flex;flex-direction:column;align-items:center;justify-content:space-evenly;
+      gap:1.2cqw;padding:0 4cqw;text-align:center;
     }
     .logo{
       width:19%;aspect-ratio:1;flex:0 0 auto;
@@ -68,13 +68,13 @@ interface GratitudeFields {
       margin-bottom:1.2cqw;
     }
     .title{
-      width:92%;height:20.7%;display:block;overflow:visible;flex:0 0 auto;margin:0.8cqw 0 0.4cqw;
+      width:92%;height:20.7%;display:block;overflow:visible;flex:0 0 auto;margin:0.8cqw 0 0;
     }
     .title text{font-family:Anton,"Arial Narrow",Impact,sans-serif}
     .year{
       transform:skewX(-8deg);
       font-style:italic;font-weight:800;font-size:8.5cqw;line-height:1;color:#b3121a;
-      letter-spacing:.1cqw;white-space:nowrap;margin-top:0.4cqw;
+      letter-spacing:.1cqw;white-space:nowrap;margin-top:1.9cqw;
     }
     .info{
       width:100%;display:grid;grid-template-columns:max-content max-content minmax(0,1fr) max-content;

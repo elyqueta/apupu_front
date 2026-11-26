@@ -326,3 +326,11 @@ Mapeamento feito antes de alterar código. O frontend parte de `feat/bloco-3-det
 | Upload de logo/QR no editor | Validação client-side (tipo/tamanho) e data URL no draft para preview; `public_id` fica `undefined` até endpoint Cloudinary dedicado existir. | Preview funcional; persistência Cloudinary com cleanup de asset fica como lacuna a fechar. |
 | LOGO placeholder | Removido do convite público/PDF; Gratitude mostra botão tracejado "Adicionar logótipo" apenas em `editorMode`. | Spec: sem "LOGO" no público/PDF. |
 | Artefacto | `docs/assets/gratitude-pdf-render.png` gerado por `renderInvitationPdf` + `pdftoppm`; `pdftotext` sem "LOGO". | Evidência mínima; validação visual completa Playwright/pdffonts ainda pendente. |
+
+## Gratitude Task A — PDF/digital layout final (26/11/2026)
+
+| Dúvida | Escolha | Motivo |
+|---|---|---|
+| Layout final PDF | `invitationDocument.ts`: zona útil 10%-89%, grupos `[logo?][org+subtitle][title+year][info row][dress?]` com `space-evenly`, gap título/ano 3%H (layout), info center máx 72% sem dress e 71.2% com dress para afastar QR da ribbon bezier. Ícone 5.4%W, gap ícone-texto 1.4%W. QR card + margem 1.5%H validado geometricamente contra `M540 1280 C700 1215 900 1110 1024 1000`. | Cumpre regras finais: pin não sobre texto, QR não intersecta ribbon, título+ano como grupo, info row com margens ~4% e separadores só entre colunas existentes. |
+| Validação PDF | `npm run build`, `npx tsx /tmp/opencode/render-gratitude.ts`, `pdftoppm` 144dpi, `pdftotext -bbox` + asserts Python para 4 casos (a-d): PASS sem overlaps bbox, sem fora da canvas, icon-text ok, QR-ribbon geométrico ok, title-year ≤3%H layout (`gapTY` bbox pequeno negativo tratado como artefacto). | Evidência automatizada reproduzível; `pdftotext -bbox` não cobre vetores, logo QR-ribbon verificado por geometria. |
+| Digital 1024×1280 | Ajustes CSS aplicados em `gratitude-invitation.component.ts`; front build ok. Spec Playwright existente usa fixture HTML estática e não prova componente Angular real. | Não declarar digital validado; blocker registado em `BLOCKERS.md` até render real 1024×1280. |

@@ -25,6 +25,18 @@ export interface TemplateManifest {
     qr_label?: string;
     qr_destination?: 'event' | 'invite' | 'custom';
     qr_custom_url?: string;
+    /** Bloco 15: logótipo e QR configuráveis */
+    logo_url?: string;
+    logo_public_id?: string;
+    logo_shape?: 'circle' | 'original';
+    logo_size?: 'sm' | 'md' | 'lg';
+    qr_mode?: 'invite' | 'event' | 'whatsapp' | 'custom' | 'image';
+    qr_whatsapp_phone?: string;
+    qr_whatsapp_message?: string;
+    qr_image_url?: string;
+    qr_image_public_id?: string;
+    qr_icon?: 'none' | 'whatsapp' | 'brand';
+    qr_size?: 'md' | 'lg';
   };
   /** Bloco 15, Passo 2: documento de blocos (fonte única para editor/convite/PDF). */
   document?: TemplateDocument;

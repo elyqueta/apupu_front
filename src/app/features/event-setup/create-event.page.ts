@@ -393,8 +393,7 @@ export class CreateEventPage {
 
   protected next(): void {
     if (!this.validateStep(this.step())) {
-      this.formError.set(this.i18n.t('create.errorStep'));
-      this.toasts.error(this.i18n.t('create.errorStep'));
+      this.reportStepError(this.step());
       return;
     }
     this.formError.set('');
@@ -407,10 +406,64 @@ export class CreateEventPage {
     this.step.update((current) => Math.max(0, current - 1));
   }
 
+  private handleSubmitError(error: unknown): void {
+    const apiError = toApiError(error);
+    const fieldEntries = Object.entries(apiError.fields ?? {});
+    const [fieldPath, messages] = fieldEntries[0] ?? [];
+    const detail = messages?.[0];
+
+    const fieldMap: Record<string, { step: number; control: string; label: string }> = {
+      'event.title': { step: 0, control: 'title', label: 'Título' },
+      'event.type': { step: 0, control: 'type', label: 'Tipo de evento' },
+      'event.host_name': { step: 0, control: 'hostName', label: 'Nome do anfitrião' },
+      'event.host_email': { step: 0, control: 'hostEmail', label: 'Email do anfitrião' },
+      'event.starts_at': { step: 0, control: 'date', label: 'Data de início' },
+      'event.ends_at': { step: 0, control: 'endsAt', label: 'Data de fim' },
+      'event.timezone': { step: 0, control: 'timezone', label: 'Fuso horário' },
+      'event.location.name': { step: 0, control: 'venue', label: 'Local' },
+      'event.location.address': { step: 0, control: 'venue', label: 'Morada' },
+      'event.location.online_url': { step: 0, control: 'onlineLink', label: 'Link online' },
+      'event.location': { step: 0, control: 'venue', label: 'Localização' },
+      'event.youtube_url': { step: 0, control: 'youtubeVideoUrl', label: 'Vídeo do YouTube' },
+      'event.message': { step: 1, control: 'message', label: 'Mensagem' },
+      'event.dress_code': { step: 1, control: 'dressCode', label: 'Código de vestuário' },
+      'event.rsvp_deadline': { step: 1, control: 'rsvpDeadline', label: 'Prazo de RSVP' },
+      'event.rules': { step: 1, control: 'rules', label: 'Regras' },
+      'event.contribution.bank_name': { step: 1, control: 'bankName', label: 'Nome do banco' },
+      'event.contribution.account_holder': { step: 1, control: 'accountName', label: 'Titular da conta' },
+      'event.contribution.account_reference': { step: 1, control: 'iban', label: 'Referência da conta' },
+      'event.visibility': { step: 1, control: 'visibility', label: 'Visibilidade' },
+      'event.min_age': { step: 1, control: 'minAge', label: 'Idade mínima' },
+      'event.max_age': { step: 1, control: 'maxAge', label: 'Idade máxima' },
+    };
+
+    const mapped = fieldPath ? fieldMap[fieldPath] : undefined;
+    const label = mapped?.label ?? (fieldPath ? fieldPath.replace(/^event\./, '').replace(/_/g, ' ') : '');
+    const message = detail
+      ? (label ? `${label}: ${detail}` : detail)
+      : apiError.message;
+
+    this.formError.set(message);
+    this.toasts.error(message);
+
+    if (mapped) {
+      this.step.set(mapped.step);
+      setTimeout(() => {
+        const el = document.querySelector(`[formcontrolname="${mapped.control}"]`) as HTMLElement | null;
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          if (typeof (el as HTMLInputElement).focus === 'function') {
+            (el as HTMLInputElement).focus({ preventScroll: true });
+          }
+        }
+      }, 120);
+    }
+  }
+
   protected async publish(): Promise<void> {
-    if (!this.validateAll()) {
-      this.formError.set(this.i18n.t('create.errorStep'));
-      this.toasts.error(this.i18n.t('create.errorStep'));
+    const firstInvalidStep = [0, 1, 2].find((s) => !this.validateStep(s));
+    if (firstInvalidStep !== undefined) {
+      this.reportStepError(firstInvalidStep);
       return;
     }
     this.formError.set('');
@@ -433,7 +486,7 @@ export class CreateEventPage {
       }
       this.created.set(this.store.eventById(event.id) ?? event);
     } catch (error: unknown) {
-      this.formError.set(toApiError(error).message);
+      this.handleSubmitError(error);
     } finally {
       this.publishing.set(false);
     }
@@ -498,6 +551,59 @@ export class CreateEventPage {
       }
     } catch {
       this.communities.set([]);
+    }
+  }
+
+  private reportStepError(step: number): void {
+    this.step.set(step);
+    const controlLabels: Record<string, string> = {
+      title: 'Título',
+      hostName: 'Nome do anfitrião',
+      hostEmail: 'Email do anfitrião',
+      date: 'Data',
+      time: 'Hora',
+      endsAt: 'Data de fim',
+      timezone: 'Fuso horário',
+      venue: 'Local',
+      city: 'Cidade',
+      onlineLink: 'Link online',
+      youtubeVideoUrl: 'Vídeo do YouTube',
+      message: 'Mensagem',
+      dressCode: 'Código de vestuário',
+      rsvpDeadline: 'Prazo de RSVP',
+      rules: 'Regras',
+      bankName: 'Nome do banco',
+      accountName: 'Titular da conta',
+      iban: 'Referência da conta',
+      coverUrl: 'Imagem de capa',
+    };
+    const controlsByStep: Record<number, string[]> = {
+      0: ['title', 'type', 'hostName', 'hostEmail', 'date', 'time', 'endsAt', 'timezone', 'venue', 'city', 'onlineLink', 'youtubeVideoUrl', 'coverUrl'],
+      1: ['message', 'dressCode', 'rsvpDeadline', 'rules', 'bankName', 'accountName', 'iban'],
+      2: [],
+    };
+    const names = controlsByStep[step] ?? [];
+    let firstInvalid: string | null = null;
+    for (const name of names) {
+      const control = this.form.get(name);
+      if (control?.invalid) { firstInvalid = name; break; }
+    }
+    if (step === 1 && !firstInvalid && this.youtubeUrlError()) firstInvalid = 'youtubeVideoUrl';
+    if (step === 1 && !firstInvalid && this.form.controls.contributionEnabled.value && !this.contributionReady()) firstInvalid = 'bankName';
+    const label = firstInvalid ? controlLabels[firstInvalid] ?? firstInvalid : '';
+    const message = label
+      ? `Verifique o campo: ${label}.`
+      : this.i18n.t('create.errorStep');
+    this.formError.set(message);
+    this.toasts.error(message);
+    if (firstInvalid) {
+      setTimeout(() => {
+        const el = document.querySelector(`[formcontrolname="${firstInvalid}"]`) as HTMLElement | null;
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          if (typeof (el as HTMLInputElement).focus === 'function') (el as HTMLInputElement).focus({ preventScroll: true });
+        }
+      }, 120);
     }
   }
 

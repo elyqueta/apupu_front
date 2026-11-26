@@ -88,7 +88,7 @@
       <div
         class="flex h-full flex-col rounded-4xl border border-line bg-surface/85 p-4 shadow-card backdrop-blur-2xl"
       >
-        <div class="flex items-center justify-between gap-3">
+        <div class="flex items-center gap-3" [class.justify-between]="!sidebarCollapsed()" [class.justify-center]="sidebarCollapsed()" [class.px-3]="!sidebarCollapsed()">
           @if (sidebarCollapsed()) {
             <a
               routerLink="/painel"
@@ -139,11 +139,11 @@
               <span
                 [class]="
                   rla.isActive
-                    ? 'grid size-8 place-items-center rounded-xl bg-secondary-soft text-brand-strong'
-                    : 'grid size-8 place-items-center rounded-xl border border-line bg-surface-raised text-muted transition group-hover:text-ink'
+                    ? 'grid size-11 place-items-center rounded-xl border border-brand/30 bg-brand/15 text-brand-strong shadow-sm'
+                    : 'grid size-11 place-items-center rounded-xl border border-line bg-surface-raised text-muted transition group-hover:border-brand/20 group-hover:bg-brand/5 group-hover:text-ink'
                 "
               >
-                <fa-icon [icon]="item.icon" class="text-xs" aria-hidden="true" />
+                <fa-icon [icon]="item.icon" class="text-lg" aria-hidden="true" />
               </span>
               @if (!sidebarCollapsed()) {
                 <span class="min-w-0 flex-1 truncate text-sm font-medium">
@@ -173,9 +173,9 @@
             (click)="closeMenus()"
           >
             <span
-              class="grid size-8 place-items-center rounded-xl border border-brand/25 bg-secondary-soft text-brand-strong"
+              class="grid size-11 place-items-center rounded-xl border border-brand/30 bg-brand/15 text-brand-strong shadow-sm"
             >
-              <fa-icon [icon]="icons['shield']" class="text-xs" aria-hidden="true" />
+              <fa-icon [icon]="icons['shield']" class="text-lg" aria-hidden="true" />
             </span>
             @if (!sidebarCollapsed()) {
               <span class="min-w-0 flex-1 truncate text-sm font-medium">

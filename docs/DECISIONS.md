@@ -307,3 +307,30 @@ Mapeamento feito antes de alterar código. O frontend parte de `feat/bloco-3-det
 | QR do convite. | PDF: QR estilizado com cartão arredondado, borda fina na cor do template, logótipo central, correção H, legenda e módulos arredondados (SVG). Destino respeita `manifest.pdf.qr_destination/qr_custom_url/qr_label`. Digital Gratitude: QR por imagem gerada via `api.qrserver.com` (sem nova dependência), respeitando label/destino custom ou URL atual. | Passo 1.3 mínimo; sem dependências novas. |
 | Gratitude template. | Template de sistema inserido por migração `1739900000034_bloco15_gratitude.js` com `kind=system`, manifesto próprio e `supported_fields` incluindo `dress_code`. Digital: componente dedicado `GratitudeInvitationComponent`. PDF: ramo dedicado em `invitationDocument.ts`. Passo 2 deve unificar num TemplateRenderer único. | Passo 1.1 urgente; fidelidade razoável ao flyer descrito em texto. |
 | `event_templates.kind`. | Coluna `kind` (`system|user`, default `user`) adicionada na migração do Gratitude; DTO/API/front expõem `kind`. | Necessário para distinguir templates oficiais de utilizador no Bloco 15. |
+
+## Gratitude Tarefa A — layout proporcional e validação (26/11/2026)
+
+| Dúvida | Escolha | Motivo |
+|---|---|---|
+| Layout vertical Gratitude | PDF e digital usam coluna proporcional na zona útil entre fitas (top 10%–89%): [logo?]→org→subtítulo→título→ano→linha de informação→[dress?], com gaps em % da altura e centragem vertical por distribuição do espaço livre. | Corrige sobreposição org/subtítulo, vazio inferior e reequilíbrio sem logo/dress code. |
+| Linha de informação | Colunas com gap ≥2%W, gap interno ícone-texto 1.4%W, largura própria para local calculada a partir de `locColW`; local quebra em 2–3 linhas e reduz fonte até mínimo 12px equivalente; separadores dourados mesma altura, centrados, só entre colunas existentes. | Corrige "18:00 toca no pin" e local sobreposto. |
+| Validação | PDFs gerados por `renderInvitationPdf` para 4 casos (a sem logo/sem dress, b com logo/sem dress, c sem logo/com dress, d com logo/com dress + local longo). `pdftoppm` gerou `docs/assets/gratitude-a.png..d.png`; `pdftotext -bbox` confirmou ausência de sobreposição nos blocos consecutivos org/subtítulo/título/ano e espaço livre inferior a=17.3%, b=8.6% (sem dress ≤18%); c/d com dress. `pdftotext` sem "LOGO"; `pdffonts` embute Montserrat/Anton. | Evidência automatizada PDF; separadores/ícones vetoriais não aparecem no bbox de texto. |
+
+## Gratitude editor/PDF defects (25/11/2026)
+
+| Dúvida | Escolha | Motivo |
+|---|---|---|
+| QR overflow em todos os templates | `drawQrWithLogo` força SVG com `width/height` explícitos e `assumePt`; QR padrão usa `resolveQrConfig` com tamanho limitado (`md/lg`, cap por largura). | Corrige QR gigante/transbordo no PDF. |
+| QR digital Gratitude | Substituído `api.qrserver.com` por gerador SVG local vendored (`qr-svg.util.ts`, baseado em qrcode-generator MIT) sem nova dependência npm. | Cumpre "QR escalável SVG vector", sem dependência externa em runtime. |
+| Logo/QR config | Campos adicionados a `manifest.pdf` (front+back schema): `logo_url/public_id/shape/size`, `qr_mode/whatsapp/custom/image/icon/size/label`. Editor guarda overrides em draft localStorage. | Permite edição no editor e render no digital/PDF. |
+| Upload de logo/QR no editor | Validação client-side (tipo/tamanho) e data URL no draft para preview; `public_id` fica `undefined` até endpoint Cloudinary dedicado existir. | Preview funcional; persistência Cloudinary com cleanup de asset fica como lacuna a fechar. |
+| LOGO placeholder | Removido do convite público/PDF; Gratitude mostra botão tracejado "Adicionar logótipo" apenas em `editorMode`. | Spec: sem "LOGO" no público/PDF. |
+| Artefacto | `docs/assets/gratitude-pdf-render.png` gerado por `renderInvitationPdf` + `pdftoppm`; `pdftotext` sem "LOGO". | Evidência mínima; validação visual completa Playwright/pdffonts ainda pendente. |
+
+## Gratitude Task A — PDF/digital layout final (26/11/2026)
+
+| Dúvida | Escolha | Motivo |
+|---|---|---|
+| Layout final PDF | `invitationDocument.ts`: zona útil 10%-89%, grupos `[logo?][org+subtitle][title+year][info row][dress?]` com `space-evenly`, gap título/ano 3%H (layout), info center máx 72% sem dress e 71.2% com dress para afastar QR da ribbon bezier. Ícone 5.4%W, gap ícone-texto 1.4%W. QR card + margem 1.5%H validado geometricamente contra `M540 1280 C700 1215 900 1110 1024 1000`. | Cumpre regras finais: pin não sobre texto, QR não intersecta ribbon, título+ano como grupo, info row com margens ~4% e separadores só entre colunas existentes. |
+| Validação PDF | `npm run build`, `npx tsx /tmp/opencode/render-gratitude.ts`, `pdftoppm` 144dpi, `pdftotext -bbox` + asserts Python para 4 casos (a-d): PASS sem overlaps bbox, sem fora da canvas, icon-text ok, QR-ribbon geométrico ok, title-year ≤3%H layout (`gapTY` bbox pequeno negativo tratado como artefacto). | Evidência automatizada reproduzível; `pdftotext -bbox` não cobre vetores, logo QR-ribbon verificado por geometria. |
+| Digital 1024×1280 | Ajustes CSS aplicados em `gratitude-invitation.component.ts`; front build ok. Spec Playwright existente usa fixture HTML estática e não prova componente Angular real. | Não declarar digital validado; blocker registado em `BLOCKERS.md` até render real 1024×1280. |

@@ -136,7 +136,7 @@
                 ? 'border-brand/30 bg-brand/15 text-ink'
                 : 'border-line bg-surface-raised/70 text-muted hover:border-brand/40 hover:text-ink'"
               [attr.data-testid]="'template-use-' + template.slug"
-              (click)="select(template.id)"
+              (click)="useTemplate(template)"
             >
               @if (selected() === template.id) {
                 <fa-icon [icon]="icons['check']" aria-hidden="true" />

@@ -9,7 +9,7 @@ interface ArtworkStyle {
 
 const ARTWORK: Record<string, ArtworkStyle> = {
   aurora: {
-    icon: ICONS['sparkles'],
+    icon: ICONS['calendar'],
   },
   constellation: {
     icon: ICONS['star'],

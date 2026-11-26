@@ -123,7 +123,7 @@ export class EventsRepository extends CachedRepository<HostEvent[]> {
         cover_url: input.coverUrl,
         visibility: input.visibility ?? 'private',
         show_attendee_count: input.visibility === 'public' ? (input.showAttendeeCount ?? false) : false,
-        youtube_video_id: input.youtubeVideoId ?? null,
+        youtube_url: input.youtubeVideoId ?? null,
         use_tables: input.useTables ?? false,
         min_age: input.minAge ?? null,
         max_age: input.maxAge ?? null,
@@ -158,7 +158,7 @@ export class EventsRepository extends CachedRepository<HostEvent[]> {
     if (patch.showAttendeeCount !== undefined) body['show_attendee_count'] = patch.showAttendeeCount;
     if (patch.minAge !== undefined) body['min_age'] = patch.minAge;
     if (patch.maxAge !== undefined) body['max_age'] = patch.maxAge;
-    if (patch.youtubeVideoId !== undefined) body['youtube_video_id'] = patch.youtubeVideoId;
+    if (patch.youtubeVideoId !== undefined) body['youtube_url'] = patch.youtubeVideoId;
     if (patch.useTables !== undefined) body['use_tables'] = patch.useTables;
     if (
       patch.venue !== undefined ||

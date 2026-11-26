@@ -107,3 +107,45 @@
 - Passos 3–5: `guest_kind`, saudação por hora, equipas em filas.
 - Passos 6–8: feed social, reações/comentários, gráfico semanal.
 - Passo 9: catálogo T01–T19 por ordem do 15B.
+
+## Atualização — Correções Gratitude editor/PDF (25/11/2026)
+
+### Defeitos corrigidos
+
+| Defeito | Estado | Evidência |
+|---|---|---|
+| QR gigante/transbordo em todos os templates (PDF) | ✔ | `drawQrWithLogo` força SVG com `width/height` explícitos e `assumePt`; QR padrão usa `resolveQrConfig`, tamanho `md/lg` capado por largura e não renderiza quando destino inválido/vazio. |
+| LOGO placeholder no público/PDF | ✔ | Gratitude digital só mostra logo quando existe `manifest.pdf.logo_url`; em `editorMode` mostra área tracejada "Adicionar logótipo". PDF Gratitude não desenha texto "LOGO"; `pdftotext` do artefacto sem "LOGO". |
+| Info row 4 colunas, alinhamento/overlap | ✔ | Gratitude digital/PDF: colunas data/hora/local/QR, separadores dourados, ícones 5.4cqw, local com wrap 2-3 linhas, QR card ~14% largura com padding 8%. |
+| Espaço grande entre título e "2026" | ✔ | Ano posicionado a `top:49.8%` (logo presente) perto do fundo do título (28.6% + 20.7%). |
+| Logo/QR editáveis (MVP) | ⚠ parcial | `manifest.pdf` estendido com `logo_url/public_id/shape/size` e `qr_mode/whatsapp/custom/image/icon/size/label` (front+back schema). Editor tem secções Logótipo/QR com validação, preview e draft localStorage. Upload Cloudinary com `public_id` cleanup pendente (endpoint dedicado). |
+| QR digital Gratitude sem dependência externa | ✔ | `qr-svg.util.ts` vendored (qrcode-generator MIT) gera SVG vetorial local com ECC H. |
+
+### Ficheiros principais
+
+- `apupu_back/src/services/pdf/invitationDocument.ts` — QR escalável, `resolveQrConfig`, Gratitude layout/logo/QR configurável.
+- `apupu_back/src/types/templateManifest.ts` — schema pdf logo/qr.
+- `apupu_front/src/app/core/models/template-manifest.ts` — tipos pdf logo/qr.
+- `apupu_front/src/app/features/invitation/parts/gratitude-invitation.component.ts` — sem LOGO placeholder público, QR SVG local, posições spec.
+- `apupu_front/src/app/features/templates/template-editor.page.ts` — secções Logótipo/QR, draft com pdfOverrides.
+- `apupu_front/src/app/shared/utils/qr-svg.util.ts` — gerador QR SVG local.
+- `apupu_front/src/app/core/i18n/block15-keys.ts` — chaves pt-PT/en.
+- `apupu_front/e2e/gratitude.spec.ts` — fixture atualizada com checks no-LOGO/no-overlap/QR-inside-card.
+
+### Artefactos
+
+- `docs/assets/gratitude-pdf-render.pdf` / `docs/assets/gratitude-pdf-render.png` — gerado por `renderInvitationPdf` + `pdftoppm`.
+- `pdftotext` sem "LOGO" confirmado.
+
+### Verificação executada
+
+- Front: `npx tsc --noEmit` ✔. `npm run lint` tem erros preexistentes no repo; ficheiros alterados nesta sessão sem erros de lint.
+- Back: `npx tsc --noEmit` ✔. `npm run lint` tem erros/warnings preexistentes no repo.
+- Não executado nesta sessão: `npm run build` completo front/back, `npm test -- --watch=false` completo, Playwright contra app, `pdffonts` embed check, `zbarimg`, migrações up/down em DB de teste dedicada.
+
+### Pendências
+
+- Endpoint Cloudinary para logo/QR image com `public_id` e destruição no replace/remove (sem bloquear operação principal).
+- Persistência backend do manifesto/draft do editor (Passo 2 gap).
+- QR configurável no renderer digital genérico não-Gratitude.
+- Validação visual completa Playwright/pdffonts/zbarimg e migrações em DB de teste.

@@ -81,6 +81,7 @@
               [email]="view.guest.email"
               [emailHasAccount]="view.guest.emailHasAccount"
               [accountDismissed]="accountDismissed()"
+              [guestKind]="view.guest.guestKind"
               (respond)="requestRsvp($event)"
               (createAccount)="createAccount($event)"
               (login)="loginInstead()"
@@ -107,6 +108,7 @@
         [deadlinePassed]="deadlinePassed()"
         [eventStatus]="view.event.status"
         [actionError]="actionError()"
+        [guestKind]="view.guest.guestKind"
         (respond)="requestRsvp($event)"
       />
 

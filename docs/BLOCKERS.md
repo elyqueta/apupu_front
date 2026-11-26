@@ -59,6 +59,13 @@
 | Passo 5 — ação no link inativo | A regra prevê “Falar com o anfitrião” quando existir contacto público, mas a resposta genérica (`404 invitation_not_found` / `Convite não encontrado.`) não devolve qualquer dado do anfitrião. | Manter a página inativa apenas com o texto genérico e o botão “Tentar de novo”; não inventar contacto nem diferenciar invalidado/expirado/revogado. | Aceite: motivo e contacto nunca são expostos em link inativo. O contacto está disponível no modal do anfitrião de um convite ativo. |
 | Passo 4 — verificação automática | Não existe captura automatizada de contraste, tamanho de texto ou alvos de toque no projeto. | Revisão das classes Tailwind em `invitation.page.html` e `parts/`; nenhum `text-[9px]`/`text-[10px]`/`text-[11px]`, botões com `h-11`/`h-12` ou `size-11`. | Recomenda-se confirmação manual em 360 px com tema claro e escuro antes do merge. |
 
+## Bloco 15 — Task A Gratitude
+
+| Passo / área | Observação | Estado / decisão |
+|---|---|---|
+| Task A — PDF Gratitude (4 casos) | Layout proporcional PDF ajustado (`invitationDocument.ts`): grupos space-evenly na zona útil, ícone 5.4%W + gap 1.4%W, QR com margem sobre ribbon bezier, `infoCenter` ≤72% sem dress e ~71.2% com dress para d. Validação automatizada executada com `npm run build`, `npx tsx /tmp/opencode/render-gratitude.ts`, `pdftoppm -png -singlefile -r 144` e `pdftotext -bbox` + asserts geométricos: a-d PASS (sem overlaps bbox, sem fora da canvas, icon-text ok, QR acima da ribbon, title-year gap dentro de 3%H de layout; `gapTY` negativo pequeno tratado como artefacto de bbox). | PDF casos a-d validados por asserts; artefactos em `docs/assets/gratitude-a.png..d.png` e PDFs, caso d: `/home/elyqueta/Documentos/projectos/apupu/docs/assets/gratitude-d.pdf`. |
+| Task A — Digital Gratitude real 1024×1280 | CSS do componente `gratitude-invitation.component.ts` alinhado (content bottom 12.5%, space-evenly, padding 4cqw, gap título/ano 1.9cqw), front build passa. Spec `e2e/gratitude.spec.ts` (fixture HTML estática, não componente Angular real) passou em `desktop-light`, mas **não satisfaz** o critério "Validar com render real ... digital Playwright 1024×1280". Não foi possível executar Playwright contra render real do componente Angular/rota Gratitude com dados dos 4 casos neste ambiente. | **Bloqueia declaração de Task A green no digital.** Não declarar digital validado até executar render real 1024×1280 (rota/token/harness) ou registar evidência equivalente. |
+
 ## Bloco 9 — UI mobile
 
 **Bloqueios:** nenhum.
@@ -87,3 +94,15 @@
 | Passo 1.1 — Fidelidade visual Gratitude | O flyer de referência foi descrito em texto (agente não vê imagens). A implementação usa SVG/CSS próprio com os elementos descritos. | Validar visualmente com o autor; ajustar no Passo 2 quando o TemplateRenderer único existir. |
 | Verificação — migração up/down em DB de teste | Não executei `migration up/down` numa DB de teste dedicada neste ambiente (requer DB de teste configurada e pode ser destrutivo). | Build/typecheck/testes passaram; migração é reversível por código (`down` remove Gratitude/kind). Confirmar em CI/DB de teste antes de merge. |
 | Verificação — lint/testes completos | Lint e suite completa de testes do front/back ainda por executar no fecho do Passo 1. | Executar antes de declarar Passo 1 verde; corrigir falhas reais. |
+
+## Gratitude editor/PDF (25/11/2026)
+
+| Passo / área | Observação | Estado / decisão |
+|---|---|---|
+| Logo/QR upload Cloudinary | Editor aceita upload e guarda data URL no draft; não existe endpoint dedicado para upload de asset de template com `public_id` e cleanup no replace/remove. | Implementar endpoint host/template asset seguindo padrão `teamPhoto.service`/Cloudinary, guardar `public_id` e destruir asset anterior sem bloquear operação principal. |
+| QR configurável em templates não-Gratitude (digital) | PDF padrão usa `resolveQrConfig`; renderer digital genérico ainda mostra placeholder de bloco QR, não QR real configurado. | Estender `TemplateRendererComponent`/blocos digitais no Passo 2. |
+| Testes exigidos pela spec | `e2e/gratitude.spec.ts` atualizado como fixture estática; não executados testes Playwright completos contra app, `pdffonts` embed check, nem `zbarimg`. | Executar em ambiente com deps Playwright/browser; registar resultados. |
+| Migrações em DB de teste | `1739900000034/0035/0036` up/down em DB de teste dedicada não executadas neste ambiente. | Validar antes de merge. |
+| Lint global | `npm run lint` tem erros preexistentes fora dos ficheiros alterados; ficheiros alterados nesta sessão sem erros de lint. | Não ampliar escopo; registar estado real. |
+| Validação digital Gratitude 1024×1280 | Capturas Playwright 1024×1280 do componente digital Gratitude para os 4 casos A não foram executadas neste ambiente; validação digital ficou por build + inspeção de layout/CSS. | Executar Playwright/e2e dedicado antes de fechar A visualmente; PDF já validado por bbox/pdftoppm/pdffonts. |
+| Validação bbox vetorial | `pdftotext -bbox` não cobre separadores/ícones/QR vetoriais. | Conferir visualmente `docs/assets/gratitude-a.png..d.png`; QR dentro do cartão verificado pelo layout calculado. |

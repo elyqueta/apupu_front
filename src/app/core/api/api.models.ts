@@ -524,7 +524,7 @@ export interface CreateEventRequest {
     min_age?: number | null;
     max_age?: number | null;
     community_id?: string | null;
-    youtube_video_id?: string | null;
+    youtube_url?: string | null;
     use_tables?: boolean;
   };
   guests: Array<{

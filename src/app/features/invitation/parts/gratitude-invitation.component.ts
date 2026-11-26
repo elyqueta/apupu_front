@@ -44,9 +44,9 @@ interface GratitudeFields {
     }
     .deco{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
     .content{
-      position:absolute;left:0;right:0;top:10%;bottom:12.5%;
+      position:absolute;left:0;right:0;top:10%;bottom:16.8%;
       display:flex;flex-direction:column;align-items:center;justify-content:space-evenly;
-      gap:1.2cqw;padding:0 4cqw;text-align:center;
+      gap:1cqw;padding:0 4cqw;text-align:center;
     }
     .logo{
       width:19%;aspect-ratio:1;flex:0 0 auto;
@@ -68,17 +68,17 @@ interface GratitudeFields {
       margin-bottom:1.2cqw;
     }
     .title{
-      width:92%;height:20.7%;display:block;overflow:visible;flex:0 0 auto;margin:0.8cqw 0 0;
+      width:92%;height:20%;display:block;overflow:visible;flex:0 0 auto;margin:0 0 0;
     }
     .title text{font-family:Anton,"Arial Narrow",Impact,sans-serif}
     .year{
       transform:skewX(-8deg);
       font-style:italic;font-weight:800;font-size:8.5cqw;line-height:1;color:#b3121a;
-      letter-spacing:.1cqw;white-space:nowrap;margin-top:1.9cqw;
+      letter-spacing:.1cqw;white-space:nowrap;margin-top:0cqw;
     }
     .info{
       width:100%;display:grid;grid-template-columns:max-content max-content minmax(0,1fr) max-content;
-      align-items:center;gap:0;font-weight:500;color:#111;margin-top:2.4cqw;
+      align-items:center;gap:0;font-weight:500;color:#111;margin-top:0.8cqw;
     }
     .info .c{
       display:flex;align-items:center;gap:1.4cqw;padding:0 2cqw;min-height:7.2cqw;
@@ -109,7 +109,7 @@ interface GratitudeFields {
     .dress{
       display:flex;align-items:center;gap:2cqw;padding:1.8cqw 5cqw;
       border:2px solid #d4a017;border-radius:999px;background:#fff3dc;color:#111;white-space:nowrap;
-      margin-top:1.6cqw;
+      margin-top:1.2cqw;
     }
     .dress.off{display:none}
     .dress svg{width:5.2cqw;height:4.5cqw;flex:0 0 auto}
@@ -154,11 +154,12 @@ interface GratitudeFields {
           <div class="org" data-testid="gratitude-org">{{ f().organization }}</div>
           <div class="sub" data-testid="gratitude-subtitle">{{ f().subtitle }}</div>
 
-          <svg #titleSvg class="title" viewBox="0 0 1000 300" preserveAspectRatio="none" role="img" [attr.aria-label]="f().title" data-testid="gratitude-title">
-            <text #titleText x="0" y="0" font-family="Anton,'Arial Narrow',Impact,sans-serif" font-size="300" fill="url(#afro)" stroke="#161616" stroke-width="2.2" vector-effect="non-scaling-stroke" paint-order="stroke fill" stroke-linejoin="round">{{ f().title }}</text>
-          </svg>
-
-          <div class="year" data-testid="gratitude-highlight">{{ f().year }}</div>
+          <div class="title-year-group" style="display:flex;flex-direction:column;align-items:center;width:100%;gap:0.5cqw;flex:0 0 auto;">
+            <svg #titleSvg class="title" viewBox="0 0 1000 300" preserveAspectRatio="none" role="img" [attr.aria-label]="f().title" data-testid="gratitude-title">
+              <text #titleText x="0" y="0" font-family="Anton,'Arial Narrow',Impact,sans-serif" font-size="300" fill="url(#afro)" stroke="#161616" stroke-width="2.2" vector-effect="non-scaling-stroke" paint-order="stroke fill" stroke-linejoin="round">{{ f().title }}</text>
+            </svg>
+            <div class="year" data-testid="gratitude-highlight">{{ f().year }}</div>
+          </div>
 
           <div class="info" data-testid="gratitude-info">
             <div class="c">

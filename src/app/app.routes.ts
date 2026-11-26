@@ -139,6 +139,11 @@ export const routes: Routes = [
           import('./features/invitation/invitation.page').then((m) => m.InvitationPage),
       },
       {
+        path: '__test/gratitude/:case',
+        loadComponent: () =>
+          import('./features/invitation/testing/gratitude-test.page').then((m) => m.GratitudeTestPage),
+      },
+      {
         path: 'i/:token',
         title: pageTitle('route.invitation'),
         loadComponent: () =>

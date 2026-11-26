@@ -80,7 +80,8 @@ import {
   ageRangeError,
   parseAge,
 } from '../../shared/components/event-visibility-fields.component';
-import { MapPickerDialogComponent, MapPickResult, reverseGeocodeGoogle, roundCoord } from '../../shared/components/map-picker-dialog.component';
+import { LocationPickerDialogComponent, LocationPickResult } from '../../shared/components/location-picker-dialog.component';
+import { LocationMapComponent } from '../../shared/components/location-map.component';
 import { extractYoutubeId } from '../../core/utils/youtube';
 import { readPreferredLocation, writePreferredLocation, type PreferredLocation } from '../../core/utils/preferred-location';
 import { PublicLinkCardComponent } from '../../shared/components/public-link-card.component';
@@ -133,7 +134,7 @@ function isoDaysAgo(days: number): string {
     EventVisibilityFieldsComponent,
     PublicLinkCardComponent,
     DeleteEventDialogComponent,
-    MapPickerDialogComponent,
+    LocationPickerDialogComponent,
   ],
   templateUrl: './event-detail.page.html',
 })
@@ -1420,14 +1421,13 @@ export class EventDetailPage {
 
   protected openMapPicker(): void { this.mapPickerOpen.set(true); }
   protected closeMapPicker(): void { this.mapPickerOpen.set(false); }
-  protected onMapPicked(point: MapPickResult): void {
+  protected onMapPicked(point: LocationPickResult): void {
     this.settingsForm.controls.latitude.setValue(point.latitude);
     this.settingsForm.controls.longitude.setValue(point.longitude);
-    if (point.city) this.settingsForm.controls.city.setValue(point.city);
-    if (point.venue) this.settingsForm.controls.venue.setValue(point.venue);
+    this.settingsForm.controls.placeLabel.setValue(point.placeName ?? '');
     this.syncLocationValidators();
     this.closeMapPicker();
-    this.promptSaveLocation(point.latitude, point.longitude, point.city, point.venue);
+    this.promptSaveLocation(point.latitude, point.longitude);
   }
   protected removeExactLocation(): void {
     this.settingsForm.controls.latitude.setValue(null);
@@ -1442,24 +1442,13 @@ export class EventDetailPage {
     }
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        const lat = roundCoord(pos.coords.latitude);
-        const lng = roundCoord(pos.coords.longitude);
+        const lat = Math.round(pos.coords.latitude * 1e6) / 1e6;
+        const lng = Math.round(pos.coords.longitude * 1e6) / 1e6;
         this.settingsForm.controls.latitude.setValue(lat);
         this.settingsForm.controls.longitude.setValue(lng);
         this.syncLocationValidators();
         this.promptSaveLocation(lat, lng);
-        void reverseGeocodeGoogle(lat, lng).then((address) => {
-          if (address.city) this.settingsForm.controls.city.setValue(address.city);
-          if (address.venue) this.settingsForm.controls.venue.setValue(address.venue);
-          const pending = this.pendingSaveLocation();
-          if (pending && pending.latitude === lat && pending.longitude === lng) {
-            this.pendingSaveLocation.set({
-              ...pending,
-              city: address.city ?? pending.city,
-              venue: address.venue ?? pending.venue,
-            });
-          }
-        });
+        this.settingsForm.markAsDirty();
       },
       () => this.toasts.error(this.i18n.t('block14.location.error')),
       { enableHighAccuracy: true, timeout: 10_000 },

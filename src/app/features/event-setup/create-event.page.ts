@@ -917,6 +917,7 @@ export class CreateEventPage {
       latitude: online ? null : value.latitude,
       longitude: online ? null : value.longitude,
       placeLabel: online ? null : (value.placeLabel.trim() || null),
+      placeName: online ? null : (value.placeLabel.trim() || null),
       useTables: value.useTables,
     };
   }

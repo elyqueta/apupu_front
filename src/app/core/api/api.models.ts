@@ -63,6 +63,7 @@ export interface EventLocation {
   latitude?: number | null;
   longitude?: number | null;
   place_label?: string | null;
+  place_name?: string | null;
 }
 
 export interface EventContribution {

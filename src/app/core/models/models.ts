@@ -62,6 +62,7 @@ export interface HostEvent {
   latitude: number | null;
   longitude: number | null;
   placeLabel: string | null;
+  placeName: string | null;
   useTables: boolean;
   createdAt: string;
   stats?: EventStats;
@@ -315,6 +316,7 @@ export interface CreateEventInput {
   latitude?: number | null;
   longitude?: number | null;
   placeLabel?: string | null;
+  placeName?: string | null;
   useTables?: boolean;
 }
 

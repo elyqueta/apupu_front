@@ -9,4 +9,5 @@ export const environment = {
   oauthBaseUrl: '',
   /** Google Maps Platform (Maps JavaScript API + Geocoding API). */
   googleMapsApiKey: 'AIzaSyCemWsnwPtBQuJQEVVynOeFRxD_hzlG7Nc',
+  mapStyleUrl: 'https://tiles.openfreemap.org/styles/liberty',
 };

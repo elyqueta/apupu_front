@@ -586,9 +586,9 @@
 
             </article>
 
-            <app-map-picker-dialog
+            <app-location-picker-dialog
               [open]="mapPickerOpen()"
-              [initial]="hasExactLocation() ? { latitude: formValue().latitude!, longitude: formValue().longitude! } : null"
+              [initial]="hasExactLocation() ? { latitude: formValue().latitude!, longitude: formValue().longitude!, placeName: formValue().placeLabel || null } : null"
               (picked)="onMapPicked($event)"
               (closed)="closeMapPicker()"
             />

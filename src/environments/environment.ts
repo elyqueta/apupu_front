@@ -8,4 +8,5 @@ export const environment = {
   oauthBaseUrl: 'http://localhost:3000',
   /** Google Maps Platform (Maps JavaScript API + Geocoding API). */
   googleMapsApiKey: 'AIzaSyCemWsnwPtBQuJQEVVynOeFRxD_hzlG7Nc',
+  mapStyleUrl: 'https://tiles.openfreemap.org/styles/liberty',
 };

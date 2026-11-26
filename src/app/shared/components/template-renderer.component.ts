@@ -260,6 +260,7 @@ export class TemplateRendererComponent {
       latitude: null,
       longitude: null,
       placeLabel: null,
+      placeName: null,
       organizers: [],
       community: null,
     };

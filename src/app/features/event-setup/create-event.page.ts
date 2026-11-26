@@ -34,7 +34,7 @@ import {
 import { EventVisibility } from '../../core/models/models';
 import { extractYoutubeId } from '../../core/utils/youtube';
 import { readPreferredLocation, writePreferredLocation, type PreferredLocation } from '../../core/utils/preferred-location';
-import { MapPickerDialogComponent, MapPickResult, reverseGeocodeGoogle, roundCoord } from '../../shared/components/map-picker-dialog.component';
+import { LocationPickerDialogComponent, LocationPickResult } from '../../shared/components/location-picker-dialog.component';
 import { ModalComponent } from '../../shared/components/modal.component';
 import { EventDraftsRepository } from '../../core/data/event-drafts.repository';
 
@@ -57,7 +57,7 @@ interface WizardStep {
     TemplatePreviewComponent,
     PhoneMaskDirective,
     EventVisibilityFieldsComponent,
-    MapPickerDialogComponent,
+    LocationPickerDialogComponent,
     ModalComponent,
   ],
   templateUrl: './create-event.page.html',
@@ -760,17 +760,16 @@ export class CreateEventPage {
     this.mapPickerOpen.set(false);
   }
 
-  protected onMapPicked(point: MapPickResult): void {
+  protected onMapPicked(point: LocationPickResult): void {
     this.form.controls.latitude.setValue(point.latitude);
     this.form.controls.longitude.setValue(point.longitude);
+    this.form.controls.placeLabel.setValue(point.placeName ?? '');
     this.form.controls.latitude.markAsDirty();
     this.form.controls.longitude.markAsDirty();
-    if (point.city) this.form.controls.city.setValue(point.city);
-    if (point.venue) this.form.controls.venue.setValue(point.venue);
     this.syncLocationValidators();
     this.closeMapPicker();
     this.scheduleDraftSave();
-    this.promptSaveLocation(point.latitude, point.longitude, point.city, point.venue);
+    this.promptSaveLocation(point.latitude, point.longitude);
   }
 
   protected removeExactLocation(): void {
@@ -788,26 +787,13 @@ export class CreateEventPage {
     }
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        const lat = roundCoord(pos.coords.latitude);
-        const lng = roundCoord(pos.coords.longitude);
+        const lat = Math.round(pos.coords.latitude * 1e6) / 1e6;
+        const lng = Math.round(pos.coords.longitude * 1e6) / 1e6;
         this.form.controls.latitude.setValue(lat);
         this.form.controls.longitude.setValue(lng);
         this.syncLocationValidators();
         this.scheduleDraftSave();
         this.promptSaveLocation(lat, lng);
-        void reverseGeocodeGoogle(lat, lng).then((address) => {
-          if (address.city) this.form.controls.city.setValue(address.city);
-          if (address.venue) this.form.controls.venue.setValue(address.venue);
-          if (address.city || address.venue) this.scheduleDraftSave();
-          const pending = this.pendingSaveLocation();
-          if (pending && pending.latitude === lat && pending.longitude === lng) {
-            this.pendingSaveLocation.set({
-              ...pending,
-              city: address.city ?? pending.city,
-              venue: address.venue ?? pending.venue,
-            });
-          }
-        });
       },
       () => this.toasts.error(this.i18n.t('block14.location.error')),
       { enableHighAccuracy: true, timeout: 10_000 },

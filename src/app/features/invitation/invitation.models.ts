@@ -49,6 +49,7 @@ export interface InvitationEventView {
   latitude: number | null;
   longitude: number | null;
   placeLabel: string | null;
+  placeName: string | null;
   organizers: InvitationOrganizer[];
   community: { name: string; slug: string; avatarUrl: string | null; isPublic: boolean } | null;
 }

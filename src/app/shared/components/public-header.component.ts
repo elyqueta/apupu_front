@@ -12,9 +12,9 @@ import { LogoComponent } from './logo.component';
   imports: [NgTemplateOutlet, RouterLink, FaIconComponent, LogoComponent],
   template: `
     <header class="sticky top-0 z-30 border-b border-line/40 bg-canvas pt-[env(safe-area-inset-top)]">
+      <!-- Uma só linha no mobile: voltar (ou menu), marca centrada e sino. -->
       @if (feedMode()) {
-        <!-- Cabeçalho móvel do feed: menu, nome da marca e notificações. -->
-        <div class="mx-auto flex h-14 max-w-7xl items-center justify-between gap-2 px-3 sm:hidden">
+        <div class="relative mx-auto flex h-14 max-w-7xl items-center justify-between gap-2 px-3 sm:hidden">
           <button
             type="button"
             class="ui-icon-button"
@@ -25,36 +25,62 @@ import { LogoComponent } from './logo.component';
             <fa-icon [icon]="icons['menu']" aria-hidden="true" />
           </button>
 
-          <a
-            routerLink="/"
-            class="flex min-h-11 items-center rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
-            [attr.aria-label]="i18n.t('app.name')"
-            data-testid="public-header-logo"
-          >
-            <app-logo variant="horizontal" [height]="26" class="dark:hidden" />
-            <app-logo variant="horizontal" theme="white" [height]="26" class="hidden dark:block" />
-          </a>
+          <ng-container *ngTemplateOutlet="mobileLogo" />
 
-          <a
-            [routerLink]="signedIn() ? '/notificacoes' : '/entrar'"
-            class="ui-icon-button relative"
-            [attr.aria-label]="i18n.t(signedIn() ? 'block15.feed.notifications' : 'block12.feed.login')"
-            data-testid="public-header-notifications"
-          >
-            <fa-icon [icon]="icons['bell']" aria-hidden="true" />
-            @if (unreadCount() > 0) {
-              <span class="absolute -right-1 -top-1 grid min-w-5 place-items-center rounded-full bg-coral px-1 text-xs font-bold leading-5 text-white">{{ unreadCount() > 9 ? '9+' : unreadCount() }}</span>
-            }
-          </a>
-        </div>
-
-        <div class="hidden sm:block">
-          <ng-container *ngTemplateOutlet="desktopNav" />
+          <ng-container *ngTemplateOutlet="notifications" />
         </div>
       } @else {
-        <ng-container *ngTemplateOutlet="desktopNav" />
+        <div class="relative mx-auto flex h-14 max-w-7xl items-center justify-between gap-2 px-3 sm:hidden">
+          @if (backLink()) {
+            <a
+              [routerLink]="backLink()"
+              class="inline-flex min-h-11 items-center gap-2 rounded-full border border-line bg-surface px-3 text-xs font-semibold text-ink shadow-card transition hover:border-brand/40 hover:text-brand-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
+              [attr.aria-label]="backLabel() || i18n.t('common.back')"
+              data-testid="public-header-back-mobile"
+            >
+              <fa-icon [icon]="icons['chevronLeft']" class="text-xs text-brand-strong" aria-hidden="true" />
+              {{ backLabel() || i18n.t('common.back') }}
+            </a>
+          } @else {
+            <span class="w-11" aria-hidden="true"></span>
+          }
+
+          <ng-container *ngTemplateOutlet="mobileLogo" />
+
+          <ng-container *ngTemplateOutlet="notifications" />
+        </div>
       }
+
+      <div class="hidden sm:block">
+        <ng-container *ngTemplateOutlet="desktopNav" />
+      </div>
     </header>
+
+    <ng-template #mobileLogo>
+      <a
+        routerLink="/"
+        class="absolute left-1/2 flex min-h-11 -translate-x-1/2 items-center rounded-xl px-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
+        [attr.aria-label]="i18n.t('app.name')"
+        data-testid="public-header-logo-mobile"
+      >
+        <app-logo variant="horizontal" [height]="24" class="dark:hidden" />
+        <app-logo variant="horizontal" theme="white" [height]="24" class="hidden dark:block" />
+      </a>
+    </ng-template>
+
+    <ng-template #notifications>
+      <a
+        [routerLink]="signedIn() ? '/notificacoes' : '/entrar'"
+        class="ui-icon-button relative"
+        [attr.aria-label]="i18n.t(signedIn() ? 'block15.feed.notifications' : 'block12.feed.login')"
+        data-testid="public-header-notifications-mobile"
+      >
+        <fa-icon [icon]="icons['bell']" aria-hidden="true" />
+        @if (unreadCount() > 0) {
+          <span class="absolute -right-1 -top-1 grid min-w-5 place-items-center rounded-full bg-coral px-1 text-xs font-bold leading-5 text-white">{{ unreadCount() > 9 ? '9+' : unreadCount() }}</span>
+        }
+      </a>
+    </ng-template>
 
     <ng-template #desktopNav>
       <div class="mx-auto flex max-w-7xl flex-wrap items-center gap-x-3 gap-y-2 px-3 py-2.5 sm:px-4">
@@ -71,11 +97,11 @@ import { LogoComponent } from './logo.component';
         @if (backLink()) {
           <a
             [routerLink]="backLink()"
-            class="inline-flex min-h-11 items-center gap-1.5 rounded-xl px-2 text-xs font-semibold text-brand-strong transition hover:bg-brand/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
+            class="inline-flex min-h-11 items-center gap-2 rounded-full border border-line bg-surface px-3 text-xs font-semibold text-ink shadow-card transition hover:border-brand/40 hover:text-brand-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
             [attr.aria-label]="backLabel() || i18n.t('common.back')"
             data-testid="public-header-back"
           >
-            <fa-icon [icon]="icons['chevronLeft']" class="text-[10px]" aria-hidden="true" />
+            <fa-icon [icon]="icons['chevronLeft']" class="text-xs text-brand-strong" aria-hidden="true" />
             {{ backLabel() || i18n.t('common.back') }}
           </a>
         }
@@ -135,7 +161,7 @@ export class PublicHeaderComponent {
   readonly backLink = input<string | null>(null);
   readonly backLabel = input('');
   readonly unreadCount = input(0);
-  /** No feed, troca a navegação desktop por menu/nome/sino em ecrãs pequenos. */
+  /** No feed, troca o botão de voltar por um menu (âncora do feed). */
   readonly feedMode = input(false);
   readonly menuTestId = input('public-header-menu');
   readonly menu = output<void>();

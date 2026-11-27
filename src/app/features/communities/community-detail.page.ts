@@ -1,5 +1,4 @@
 import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
-import { NgTemplateOutlet } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { toApiError } from '../../core/api/api-error';
@@ -14,6 +13,7 @@ import {
   CommunitiesRepository,
   shareUrl,
 } from '../../core/data/communities.repository';
+import { FeedEvent } from '../../core/data/social.repository';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { TranslationKey } from '../../core/i18n/translations';
 import { ToastService } from '../../core/services/toast.service';
@@ -22,9 +22,10 @@ import { ActionMenuComponent, ActionMenuItem } from '../../shared/components/act
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog.component';
 import { ModalComponent } from '../../shared/components/modal.component';
 import { PersonCardComponent, PersonMetaItem } from '../../shared/components/person-card.component';
+import { PublicEventCardComponent } from '../../shared/components/public-event-card.component';
 import { SkeletonComponent } from '../../shared/components/skeleton.component';
+import { TeamCardComponent } from '../../shared/components/team-card.component';
 import { PhoneMaskDirective } from '../../shared/directives/phone-mask.directive';
-import { LinkCopyService } from '../../shared/services/link-copy.service';
 import { phoneDigits } from '../../core/utils/phone.util';
 import { CommunityFormDialogComponent } from './community-form-dialog.component';
 
@@ -41,7 +42,6 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 @Component({
   selector: 'app-community-detail-page',
   imports: [
-    NgTemplateOutlet,
     RouterLink,
     FaIconComponent,
     SkeletonComponent,
@@ -50,6 +50,8 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     ActionMenuComponent,
     PersonCardComponent,
     PhoneMaskDirective,
+    PublicEventCardComponent,
+    TeamCardComponent,
     CommunityFormDialogComponent,
   ],
   templateUrl: './community-detail.page.html',
@@ -60,7 +62,6 @@ export class CommunityDetailPage {
   private readonly repo = inject(CommunitiesRepository);
   private readonly toasts = inject(ToastService);
   private readonly router = inject(Router);
-  private readonly linkCopy = inject(LinkCopyService);
 
   /** `:slug` da rota. */
   readonly slug = input('');
@@ -271,12 +272,41 @@ export class CommunityDetailPage {
 
   /* ─────────────────────────────── eventos ─────────────────────────────── */
 
-  protected async copyShare(event: ApiCommunityEvent): Promise<void> {
-    if (!event.public_url) return;
-    const copied = await this.linkCopy.copy(shareUrl(event.public_url, this.detail()?.my_ref_code ?? null));
-    if (copied && this.detail()?.my_ref_code) {
-      this.toasts.info(this.i18n.t('block11.events.shareCopied'));
-    }
+  /** Adapta o evento da comunidade ao contrato do cartão partilhado do feed. */
+  protected feedEvent(event: ApiCommunityEvent): FeedEvent {
+    const community = this.community();
+    const status = ['scheduled', 'published', 'completed', 'cancelled'].includes(event.status)
+      ? (event.status as FeedEvent['status'])
+      : undefined;
+    return {
+      type: 'event',
+      id: event.id,
+      title: event.title,
+      category: null,
+      starts_at: event.starts_at,
+      ends_at: null,
+      timezone: 'Africa/Luanda',
+      status,
+      location: null,
+      online: false,
+      cover_url: event.cover_url,
+      template: { id: null, palette: 'default', mode: 'light' },
+      host_name: community?.name ?? '',
+      excerpt: null,
+      public_url: event.public_url ?? '',
+      slug: event.public_url?.split('/').filter(Boolean).pop() ?? event.id,
+      community: community ? { name: community.name, slug: community.slug } : null,
+      attendee_count: event.accepted_count,
+    };
+  }
+
+  protected eventShareUrl(event: ApiCommunityEvent): string {
+    const ref = this.can()?.canShare ? (this.detail()?.my_ref_code ?? null) : null;
+    return shareUrl(event.public_url ?? '', ref);
+  }
+
+  protected openTeam(id: string): void {
+    void this.router.navigate(['/equipas', id]);
   }
 
   /** Qualquer membro ativo sugere o evento; a criação direta é só para eventos pessoais. */

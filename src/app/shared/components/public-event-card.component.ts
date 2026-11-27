@@ -122,7 +122,7 @@ import { TemplateArtworkComponent } from './template-artwork.component';
           </p>
         }
 
-        <div class="mt-auto flex min-w-0 items-center gap-1 border-t border-line/40 pt-2">
+        <div class="mt-auto flex min-w-0 flex-nowrap items-center gap-1 border-t border-line/40 pt-2">
           <span class="inline-flex items-center gap-1" [attr.title]="i18n.t('block15.feed.reactionsUnavailable')">
             <button
               type="button"
@@ -161,8 +161,9 @@ import { TemplateArtworkComponent } from './template-artwork.component';
           </button>
           <a
             [routerLink]="path()"
-            class="ui-btn ml-auto min-h-11"
+            class="ui-btn ml-auto min-h-11 shrink-0 whitespace-nowrap"
             [attr.aria-label]="i18n.t('block12.feed.viewEvent') + ': ' + event().title"
+            [attr.data-testid]="'feed-event-cta-' + event().id"
           >
             {{ i18n.t('block12.feed.viewEvent') }}
           </a>
@@ -188,6 +189,10 @@ export class PublicEventCardComponent {
   readonly event = input.required<FeedEvent>();
   /** Só altera a altura do flyer; o cartão continua a ser o mesmo em todas as páginas. */
   readonly variant = input<'default' | 'compact'>('default');
+  /** Substitui o link partilhado (ex.: link com código de indicação da comunidade). */
+  readonly shareUrl = input<string | null>(null);
+  /** Quando presente, acrescenta "Editar" ao menu (gestão da comunidade). */
+  readonly editPath = input<string | null>(null);
 
   protected readonly lightboxSrc = signal<string | null>(null);
 
@@ -225,6 +230,9 @@ export class PublicEventCardComponent {
   protected readonly visibleTags = computed(() => this.allTags().slice(0, 2));
   protected readonly extraTags = computed(() => Math.max(0, this.allTags().length - 2));
   protected readonly menuItems = computed<ActionMenuItem[]>(() => [
+    ...(this.editPath()
+      ? [{ id: 'edit', label: this.i18n.t('common.edit'), icon: this.icons['pen'] }]
+      : []),
     { id: 'open', label: this.i18n.t('block12.feed.viewEvent'), icon: this.icons['arrowUpRight'] },
     { id: 'copy', label: this.i18n.t('block10.copy.link'), icon: this.icons['copy'] },
     {
@@ -239,6 +247,11 @@ export class PublicEventCardComponent {
   }
 
   protected onMenu(id: string): void {
+    if (id === 'edit') {
+      const path = this.editPath();
+      if (path) void this.router.navigateByUrl(path);
+      return;
+    }
     if (id === 'open') {
       void this.router.navigateByUrl(this.path());
       return;
@@ -251,13 +264,13 @@ export class PublicEventCardComponent {
   }
 
   protected copy(): void {
-    void this.linkCopy.copy(this.event().public_url);
+    void this.linkCopy.copy(this.shareUrl() ?? this.event().public_url);
   }
 
   protected whatsapp(): void {
     const text = this.i18n.t('block10.publicLink.whatsappMessage', {
       event: this.event().title,
-      url: this.event().public_url,
+      url: this.shareUrl() ?? this.event().public_url,
     });
     this.share.openExternal(this.share.whatsappShareUrl(text));
   }

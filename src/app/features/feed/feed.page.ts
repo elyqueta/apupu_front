@@ -382,6 +382,16 @@ export class FeedPage {
       .toUpperCase();
   }
 
+  /** Data por extenso na coluna lateral (ex.: `5 de dezembro de 2026 · 18:00`). */
+  protected eventLongDate(event: FeedEvent): string {
+    const date = this.i18n.formatDate(event.starts_at, event.timezone, {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    });
+    return `${date} · ${this.i18n.time(event.starts_at, event.timezone)}`;
+  }
+
   /* ─────────────────────────────── Pessoas ─────────────────────────────── */
 
   protected openPerson(person: FeedPerson): void {

@@ -1,7 +1,8 @@
 import { Component, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
 import { FeedEvent } from '../../core/data/social.repository';
+import { LinkCopyService } from '../services/link-copy.service';
 import { PublicEventCardComponent } from './public-event-card.component';
 
 const EVENT: FeedEvent = {
@@ -29,11 +30,20 @@ const EVENT: FeedEvent = {
 
 @Component({
   imports: [PublicEventCardComponent],
-  template: `<app-public-event-card [event]="event()" [variant]="variant()" />`,
+  template: `
+    <app-public-event-card
+      [event]="event()"
+      [variant]="variant()"
+      [shareUrl]="shareUrl()"
+      [editPath]="editPath()"
+    />
+  `,
 })
 class HostComponent {
   readonly event = signal<FeedEvent>(EVENT);
   readonly variant = signal<'default' | 'compact'>('default');
+  readonly shareUrl = signal<string | null>(null);
+  readonly editPath = signal<string | null>(null);
 }
 
 describe('PublicEventCardComponent · modo cartaz', () => {
@@ -113,6 +123,41 @@ describe('PublicEventCardComponent · modo cartaz', () => {
     expect(tags).toContain('#jovens');
     expect(tags).toContain('#gratidao');
     expect(tags).toContain('+1');
+  });
+
+  it('mantém o CTA "Ver evento" numa só linha', () => {
+    const cta = native().querySelector('[data-testid="feed-event-cta-ev1"]') as HTMLAnchorElement;
+    expect(cta.textContent?.trim()).toBe('Ver evento');
+    expect(cta.className).toContain('whitespace-nowrap');
+    expect(cta.className).toContain('shrink-0');
+  });
+
+  it('usa o link partilhado da comunidade e acrescenta "Editar" quando pode gerir', async () => {
+    const copy = vi.spyOn(TestBed.inject(LinkCopyService), 'copy').mockResolvedValue(true);
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
+    fixture.componentInstance.shareUrl.set('http://localhost:4200/e/abcDEF123456?ref=REF1');
+    fixture.componentInstance.editPath.set('/eventos/ev1');
+    fixture.detectChanges();
+
+    async function choose(text: string): Promise<void> {
+      (native().querySelector('[data-testid="feed-event-options-ev1"]') as HTMLButtonElement).click();
+      fixture.detectChanges();
+      await fixture.whenStable();
+      fixture.detectChanges();
+      const item = [...document.querySelectorAll('[role="menuitem"]')].find((node) =>
+        node.textContent?.toLowerCase().includes(text),
+      ) as HTMLElement | undefined;
+      expect(item).toBeDefined();
+      item?.click();
+      fixture.detectChanges();
+    }
+
+    await choose('copiar');
+    expect(copy).toHaveBeenCalledWith('http://localhost:4200/e/abcDEF123456?ref=REF1');
+
+    await choose('editar');
+    expect(navigate).toHaveBeenCalledWith('/eventos/ev1');
+    vi.restoreAllMocks();
   });
 
   it('mantém o link "Ver evento" fora da imagem', () => {

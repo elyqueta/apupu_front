@@ -7,6 +7,8 @@ import { API_BASE_URL } from '../../core/api/api-config';
 import {
   ApiCommunityActivity,
   ApiCommunityDetail,
+  ApiCommunityEvent,
+  ApiCommunityTeam,
   ApiEventSuggestion,
   shareUrl,
 } from '../../core/data/communities.repository';
@@ -127,6 +129,23 @@ function activity(overrides: Partial<ApiCommunityActivity> = {}): ApiCommunityAc
     created_at: '2026-11-26T10:00:00.000Z',
     ...overrides,
   };
+}
+
+function communityEvent(): ApiCommunityEvent {
+  return {
+    id: 'ev9',
+    title: 'Encontro partilhado',
+    starts_at: '2027-02-10T15:00:00.000Z',
+    status: 'published',
+    visibility: 'public',
+    public_url: 'http://localhost:4200/e/partilhado',
+    cover_url: null,
+    accepted_count: 4,
+  };
+}
+
+function communityTeam(): ApiCommunityTeam {
+  return { id: 't1', name: 'Cozinha', category: 'other', member_count: 3, event_count: 2 };
 }
 
 function setup(): { fixture: ComponentFixture<CommunityDetailPage>; http: HttpTestingController } {
@@ -269,6 +288,31 @@ describe('CommunityDetailPage', () => {
     const link = native.querySelector('[data-testid="community-activity-event"]') as HTMLAnchorElement;
     expect(link.getAttribute('href')).toBe('/e/encontro-de-jovens');
     http.expectNone(ACTIVITY_URL);
+  });
+
+  it('reutiliza o cartão de evento do feed e a linha de equipa da gestão', async () => {
+    const context = setup();
+    http = context.http;
+    http.expectOne(`${BASE}/host/communities/${SLUG}`).flush({
+      data: activeMember({ events: [communityEvent()], teams: [communityTeam()] }),
+    });
+    await flushPending(http, ACTIVITY_URL, { data: [] });
+    await settle(context.fixture);
+
+    const native = context.fixture.nativeElement as HTMLElement;
+    expect(native.querySelector('[data-testid="community-event-ev9"] app-public-event-card')).not.toBeNull();
+    expect(native.textContent).toContain('Encontro partilhado');
+
+    openTab(context.fixture, 'teams');
+    const team = native.querySelector('[data-testid="community-team-t1"]') as HTMLElement;
+    expect(team).not.toBeNull();
+    expect(team.textContent).toContain('Cozinha');
+    expect(team.textContent).toContain('3 membros');
+    expect(native.querySelector('[data-testid="community-teams-list"] app-team-card')).not.toBeNull();
+
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    team.click();
+    expect(navigate).toHaveBeenCalledWith(['/equipas', 't1']);
   });
 
   it('staff revê sugestões pendentes e aprova, recarregando detalhe e eventos', async () => {

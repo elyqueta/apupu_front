@@ -124,6 +124,61 @@ describe('FeedPage', () => {
     expect((native.querySelector('[data-testid="feed-categories-modal"]') as HTMLElement).textContent).toContain('Todas');
   });
 
+  it('mantém a pesquisa visível abaixo do cabeçalho e remove o atalho perdido do painel', async () => {
+    const context = setup();
+    http = context.http;
+    flushFeed(http, 'events', [event]);
+    flushFeed(http, 'communities');
+    flushFeed(http, 'people');
+    await settle(context.fixture);
+
+    const native = context.fixture.nativeElement as HTMLElement;
+    const sticky = native.querySelector('[data-testid="feed-search-open"]')?.closest('.sticky') as HTMLElement;
+    expect(sticky).not.toBeNull();
+    expect(sticky.className).toContain('bg-canvas');
+    expect(sticky.className).toContain('sm:top-[4.0625rem]');
+    expect(native.querySelector('[data-testid="feed-dashboard"]')).toBeNull();
+    expect(native.textContent).not.toContain('Ir para o painel');
+  });
+
+  it('mostra o filtro e o chip "Todas" com fundo sólido em vez de tint escuro', async () => {
+    const context = setup();
+    http = context.http;
+    flushFeed(http, 'events');
+    flushFeed(http, 'communities');
+    flushFeed(http, 'people');
+    await settle(context.fixture);
+
+    const native = context.fixture.nativeElement as HTMLElement;
+    const filter = native.querySelector('[data-testid="feed-categories-open"]') as HTMLButtonElement;
+    expect(filter.className).toContain('bg-surface');
+    expect(filter.className).toContain('text-ink');
+
+    const all = [...native.querySelectorAll('button')].find(
+      (button) => button.textContent?.trim() === 'Todas',
+    ) as HTMLButtonElement;
+    expect(all).not.toBeNull();
+    expect(all.className).toContain('bg-surface');
+    expect(all.className).not.toContain('bg-brand/15');
+  });
+
+  it('escreve a data por extenso na coluna de próximos eventos', async () => {
+    const context = setup();
+    http = context.http;
+    flushFeed(http, 'events', [event]);
+    flushFeed(http, 'communities');
+    flushFeed(http, 'people');
+    await settle(context.fixture);
+
+    const page = context.fixture.componentInstance as unknown as {
+      eventLongDate(value: FeedEvent): string;
+    };
+    const label = page.eventLongDate(event);
+    expect(label).toContain('janeiro');
+    expect(label).toContain('2027');
+    expect(label).toContain('·');
+  });
+
   it('esconde a faixa de stories quando só existiria o botão "Criar"', async () => {
     const context = setup();
     http = context.http;

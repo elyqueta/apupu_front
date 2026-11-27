@@ -14,15 +14,21 @@ import { ICONS } from '../../core/ui/icons';
   imports: [RouterLink, FaIconComponent],
   template: `
     <article
-      class="flex h-full min-w-0 flex-col overflow-hidden rounded-4xl border border-line/40 bg-surface shadow-card transition duration-200 hover:-translate-y-0.5 hover:border-brand/40"
+      class="flex h-full min-w-0 flex-col overflow-hidden rounded-4xl border border-line/40 bg-surface shadow-card transition duration-200 hover:-translate-y-0.5 hover:border-brand/40 hover:shadow-lg focus-within:border-brand/50"
       [attr.data-testid]="testId()"
     >
-      <div class="relative h-28 shrink-0 overflow-hidden bg-gradient-to-br from-brand/35 via-surface-raised to-surface">
+      <div class="relative h-32 shrink-0 overflow-hidden bg-gradient-to-br from-brand/45 via-secondary/20 to-surface-raised">
         @if (coverUrl()) {
           <img [src]="coverUrl()" alt="" class="size-full object-cover" loading="lazy" />
+        } @else {
+          <span class="absolute -right-6 -top-8 size-32 rounded-full border border-white/20 bg-white/10" aria-hidden="true"></span>
+          <span class="absolute -bottom-14 left-10 size-32 rounded-full border border-white/15 bg-white/5" aria-hidden="true"></span>
         }
+        <span class="absolute right-3 top-3 rounded-full border border-line bg-surface px-2.5 py-1 text-xs font-semibold text-ink shadow-card">
+          {{ badgeLabel() }}
+        </span>
         <span
-          class="absolute -bottom-6 left-4 grid size-12 place-items-center overflow-hidden rounded-2xl border-2 border-surface bg-surface-raised text-lg font-semibold text-brand-strong shadow-card"
+          class="absolute -bottom-7 left-4 grid size-14 place-items-center overflow-hidden rounded-2xl border-4 border-surface bg-surface-raised text-lg font-semibold text-brand-strong shadow-card"
         >
           @if (avatarUrl()) {
             <img [src]="avatarUrl()" alt="" class="size-full object-cover" />
@@ -34,26 +40,26 @@ import { ICONS } from '../../core/ui/icons';
         </span>
       </div>
 
-      <div class="flex flex-1 flex-col gap-2 p-4 pt-8">
+      <div class="flex flex-1 flex-col gap-2 p-4 pt-9">
         <h3 class="line-clamp-2 min-h-11 break-words font-display text-base font-semibold leading-snug text-ink">
           {{ name() }}
         </h3>
         <p class="line-clamp-2 min-h-10 break-words text-xs leading-5 text-muted">
           {{ description() || '—' }}
         </p>
-        <div class="flex flex-wrap items-center gap-2 text-xs text-muted">
-          <span class="ui-chip">
-            <fa-icon [icon]="icons[kind() === 'community' ? 'globe' : 'bank']" aria-hidden="true" />
-            {{ badgeLabel() }}
+        <div class="flex min-w-0 items-center gap-2 border-t border-line/40 pt-3 text-xs font-semibold text-muted">
+          <span class="grid size-8 shrink-0 place-items-center rounded-xl bg-brand/10 text-brand-strong">
+            <fa-icon [icon]="icons[kind() === 'community' ? 'guestGroup' : 'bank']" aria-hidden="true" />
           </span>
-          <span class="break-words">{{ countLabel() }}</span>
+          <span class="min-w-0 break-words">{{ countLabel() }}</span>
         </div>
         <a
           [routerLink]="path()"
-          class="ui-btn-secondary mt-auto min-h-11 w-full justify-center"
+          class="ui-btn mt-auto min-h-11 w-full shrink-0 justify-center whitespace-nowrap"
           [attr.aria-label]="i18n.t('common.view') + ': ' + name()"
         >
           {{ i18n.t('common.view') }}
+          <fa-icon [icon]="icons['chevronRight']" class="text-xs" aria-hidden="true" />
         </a>
       </div>
     </article>

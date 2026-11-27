@@ -28,7 +28,7 @@ import { CachedRepository } from './cached-repository';
 interface EventCreateEnvelope {
   event: ApiEvent;
   manage_email_status: 'queued' | 'failed';
-  deliveries: Array<{ email: string; status: 'queued' }>;
+  deliveries: { email: string; status: 'queued' }[];
 }
 
 export type EventUpdatePatch = Partial<
@@ -53,6 +53,50 @@ export type EventUpdatePatch = Partial<
     | 'useTables'
   >
 >;
+
+/**
+ * Constrói o payload completo de criação de evento. Partilhado pelo
+ * `/host/events` (eventos pessoais) e pelo fluxo de sugestão em comunidades,
+ * para que ambos enviem exatamente o mesmo corpo.
+ *
+ * Nunca inclui `community_id` em eventos pessoais: o backend rejeita
+ * `POST /host/events` com comunidade; esses eventos seguem para
+ * `/host/communities/:id/event-suggestions`.
+ */
+export function buildEventCreateRequest(input: CreateEventInput): CreateEventRequest {
+  return {
+    event: {
+      title: input.title,
+      host_name: input.hostName,
+      host_email: input.hostEmail,
+      category: input.type,
+      starts_at: input.startsAt,
+      ends_at: input.endsAt ?? undefined,
+      timezone: input.timezone,
+      location: locationFromInput(input),
+      message: input.message,
+      rules: input.rules || undefined,
+      dress_code: input.dressCode || undefined,
+      template_id: input.templateId,
+      theme: { mode: 'dark', palette: 'default' },
+      contribution: contributionFromInput(input),
+      rsvp_deadline: input.rsvpDeadline,
+      cover_url: input.coverUrl,
+      visibility: input.visibility ?? 'private',
+      show_attendee_count: input.visibility === 'public' ? (input.showAttendeeCount ?? false) : false,
+      youtube_url: input.youtubeVideoId ?? null,
+      use_tables: input.useTables ?? false,
+      min_age: input.minAge ?? null,
+      max_age: input.maxAge ?? null,
+      ...(input.communityId ? { community_id: input.communityId } : {}),
+    },
+    guests: input.guests.map((guest) => ({
+      name: guest.name,
+      email: guest.email,
+      phone: guest.phone,
+    })),
+  };
+}
 
 /**
  * Eventos do anfitrião (`/host/events`). É a fonte de verdade para as listas e
@@ -104,39 +148,10 @@ export class EventsRepository extends CachedRepository<HostEvent[]> {
   async create(
     input: CreateEventInput,
   ): Promise<{ event: HostEvent; manageEmailStatus: 'queued' | 'failed' }> {
-    const request: CreateEventRequest = {
-      event: {
-        title: input.title,
-        host_name: input.hostName,
-        host_email: input.hostEmail,
-        category: input.type,
-        starts_at: input.startsAt,
-        ends_at: input.endsAt ?? undefined,
-        timezone: input.timezone,
-        location: locationFromInput(input),
-        message: input.message,
-        rules: input.rules || undefined,
-        dress_code: input.dressCode || undefined,
-        template_id: input.templateId,
-        theme: { mode: 'dark', palette: 'default' },
-        contribution: contributionFromInput(input),
-        rsvp_deadline: input.rsvpDeadline,
-        cover_url: input.coverUrl,
-        visibility: input.visibility ?? 'private',
-        show_attendee_count: input.visibility === 'public' ? (input.showAttendeeCount ?? false) : false,
-        youtube_url: input.youtubeVideoId ?? null,
-        use_tables: input.useTables ?? false,
-        min_age: input.minAge ?? null,
-        max_age: input.maxAge ?? null,
-        community_id: input.communityId ?? null,
-      },
-      guests: input.guests.map((guest) => ({
-        name: guest.name,
-        email: guest.email,
-        phone: guest.phone,
-      })),
-    };
-    const response = await this.api.post<EventCreateEnvelope>('/host/events', request);
+    const response = await this.api.post<EventCreateEnvelope>(
+      '/host/events',
+      buildEventCreateRequest(input),
+    );
     const event = mapEvent(response.event);
     this.upsert(event);
     return { event, manageEmailStatus: response.manage_email_status };

@@ -4,9 +4,11 @@ import { Router, RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { toApiError } from '../../core/api/api-error';
 import {
+  ApiCommunityActivity,
   ApiCommunityDetail,
   ApiCommunityEvent,
   ApiCommunityMember,
+  ApiEventSuggestion,
   ApiJoinRequest,
   ApiReferral,
   CommunitiesRepository,
@@ -70,6 +72,9 @@ export class CommunityDetailPage {
 
   protected readonly requests = signal<ApiJoinRequest[]>([]);
   protected readonly referrals = signal<ApiReferral[] | null>(null);
+  /** `null` = ainda não carregado (o painel de revisão é lazy). */
+  protected readonly suggestions = signal<ApiEventSuggestion[] | null>(null);
+  protected readonly activity = signal<ApiCommunityActivity[] | null>(null);
 
   protected readonly editOpen = signal(false);
   protected readonly joinOpen = signal(false);
@@ -135,6 +140,7 @@ export class CommunityDetailPage {
       untracked(() => {
         if (tab === 'requests') void this.loadRequests();
         if (tab === 'shares') void this.loadReferrals();
+        if (tab === 'events') void this.loadSuggestions();
       });
     });
   }
@@ -148,6 +154,32 @@ export class CommunityDetailPage {
       if (!this.tabs().some((item) => item.id === this.tab())) this.tab.set('summary');
     } catch (error: unknown) {
       this.state.set(toApiError(error).status === 404 ? 'not_found' : 'error');
+    }
+    // A atividade é carregada com o detalhe (membros ativos), pelo que fica
+    // atualizada quando se volta à comunidade depois de partilhar no feed.
+    void this.loadActivity();
+  }
+
+  private async loadActivity(): Promise<void> {
+    const community = this.community();
+    if (!community || !this.can()?.isMember || community.my_status !== 'active') {
+      this.activity.set([]);
+      return;
+    }
+    try {
+      this.activity.set(await this.repo.communityActivity(community.id));
+    } catch {
+      this.activity.set([]);
+    }
+  }
+
+  private async loadSuggestions(): Promise<void> {
+    const community = this.community();
+    if (!community || !this.can()?.canDecideEventSuggestions) return;
+    try {
+      this.suggestions.set(await this.repo.eventSuggestions(community.id));
+    } catch {
+      this.suggestions.set([]);
     }
   }
 
@@ -247,9 +279,26 @@ export class CommunityDetailPage {
     }
   }
 
-  protected newEvent(): void {
+  /** Qualquer membro ativo sugere o evento; a criação direta é só para eventos pessoais. */
+  protected suggestEvent(): void {
     const community = this.community();
-    if (community) void this.router.navigate(['/criar-evento'], { queryParams: { comunidade: community.id } });
+    if (community) {
+      void this.router.navigate(['/criar-evento'], { queryParams: { community: community.slug } });
+    }
+  }
+
+  protected async decideSuggestion(
+    suggestion: ApiEventSuggestion,
+    decision: 'approve' | 'reject',
+  ): Promise<void> {
+    const community = this.community();
+    if (!community) return;
+    const ok = await this.run(
+      () => this.repo.decideEventSuggestion(community.id, suggestion.id, decision),
+      decision === 'approve' ? 'block11.events.approved' : 'block11.events.rejected',
+    );
+    // `run` recarrega o detalhe (e os eventos); atualiza também a lista revisada.
+    if (ok) await this.loadSuggestions();
   }
 
   /* ─────────────────────────────── membros ─────────────────────────────── */

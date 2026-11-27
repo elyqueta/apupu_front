@@ -37,6 +37,7 @@ import { readPreferredLocation, writePreferredLocation, type PreferredLocation }
 import { LocationPickerDialogComponent, LocationPickResult } from '../../shared/components/location-picker-dialog.component';
 import { ModalComponent } from '../../shared/components/modal.component';
 import { EventDraftsRepository } from '../../core/data/event-drafts.repository';
+import { buildEventCreateRequest } from '../../core/data/events.repository';
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const COVER_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
@@ -69,9 +70,11 @@ export class CreateEventPage {
   private readonly route = inject(ActivatedRoute);
   private readonly communitiesRepo = inject(CommunitiesRepository);
 
-  /** Bloco 11: comunidades onde a conta é gestora ou responsável. */
+  /** Bloco 11: comunidades onde a conta é membro ativo (inclui staff). */
   protected readonly communities = signal<ApiCommunity[]>([]);
   protected readonly communityId = signal<string>('');
+  /** Mensagem opcional que acompanha a sugestão para a equipa da comunidade. */
+  protected readonly suggestionMessage = signal('');
   private readonly destroyRef = inject(DestroyRef);
 
   protected readonly store = inject(WorkspaceStore);
@@ -469,7 +472,29 @@ export class CreateEventPage {
     this.formError.set('');
     this.publishing.set(true);
     try {
-      const event = await this.store.createEvent(this.buildInput());
+      const input = this.buildInput();
+      const communityId = this.communityId();
+      if (communityId) {
+        // Eventos de comunidade nunca vão para POST /host/events: o backend
+        // rejeita `community_id` nesse endpoint. Seguem para aprovação.
+        const request = buildEventCreateRequest(input);
+        await this.communitiesRepo.suggestEvent(communityId, {
+          event: { ...request.event, community_id: communityId },
+          guests: request.guests,
+          ...(this.suggestionMessage().trim() ? { message: this.suggestionMessage().trim() } : {}),
+        });
+        this.toasts.success(this.i18n.t('block11.events.suggestSent'));
+        const draftId = this.draftId();
+        if (draftId) {
+          this.draftId.set(null);
+          void this.drafts.remove(draftId).catch(() => undefined);
+        }
+        this.suggestionMessage.set('');
+        const slug = this.communities().find((item) => item.id === communityId)?.slug;
+        void this.router.navigate(['/comunidades', slug ?? communityId]);
+        return;
+      }
+      const event = await this.store.createEvent({ ...input, communityId: null });
       const cover = this.coverFile();
       if (cover) {
         try {
@@ -505,6 +530,7 @@ export class CreateEventPage {
     this.setCoverFile(null);
     this.step.set(0);
     this.formError.set('');
+    this.suggestionMessage.set('');
     this.form.reset({
       title: '',
       type: 'wedding',
@@ -537,20 +563,37 @@ export class CreateEventPage {
     this.form.controls.guests.push(this.guestGroup());
   }
 
-  /** Pré-seleciona `?comunidade=` (vindo da página da comunidade). */
+  /** Pré-seleciona `?community=` (aceita também o antigo `?comunidade=`). */
   private async loadCommunities(): Promise<void> {
+    let eligible: ApiCommunity[];
     try {
       const mine = await this.communitiesRepo.list('mine');
-      const eligible = mine.filter(
-        (item) => item.my_status === 'active' && (item.my_role === 'owner' || item.my_role === 'manager'),
-      );
-      this.communities.set(eligible);
-      const requested = this.route.snapshot.queryParamMap.get('comunidade');
-      if (requested && eligible.some((item) => item.id === requested)) {
-        this.communityId.set(requested);
-      }
+      eligible = mine.filter((item) => item.my_status === 'active');
     } catch {
       this.communities.set([]);
+      return;
+    }
+    this.communities.set(eligible);
+    const requested =
+      this.route.snapshot.queryParamMap.get('community') ??
+      this.route.snapshot.queryParamMap.get('comunidade');
+    if (!requested) return;
+    const match = eligible.find((item) => item.id === requested || item.slug === requested);
+    if (match) {
+      this.communityId.set(match.id);
+      return;
+    }
+    // Slug de uma comunidade ativa não devolvida na lista: resolver pelo detalhe.
+    try {
+      const detail = await this.communitiesRepo.detail(requested);
+      if (detail.permissions.canSuggestEvent && detail.community.my_status === 'active') {
+        this.communityId.set(detail.community.id);
+        if (!eligible.some((item) => item.id === detail.community.id)) {
+          this.communities.set([...eligible, detail.community]);
+        }
+      }
+    } catch {
+      // Sem acesso: mantém a lista de comunidades ativas carregada.
     }
   }
 

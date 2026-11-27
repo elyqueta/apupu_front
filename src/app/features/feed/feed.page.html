@@ -242,6 +242,7 @@
               @for (institution of institutions(); track institution.id) {
                 <li class="flex h-full min-w-0">
                   <app-public-entity-card
+                    class="w-full"
                     kind="institution"
                     [name]="institution.name"
                     [slug]="institution.slug"
@@ -255,6 +256,7 @@
               @for (community of communities(); track community.id) {
                 <li class="flex h-full min-w-0">
                   <app-public-entity-card
+                    class="w-full"
                     kind="community"
                     [name]="community.name"
                     [slug]="community.slug"

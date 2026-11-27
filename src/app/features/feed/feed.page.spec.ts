@@ -4,7 +4,7 @@ import { PLATFORM_ID } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { API_BASE_URL } from '../../core/api/api-config';
-import { FeedEvent, FeedPerson } from '../../core/data/social.repository';
+import { FeedCommunity, FeedEvent, FeedInstitution, FeedPerson } from '../../core/data/social.repository';
 import { FeedPage } from './feed.page';
 
 const BASE = 'http://localhost:3000/api/v1';
@@ -28,6 +28,28 @@ const event: FeedEvent = {
 };
 
 const person: FeedPerson = { type: 'person', id: 'p1', display_name: 'Rui', avatar_url: null, cover_url: null };
+
+const communityItem: FeedCommunity = {
+  type: 'community',
+  id: 'c1',
+  name: 'Comunidade Teste',
+  slug: 'comunidade-teste',
+  description: null,
+  avatar_url: null,
+  cover_url: null,
+  member_count: 2,
+};
+
+const institutionItem: FeedInstitution = {
+  type: 'institution',
+  id: 'i1',
+  name: 'Instituição Teste',
+  slug: 'instituicao-teste',
+  description: null,
+  avatar_url: null,
+  cover_url: null,
+  community_count: 3,
+};
 
 function setup(): { fixture: ComponentFixture<FeedPage>; http: HttpTestingController } {
   TestBed.configureTestingModule({
@@ -177,6 +199,21 @@ describe('FeedPage', () => {
     expect(label).toContain('janeiro');
     expect(label).toContain('2027');
     expect(label).toContain('·');
+  });
+
+  it('dá aos cartões de comunidade e instituição a mesma largura da grelha', async () => {
+    const context = setup();
+    http = context.http;
+    flushFeed(http, 'events');
+    flushFeed(http, 'communities', [institutionItem, communityItem]);
+    flushFeed(http, 'people');
+    await settle(context.fixture);
+
+    const cards = [
+      ...(context.fixture.nativeElement as HTMLElement).querySelectorAll('app-public-entity-card'),
+    ] as HTMLElement[];
+    expect(cards.length).toBe(2);
+    cards.forEach((card) => expect(card.className).toContain('w-full'));
   });
 
   it('esconde a faixa de stories quando só existiria o botão "Criar"', async () => {

@@ -1,7 +1,7 @@
 import { inject } from '@angular/core';
 import { Router, Routes } from '@angular/router';
 import { ShellComponent } from './core/layout/shell.component';
-import { authenticatedGuard } from './core/api/auth.guard';
+import { authenticatedGuard, unauthenticatedOnlyGuard } from './core/api/auth.guard';
 import { I18nService } from './core/i18n/i18n.service';
 import { TranslationKey } from './core/i18n/translations';
 import { superAdminGuard } from './features/admin/admin.guard';
@@ -98,6 +98,7 @@ export const routes: Routes = [
       {
         path: 'gestao',
         title: pageTitle('route.management'),
+        canActivate: [unauthenticatedOnlyGuard],
         loadComponent: () =>
           import('./features/host-management/management-entry.page').then(
             (m) => m.ManagementEntryPage,

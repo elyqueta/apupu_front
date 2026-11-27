@@ -12,6 +12,7 @@ import { ICONS } from '../../core/ui/icons';
 import { AvatarComponent } from '../../shared/components/avatar.component';
 import { BrandComponent } from '../../shared/components/brand.component';
 import { SkeletonComponent } from '../../shared/components/skeleton.component';
+import { LinkCopyService } from '../../shared/services/link-copy.service';
 import { FeedCommunityCardComponent, FeedEventCardComponent } from './feed-cards.component';
 
 type State = 'loading' | 'ready' | 'not_found' | 'error';
@@ -27,12 +28,10 @@ type State = 'loading' | 'ready' | 'not_found' | 'error';
   template: `
     <div class="mx-auto flex min-h-dvh max-w-5xl flex-col gap-4 px-4 pb-16 pt-4 sm:px-6">
       <header class="flex items-center justify-between gap-3">
-        <div class="flex items-center gap-1">
-          <a routerLink="/" class="ui-icon-button" [attr.aria-label]="i18n.t('block12.feed.title')">
-            <fa-icon [icon]="icons['chevronLeft']" aria-hidden="true" />
-          </a>
-          <app-brand />
-        </div>
+        <a routerLink="/" class="ui-icon-button" [attr.aria-label]="i18n.t('block12.feed.title')">
+          <fa-icon [icon]="icons['chevronLeft']" aria-hidden="true" />
+        </a>
+        <app-brand [height]="44" />
       </header>
 
       @switch (state()) {
@@ -48,52 +47,125 @@ type State = 'loading' | 'ready' | 'not_found' | 'error';
         }
         @case ('ready') {
           @if (person(); as p) {
-            <article class="overflow-hidden rounded-4xl border border-line bg-surface shadow-card">
-              <div class="h-32 bg-gradient-to-br from-brand/35 via-surface-raised to-surface sm:h-44">
+            <article class="relative overflow-hidden rounded-4xl border border-line bg-surface shadow-card">
+              <div class="pointer-events-none absolute inset-x-0 top-0 h-40 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.18),transparent_60%)]"></div>
+              <div class="relative h-32 bg-gradient-to-br from-brand/40 via-secondary/20 to-surface sm:h-44">
                 @if (p.cover_url) { <img [src]="p.cover_url" alt="" class="size-full object-cover" /> }
               </div>
-              <div class="flex flex-col gap-3 p-4 pt-0 sm:flex-row sm:items-end sm:justify-between sm:p-6 sm:pt-0">
+              <div class="relative flex flex-col gap-3 p-4 pt-0 sm:flex-row sm:items-end sm:justify-between sm:p-6 sm:pt-0">
                 <div class="flex items-end gap-3">
-                  <app-avatar class="-mt-10 rounded-full border-4 border-surface" [name]="p.display_name || '?'" [imageUrl]="p.avatar_url" size="2xl" />
+                  <app-avatar class="-mt-10 rounded-full border-4 border-surface shadow-card" [name]="p.display_name || '?'" [imageUrl]="p.avatar_url" size="2xl" />
                   <div class="pb-1">
-                    <h1 class="font-display text-2xl font-semibold text-ink">{{ p.display_name }}</h1>
+                    <h1 class="font-display text-2xl font-semibold tracking-tight text-ink">{{ p.display_name }}</h1>
                     @if (detail(); as d) {
-                      <p class="text-xs text-muted">
-                        {{ i18n.t('block12.profile.friends', { count: d.friend_count }) }}
-                        @if (d.mutual_friends.total > 0) { · {{ i18n.t('block12.profile.mutualFriends', { count: d.mutual_friends.total }) }} }
+                      <p class="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted">
+                        <span class="inline-flex items-center gap-1.5">
+                          <fa-icon [icon]="icons['guestGroup']" class="text-[10px] text-brand-strong" aria-hidden="true" />
+                          {{ i18n.t('block12.profile.friends', { count: d.friend_count }) }}
+                        </span>
+                        @if (d.mutual_friends.total > 0) {
+                          <span class="inline-flex items-center gap-1.5">
+                            <fa-icon [icon]="icons['userCheck']" class="text-[10px] text-brand-strong" aria-hidden="true" />
+                            {{ i18n.t('block12.profile.mutualFriends', { count: d.mutual_friends.total }) }}
+                          </span>
+                        }
                       </p>
+                      @if (d.is_self) {
+                        <p class="mt-1 inline-flex items-center gap-1.5 text-[11px] font-semibold text-brand-strong">
+                          <fa-icon [icon]="icons['check']" aria-hidden="true" />
+                          {{ i18n.t('block12.profile.self') }}
+                        </p>
+                      }
                     }
                   </div>
                 </div>
                 @if (detail(); as d) {
-                  @if (d.is_self) {
-                    <a routerLink="/perfil" class="ui-btn-secondary">{{ i18n.t('block12.profile.editProfile') }}</a>
-                  } @else {
-                    <div class="flex flex-wrap gap-2" data-testid="person-friendship">
-                      @switch (d.friendship.status) {
-                        @case ('none') {
-                          <button type="button" class="ui-btn" [disabled]="busy()" data-testid="person-add-friend" (click)="addFriend()">
-                            <fa-icon [icon]="icons['userPlus']" aria-hidden="true" /> {{ i18n.t('block12.profile.addFriend') }}
-                          </button>
-                        }
-                        @case ('pending') {
-                          @if (d.friendship.direction === 'incoming') {
-                            <button type="button" class="ui-btn" [disabled]="busy()" (click)="respond(true)">{{ i18n.t('block12.profile.acceptRequest') }}</button>
-                          } @else {
-                            <span class="ui-chip">{{ i18n.t('block12.profile.requested') }}</span>
-                            <button type="button" class="ui-btn-secondary" [disabled]="busy()" (click)="removeFriendship()">{{ i18n.t('block12.profile.cancelRequest') }}</button>
+                  <div class="flex flex-wrap items-center gap-2">
+                    @if (d.is_self) {
+                      <a routerLink="/perfil" class="ui-btn-secondary">
+                        <fa-icon [icon]="icons['pen']" aria-hidden="true" />
+                        {{ i18n.t('block12.profile.editProfile') }}
+                      </a>
+                    } @else {
+                      <div class="flex flex-wrap gap-2" data-testid="person-friendship">
+                        @switch (d.friendship.status) {
+                          @case ('none') {
+                            <button type="button" class="ui-btn" [disabled]="busy()" data-testid="person-add-friend" (click)="addFriend()">
+                              <fa-icon [icon]="icons['userPlus']" aria-hidden="true" /> {{ i18n.t('block12.profile.addFriend') }}
+                            </button>
+                          }
+                          @case ('pending') {
+                            @if (d.friendship.direction === 'incoming') {
+                              <button type="button" class="ui-btn" [disabled]="busy()" (click)="respond(true)">{{ i18n.t('block12.profile.acceptRequest') }}</button>
+                            } @else {
+                              <span class="ui-chip">{{ i18n.t('block12.profile.requested') }}</span>
+                              <button type="button" class="ui-btn-secondary" [disabled]="busy()" (click)="removeFriendship()">{{ i18n.t('block12.profile.cancelRequest') }}</button>
+                            }
+                          }
+                          @case ('accepted') {
+                            <span class="ui-chip"><fa-icon [icon]="icons['userCheck']" aria-hidden="true" /> {{ i18n.t('block12.profile.isFriend') }}</span>
+                            <button type="button" class="ui-btn-secondary" [disabled]="busy()" (click)="removeFriendship()">{{ i18n.t('block12.profile.removeFriend') }}</button>
                           }
                         }
-                        @case ('accepted') {
-                          <span class="ui-chip"><fa-icon [icon]="icons['userCheck']" aria-hidden="true" /> {{ i18n.t('block12.profile.isFriend') }}</span>
-                          <button type="button" class="ui-btn-secondary" [disabled]="busy()" (click)="removeFriendship()">{{ i18n.t('block12.profile.removeFriend') }}</button>
-                        }
-                      }
-                    </div>
-                  }
+                      </div>
+                    }
+                    <button
+                      type="button"
+                      class="ui-icon-button"
+                      [attr.aria-label]="i18n.t('block12.profile.share')"
+                      [attr.title]="i18n.t('block12.profile.share')"
+                      (click)="shareProfile()"
+                    >
+                      <fa-icon [icon]="icons['share']" aria-hidden="true" />
+                    </button>
+                  </div>
                 }
               </div>
             </article>
+
+            @if (detail(); as d) {
+              <section class="grid grid-cols-3 gap-2 sm:grid-cols-4" data-testid="person-stats">
+                <div class="flex flex-col gap-1 rounded-2xl border border-line bg-surface/80 p-3 shadow-card backdrop-blur-xl">
+                  <fa-icon [icon]="icons['guestGroup']" class="text-sm text-brand-strong" aria-hidden="true" />
+                  <span class="text-lg font-semibold tabular-nums text-ink">{{ d.friend_count }}</span>
+                  <span class="text-[11px] text-muted">{{ i18n.t('block12.friends.title') }}</span>
+                </div>
+                <div class="flex flex-col gap-1 rounded-2xl border border-line bg-surface/80 p-3 shadow-card backdrop-blur-xl">
+                  <fa-icon [icon]="icons['events']" class="text-sm text-brand-strong" aria-hidden="true" />
+                  <span class="text-lg font-semibold tabular-nums text-ink">{{ d.events.length }}</span>
+                  <span class="text-[11px] text-muted">{{ i18n.t('block12.profile.events') }}</span>
+                </div>
+                <div class="flex flex-col gap-1 rounded-2xl border border-line bg-surface/80 p-3 shadow-card backdrop-blur-xl">
+                  <fa-icon [icon]="icons['globe']" class="text-sm text-brand-strong" aria-hidden="true" />
+                  <span class="text-lg font-semibold tabular-nums text-ink">{{ d.communities.length }}</span>
+                  <span class="text-[11px] text-muted">{{ i18n.t('block12.profile.communities') }}</span>
+                </div>
+                <div class="flex flex-col gap-1 rounded-2xl border border-line bg-surface/80 p-3 shadow-card backdrop-blur-xl max-sm:col-span-3">
+                  <fa-icon [icon]="icons['userCheck']" class="text-sm text-brand-strong" aria-hidden="true" />
+                  <span class="text-lg font-semibold tabular-nums text-ink">{{ d.mutual_friends.total }}</span>
+                  <span class="text-[11px] text-muted">{{ i18n.t('block12.profile.mutualFriends', { count: d.mutual_friends.total }) }}</span>
+                </div>
+              </section>
+
+              @if (d.mutual_friends.preview.length > 0) {
+                <section class="rounded-4xl border border-line bg-surface/80 p-4 shadow-card backdrop-blur-xl">
+                  <div class="mb-3 flex items-center gap-2">
+                    <span class="grid size-9 place-items-center rounded-xl border border-brand/20 bg-brand/10 text-brand-strong">
+                      <fa-icon [icon]="icons['guestGroup']" aria-hidden="true" />
+                    </span>
+                    <h2 class="text-sm font-semibold text-ink">{{ i18n.t('block12.profile.mutualFriends', { count: d.mutual_friends.total }) }}</h2>
+                  </div>
+                  <div class="flex flex-wrap gap-2">
+                    @for (friend of d.mutual_friends.preview; track friend.id) {
+                      <a [routerLink]="['/pessoas', friend.id]" class="group inline-flex items-center gap-2 rounded-full border border-line bg-surface-raised/60 py-1 pl-1 pr-3 transition hover:border-brand/40 hover:bg-brand/5">
+                        <app-avatar [name]="friend.display_name || '?'" [imageUrl]="friend.avatar_url" size="xs" />
+                        <span class="max-w-32 truncate text-xs font-medium text-ink">{{ friend.display_name }}</span>
+                      </a>
+                    }
+                  </div>
+                </section>
+              }
+            }
 
             @if (!detail()) {
               <div class="flex flex-col items-center gap-3 rounded-4xl border border-brand/25 bg-brand/10 p-6 text-center" data-testid="person-gate">
@@ -105,37 +177,78 @@ type State = 'loading' | 'ready' | 'not_found' | 'error';
                 </div>
               </div>
             } @else if (detail(); as d) {
-              @if (d.mutual_communities.length > 0) {
-                <section>
-                  <h2 class="mb-2 text-sm font-semibold text-ink">{{ i18n.t('block12.profile.mutualCommunities') }}</h2>
+              <section class="rounded-4xl border border-line bg-surface/80 p-4 shadow-card backdrop-blur-xl">
+                <div class="mb-3 flex items-center gap-2">
+                  <span class="grid size-9 place-items-center rounded-xl border border-brand/20 bg-brand/10 text-brand-strong">
+                    <fa-icon [icon]="icons['guestGroup']" aria-hidden="true" />
+                  </span>
+                  <h2 class="text-sm font-semibold text-ink">{{ i18n.t('block12.profile.mutualCommunities') }}</h2>
+                  <span class="ml-auto rounded-full border border-line bg-surface-raised px-2 py-0.5 text-[11px] font-semibold text-muted">{{ d.mutual_communities.length }}</span>
+                </div>
+                @if (d.mutual_communities.length === 0) {
+                  <p class="text-sm text-muted">{{ i18n.t('block12.profile.noMutual') }}</p>
+                } @else {
                   <div class="flex flex-wrap gap-2">
                     @for (community of d.mutual_communities; track community.id) {
                       <a [routerLink]="['/comunidades', community.slug]" class="ui-chip-interactive">{{ community.name }}</a>
                     }
                   </div>
-                </section>
-              }
-              <section>
-                <h2 class="mb-2 text-sm font-semibold text-ink">{{ i18n.t('block12.profile.events') }}</h2>
+                }
+              </section>
+
+              <section class="rounded-4xl border border-line bg-surface/80 p-4 shadow-card backdrop-blur-xl">
+                <div class="mb-3 flex items-center gap-2">
+                  <span class="grid size-9 place-items-center rounded-xl border border-brand/20 bg-brand/10 text-brand-strong">
+                    <fa-icon [icon]="icons['events']" aria-hidden="true" />
+                  </span>
+                  <h2 class="text-sm font-semibold text-ink">{{ i18n.t('block12.profile.events') }}</h2>
+                  <span class="ml-auto rounded-full border border-line bg-surface-raised px-2 py-0.5 text-[11px] font-semibold text-muted">{{ d.events.length }}</span>
+                </div>
                 @if (d.events.length === 0) {
-                  <p class="text-sm text-muted">{{ i18n.t('block12.profile.noEvents') }}</p>
+                  <div class="flex items-center gap-3 rounded-2xl border border-dashed border-line bg-surface-raised/40 p-4">
+                    <span class="grid size-10 shrink-0 place-items-center rounded-xl border border-brand/20 bg-brand/10 text-brand-strong">
+                      <fa-icon [icon]="icons['calendar']" aria-hidden="true" />
+                    </span>
+                    <p class="text-sm text-muted">{{ i18n.t('block12.profile.noEvents') }}</p>
+                  </div>
                 } @else {
                   <ul class="grid auto-rows-fr grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
                     @for (event of d.events; track event.id) { <li class="h-full min-w-0"><app-feed-event-card [event]="event" /></li> }
                   </ul>
                 }
               </section>
-              @if (d.communities.length > 0) {
-                <section>
-                  <h2 class="mb-2 text-sm font-semibold text-ink">{{ i18n.t('block12.profile.communities') }}</h2>
+
+              <section class="rounded-4xl border border-line bg-surface/80 p-4 shadow-card backdrop-blur-xl">
+                <div class="mb-3 flex items-center gap-2">
+                  <span class="grid size-9 place-items-center rounded-xl border border-brand/20 bg-brand/10 text-brand-strong">
+                    <fa-icon [icon]="icons['globe']" aria-hidden="true" />
+                  </span>
+                  <h2 class="text-sm font-semibold text-ink">{{ i18n.t('block12.profile.communities') }}</h2>
+                  <span class="ml-auto rounded-full border border-line bg-surface-raised px-2 py-0.5 text-[11px] font-semibold text-muted">{{ d.communities.length }}</span>
+                </div>
+                @if (d.communities.length === 0) {
+                  <div class="flex items-center gap-3 rounded-2xl border border-dashed border-line bg-surface-raised/40 p-4">
+                    <span class="grid size-10 shrink-0 place-items-center rounded-xl border border-brand/20 bg-brand/10 text-brand-strong">
+                      <fa-icon [icon]="icons['globe']" aria-hidden="true" />
+                    </span>
+                    <p class="text-sm text-muted">{{ i18n.t('block12.profile.noCommunities') }}</p>
+                  </div>
+                } @else {
                   <ul class="grid auto-rows-fr grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
                     @for (community of d.communities; track community.id) { <li class="h-full min-w-0"><app-feed-community-card [community]="community" /></li> }
                   </ul>
-                </section>
-              }
+                }
+              </section>
+
               @if (past().length > 0) {
-                <section data-testid="person-past-events">
-                  <h2 class="mb-2 text-sm font-semibold text-ink">{{ i18n.t('block12.profile.pastEvents') }}</h2>
+                <section class="rounded-4xl border border-line bg-surface/80 p-4 shadow-card backdrop-blur-xl" data-testid="person-past-events">
+                  <div class="mb-3 flex items-center gap-2">
+                    <span class="grid size-9 place-items-center rounded-xl border border-brand/20 bg-brand/10 text-brand-strong">
+                      <fa-icon [icon]="icons['clock']" aria-hidden="true" />
+                    </span>
+                    <h2 class="text-sm font-semibold text-ink">{{ i18n.t('block12.profile.pastEvents') }}</h2>
+                    <span class="ml-auto rounded-full border border-line bg-surface-raised px-2 py-0.5 text-[11px] font-semibold text-muted">{{ past().length }}</span>
+                  </div>
                   <ul class="grid auto-rows-fr grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
                     @for (event of past(); track event.id) { <li class="h-full min-w-0"><app-feed-event-card [event]="event" /></li> }
                   </ul>
@@ -154,6 +267,7 @@ export class PersonPage {
   private readonly social = inject(SocialRepository);
   private readonly auth = inject(AuthService);
   private readonly toasts = inject(ToastService);
+  private readonly linkCopy = inject(LinkCopyService);
   private readonly title = inject(Title);
   private readonly browser = isPlatformBrowser(inject(PLATFORM_ID));
 
@@ -222,5 +336,10 @@ export class PersonPage {
   protected removeFriendship(): Promise<void> {
     const id = this.detail()?.friendship.id;
     return id ? this.act(() => this.social.remove(id), 'block12.friends.removed') : Promise.resolve();
+  }
+
+  protected async shareProfile(): Promise<void> {
+    if (!this.browser || !this.id()) return;
+    await this.linkCopy.copy(`${window.location.origin}/pessoas/${encodeURIComponent(this.id())}`);
   }
 }

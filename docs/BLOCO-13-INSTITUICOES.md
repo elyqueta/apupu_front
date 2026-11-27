@@ -15,7 +15,7 @@
 ## Passos
 
 1. **Backend**: migração reversível: `institutions (id, name, slug unique, description, visibility, creator_id, avatar/cover com public_id, created_at, deleted_at)`, `communities.institution_id uuid null`, `institution_community_requests (id, institution_id, community_id, direction community_to_institution|institution_to_community, status, otp…, decided_at)`. Reutilizar o serviço de OTP (purpose `institution_link`). Rotas CRUD, pedidos, aprovar/rejeitar, remover, auditoria; testes de permissões e de OTP.
-2. **Frontend**: "Instituições" no menu; `/instituicoes/:slug` (capa + avatar, comunidades, eventos agregados); modais para criar/editar, convidar comunidade, pedir associação, confirmar com OTP; mostrar a instituição no perfil da comunidade.
+2. **Frontend**: "Instituições" no menu; `/instituicoes/:slug` (capa + avatar, comunidades, eventos agregados); modais para criar/editar, convidar comunidade, pedir associação, confirmar com OTP; mostrar a instituição no perfil da comunidade. O modal de criar/editar aceita upload (multipart) ou URL para avatar e capa: `POST /host/institutions/:id/{avatar,cover}/upload` e `DELETE …/{avatar,cover}`, só para o criador.
 3. Feed: instituições públicas como cartão no separador "Comunidades" (sem novo tipo de pesquisa neste bloco).
 
 ## Critérios de aceitação

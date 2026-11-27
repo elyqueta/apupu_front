@@ -8,6 +8,7 @@ import { EventTemplate, TemplateId } from '../../core/models/models';
 import { ToastService } from '../../core/services/toast.service';
 import { WorkspaceStore } from '../../core/services/workspace.store';
 import { ICONS } from '../../core/ui/icons';
+import { ActionMenuComponent, ActionMenuItem } from '../../shared/components/action-menu.component';
 import { ModalComponent } from '../../shared/components/modal.component';
 import { TemplateRendererComponent, TemplateRenderData } from '../../shared/components/template-renderer.component';
 import { OPEN_STYLES, OpenStyle } from '../../core/models/template-manifest';
@@ -16,7 +17,7 @@ type TemplateCategory = 'all' | 'system' | 'user';
 
 @Component({
   selector: 'app-templates-page',
-  imports: [RouterLink, FaIconComponent, ModalComponent, TemplateRendererComponent],
+  imports: [RouterLink, FaIconComponent, ActionMenuComponent, ModalComponent, TemplateRendererComponent],
   templateUrl: './templates.page.html',
 })
 export class TemplatesPage {
@@ -130,6 +131,32 @@ export class TemplatesPage {
     this.toasts.success(
       `${this.i18n.t('create.templateSelected')}${template ? ` · ${template.name}` : ''}`,
     );
+  }
+
+  protected templateActions(): ActionMenuItem[] {
+    return [
+      { id: 'preview', label: this.i18n.t('block15.templates.preview'), icon: ICONS['eye'] },
+      { id: 'use', label: this.i18n.t('templates.use'), icon: ICONS['palette'] },
+      { id: 'select', label: this.i18n.t('templates.selected'), icon: ICONS['check'] },
+      { id: 'edit', label: this.i18n.t('common.edit'), icon: ICONS['pen'] },
+    ];
+  }
+
+  protected onTemplateAction(template: EventTemplate, action: string): void {
+    switch (action) {
+      case 'preview':
+        this.openPreview(template);
+        break;
+      case 'use':
+        this.useTemplate(template);
+        break;
+      case 'select':
+        this.select(template.id);
+        break;
+      case 'edit':
+        void this.router.navigate(['/templates', template.slug, 'editar']);
+        break;
+    }
   }
 
   protected useTemplate(template: EventTemplate): void {

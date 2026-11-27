@@ -16,7 +16,7 @@ import { I18nService } from '../../core/i18n/i18n.service';
 import { TranslationKey } from '../../core/i18n/translations';
 import { ToastService } from '../../core/services/toast.service';
 import { ICONS } from '../../core/ui/icons';
-import { ActionMenuItem } from '../../shared/components/action-menu.component';
+import { ActionMenuComponent, ActionMenuItem } from '../../shared/components/action-menu.component';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog.component';
 import { ModalComponent } from '../../shared/components/modal.component';
 import { PersonCardComponent, PersonMetaItem } from '../../shared/components/person-card.component';
@@ -45,6 +45,7 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     SkeletonComponent,
     ModalComponent,
     ConfirmDialogComponent,
+    ActionMenuComponent,
     PersonCardComponent,
     PhoneMaskDirective,
     CommunityFormDialogComponent,

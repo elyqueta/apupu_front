@@ -86,8 +86,9 @@
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       @for (template of filteredTemplates(); track template.id) {
         <article
-          class="group flex h-full flex-col overflow-hidden rounded-4xl border bg-surface shadow-card transition duration-300 hover:-translate-y-0.5"
-          [class]="selected() === template.id ? 'border-brand/45 ring-1 ring-brand/20' : 'border-line hover:border-brand/40'"
+          class="group relative flex h-full flex-col overflow-hidden rounded-4xl border border-white/12 bg-surface/70 shadow-card backdrop-blur-xl transition duration-300 hover:-translate-y-0.5 hover:border-white/25"
+          [class]="selected() === template.id ? 'ring-1 ring-brand/30' : ''"
+          data-testid="template-card"
         >
           <button
             type="button"
@@ -104,10 +105,16 @@
               [label]="template.name"
               class="absolute inset-0 block h-full"
             />
-            <span class="absolute bottom-2 right-2 inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl border border-line bg-surface/90 text-muted shadow-card backdrop-blur-sm">
-              <fa-icon [icon]="icons['eye']" aria-hidden="true" />
-            </span>
           </button>
+
+          <div class="absolute right-2 top-2 z-10 hidden lg:block" (click)="$event.stopPropagation()">
+            <app-action-menu
+              [items]="templateActions()"
+              [triggerLabel]="i18n.t('common.moreActions')"
+              [attr.data-testid]="'template-actions-' + template.slug"
+              (selected)="onTemplateAction(template, $event)"
+            />
+          </div>
 
           <div class="flex flex-1 flex-col gap-3 p-4">
             <div class="flex items-start justify-between gap-2">

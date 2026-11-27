@@ -77,6 +77,28 @@ export class InstitutionsRepository {
     return this.api.patch<ApiInstitution>(`${this.base}/${encodeURIComponent(id)}`, input);
   }
 
+  /** Envia o avatar em `multipart/form-data` (campo `avatar`). */
+  uploadAvatar(id: string, file: File): Promise<ApiInstitution> {
+    const body = new FormData();
+    body.append('avatar', file);
+    return this.api.postForm<ApiInstitution>(`${this.base}/${encodeURIComponent(id)}/avatar/upload`, body);
+  }
+
+  removeAvatar(id: string): Promise<ApiInstitution> {
+    return this.api.deleteWithData<ApiInstitution>(`${this.base}/${encodeURIComponent(id)}/avatar`);
+  }
+
+  /** Envia a capa em `multipart/form-data` (campo `cover`). */
+  uploadCover(id: string, file: File): Promise<ApiInstitution> {
+    const body = new FormData();
+    body.append('cover', file);
+    return this.api.postForm<ApiInstitution>(`${this.base}/${encodeURIComponent(id)}/cover/upload`, body);
+  }
+
+  removeCover(id: string): Promise<ApiInstitution> {
+    return this.api.deleteWithData<ApiInstitution>(`${this.base}/${encodeURIComponent(id)}/cover`);
+  }
+
   remove(id: string, confirmName: string): Promise<void> {
     return this.api.deleteWithBody(`${this.base}/${encodeURIComponent(id)}`, { confirm_name: confirmName });
   }

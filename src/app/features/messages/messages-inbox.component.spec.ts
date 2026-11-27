@@ -93,7 +93,6 @@ describe('MessagesInboxComponent', () => {
     const search = native.querySelector('[formcontrolname="q"]') as HTMLInputElement;
     search.value = 'João';
     search.dispatchEvent(new Event('input'));
-    (native.querySelector('button[type="submit"]') as HTMLButtonElement).click();
     await settle();
 
     const request = http.expectOne((req) => req.url === path());

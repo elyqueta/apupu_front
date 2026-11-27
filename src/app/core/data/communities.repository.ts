@@ -152,6 +152,28 @@ export class CommunitiesRepository {
     return this.api.patch<ApiCommunity>(this.path(id), input);
   }
 
+  /** Envia o avatar em `multipart/form-data` (campo `avatar`). */
+  uploadAvatar(id: string, file: File): Promise<ApiCommunity> {
+    const body = new FormData();
+    body.append('avatar', file);
+    return this.api.postForm<ApiCommunity>(this.path(id, '/avatar/upload'), body);
+  }
+
+  removeAvatar(id: string): Promise<ApiCommunity> {
+    return this.api.deleteWithData<ApiCommunity>(this.path(id, '/avatar'));
+  }
+
+  /** Envia a capa em `multipart/form-data` (campo `cover`). */
+  uploadCover(id: string, file: File): Promise<ApiCommunity> {
+    const body = new FormData();
+    body.append('cover', file);
+    return this.api.postForm<ApiCommunity>(this.path(id, '/cover/upload'), body);
+  }
+
+  removeCover(id: string): Promise<ApiCommunity> {
+    return this.api.deleteWithData<ApiCommunity>(this.path(id, '/cover'));
+  }
+
   remove(id: string, confirmName: string): Promise<void> {
     return this.api.deleteWithBody(this.path(id), { confirm_name: confirmName });
   }

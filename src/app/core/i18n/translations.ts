@@ -29,6 +29,7 @@ const PT_AO = {
   'app.demoBadge': 'Demonstração',
   'app.prototype': 'Protótipo local',
 
+  'nav.feed': 'Feed',
   'nav.dashboard': 'Painel',
   'nav.events': 'Eventos',
   'nav.guests': 'Convidados',
@@ -1551,6 +1552,7 @@ const EN: Record<TranslationKey, string> = {
   'app.demoBadge': 'Demo',
   'app.prototype': 'Local prototype',
 
+  'nav.feed': 'Feed',
   'nav.dashboard': 'Dashboard',
   'nav.events': 'Events',
   'nav.guests': 'Guests',

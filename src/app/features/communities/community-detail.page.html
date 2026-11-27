@@ -204,13 +204,29 @@
                     <li class="h-full min-w-0">
                       <a
                         [routerLink]="['/equipas', team.id]"
-                        class="flex h-full flex-col gap-2 rounded-3xl border border-line bg-surface p-4 shadow-card transition hover:border-brand/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60"
+                        class="group relative flex h-full min-w-0 flex-col gap-3 overflow-hidden rounded-3xl border border-line bg-surface p-4 shadow-card transition duration-300 hover:-translate-y-0.5 hover:border-brand/40 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60"
                       >
-                        <span class="line-clamp-2 font-display text-base font-semibold text-ink">{{ team.name }}</span>
-                        <span class="mt-auto flex flex-wrap gap-x-3 text-xs text-muted">
-                          <span>{{ i18n.t('block11.teams.members', { count: team.member_count }) }}</span>
-                          <span>{{ i18n.t('block11.teams.events', { count: team.event_count }) }}</span>
-                        </span>
+                        <div class="pointer-events-none absolute -right-10 -top-12 size-36 rounded-full bg-brand/10 blur-2xl transition group-hover:bg-brand/20"></div>
+                        <div class="relative flex items-start gap-3">
+                          <span class="grid size-11 shrink-0 place-items-center rounded-2xl border border-brand/25 bg-brand/10 text-brand-strong">
+                            <fa-icon [icon]="icons['team']" class="text-base" aria-hidden="true" />
+                          </span>
+                          <div class="min-w-0 flex-1">
+                            <span class="text-[10px] font-semibold uppercase tracking-[0.14em] text-brand-strong">{{ i18n.t('block11.tab.teams') }}</span>
+                            <span class="mt-0.5 block line-clamp-2 font-display text-base font-semibold text-ink">{{ team.name }}</span>
+                          </div>
+                          <fa-icon [icon]="icons['chevronRight']" class="mt-1 shrink-0 text-sm text-muted transition group-hover:translate-x-0.5 group-hover:text-brand-strong" aria-hidden="true" />
+                        </div>
+                        <div class="relative mt-auto flex flex-wrap gap-2 border-t border-line pt-3">
+                          <span class="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface-raised/60 px-2.5 py-1 text-[11px] font-semibold text-muted">
+                            <fa-icon [icon]="icons['user']" class="text-[10px] text-brand-strong" aria-hidden="true" />
+                            {{ i18n.t('block11.teams.members', { count: team.member_count }) }}
+                          </span>
+                          <span class="inline-flex items-center gap-1.5 rounded-full border border-brand/20 bg-brand/10 px-2.5 py-1 text-[11px] font-semibold text-brand-strong">
+                            <fa-icon [icon]="icons['events']" class="text-[10px]" aria-hidden="true" />
+                            {{ i18n.t('block11.teams.events', { count: team.event_count }) }}
+                          </span>
+                        </div>
                       </a>
                     </li>
                   }
@@ -226,19 +242,50 @@
                   {{ i18n.t('block11.members.invite') }}
                 </button>
               }
-              <ul class="grid auto-rows-fr grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+              <ul class="flex flex-col overflow-hidden rounded-3xl border border-line bg-surface-raised/20" data-testid="community-members-list">
                 @for (member of data.members; track member.id) {
-                  <li class="h-full min-w-0">
-                    <app-person-card
-                      [name]="member.display_name || member.email || roleLabel(member.role)"
-                      [avatarUrl]="member.avatar_url"
-                      [subtitle]="member.email || ''"
-                      [status]="member.status === 'invited' ? i18n.t('block11.members.invited') : null"
-                      [meta]="memberMeta(member)"
-                      [actions]="memberActions(member)"
-                      [actionsLabel]="i18n.t('common.moreActions')"
-                      (actionSelected)="onMemberAction(member, $event)"
-                    />
+                  <li class="min-w-0 border-b border-line last:border-b-0">
+                    <div class="flex min-h-[5.25rem] items-center gap-3 px-3 py-3 sm:px-4">
+                      <span class="relative grid size-12 shrink-0 place-items-center overflow-hidden rounded-full border border-brand/25 bg-brand/15 text-sm font-semibold text-brand-strong">
+                        @if (member.avatar_url) {
+                          <img [src]="member.avatar_url" alt="" class="size-full object-cover" loading="lazy" />
+                        } @else {
+                          {{ initials(member.display_name || member.email || roleLabel(member.role)) }}
+                        }
+                      </span>
+                      <div class="min-w-0 flex-1">
+                        <div class="flex flex-wrap items-center gap-2">
+                          <p class="truncate text-sm font-semibold text-ink" [title]="member.display_name || member.email">
+                            {{ member.display_name || member.email || roleLabel(member.role) }}
+                          </p>
+                          <span class="ui-chip shrink-0">
+                            <fa-icon [icon]="icons['user']" aria-hidden="true" />
+                            {{ roleLabel(member.role) }}
+                          </span>
+                          @if (member.status === 'invited') {
+                            <span class="rounded-full border border-amber/30 bg-amber/10 px-2 py-0.5 text-[10px] font-semibold text-amber">
+                              {{ i18n.t('block11.list.invited') }}
+                            </span>
+                          }
+                        </div>
+                        @if (member.email) {
+                          <p class="mt-0.5 truncate text-xs text-muted" [title]="member.email">{{ member.email }}</p>
+                        }
+                        @if (member.joined_at) {
+                          <p class="mt-1 inline-flex items-center gap-1.5 text-[11px] text-muted/80">
+                            <fa-icon [icon]="icons['clock']" class="text-[10px] text-brand-strong" aria-hidden="true" />
+                            {{ i18n.shortDate(member.joined_at, 'Africa/Luanda') }}
+                          </p>
+                        }
+                      </div>
+                      @if (memberActions(member).length) {
+                        <app-action-menu
+                          [items]="memberActions(member)"
+                          [triggerLabel]="i18n.t('common.moreActions')"
+                          (selected)="onMemberAction(member, $event)"
+                        />
+                      }
+                    </div>
                   </li>
                 }
               </ul>
@@ -272,58 +319,116 @@
             </section>
           }
           @case ('shares') {
-            <section class="rounded-4xl border border-line bg-surface p-4 shadow-card sm:p-5">
-              <h2 class="text-sm font-semibold text-ink">
-                {{ perms.canViewAllReferrals ? i18n.t('block11.shares.all') : i18n.t('block11.shares.mine') }}
-              </h2>
-              <p class="mt-1 text-xs text-muted">{{ i18n.t('block11.shares.hint') }}</p>
-              @if (referrals() === null) {
-                <app-skeleton variant="table" />
-              } @else if (referrals()!.length === 0) {
-                <p class="mt-3 text-sm text-muted">{{ i18n.t('block11.shares.empty') }}</p>
-              } @else {
-                <ul class="mt-3 divide-y divide-line">
-                  @for (stat of referrals(); track stat.member_id) {
-                    <li class="flex flex-wrap items-center justify-between gap-2 py-2.5 text-sm">
-                      <span class="min-w-0 truncate font-semibold text-ink">{{ stat.display_name || '—' }}</span>
-                      <span class="flex gap-3 text-xs text-muted">
-                        <span>{{ i18n.t('block11.shares.invitations', { count: stat.invitations }) }}</span>
-                        <span class="font-semibold text-brand-strong">{{ i18n.t('block11.shares.accepted', { count: stat.accepted }) }}</span>
-                      </span>
-                    </li>
-                  }
-                </ul>
-              }
+            <section class="relative overflow-hidden rounded-4xl border border-line bg-surface p-4 shadow-card sm:p-5">
+              <div class="pointer-events-none absolute inset-x-0 top-0 h-28 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.14),transparent_60%)]"></div>
+              <header class="relative flex flex-wrap items-start justify-between gap-3">
+                <div class="flex min-w-0 items-start gap-3">
+                  <span class="grid size-11 shrink-0 place-items-center rounded-2xl border border-brand/20 bg-brand/10 text-brand-strong shadow-inner">
+                    <fa-icon [icon]="icons['share']" class="text-base" aria-hidden="true" />
+                  </span>
+                  <div class="min-w-0 flex-1">
+                    <p class="text-[10px] font-semibold uppercase tracking-[0.18em] text-brand-strong">
+                      {{ i18n.t('block11.shares.title') }}
+                    </p>
+                    <h2 class="mt-0.5 text-base font-semibold text-ink">
+                      {{ perms.canViewAllReferrals ? i18n.t('block11.shares.all') : i18n.t('block11.shares.mine') }}
+                    </h2>
+                    <p class="mt-1 truncate text-xs text-muted" [title]="i18n.t('block11.shares.hint')">{{ i18n.t('block11.shares.hint') }}</p>
+                  </div>
+                </div>
+                <span class="shrink-0 rounded-full border border-line bg-surface-raised px-3 py-1 text-[11px] font-semibold text-muted">
+                  {{ i18n.t('block11.list.members', { count: referrals()?.length ?? 0 }) }}
+                </span>
+              </header>
+
+              <div class="relative mt-4 border-t border-line pt-4">
+                @if (referrals() === null) {
+                  <app-skeleton variant="table" />
+                } @else if (referrals()!.length === 0) {
+                  <div class="flex flex-col items-center justify-center gap-3 rounded-3xl border border-dashed border-line bg-surface-raised/40 px-6 py-10 text-center">
+                    <span class="grid size-12 place-items-center rounded-2xl border border-brand/20 bg-brand/10 text-brand-strong">
+                      <fa-icon [icon]="icons['share']" class="text-lg" aria-hidden="true" />
+                    </span>
+                    <p class="text-sm text-muted">{{ i18n.t('block11.shares.empty') }}</p>
+                  </div>
+                } @else {
+                  <ul class="grid gap-2 sm:grid-cols-2">
+                    @for (stat of referrals(); track stat.member_id) {
+                      <li class="group flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-line/80 bg-surface-raised/60 p-3 transition hover:border-brand/30 hover:bg-brand/5">
+                        <div class="flex min-w-0 items-center gap-2.5">
+                          <span class="grid size-9 shrink-0 place-items-center rounded-xl border border-brand/20 bg-brand/10 text-xs font-bold text-brand-strong">
+                            {{ (stat.display_name || '—').slice(0, 1).toUpperCase() }}
+                          </span>
+                          <span class="min-w-0 truncate text-sm font-semibold text-ink">{{ stat.display_name || '—' }}</span>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-1.5">
+                          <span class="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface px-2.5 py-1 text-[11px] font-semibold text-muted">
+                            <fa-icon [icon]="icons['envelope']" class="text-[10px]" aria-hidden="true" />
+                            {{ i18n.t('block11.shares.invitations', { count: stat.invitations }) }}
+                          </span>
+                          <span class="inline-flex items-center gap-1.5 rounded-full border border-mint/30 bg-mint/10 px-2.5 py-1 text-[11px] font-semibold text-mint">
+                            <fa-icon [icon]="icons['success']" class="text-[10px]" aria-hidden="true" />
+                            {{ i18n.t('block11.shares.accepted', { count: stat.accepted }) }}
+                          </span>
+                        </div>
+                      </li>
+                    }
+                  </ul>
+                }
+              </div>
             </section>
           }
           @case ('settings') {
-            <section class="grid gap-3 md:grid-cols-2">
-              <article class="flex flex-col gap-3 rounded-4xl border border-line bg-surface p-4 shadow-card sm:p-5">
-                <h2 class="text-sm font-semibold text-ink">{{ i18n.t('block11.settings.edit') }}</h2>
-                <button type="button" class="ui-btn-secondary self-start" data-testid="community-edit" (click)="editOpen.set(true)">
+            <section class="flex flex-col overflow-hidden rounded-3xl border border-line bg-surface-raised/20" data-testid="community-settings-list">
+              <button
+                type="button"
+                class="flex min-h-[4.75rem] w-full items-center gap-3 border-b border-line px-3 py-3 text-left transition hover:bg-surface-raised/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand/60 sm:px-4"
+                data-testid="community-edit"
+                (click)="editOpen.set(true)"
+              >
+                <span class="grid size-10 shrink-0 place-items-center rounded-xl border border-brand/20 bg-brand/10 text-brand-strong">
                   <fa-icon [icon]="icons['pen']" aria-hidden="true" />
-                  {{ i18n.t('block11.settings.edit') }}
-                </button>
-              </article>
+                </span>
+                <span class="min-w-0 flex-1">
+                  <span class="block truncate text-sm font-semibold text-ink">{{ i18n.t('block11.settings.edit') }}</span>
+                  <span class="mt-0.5 block truncate text-xs text-muted">{{ i18n.t('block11.settings.editHint') }}</span>
+                </span>
+                <fa-icon [icon]="icons['chevronRight']" class="shrink-0 text-xs text-muted" aria-hidden="true" />
+              </button>
+
               @if (perms.canTransfer) {
-                <article class="flex flex-col gap-3 rounded-4xl border border-line bg-surface p-4 shadow-card sm:p-5">
-                  <h2 class="text-sm font-semibold text-ink">{{ i18n.t('block11.settings.transferTitle') }}</h2>
-                  <p class="text-xs leading-5 text-muted">{{ i18n.t('block11.settings.transferHint') }}</p>
-                  <button type="button" class="ui-btn-secondary self-start" data-testid="community-transfer" (click)="openTransfer()">
+                <button
+                  type="button"
+                  class="flex min-h-[4.75rem] w-full items-center gap-3 border-b border-line px-3 py-3 text-left transition hover:bg-surface-raised/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand/60 sm:px-4"
+                  data-testid="community-transfer"
+                  (click)="openTransfer()"
+                >
+                  <span class="grid size-10 shrink-0 place-items-center rounded-xl border border-amber/30 bg-amber/10 text-amber">
                     <fa-icon [icon]="icons['key']" aria-hidden="true" />
-                    {{ i18n.t('block11.transfer.title') }}
-                  </button>
-                </article>
+                  </span>
+                  <span class="min-w-0 flex-1">
+                    <span class="block truncate text-sm font-semibold text-ink">{{ i18n.t('block11.settings.transferTitle') }}</span>
+                    <span class="mt-0.5 block truncate text-xs text-muted">{{ i18n.t('block11.settings.transferHint') }}</span>
+                  </span>
+                  <fa-icon [icon]="icons['chevronRight']" class="shrink-0 text-xs text-muted" aria-hidden="true" />
+                </button>
               }
+
               @if (perms.canDelete) {
-                <article class="flex flex-col gap-3 rounded-4xl border border-coral/30 bg-coral/5 p-4 shadow-card sm:p-5 md:col-span-2">
-                  <h2 class="text-sm font-semibold text-coral">{{ i18n.t('block11.settings.delete') }}</h2>
-                  <p class="text-xs leading-5 text-muted">{{ i18n.t('block11.settings.deleteBody') }}</p>
-                  <button type="button" class="ui-btn-danger self-start" (click)="deleteTyped.set(''); deleteOpen.set(true)">
+                <button
+                  type="button"
+                  class="flex min-h-[4.75rem] w-full items-center gap-3 px-3 py-3 text-left transition hover:bg-coral/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-coral/60 sm:px-4"
+                  (click)="deleteTyped.set(''); deleteOpen.set(true)"
+                >
+                  <span class="grid size-10 shrink-0 place-items-center rounded-xl border border-coral/30 bg-coral/10 text-coral">
                     <fa-icon [icon]="icons['trash']" aria-hidden="true" />
-                    {{ i18n.t('block11.settings.delete') }}
-                  </button>
-                </article>
+                  </span>
+                  <span class="min-w-0 flex-1">
+                    <span class="block truncate text-sm font-semibold text-coral">{{ i18n.t('block11.settings.delete') }}</span>
+                    <span class="mt-0.5 block truncate text-xs text-muted">{{ i18n.t('block11.settings.deleteBody') }}</span>
+                  </span>
+                  <fa-icon [icon]="icons['chevronRight']" class="shrink-0 text-xs text-coral" aria-hidden="true" />
+                </button>
               }
             </section>
           }

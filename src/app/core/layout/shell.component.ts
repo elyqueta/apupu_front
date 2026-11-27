@@ -87,6 +87,7 @@ export class ShellComponent {
   private readonly mobileSearchTrigger = viewChild<ElementRef<HTMLButtonElement>>('mobileSearchTrigger');
 
   protected readonly navItems: NavItem[] = [
+    { path: '/', labelKey: 'nav.feed', icon: ICONS['home'], exact: true },
     { path: '/painel', labelKey: 'nav.dashboard', icon: ICONS['dashboard'], exact: true },
     { path: '/eventos', labelKey: 'nav.events', icon: ICONS['events'], exact: false },
     { path: '/tarefas', labelKey: 'nav.tasks', icon: ICONS['checklist'], exact: false },
@@ -112,6 +113,7 @@ export class ShellComponent {
    * anfitrião; o resto fica acessível pelo botão "Mais", que abre o drawer.
    */
   protected readonly bottomNavItems: NavItem[] = [
+    { path: '/', labelKey: 'nav.feed', icon: ICONS['home'], exact: true },
     { path: '/painel', labelKey: 'nav.dashboard', icon: ICONS['dashboard'], exact: true },
     { path: '/eventos', labelKey: 'nav.events', icon: ICONS['events'], exact: false },
     { path: '/convidados', labelKey: 'nav.guests', icon: ICONS['guests'], exact: false },

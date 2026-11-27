@@ -5,6 +5,8 @@ import { Router, RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { AuthService } from '../../core/api/auth.service';
 import { ApiCommunity, CommunitiesRepository } from '../../core/data/communities.repository';
+import { EventsRepository } from '../../core/data/events.repository';
+import { HostEvent } from '../../core/models/models';
 import {
   FeedCommunity,
   FeedInstitution,
@@ -18,11 +20,13 @@ import {
 import { I18nService } from '../../core/i18n/i18n.service';
 import { TranslationKey } from '../../core/i18n/translations';
 import { ToastService } from '../../core/services/toast.service';
+import { NotificationsRepository } from '../../core/data/notifications.repository';
 import { ICONS } from '../../core/ui/icons';
 import { AvatarComponent } from '../../shared/components/avatar.component';
 import { BrandComponent } from '../../shared/components/brand.component';
 import { ModalComponent } from '../../shared/components/modal.component';
 import { PreferenceControlsComponent } from '../../shared/components/preference-controls.component';
+import { LinkCopyService } from '../../shared/services/link-copy.service';
 import { SkeletonComponent } from '../../shared/components/skeleton.component';
 import {
   FeedCommunityCardComponent,
@@ -69,20 +73,24 @@ export class FeedPage {
   protected readonly auth = inject(AuthService);
   private readonly social = inject(SocialRepository);
   private readonly communitiesRepo = inject(CommunitiesRepository);
+  private readonly eventsRepo = inject(EventsRepository);
+  private readonly notificationsRepo = inject(NotificationsRepository);
   private readonly toasts = inject(ToastService);
+  private readonly linkCopy = inject(LinkCopyService);
   private readonly router = inject(Router);
   private readonly title = inject(Title);
   private readonly meta = inject(Meta);
   private readonly browser = isPlatformBrowser(inject(PLATFORM_ID));
 
-  protected readonly types: { id: FeedType; label: TranslationKey; icon: string }[] = [
+  protected readonly types: { id: FeedType | 'all'; label: TranslationKey; icon: string }[] = [
+    { id: 'all', label: 'block12.feed.type.all', icon: 'templates' },
     { id: 'events', label: 'block12.feed.type.events', icon: 'calendar' },
     { id: 'communities', label: 'block12.feed.type.communities', icon: 'globe' },
     { id: 'people', label: 'block12.feed.type.people', icon: 'guests' },
   ];
   protected readonly categories = CATEGORIES;
 
-  protected readonly type = signal<FeedType>('events');
+  protected readonly type = signal<FeedType | 'all'>('all');
   protected readonly category = signal<string>('');
   protected readonly items = signal<FeedItem[]>([]);
   protected readonly cursor = signal<string | null>(null);
@@ -108,6 +116,7 @@ export class FeedPage {
   private searchTimer: ReturnType<typeof setTimeout> | null = null;
 
   protected readonly gatePerson = signal<FeedPerson | null>(null);
+  protected readonly unreadCount = signal(0);
   protected readonly signedIn = computed(() => !!this.auth.host());
   protected readonly me = computed(() => this.auth.host());
   protected readonly myName = computed(() => this.me()?.profile?.display_name || this.me()?.email || '');
@@ -128,7 +137,13 @@ export class FeedPage {
     this.meta.updateTag({ property: 'og:description', content: this.i18n.t('block12.seo.description') });
 
     if (this.browser) {
+      void this.eventsRepo.load().catch(() => undefined);
       void this.loadSidebars();
+      effect(() => {
+        if (this.auth.host()) {
+          void this.notificationsRepo.refreshUnread().then((count) => this.unreadCount.set(count)).catch(() => undefined);
+        }
+      });
     }
     effect(() => {
       this.type();
@@ -141,9 +156,24 @@ export class FeedPage {
     this.loading.set(true);
     this.error.set(false);
     try {
-      const page = await this.social.feed(this.type(), { category: this.type() === 'events' ? this.category() : undefined });
-      this.items.set(page.items);
-      this.cursor.set(page.next_cursor);
+      const type = this.type();
+      if (type === 'all') {
+        const pages = await Promise.all([
+          this.social.feed('events', { category: this.category() || undefined }),
+          this.social.feed('communities'),
+          this.social.feed('people'),
+        ]);
+        this.items.set([
+          ...pages[0].items.filter((item) => item.type === 'event'),
+          ...pages[1].items.filter((item) => item.type === 'community' || item.type === 'institution'),
+          ...pages[2].items.filter((item) => item.type === 'person'),
+        ]);
+        this.cursor.set(null);
+      } else {
+        const page = await this.social.feed(type, { category: type === 'events' ? this.category() : undefined });
+        this.items.set(page.items);
+        this.cursor.set(page.next_cursor);
+      }
     } catch {
       this.error.set(true);
     } finally {
@@ -156,8 +186,10 @@ export class FeedPage {
     if (!cursor || this.loadingMore()) return;
     this.loadingMore.set(true);
     try {
-      const page = await this.social.feed(this.type(), {
-        category: this.type() === 'events' ? this.category() : undefined,
+      const type = this.type();
+      if (type === 'all') return;
+      const page = await this.social.feed(type, {
+        category: type === 'events' ? this.category() : undefined,
         cursor,
       });
       this.items.update((items) => [...items, ...page.items]);
@@ -197,7 +229,7 @@ export class FeedPage {
     }
   }
 
-  protected setType(type: FeedType): void {
+  protected setType(type: FeedType | 'all'): void {
     this.type.set(type);
   }
 
@@ -210,7 +242,43 @@ export class FeedPage {
       void this.router.navigate(['/criar-conta']);
       return;
     }
-    void this.router.navigate([kind === 'event' ? '/criar-evento' : '/comunidades']);
+    if (kind === 'event') {
+      const events = this.ownedEvents();
+      if (events.length === 0) {
+        this.suggestionsOpen.set(true);
+        return;
+      }
+      this.shareEvent.set(events[0]);
+      this.shareOpen.set(true);
+      return;
+    }
+    void this.router.navigate(['/comunidades']);
+  }
+
+  protected readonly shareOpen = signal(false);
+  protected readonly shareEvent = signal<HostEvent | null>(null);
+  protected readonly suggestionsOpen = signal(false);
+
+  protected readonly ownedEvents = computed(() =>
+    (this.eventsRepo.data() ?? []).filter((event) => event.status !== 'draft' && event.status !== 'cancelled'),
+  );
+
+  protected shareSelected(id: string): void {
+    const event = this.ownedEvents().find((item) => item.id === id) ?? null;
+    this.shareEvent.set(event);
+  }
+
+  protected async shareToFeed(): Promise<void> {
+    const event = this.shareEvent();
+    if (!event) return;
+    const url = event.publicUrl ?? (this.browser ? `${window.location.origin}/e/${event.id}` : `/e/${event.id}`);
+    this.shareOpen.set(false);
+    await this.linkCopy.copy(url);
+  }
+
+  protected createFirstEvent(): void {
+    this.suggestionsOpen.set(false);
+    void this.router.navigate(['/criar-evento']);
   }
 
   /* ─────────────────────────────── Pesquisa ─────────────────────────────── */
@@ -248,6 +316,11 @@ export class FeedPage {
         if (seq === this.searchSeq) this.searching.set(false);
       }
     }, 250);
+  }
+
+  protected clearQuery(): void {
+    this.query.set('');
+    this.results.set(null);
   }
 
   protected hasResults(results: SearchResults): boolean {

@@ -13,8 +13,8 @@ import { CommunityFormDialogComponent } from './community-form-dialog.component'
 type Scope = 'mine' | 'discover';
 
 /**
- * Comunidades (Bloco 11): as minhas e as públicas para descobrir. Cartões
- * com o mesmo tamanho (grelha `auto-rows-fr`), estados de carregar, vazio,
+ * Comunidades (Bloco 11): as minhas e as públicas para descobrir. Lista de
+ * linhas no estilo dos cartões de equipas, com estados de carregar, vazio,
  * erro e sucesso; criar abre um modal.
  */
 @Component({
@@ -99,54 +99,60 @@ type Scope = 'mine' | 'discover';
           }
         </div>
       } @else {
-        <ul class="grid auto-rows-fr grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+        <ul class="flex flex-col overflow-hidden rounded-3xl border border-line bg-surface-raised/20" data-testid="communities-list">
           @for (community of items(); track community.id) {
-            <li class="h-full min-w-0">
-              <article
-                class="flex h-full flex-col overflow-hidden rounded-4xl border border-line bg-surface shadow-card transition hover:border-brand/30"
+            <li class="min-w-0 border-b border-line last:border-b-0">
+              <a
+                [routerLink]="['/comunidades', community.slug]"
+                class="group flex min-h-[5.5rem] w-full items-center gap-3 px-3 py-3 text-left transition hover:bg-surface-raised/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand/60 sm:px-4"
                 [attr.data-testid]="'community-card-' + community.slug"
+                [attr.aria-label]="i18n.t('block11.list.open') + ': ' + community.name"
               >
-                <div class="relative h-24 shrink-0 bg-gradient-to-br from-brand/30 via-surface-raised to-surface">
-                  @if (community.cover_url) {
-                    <img [src]="community.cover_url" alt="" class="size-full object-cover" loading="lazy" />
+                <span class="relative grid size-12 shrink-0 place-items-center overflow-hidden rounded-full border border-brand/25 bg-brand/15 text-sm font-semibold text-brand-strong">
+                  @if (community.avatar_url) {
+                    <img [src]="community.avatar_url" alt="" class="size-full object-cover" loading="lazy" />
+                  } @else {
+                    {{ initials(community.name) }}
                   }
-                  <span class="absolute -bottom-6 left-4 grid size-12 place-items-center overflow-hidden rounded-2xl border-2 border-surface bg-surface-raised text-lg font-semibold text-brand-strong shadow-card">
-                    @if (community.avatar_url) {
-                      <img [src]="community.avatar_url" alt="" class="size-full object-cover" />
-                    } @else {
-                      {{ initials(community.name) }}
-                    }
-                  </span>
-                </div>
-                <div class="flex flex-1 flex-col gap-3 p-4 pt-8">
-                  <div class="flex flex-wrap items-start justify-between gap-2">
-                    <h3 class="min-w-0 flex-1 line-clamp-2 font-display text-base font-semibold text-ink" [title]="community.name">{{ community.name }}</h3>
+                </span>
+                <div class="min-w-0 flex-1">
+                  <div class="flex flex-wrap items-center gap-2">
+                    <p class="truncate text-sm font-semibold text-ink" [title]="community.name">{{ community.name }}</p>
                     <span class="ui-chip shrink-0">
                       <fa-icon [icon]="icons[community.visibility === 'public' ? 'globe' : 'lock']" aria-hidden="true" />
                       {{ i18n.t(community.visibility === 'public' ? 'block11.visibility.public' : 'block11.visibility.private') }}
                     </span>
                   </div>
-                  <p class="line-clamp-2 min-h-10 text-xs leading-5 text-muted">{{ community.description || '' }}</p>
-                  <p class="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted">
-                    <span>{{ i18n.t('block11.list.members', { count: community.member_count }) }}</span>
-                    <span>{{ i18n.t('block11.list.events', { count: community.event_count }) }}</span>
-                    <span>{{ i18n.t('block11.list.teams', { count: community.team_count }) }}</span>
+                  @if (community.description) {
+                    <p class="mt-0.5 truncate text-xs text-muted" [title]="community.description">{{ community.description }}</p>
+                  }
+                  <p class="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-muted/80">
+                    <span class="inline-flex items-center gap-1.5">
+                      <fa-icon [icon]="icons['user']" class="text-[10px] text-brand-strong" aria-hidden="true" />
+                      {{ i18n.t('block11.list.members', { count: community.member_count }) }}
+                    </span>
+                    <span class="inline-flex items-center gap-1.5">
+                      <fa-icon [icon]="icons['events']" class="text-[10px] text-brand-strong" aria-hidden="true" />
+                      {{ i18n.t('block11.list.events', { count: community.event_count }) }}
+                    </span>
+                    <span class="inline-flex items-center gap-1.5">
+                      <fa-icon [icon]="icons['team']" class="text-[10px] text-brand-strong" aria-hidden="true" />
+                      {{ i18n.t('block11.list.teams', { count: community.team_count }) }}
+                    </span>
                   </p>
-                  <div class="mt-auto flex flex-wrap items-center justify-between gap-2 border-t border-line pt-3">
-                    <span class="text-xs font-semibold" [class]="community.my_status === 'invited' ? 'text-amber' : 'text-brand-strong'">
+                </div>
+                <div class="flex shrink-0 flex-col items-end gap-1.5">
+                  @if (statusLabel(community)) {
+                    <span
+                      class="rounded-full border border-line bg-surface px-2 py-0.5 text-[10px] font-semibold text-brand-strong"
+                      [class.text-amber]="community.my_status === 'invited'"
+                    >
                       {{ statusLabel(community) }}
                     </span>
-                    <a
-                      [routerLink]="['/comunidades', community.slug]"
-                      class="ui-btn-secondary"
-                      [attr.aria-label]="i18n.t('block11.list.open') + ': ' + community.name"
-                    >
-                      {{ i18n.t('block11.list.open') }}
-                      <fa-icon [icon]="icons['chevronRight']" aria-hidden="true" />
-                    </a>
-                  </div>
+                  }
+                  <fa-icon [icon]="icons['chevronRight']" class="text-xs text-muted transition group-hover:translate-x-0.5 group-hover:text-brand-strong" aria-hidden="true" />
                 </div>
-              </article>
+              </a>
             </li>
           }
         </ul>

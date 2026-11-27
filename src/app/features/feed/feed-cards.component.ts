@@ -31,7 +31,7 @@ export function eventPath(event: Pick<FeedEvent, 'slug'>): string {
         @if (event().cover_url) {
           <img [src]="event().cover_url" [alt]="event().title" class="size-full object-cover transition duration-500 group-hover:scale-[1.03]" loading="lazy" />
         } @else {
-          <app-template-artwork [templateId]="event().template.id" variant="cover" [title]="event().title" class="block size-full" />
+          <app-template-artwork [templateId]="event().template.id" variant="cover" [title]="event().title" [showIcon]="false" class="block size-full" />
         }
         <div class="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/45 to-transparent"></div>
         <span class="absolute left-3 top-3 inline-flex max-w-[75%] items-center gap-1.5 rounded-full border border-white/20 bg-black/45 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur-md">

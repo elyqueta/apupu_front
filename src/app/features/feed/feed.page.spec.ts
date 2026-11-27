@@ -48,25 +48,44 @@ function setup(): { fixture: ComponentFixture<FeedPage>; http: HttpTestingContro
 }
 
 async function settle(fixture: ComponentFixture<FeedPage>): Promise<void> {
-  for (let pass = 0; pass < 2; pass += 1) {
+  // "Todos" resolve três pedidos em Promise.all: são precisos vários ciclos
+  // para que o resultado das três promessas chegue à template.
+  for (let pass = 0; pass < 5; pass += 1) {
     await fixture.whenStable();
     fixture.detectChanges();
   }
 }
 
+/** O separador "Todos" carrega os três tipos em paralelo. */
+function flushFeed(
+  http: HttpTestingController,
+  type: 'events' | 'communities' | 'people',
+  items: unknown[] = [],
+  nextCursor: string | null = null,
+): void {
+  http
+    .expectOne((req) => req.url === `${BASE}/public/feed` && req.params.get('type') === type)
+    .flush({ data: { items, next_cursor: nextCursor } });
+}
+
 describe('FeedPage', () => {
   let http: HttpTestingController;
   afterEach(() => {
-    http?.verify();
-    TestBed.resetTestingModule();
+    try {
+      http?.verify();
+    } finally {
+      // Mesmo se uma verificação falhar, o TestBed tem de ser reiniciado
+      // para que o próximo teste possa configurar o módulo novamente.
+      TestBed.resetTestingModule();
+    }
   });
 
   it('visitante vê eventos públicos, a faixa de convite e "Ver evento" aponta para /e/:slug', async () => {
     const context = setup();
     http = context.http;
-    http.expectOne((req) => req.url === `${BASE}/public/feed` && req.params.get('type') === 'events').flush({
-      data: { items: [event], next_cursor: null },
-    });
+    flushFeed(http, 'events', [event]);
+    flushFeed(http, 'communities');
+    flushFeed(http, 'people');
     await settle(context.fixture);
     const native = context.fixture.nativeElement as HTMLElement;
     expect(native.querySelector('[data-testid="feed-visitor-banner"]')).not.toBeNull();
@@ -78,11 +97,13 @@ describe('FeedPage', () => {
   it('sem conta, abrir uma pessoa mostra o convite a criar conta', async () => {
     const context = setup();
     http = context.http;
-    http.expectOne((req) => req.url === `${BASE}/public/feed`).flush({ data: { items: [], next_cursor: null } });
+    flushFeed(http, 'events');
+    flushFeed(http, 'communities');
+    flushFeed(http, 'people');
     await settle(context.fixture);
     (context.fixture.nativeElement.querySelector('[data-testid="feed-type-people"]') as HTMLButtonElement).click();
     await settle(context.fixture);
-    http.expectOne((req) => req.params.get('type') === 'people').flush({ data: { items: [person], next_cursor: 'MTI' } });
+    flushFeed(http, 'people', [person], 'MTI');
     await settle(context.fixture);
     const native = context.fixture.nativeElement as HTMLElement;
     expect(native.querySelector('[data-testid="feed-load-more"]')).not.toBeNull();

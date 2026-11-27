@@ -3,6 +3,7 @@ import { Component, PLATFORM_ID, computed, effect, inject, signal, untracked } f
 import { Meta, Title } from '@angular/platform-browser';
 import { Router, RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { toApiError } from '../../core/api/api-error';
 import { AuthService } from '../../core/api/auth.service';
 import { ApiCommunity, CommunitiesRepository } from '../../core/data/communities.repository';
 import { EventsRepository } from '../../core/data/events.repository';
@@ -24,17 +25,14 @@ import { NotificationsRepository } from '../../core/data/notifications.repositor
 import { ICONS } from '../../core/ui/icons';
 import { AvatarComponent } from '../../shared/components/avatar.component';
 import { BrandComponent } from '../../shared/components/brand.component';
+import { InfoBlockComponent } from '../../shared/components/info-block.component';
 import { ModalComponent } from '../../shared/components/modal.component';
 import { PreferenceControlsComponent } from '../../shared/components/preference-controls.component';
-import { LinkCopyService } from '../../shared/services/link-copy.service';
+import { PublicEntityCardComponent } from '../../shared/components/public-entity-card.component';
+import { PublicEventCardComponent } from '../../shared/components/public-event-card.component';
+import { PublicHeaderComponent } from '../../shared/components/public-header.component';
 import { SkeletonComponent } from '../../shared/components/skeleton.component';
-import {
-  FeedCommunityCardComponent,
-  FeedInstitutionCardComponent,
-  FeedPersonCardComponent,
-  eventPath,
-} from './feed-cards.component';
-import { FeedPostComponent } from './feed-post.component';
+import { FeedPersonCardComponent, eventPath } from './feed-cards.component';
 
 const CATEGORIES = ['wedding', 'birthday', 'corporate', 'baby', 'other'] as const;
 
@@ -60,9 +58,10 @@ const CATEGORIES = ['wedding', 'birthday', 'corporate', 'baby', 'other'] as cons
     ModalComponent,
     PreferenceControlsComponent,
     SkeletonComponent,
-    FeedPostComponent,
-    FeedCommunityCardComponent,
-    FeedInstitutionCardComponent,
+    PublicHeaderComponent,
+    PublicEventCardComponent,
+    PublicEntityCardComponent,
+    InfoBlockComponent,
     FeedPersonCardComponent,
   ],
   templateUrl: './feed.page.html',
@@ -76,7 +75,6 @@ export class FeedPage {
   private readonly eventsRepo = inject(EventsRepository);
   private readonly notificationsRepo = inject(NotificationsRepository);
   private readonly toasts = inject(ToastService);
-  private readonly linkCopy = inject(LinkCopyService);
   private readonly router = inject(Router);
   private readonly title = inject(Title);
   private readonly meta = inject(Meta);
@@ -120,6 +118,17 @@ export class FeedPage {
   protected readonly signedIn = computed(() => !!this.auth.host());
   protected readonly me = computed(() => this.auth.host());
   protected readonly myName = computed(() => this.me()?.profile?.display_name || this.me()?.email || '');
+
+  /** Contagens do cartão de perfil sempre via `i18n.plural`. */
+  protected readonly friendCountLabel = computed(() =>
+    this.i18n.plural(this.friendCount(), 'plural.friend.one', 'plural.friend.many'),
+  );
+  protected readonly requestCountLabel = computed(() =>
+    this.i18n.plural(this.requestCount(), 'plural.friend.one', 'plural.friend.many'),
+  );
+
+  /** O visitante é convidado a criar conta antes de criar o primeiro evento. */
+  protected readonly emptyActionLink = computed(() => (this.signedIn() ? '/criar-evento' : '/criar-conta'));
 
   protected readonly events = computed(() => this.items().filter((item): item is FeedEvent => item.type === 'event'));
   protected readonly institutions = computed(() =>
@@ -249,6 +258,7 @@ export class FeedPage {
         return;
       }
       this.shareEvent.set(events[0]);
+      this.shareCommunityId.set(this.shareCommunities()[0]?.id ?? '');
       this.shareOpen.set(true);
       return;
     }
@@ -257,7 +267,13 @@ export class FeedPage {
 
   protected readonly shareOpen = signal(false);
   protected readonly shareEvent = signal<HostEvent | null>(null);
+  protected readonly shareCommunityId = signal('');
   protected readonly suggestionsOpen = signal(false);
+
+  /** Comunidades onde o membro pode publicar a sua atividade. */
+  protected readonly shareCommunities = computed(() =>
+    this.myCommunities().filter((community) => community.my_status === 'active'),
+  );
 
   protected readonly ownedEvents = computed(() =>
     (this.eventsRepo.data() ?? []).filter((event) => event.status !== 'draft' && event.status !== 'cancelled'),
@@ -270,10 +286,16 @@ export class FeedPage {
 
   protected async shareToFeed(): Promise<void> {
     const event = this.shareEvent();
-    if (!event) return;
-    const url = event.publicUrl ?? (this.browser ? `${window.location.origin}/e/${event.id}` : `/e/${event.id}`);
-    this.shareOpen.set(false);
-    await this.linkCopy.copy(url);
+    const communityId = this.shareCommunityId();
+    if (!event || !communityId) return;
+    try {
+      await this.communitiesRepo.shareEventActivity(communityId, event.id);
+      this.shareOpen.set(false);
+      this.toasts.success(this.i18n.t('block12.feed.shared'));
+    } catch (error) {
+      const apiError = toApiError(error);
+      this.toasts.error(apiError.status === 403 ? this.i18n.t('block11.common.forbidden') : apiError.message || this.i18n.t('block12.common.error'));
+    }
   }
 
   protected createFirstEvent(): void {

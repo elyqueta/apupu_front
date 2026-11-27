@@ -45,7 +45,7 @@ import { ICONS } from '../../core/ui/icons';
             <button
               #closeButton
               type="button"
-              class="inline-flex size-10 shrink-0 items-center justify-center rounded-full border border-line bg-surface text-ink shadow-card transition hover:border-brand/40 hover:text-brand-strong"
+              class="ui-icon-button"
               [attr.aria-label]="closeLabel()"
               [attr.title]="closeLabel()"
               (click)="closed.emit()"

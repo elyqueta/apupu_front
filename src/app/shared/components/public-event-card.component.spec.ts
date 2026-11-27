@@ -1,11 +1,8 @@
 import { Component, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import { FeedEvent } from '../../core/data/social.repository';
-import { I18nService } from '../../core/i18n/i18n.service';
 import { PublicEventCardComponent } from './public-event-card.component';
-import { TemplateArtworkComponent } from './template-artwork.component';
 
 const EVENT: FeedEvent = {
   type: 'event',
@@ -18,104 +15,117 @@ const EVENT: FeedEvent = {
   status: 'published',
   location: 'Igreja',
   online: false,
-  cover_url: null,
+  cover_url: '/flyers/gratitude.png',
   template: { id: 'constellation', palette: 'default', mode: 'light' },
   host_name: 'Ana',
+  host_avatar_url: null,
+  excerpt: 'Um encontro para crescer #jovens #gratidao #Luz',
+  published_at: '2026-11-20T10:00:00.000Z',
   public_url: 'http://localhost:4200/e/abcDEF123456',
   slug: 'abcDEF123456',
-  community: null,
+  community: { name: 'Comunidade Teste Bloco 11', slug: 'comunidade-teste-bloco-11' },
   attendee_count: 3,
 };
 
 @Component({
   imports: [PublicEventCardComponent],
-  template: `
-    <app-public-event-card [event]="event()" [variant]="variant()" />
-  `,
+  template: `<app-public-event-card [event]="event()" [variant]="variant()" />`,
 })
-class PublicEventCardHostComponent {
+class HostComponent {
   readonly event = signal<FeedEvent>(EVENT);
   readonly variant = signal<'default' | 'compact'>('default');
 }
 
-describe('PublicEventCardComponent', () => {
-  let fixture: ComponentFixture<PublicEventCardHostComponent>;
-  let host: PublicEventCardHostComponent;
+describe('PublicEventCardComponent · modo cartaz', () => {
+  let fixture: ComponentFixture<HostComponent>;
 
-  beforeEach(async () => {
+  beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [PublicEventCardHostComponent],
+      imports: [HostComponent],
       providers: [provideRouter([])],
     });
-    fixture = TestBed.createComponent(PublicEventCardHostComponent);
-    host = fixture.componentInstance;
+    fixture = TestBed.createComponent(HostComponent);
     fixture.detectChanges();
-    await fixture.whenStable();
-    fixture.detectChanges();
+  });
+
+  afterEach(() => {
+    document.body.querySelectorAll('[data-testid="action-menu-panel"]').forEach((node) => node.remove());
   });
 
   function native(): HTMLElement {
     return fixture.nativeElement as HTMLElement;
   }
 
-  function coverLink(): HTMLAnchorElement {
-    return native().querySelector('[data-testid="feed-event-open-ev1"]') as HTMLAnchorElement;
-  }
-
-  function setEvent(overrides: Partial<FeedEvent>): void {
-    host.event.set({ ...EVENT, ...overrides });
-    fixture.detectChanges();
-  }
-
-  it('mostra a capa num img quando existe URL de capa', () => {
-    setEvent({ cover_url: 'https://example.test/capa.jpg' });
-
-    const image = coverLink().querySelector('img');
+  it('mostra o flyer inteiro sem texto, selos ou gradientes por cima', () => {
+    const flyer = native().querySelector('[data-testid="feed-event-flyer-ev1"]') as HTMLElement;
+    const image = flyer.querySelector('img') as HTMLImageElement;
     expect(image).not.toBeNull();
-    expect(image?.getAttribute('src')).toBe('https://example.test/capa.jpg');
-    expect(native().querySelector('app-template-artwork')).toBeNull();
+    expect(image.className).toContain('object-contain');
+    expect(image.className).not.toContain('object-cover');
+    expect(flyer.querySelectorAll('h1, h2, h3, p, span, app-status-badge, button').length).toBe(0);
+    expect(flyer.className).not.toContain('bg-gradient');
+    expect(flyer.className).not.toContain('backdrop-blur');
+
+    const status = native().querySelector('[data-testid="feed-event-status-ev1"]') as HTMLElement;
+    expect(status).not.toBeNull();
+    expect(status.className).toContain('text-brand-strong');
+    expect(flyer.contains(status)).toBe(false);
   });
 
-  it('usa a miniatura do modelo com o respetivo id quando não há capa', () => {
-    setEvent({ cover_url: null, template: { ...EVENT.template, id: 'waves' } });
+  it('abre o lightbox ao tocar no flyer e devolve o foco ao fechar', async () => {
+    const flyer = native().querySelector('[data-testid="feed-event-flyer-ev1"]') as HTMLButtonElement;
+    flyer.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
 
-    const artwork = native().querySelector('app-template-artwork');
-    expect(artwork).not.toBeNull();
-    const instance = fixture.debugElement.query(By.directive(TemplateArtworkComponent))
-      .componentInstance as TemplateArtworkComponent;
-    expect(instance.templateId()).toBe('waves');
-    expect(artwork?.querySelector('[data-artwork]')?.getAttribute('data-artwork')).toBe('cover');
+    const lightbox = native().querySelector('app-image-lightbox [role="dialog"]') as HTMLElement;
+    expect(lightbox).not.toBeNull();
+    expect(lightbox.querySelector('img')?.getAttribute('src')).toBe(EVENT.cover_url);
+    expect(document.activeElement?.getAttribute('aria-label')).toBe('Fechar');
+
+    (lightbox.querySelector('button[aria-label="Fechar"]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(native().querySelector('app-image-lightbox [role="dialog"]')).toBeNull();
   });
 
-  it('mantém data e estado num cabeçalho flex dentro da capa, sem sobreposição absoluta no conteúdo', () => {
-    const anchor = coverLink();
-    const header = Array.from(anchor.children).find((child) =>
-      child.classList.contains('pointer-events-none'),
-    ) as HTMLElement;
+  it('usa a miniatura do modelo quando não há capa', () => {
+    fixture.componentInstance.event.set({ ...EVENT, cover_url: null });
+    fixture.detectChanges();
 
-    expect(header).toBeDefined();
-    expect(header.parentElement).toBe(anchor);
-    expect(header.classList.contains('flex')).toBe(true);
-    expect(header.classList.contains('flex-wrap')).toBe(true);
-    expect(header.classList.contains('items-start')).toBe(true);
-    expect(header.classList.contains('justify-between')).toBe(true);
-    expect(header.querySelector('app-status-badge')).not.toBeNull();
-    expect(header.textContent).toContain(
-      TestBed.inject(I18nService).dateTime(EVENT.starts_at, EVENT.timezone),
-    );
-
-    // Nenhum cabeçalho com deslocações absolutas partilhadas com o conteúdo.
-    expect(header.className).not.toMatch(/-top-|-right-|left-3|right-3/);
-    const content = Array.from(native().querySelector('article')?.children ?? []).find((child) =>
-      child.classList.contains('p-4'),
-    );
-    expect(content?.querySelector('app-status-badge')).toBeNull();
-    expect(content?.classList.contains('absolute')).toBe(false);
+    const flyer = native().querySelector('[data-testid="feed-event-flyer-ev1"]') as HTMLElement;
+    expect(flyer.querySelector('img')).toBeNull();
+    expect(flyer.querySelector('app-template-artwork')).not.toBeNull();
+    expect(flyer.querySelector('app-template-artwork [data-artwork]')?.getAttribute('data-artwork')).toBe('cover');
   });
 
-  it('expõe a ligação com o testid feed-event-open-<id> apontando para /e/:slug', () => {
-    const anchor = coverLink();
-    expect(anchor).not.toBeNull();
-    expect(anchor.getAttribute('href')).toBe('/e/abcDEF123456');
+  it('mantém um único botão de opções de 44 px, sem círculo duplicado', () => {
+    const options = native().querySelector('[data-testid="feed-event-options-ev1"]') as HTMLButtonElement;
+    expect(options).not.toBeNull();
+    expect(options.classList.contains('ui-icon-button')).toBe(true);
+    expect(options.parentElement?.querySelectorAll('button').length).toBe(1);
+    expect(options.getAttribute('aria-haspopup')).toBe('menu');
+  });
+
+  it('mostra no máximo duas hashtags com contador de excedentes', () => {
+    const tags = native().querySelector('[data-testid="feed-event-tags-ev1"]')?.textContent ?? '';
+    expect(tags).toContain('#jovens');
+    expect(tags).toContain('#gratidao');
+    expect(tags).toContain('+1');
+  });
+
+  it('mantém o link "Ver evento" fora da imagem', () => {
+    const flyer = native().querySelector('[data-testid="feed-event-flyer-ev1"]') as HTMLElement;
+    const open = native().querySelector('[data-testid="feed-event-open-ev1"]') as HTMLAnchorElement;
+    expect(open.getAttribute('href')).toBe('/e/abcDEF123456');
+    expect(flyer.contains(open)).toBe(false);
+
+    const react = native().querySelector('button[aria-label="Reagir"]') as HTMLButtonElement;
+    const comment = native().querySelector('button[aria-label="Comentar"]') as HTMLButtonElement;
+    expect(react.disabled).toBe(true);
+    expect(comment.disabled).toBe(true);
+    expect(react.title).toBeTruthy();
+    expect(comment.title).toBeTruthy();
   });
 });

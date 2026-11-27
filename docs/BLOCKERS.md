@@ -112,3 +112,6 @@
 | Passo / área | Observação | Estado / decisão |
 |---|---|---|
 | Perfil público — eventos anteriores | `GET /host/profiles/:id/events` devolve também eventos com `status: 'cancelled'`, pelo que o histórico mostraria eventos cancelados como "Eventos anteriores". | O front filtra `status !== 'cancelled'` antes de renderizar; não alterámos o contrato da API. Se a API passar a excluí-los, o filtro não tem efeito. |
+| Capa do feed — flyer vs. fotografia | O contrato `FeedEvent` não tem campo explícito a indicar se `cover_url` é um flyer (imagem com texto/QR) ou uma fotografia. | Modo único "cartaz": a imagem é sempre tratada como flyer, inteira e sem sobreposições. O modo imersivo (vidro sobre a imagem) só faria sentido com esse campo; não implementado. |
+| Reações e comentários no feed | A API pública do feed não devolve contadores de reações/comentários. | Botões desativados com `disabledHint`; nenhum endpoint ou lógica de backend alterada. |
+| Faixa de stories | O feed público devolve comunidades mas não indica quais têm eventos a decorrer nem amigos. | A faixa aparece quando há pelo menos 2 comunidades; não é possível filtrar por eventos em curso sem alterar a API. |

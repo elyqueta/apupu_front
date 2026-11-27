@@ -370,6 +370,18 @@ export class FeedPage {
     return eventPath(event);
   }
 
+  /** Chip de data da coluna lateral: dia grande e mês abreviado, sempre inteiro. */
+  protected eventDay(event: FeedEvent): string {
+    return this.i18n.formatDate(event.starts_at, event.timezone, { day: '2-digit' });
+  }
+
+  protected eventMonth(event: FeedEvent): string {
+    return this.i18n
+      .formatDate(event.starts_at, event.timezone, { month: 'short' })
+      .replace('.', '')
+      .toUpperCase();
+  }
+
   /* ─────────────────────────────── Pessoas ─────────────────────────────── */
 
   protected openPerson(person: FeedPerson): void {

@@ -1312,7 +1312,7 @@ export class EventDetailPage {
     }
   }
 
-  /** Descarrega o bilhete individual com o QR do convite. */
+  /** Descarrega o convite individual com o QR. */
   protected async downloadTicket(guest: Guest): Promise<void> {
     const key = `ticket-${guest.id}`;
     if (this.exporting() !== null) {
@@ -1323,7 +1323,13 @@ export class EventDetailPage {
 
     try {
       const file = await this.reports.exportEvent(this.eventId(), 'ticket', 'pdf', guest.id);
-      this.downloads.save(file, 'conto-contigo-bilhete.pdf');
+      const guestSlug = guest.name
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-zA-Z0-9]+/g, '-')
+        .replace(/^-|-$/g, '')
+        .toLowerCase() || 'convidado';
+      this.downloads.save(file, `conto-contigo-convite-${guestSlug}.pdf`);
       this.toasts.success(this.i18n.t('eventDetail.ticketDownloaded', { name: guest.name }));
     } catch (error: unknown) {
       this.toasts.error(toApiError(error).message);

@@ -336,6 +336,13 @@ export class GuestsPage {
       { id: 'view', label: this.i18n.t('guests.viewEvent'), icon: ICONS['arrowUpRight'] },
     ];
     if (this.isHostFor(entry.event.id)) {
+      if (entry.guest.phone) {
+        items.unshift({
+          id: 'whatsapp',
+          label: this.i18n.t('guests.whatsapp'),
+          icon: ICONS['whatsapp'],
+        });
+      }
       items.push(
         { id: 'edit', label: this.i18n.t('guests.editAction'), icon: ICONS['pen'] },
         { id: 'resend', label: this.i18n.t('eventDetail.resend'), icon: ICONS['paperPlane'] },
@@ -348,18 +355,6 @@ export class GuestsPage {
       );
     }
     return items;
-  }
-
-  protected primaryFor(entry: GuestListEntry): PersonPrimaryAction | null {
-    if (!this.isHostFor(entry.event.id) || !entry.guest.phone) {
-      return null;
-    }
-    return {
-      id: 'whatsapp',
-      label: this.i18n.t('guests.whatsappShort'),
-      icon: ICONS['whatsapp'],
-      hint: this.i18n.t('guests.whatsapp'),
-    };
   }
 
   protected onPrimary(action: string, entry: GuestListEntry): void {
@@ -379,7 +374,7 @@ export class GuestsPage {
     return [guest.email, guest.phone].filter(Boolean).join(' · ');
   }
 
-  /** "Copiar" ao lado do WhatsApp, sempre que há link individual. */
+  /** Copiar o link individual ao lado do menu de ações. */
   protected secondaryFor(entry: GuestListEntry): PersonPrimaryAction | null {
     if (!this.isHostFor(entry.event.id) || !entry.guest.invitationUrl || entry.guest.source !== 'personal') {
       return null;
@@ -389,6 +384,9 @@ export class GuestsPage {
 
   protected onMenuAction(action: string, entry: GuestListEntry): void {
     switch (action) {
+      case 'whatsapp':
+        this.forwardWhatsApp(entry.guest, entry.event.title);
+        break;
       case 'view':
         void this.router.navigate(['/eventos', entry.event.id]);
         break;

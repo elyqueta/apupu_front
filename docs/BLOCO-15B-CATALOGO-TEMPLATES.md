@@ -159,10 +159,10 @@
 
 ## Critérios de aceitação
 
-- [ ] Todos os templates T01–T19 criados como `system`, cada um com `previewData` e miniatura gerada.
-- [ ] Os padrões de blocos acima são componentes únicos, reutilizados.
-- [ ] Cada template renderiza igual no editor, no convite público e no PDF (teste visual por template com captura comparada, ou checklist documentada).
-- [ ] Todos legíveis a 320 px, claro/escuro não se aplica ao interior do template (a paleta é do template), mas a galeria respeita o tema da app.
-- [ ] Fontes embutidas no PDF; nenhuma fonte fora do catálogo local.
-- [ ] Templates não usados por falta de tempo ficam listados em `docs/BLOCKERS.md`.
-- [ ] `build`, `lint`, `test` verdes; entrada em `docs/REPORT-BLOCO-15.md`.
+- [x] Todos os templates T01–T19 criados como `system`, cada um com `previewData` e miniatura gerada — ver `REPORT-BLOCO-15.md` (27/11/2026).
+- [x] Os padrões de blocos acima são componentes únicos, reutilizados — fábricas em `system-templates.ts`.
+- [x] Cada template renderiza igual no editor, no convite público e no PDF, com checklist documentada no relatório; efeitos decorativos complexos aproximados e registados em `BLOCKERS.md`.
+- [x] Todos legíveis a 320 px: spec Playwright `e2e/templates-320.spec.ts` mede os 19 templates renderizados (4 projetos) e o teste `system-templates.spec.ts` garante contraste ≥4.5:1; galeria respeita o tema da app.
+- [x] Fontes embutidas no PDF; nenhuma fonte fora do catálogo local.
+- [x] Nenhum template ficou de fora; limitações de fidelidade listadas em `BLOCKERS.md`.
+- [x] `build`, `lint` (0 erros) e `test` verdes no front e no back; entrada em `docs/REPORT-BLOCO-15.md`.

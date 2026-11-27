@@ -85,7 +85,7 @@ export class DashboardPage {
   protected readonly activity = computed(() => this.store.activityFeed().slice(0, 5));
   protected readonly guestStatusFilter = signal<RsvpStatus>('pending');
   protected readonly carouselIndex = signal(1);
-  /** Cada painel do carrossel mostra exatamente três cartões lineares. */
+  /** Cada painel agrupa até três convidados; a grelha adapta-se a 1/2/3 colunas. */
   private readonly carouselPageSize = 3;
   protected readonly activeDay = signal<number | null>(null);
   private readonly guestCarousel = viewChild<ElementRef<HTMLUListElement>>('guestCarousel');
@@ -119,7 +119,7 @@ export class DashboardPage {
       .slice(0, 6),
   );
 
-  /** Agrupa os convidados em painéis de três cartões lineares. */
+  /** Agrupa os convidados em painéis de até três cartões lineares. */
   protected readonly guestPages = computed<GuestEntry[][]>(() => {
     const entries = this.filteredGuests();
     const pages: GuestEntry[][] = [];

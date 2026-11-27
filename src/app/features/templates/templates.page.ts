@@ -87,6 +87,20 @@ export class TemplatesPage {
         type: 'other',
       };
     }
+    const preview = template.manifest.previewData;
+    if (preview) {
+      return {
+        title: preview['title'] ?? this.i18n.t('block14.preview.sampleTitle'),
+        hostName: preview['hostName'] ?? this.i18n.t('block14.preview.kicker'),
+        startsAt: preview['startsAt'] ?? '2026-12-20T16:00:00.000Z',
+        city: preview['city'] ?? 'Luanda',
+        venue: preview['venue'] ?? 'Quinta das Palmeiras',
+        message: preview['message'] ?? template.description ?? '',
+        dressCode: preview['dressCode'] ?? '',
+        templateSlug: preview['templateSlug'] ?? template.slug,
+        type: preview['type'] ?? 'other',
+      };
+    }
     return {
       title: this.i18n.t('block14.preview.sampleTitle'),
       hostName: this.i18n.t('block14.preview.kicker'),
@@ -98,6 +112,11 @@ export class TemplatesPage {
       templateSlug: template.slug,
       type: 'other',
     };
+  }
+
+  /** Bloco 15B: classe única para miniatura e modal, derivada do manifesto. */
+  protected orientationClass(template: EventTemplate): string {
+    return `tpl-orientation-${template.manifest.orientation ?? 'card45'}`;
   }
 
   protected readonly previewModalOpen = computed(() => this.previewTemplateId() !== null);

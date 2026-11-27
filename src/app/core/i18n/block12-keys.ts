@@ -141,6 +141,7 @@ export const BLOCK12_KEYS_PT = {
   'block12.feed.add': 'Adicionar',
   'block12.feed.added': 'Pedido enviado',
   'block12.feed.create': 'Criar',
+  'block12.feed.createInvite': 'Criar convite',
 } as const;
 
 export const BLOCK12_KEYS_EN: Record<keyof typeof BLOCK12_KEYS_PT, string> = {
@@ -284,4 +285,5 @@ export const BLOCK12_KEYS_EN: Record<keyof typeof BLOCK12_KEYS_PT, string> = {
   'block12.feed.add': 'Add',
   'block12.feed.added': 'Request sent',
   'block12.feed.create': 'Create',
+  'block12.feed.createInvite': 'Create invite',
 };

@@ -593,43 +593,39 @@
     </div>
   </div>
 
+  <!-- Barra inferior: mesma cápsula do feed, com safe-area e alvos de 44 px. -->
   <nav
-    class="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface/90 backdrop-blur-2xl lg:hidden"
-    style="padding-bottom: env(safe-area-inset-bottom)"
+    class="fixed inset-x-0 z-40 mx-auto flex w-[min(28rem,calc(100%-1rem))] items-center justify-around gap-0.5 rounded-full border border-line/40 bg-surface/80 p-1.5 shadow-card backdrop-blur-xl lg:hidden"
+    style="bottom: max(0.75rem, env(safe-area-inset-bottom))"
     [attr.aria-label]="i18n.t('nav.hostArea')"
+    data-testid="host-bottom-nav"
   >
-    <div class="mx-auto flex max-w-lg items-stretch justify-around px-2">
-      @for (item of bottomNavItems; track item.path) {
-        <a
-          [routerLink]="item.path"
-          routerLinkActive
-          #bna="routerLinkActive"
-          [routerLinkActiveOptions]="{ exact: item.exact }"
-          [class]="
-            bna.isActive
-              ? 'flex flex-1 flex-col items-center gap-1 py-2.5 text-[10px] font-semibold text-brand-strong'
-              : 'flex flex-1 flex-col items-center gap-1 py-2.5 text-[10px] font-semibold text-muted transition hover:text-ink'
-          "
-          (click)="closeMenus()"
-        >
-          <fa-icon [icon]="item.icon" class="text-base" aria-hidden="true" />
-          <span class="truncate">{{ i18n.t(item.labelKey) }}</span>
-        </a>
-      }
-      <button
-        type="button"
-        [class]="
-          mobileOpen()
-            ? 'flex flex-1 flex-col items-center gap-1 py-2.5 text-[10px] font-semibold text-brand-strong'
-            : 'flex flex-1 flex-col items-center gap-1 py-2.5 text-[10px] font-semibold text-muted transition hover:text-ink'
-        "
-        [attr.aria-label]="i18n.t('shell.more')"
-        (click)="mobileOpen.set(true)"
+    @for (item of bottomNavItems; track item.path) {
+      <a
+        [routerLink]="item.path"
+        routerLinkActive
+        #bna="routerLinkActive"
+        [routerLinkActiveOptions]="{ exact: item.exact }"
+        class="flex min-h-11 min-w-11 flex-col items-center justify-center gap-0.5 rounded-full px-2 text-xs font-semibold transition"
+        [class]="bna.isActive ? 'bg-brand/15 text-brand' : 'text-muted'"
+        [attr.aria-current]="bna.isActive ? 'page' : null"
+        (click)="closeMenus()"
       >
-        <fa-icon [icon]="icons['ellipsis']" class="text-base" aria-hidden="true" />
-        <span class="truncate">{{ i18n.t('shell.more') }}</span>
-      </button>
-    </div>
+        <fa-icon [icon]="item.icon" class="text-base" aria-hidden="true" />
+        <span class="whitespace-nowrap">{{ i18n.t(item.labelKey) }}</span>
+      </a>
+    }
+    <button
+      type="button"
+      class="flex min-h-11 min-w-11 flex-col items-center justify-center gap-0.5 rounded-full px-2 text-xs font-semibold transition"
+      [class]="mobileOpen() ? 'bg-brand/15 text-brand' : 'text-muted'"
+      [attr.aria-label]="i18n.t('shell.more')"
+      [attr.aria-expanded]="mobileOpen()"
+      (click)="mobileOpen.set(true)"
+    >
+      <fa-icon [icon]="icons['ellipsis']" class="text-base" aria-hidden="true" />
+      <span class="whitespace-nowrap">{{ i18n.t('shell.more') }}</span>
+    </button>
   </nav>
 
   @if (isEventDetail()) {

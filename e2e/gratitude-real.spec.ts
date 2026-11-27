@@ -18,7 +18,7 @@ function overlap(a: Box, b: Box, pad = 0) {
 test.describe('Gratitude real component 1024x1280', () => {
   test.use({ viewport: { width: 1024, height: 1280 } });
 
-  for (const c of ['a', 'b', 'c', 'd'] as const) {
+  for (const c of ['a', 'b', 'c', 'd', 'e'] as const) {
     test(`case ${c}`, async ({ page }) => {
       await page.goto(`/__test/gratitude/${c}`, { waitUntil: 'networkidle' });
       await page.locator('[data-testid="gratitude-invitation"]').waitFor();
@@ -42,6 +42,11 @@ test.describe('Gratitude real component 1024x1280', () => {
       const org = await box('[data-testid="gratitude-org"]');
       const sub = await box('[data-testid="gratitude-subtitle"]');
       const title = await box('[data-testid="gratitude-title"]');
+      if (c === 'e') {
+        const size = Number(await page.locator('[data-testid="gratitude-title"] text').getAttribute('font-size'));
+        expect(size, `title font-size ${size}`).toBeLessThan(300);
+        expect(size).toBeGreaterThanOrEqual(90);
+      }
       const year = await box('[data-testid="gratitude-highlight"]');
       const info = await box('[data-testid="gratitude-info"]');
       [org, sub, title, year, info].forEach((b, i) => within(b, ['org','sub','title','year','info'][i], P.width, P.height));
@@ -85,6 +90,13 @@ test.describe('Gratitude real component 1024x1280', () => {
           if (x >= q.x && x <= q.x + q.w) minClear = Math.min(minClear, y - (q.y + q.h));
         }
         expect(minClear, `qr ribbon clearance ${minClear}`).toBeGreaterThan(0);
+
+        const qrBlock = await box('[data-testid="gratitude-qr"]');
+        expect(overlap(info, qrBlock), 'info/qr overlap').toBeFalsy();
+        if (await page.locator('[data-testid="gratitude-dresscode"]').isVisible()) {
+          const dressBlock = await box('[data-testid="gratitude-dresscode"]');
+          expect(overlap(qrBlock, dressBlock), 'qr/dress overlap').toBeFalsy();
+        }
       }
 
       // dress code if present

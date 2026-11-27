@@ -49,6 +49,10 @@ const CASES: Record<string, { event: Partial<InvitationEventView>; manifest: Par
   d: {
     event: { title: 'Gratitude', dressCode: 'Traje africano', venue: 'Igreja Cristã Reino Church, Bairro Central, Talatona, Luanda' },
     manifest: { pdf: { ...DEFAULT_MANIFEST.pdf, logo_url: 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==', logo_shape: 'circle', logo_size: 'md' } } },
+  // Long-title fixture: the title must step down in font size, not be squeezed.
+  e: {
+    event: { title: 'O nosso dia especial', dressCode: '' },
+    manifest: { pdf: { ...DEFAULT_MANIFEST.pdf, logo_url: null as unknown as TemplateManifest['pdf']['logo_url'] } } },
 };
 
 @Component({

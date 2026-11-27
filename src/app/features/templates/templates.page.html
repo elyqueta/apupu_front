@@ -91,15 +91,21 @@
             [attr.aria-label]="i18n.t('block15.templates.preview') + ': ' + template.name"
             (click)="openPreview(template)"
           >
-            <app-template-renderer
-              [manifest]="template.manifest"
-              [data]="sampleData(template)"
-              mode="preview"
-              previewVariant="thumb"
-              [kicker]="i18n.t('block14.preview.kicker')"
-              [label]="template.name"
-              class="absolute inset-0 block h-full"
-            />
+            <div
+              class="absolute inset-0"
+              [class]="orientationClass(template)"
+              [attr.data-orientation]="template.manifest.orientation ?? 'card45'"
+            >
+              <app-template-renderer
+                [manifest]="template.manifest"
+                [data]="sampleData(template)"
+                mode="preview"
+                previewVariant="thumb"
+                [kicker]="i18n.t('block14.preview.kicker')"
+                [label]="template.name"
+                class="block h-full"
+              />
+            </div>
             @if (selected() === template.id) {
               <span class="absolute bottom-2 left-2 grid size-7 place-items-center rounded-lg bg-mint/15 text-mint backdrop-blur-md" [attr.aria-label]="i18n.t('templates.selected')">
                 <fa-icon [icon]="icons['check']" class="text-xs" aria-hidden="true" />
@@ -160,16 +166,22 @@
   @if (previewTemplate(); as template) {
     <div class="flex flex-col gap-4">
       <div class="overflow-hidden rounded-3xl border border-line bg-surface-raised">
-        <app-template-renderer
-          [manifest]="previewManifest()!"
-          [data]="sampleData(template)"
-          mode="preview"
-          previewVariant="hero"
-          [animate]="previewAnimate()"
-          [kicker]="i18n.t('block14.preview.kicker')"
-          [label]="template.name"
-          class="block min-h-[18rem] sm:min-h-[24rem]"
-        />
+        <div
+          class="h-full"
+          [class]="orientationClass(template)"
+          [attr.data-orientation]="template.manifest.orientation ?? 'card45'"
+        >
+          <app-template-renderer
+            [manifest]="previewManifest()!"
+            [data]="sampleData(template)"
+            mode="preview"
+            previewVariant="hero"
+            [animate]="previewAnimate()"
+            [kicker]="i18n.t('block14.preview.kicker')"
+            [label]="template.name"
+            class="block min-h-[18rem] sm:min-h-[24rem]"
+          />
+        </div>
       </div>
 
       <div class="flex flex-col gap-3 rounded-2xl border border-line bg-surface-raised/50 p-4">

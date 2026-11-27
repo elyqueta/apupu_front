@@ -7,6 +7,8 @@ export type TemplateFont = 'sans' | 'serif' | 'cap' | 'script' | 'condensed' | '
 export type OpenStyle = 'none' | 'envelope' | 'curtain' | 'fade' | 'fold';
 export type CoverMode = 'hero' | 'framed' | 'none';
 export type LayoutBlock = 'title' | 'host' | 'datetime' | 'location' | 'deadline' | 'message';
+/** Bloco 15B: forma do cartão/miniatura; não altera o documento de blocos. */
+export type TemplateOrientation = 'strip' | 'card45' | 'a5' | 'a4' | 'landscape' | 'story';
 
 import type { TemplateDocument } from './template-document';
 
@@ -40,6 +42,10 @@ export interface TemplateManifest {
   };
   /** Bloco 15, Passo 2: documento de blocos (fonte única para editor/convite/PDF). */
   document?: TemplateDocument;
+  /** Bloco 15B: apenas apresentação da miniatura/pré-visualização. */
+  orientation?: TemplateOrientation;
+  /** Bloco 15B: conteúdo neutro de exemplo, já preenchido ao escolher. */
+  previewData?: Record<string, string>;
 }
 
 export const DEFAULT_MANIFEST: TemplateManifest = {
@@ -57,6 +63,27 @@ const HEX = /^#[0-9A-Fa-f]{6}$/;
 const FONTS: TemplateFont[] = ['sans', 'serif', 'cap', 'script', 'condensed', 'anton'];
 export const OPEN_STYLES: OpenStyle[] = ['none', 'envelope', 'curtain', 'fade', 'fold'];
 const OPEN: OpenStyle[] = OPEN_STYLES;
+export const TEMPLATE_ORIENTATIONS: TemplateOrientation[] = [
+  'strip',
+  'card45',
+  'a5',
+  'a4',
+  'landscape',
+  'story',
+];
+
+/** Só texto simples e chaves seguras; nunca HTML/URL vindos do manifesto. */
+function normalizePreviewData(raw: unknown): Record<string, string> | undefined {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return undefined;
+  const source = raw as Record<string, unknown>;
+  const result: Record<string, string> = {};
+  for (const [key, entry] of Object.entries(source)) {
+    if (!/^[a-zA-Z][a-zA-Z0-9_]*$/.test(key) || typeof entry !== 'string') continue;
+    result[key] = entry.slice(0, 500);
+    if (Object.keys(result).length >= 24) break;
+  }
+  return Object.keys(result).length > 0 ? result : undefined;
+}
 
 /** Validação defensiva (o back já valida; isto evita CSS injetado). */
 export function normalizeManifest(raw: unknown): TemplateManifest {
@@ -67,9 +94,14 @@ export function normalizeManifest(raw: unknown): TemplateManifest {
     return DEFAULT_MANIFEST;
   }
   if (!FONTS.includes(value.fonts.display) || !FONTS.includes(value.fonts.body)) return DEFAULT_MANIFEST;
+  const orientation = TEMPLATE_ORIENTATIONS.includes(value.orientation as TemplateOrientation)
+    ? (value.orientation as TemplateOrientation)
+    : undefined;
   return {
     ...DEFAULT_MANIFEST,
     ...value,
+    orientation,
+    previewData: normalizePreviewData(value.previewData),
     open_style: OPEN.includes(value.open_style as OpenStyle) ? (value.open_style as OpenStyle) : 'fade',
   } as TemplateManifest;
 }

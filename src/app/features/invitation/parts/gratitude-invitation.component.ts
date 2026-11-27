@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, computed, effect, inject, input, output, viewChild } from '@angular/core';
+import { AfterViewInit, Component, computed, effect, inject, input, output, signal } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { TemplateManifest } from '../../../core/models/template-manifest';
 import { qrCodeSvg } from '../../../shared/utils/qr-svg.util';
@@ -24,81 +24,101 @@ interface GratitudeFields {
   qrSize: 'md' | 'lg';
 }
 
+/** Shared with the PDF renderer: PDF uses 195 base units, the screen poster 300. */
+const TITLE_VIEWBOX_WIDTH = 1000;
+const TITLE_VIEWBOX_HEIGHT = 300;
+const TITLE_BAND_WIDTH = 910;
+const TITLE_BAND_HEIGHT = TITLE_VIEWBOX_HEIGHT;
+const TITLE_BASE_FONT_SIZE = 300;
+const TITLE_MIN_FONT_SIZE = 90;
+const TITLE_FONT_STEP = 10;
+const TITLE_PAD = 4;
+const TITLE_FONT_STACK = 'Anton, "Arial Narrow", Impact, sans-serif';
+
 /**
- * Gratitude — fiel à referência visual. Poster 4:5, Anton + Montserrat.
- * Sem placeholders de LOGO/QR no convite público: blocos ausentes fecham espaço.
+ * Gratitude — fiel à referência visual. Poster 4:5, Anton + Montserrat locais.
+ * Sem placeholders de LOGO/QR no convite público: o logótipo só aparece quando existe `pdf.logo_url`.
  */
 @Component({
   selector: 'app-gratitude-invitation',
   styles: [`
-    @import url('https://fonts.googleapis.com/css2?family=Anton&family=Montserrat:ital,wght@0,400;0,500;0,700;0,800;1,800&display=swap');
+    @font-face {
+      font-family:'Anton';
+      src:url('/fonts/Anton-400.ttf') format('truetype');
+      font-weight:400;font-style:normal;font-display:swap;
+    }
     :host { display: block; }
     .poster{
       width:100%; max-width:42rem; margin:0 auto;
-      background:#fff6ea; position:relative; overflow:hidden;
+      background:radial-gradient(circle at 50% 45%,#fffdf8 0%,#fff6ea 55%,#fbe9cf 100%);
+      position:relative; overflow:hidden;
       aspect-ratio:4/5; container-type:inline-size;
-      border-radius:1.25rem;
-      box-shadow:0 20px 60px rgba(40,24,8,.16);
-      border:1px solid rgba(216,192,137,.45);
-      font-family:Montserrat,system-ui,sans-serif;
+      border-radius:14px; box-shadow:0 10px 30px rgba(0,0,0,.25);
+      font-family:Montserrat,system-ui,sans-serif; box-sizing:border-box;
     }
     .deco{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
-    .content{
-      position:absolute;left:0;right:0;top:10%;bottom:16.8%;
-      display:flex;flex-direction:column;align-items:center;justify-content:space-evenly;
-      gap:1cqw;padding:0 4cqw;text-align:center;
-    }
     .logo{
-      width:19%;aspect-ratio:1;flex:0 0 auto;
-      border-radius:50%;border:.35cqw solid #d4a017;background:#fffaf0;
-      display:grid;place-items:center;overflow:hidden;
+      position:absolute;top:2.4%;left:50%;transform:translateX(-50%);
+      width:19%;aspect-ratio:1;border-radius:50%;overflow:hidden;
+      display:grid;place-items:center;box-sizing:border-box;
     }
     .logo.original{border-radius:1.2cqw}
     .logo.sm{width:14%}.logo.lg{width:23%}
     .logo img{width:100%;height:100%;object-fit:cover;display:block}
-    .logo.placeholder{border:.35cqw dashed #d4a017;background:rgba(255,250,240,.6);cursor:pointer}
+    .logo.placeholder{border:.35cqw dashed #d4a017;background:rgba(255,250,240,.7);cursor:pointer}
     .logo.placeholder span{font-size:1.5cqw;font-weight:700;color:#b8862b;text-align:center;padding:8%;line-height:1.2}
     .org{
-      font-weight:500;font-size:3.03cqw;letter-spacing:.77cqw;text-transform:uppercase;color:#1b1b1b;
-      width:100%;line-height:1.15;margin-top:.2cqw;
+      position:absolute;top:19.4%;left:0;right:0;text-align:center;
+      font-weight:500;font-size:2.7cqw;letter-spacing:.27em;padding-left:.27em;
+      text-transform:uppercase;color:#1b1b1b;line-height:1.15;
     }
     .sub{
-      font-weight:700;font-size:4.79cqw;color:#111;width:100%;line-height:1.08;
-      margin-top:0;
-      margin-bottom:1.2cqw;
+      position:absolute;top:22.4%;left:0;right:0;text-align:center;
+      font-weight:800;font-size:4.7cqw;color:#111;line-height:1.1;
+      text-transform:uppercase;letter-spacing:.01em;
     }
     .title{
-      width:92%;height:20%;display:block;overflow:visible;flex:0 0 auto;margin:0 0 0;
+      position:absolute;left:4.5%;top:28.6%;width:91%;height:20.7%;
+      display:block;overflow:visible;box-sizing:border-box;
     }
-    .title text{font-family:Anton,"Arial Narrow",Impact,sans-serif}
+    .title text{font-family:Anton,'Arial Narrow',Impact,sans-serif}
     .year{
-      transform:skewX(-8deg);
-      font-style:italic;font-weight:800;font-size:8.5cqw;line-height:1;color:#b3121a;
-      letter-spacing:.1cqw;white-space:nowrap;margin-top:0cqw;
+      position:absolute;top:49.8%;left:0;right:0;text-align:center;
+      font-family:Montserrat,system-ui,sans-serif;font-style:italic;font-weight:800;
+      font-size:9.6cqw;line-height:1.15;letter-spacing:-.01em;
+      color:#b3121a;white-space:nowrap;
     }
+    .year span{display:inline-block;transform:skewX(-4deg)}
     .info{
-      width:100%;display:grid;grid-template-columns:max-content max-content minmax(0,1fr) max-content;
-      align-items:center;gap:0;font-weight:500;color:#111;margin-top:0.8cqw;
+      position:absolute;left:4cqw;right:4cqw;top:62.9%;
+      display:flex;align-items:center;justify-content:space-between;gap:0;
+      font-weight:500;color:#111;box-sizing:border-box;
     }
     .info .c{
-      display:flex;align-items:center;gap:1.4cqw;padding:0 2cqw;min-height:7.2cqw;
-      border-right:1px solid #d4a017;min-width:0;
+      display:flex;flex:1 1 0;align-items:center;justify-content:center;gap:1.4cqw;padding:0 2cqw;
+      min-height:11cqw;box-sizing:border-box;min-width:0;
     }
-    .info .c:last-child{border-right:0;padding-right:0}
+    .info .c + .c{border-left:.45cqw solid #d4a017}
     .info .c:first-child{padding-left:0}
+    .info .c:last-child{padding-right:0}
     .info svg{width:5.4cqw;height:5.4cqw;flex:0 0 auto}
-    .info .v{font-size:4cqw;line-height:1;white-space:nowrap}
+    .info .v{font-size:3.7cqw;font-weight:400;letter-spacing:.1em;line-height:1;white-space:nowrap}
     .info .loc{align-items:flex-start}
     .info .loc svg{margin-top:.3cqw}
-    .info .loc .t{font-size:2.55cqw;line-height:1.25;font-weight:700;text-transform:uppercase;overflow-wrap:anywhere;text-align:left}
-    .info .loc .t b{display:block;font-size:1.75cqw;margin-bottom:.2cqw}
-    .info .qrc{flex-direction:column;gap:.7cqw;padding-left:2cqw}
-    .info .qrc .lab{font-size:2.34cqw;font-weight:700;line-height:1;color:#111;text-align:center}
-    .qrcard{
-      width:12.3cqw;aspect-ratio:1;background:#fff;border:.25cqw solid #d4a017;border-radius:1.2cqw;
-      display:grid;place-items:center;position:relative;padding:8%;box-sizing:border-box;overflow:hidden;
+    .info .loc .t{font-size:2.35cqw;line-height:1.2;font-weight:800;text-transform:uppercase;overflow-wrap:anywhere;text-align:left}
+    .info .loc .t b{display:block;font-size:2.2cqw;letter-spacing:.03em;margin-bottom:.15cqw}
+    .info .loc .t span{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;line-clamp:3;overflow:hidden}
+    .qrblock{
+      position:absolute;top:73.2%;left:50%;transform:translateX(-50%);
+      display:flex;flex-direction:column;align-items:center;gap:.8cqw;
     }
-    .qrcard.lg{width:14cqw}
+    .qrblock .lab{font-size:2.9cqw;font-weight:800;line-height:1;color:#111;text-align:center}
+    .qrcard{
+      width:14cqw;aspect-ratio:1;background:#fff;border:.55cqw solid #d4a017;
+      border-radius:2.2cqw;padding:1.1cqw;box-sizing:border-box;overflow:hidden;
+      display:grid;place-items:center;position:relative;
+    }
+    .qrcard.lg{width:16cqw}
     .qrcard .qr-svg,.qrcard .qr-svg svg{width:100%;height:100%;display:block}
     .qrcard .qr-img{width:100%;height:100%;object-fit:contain;display:block}
     .qrcard .badge{
@@ -107,14 +127,15 @@ interface GratitudeFields {
     }
     .qrcard .badge svg{width:82%;height:82%}
     .dress{
-      display:flex;align-items:center;gap:2cqw;padding:1.8cqw 5cqw;
-      border:2px solid #d4a017;border-radius:999px;background:#fff3dc;color:#111;white-space:nowrap;
-      margin-top:1.2cqw;
+      position:absolute;top:88.2%;left:50%;transform:translateX(-50%);
+      width:48.3%;display:flex;align-items:center;justify-content:center;gap:2.4cqw;
+      padding:1.3cqw 2.6cqw;background:#fff3dc;border:.6cqw solid #d4a017;
+      border-radius:999px;box-sizing:border-box;
     }
     .dress.off{display:none}
-    .dress svg{width:5.2cqw;height:4.5cqw;flex:0 0 auto}
-    .dress small{display:block;font-size:1.95cqw;font-weight:700;letter-spacing:.1cqw;line-height:1}
-    .dress strong{display:block;font-size:4.5cqw;font-weight:400;line-height:1.05;font-family:Anton,"Arial Narrow",Impact,sans-serif;letter-spacing:.03em}
+    .dress svg{width:8.5cqw;height:8.5cqw;flex:0 0 auto}
+    .dress small{display:block;font-weight:800;font-size:2.8cqw;letter-spacing:.02em;line-height:1}
+    .dress strong{display:block;font-family:Anton,'Arial Narrow',sans-serif;font-weight:400;font-size:4.9cqw;letter-spacing:.02em;line-height:1.05;text-transform:uppercase}
   `],
   template: `
     <section class="mx-auto w-full max-w-[42rem]" data-testid="gratitude-invitation">
@@ -140,8 +161,7 @@ interface GratitudeFields {
           <path d="M580 1280C735 1222 915 1125 1024 1030" fill="none" stroke="#fff3c4" stroke-opacity=".85" stroke-width="4"/>
         </svg>
 
-        <div class="content">
-          @if (f().logoUrl) {
+        @if (f().logoUrl) {
             <div class="logo" [class.original]="f().logoShape === 'original'" [class.sm]="f().logoSize === 'sm'" [class.lg]="f().logoSize === 'lg'" data-testid="gratitude-logo-wrap">
               <img [src]="f().logoUrl!" alt="Logótipo" data-testid="gratitude-logo" />
             </div>
@@ -154,12 +174,10 @@ interface GratitudeFields {
           <div class="org" data-testid="gratitude-org">{{ f().organization }}</div>
           <div class="sub" data-testid="gratitude-subtitle">{{ f().subtitle }}</div>
 
-          <div class="title-year-group" style="display:flex;flex-direction:column;align-items:center;width:100%;gap:0.5cqw;flex:0 0 auto;">
-            <svg #titleSvg class="title" viewBox="0 0 1000 300" preserveAspectRatio="none" role="img" [attr.aria-label]="f().title" data-testid="gratitude-title">
-              <text #titleText x="0" y="0" font-family="Anton,'Arial Narrow',Impact,sans-serif" font-size="300" fill="url(#afro)" stroke="#161616" stroke-width="2.2" vector-effect="non-scaling-stroke" paint-order="stroke fill" stroke-linejoin="round">{{ f().title }}</text>
-            </svg>
-            <div class="year" data-testid="gratitude-highlight">{{ f().year }}</div>
-          </div>
+          <svg class="title" [attr.viewBox]="titleViewBox()" preserveAspectRatio="xMidYMid meet" role="img" [attr.aria-label]="f().title" data-testid="gratitude-title">
+            <text x="0" y="0" font-family="Anton,'Arial Narrow',Impact,sans-serif" [attr.font-size]="titleFontSize()" [attr.x]="titleX()" [attr.y]="titleY()" fill="url(#afro)" stroke="#161616" stroke-width="2.2" vector-effect="non-scaling-stroke" paint-order="stroke fill" stroke-linejoin="round">{{ f().title }}</text>
+          </svg>
+          <div class="year" data-testid="gratitude-highlight"><span>{{ f().year }}</span></div>
 
           <div class="info" data-testid="gratitude-info">
             <div class="c">
@@ -174,30 +192,30 @@ interface GratitudeFields {
               <svg viewBox="0 0 24 24" fill="#111" aria-hidden="true"><path d="M12 22s7-6.4 7-12a7 7 0 1 0-14 0c0 5.6 7 12 7 12Z"/><circle cx="12" cy="10" r="2.6" fill="#fff6ea"/></svg>
               <div class="t"><b>LOCAL:</b><span>@for (line of f().locationLines; track line + '-' + $index) { {{ line }}@if (!$last) {<br />} }</span></div>
             </div>
-            @if (hasQr()) {
-              <div class="c qrc" data-testid="gratitude-qr">
-                <div class="lab">{{ f().qrLabel }}</div>
-                <div class="qrcard" [class.lg]="f().qrSize === 'lg'">
-                  @if (f().qrImageUrl) {
-                    <img class="qr-img" [src]="f().qrImageUrl!" alt="QR code" loading="eager" />
-                  } @else if (qrSvg()) {
-                    <div class="qr-svg" [innerHTML]="qrSvg()"></div>
-                  }
-                  @if (f().qrIcon === 'whatsapp') {
-                    <div class="badge" aria-hidden="true"><svg viewBox="0 0 24 24" fill="#1e8a3c"><path d="M12 2a10 10 0 0 0-8.6 15L2 22l5.2-1.4A10 10 0 1 0 12 2Zm5.2 13.6c-.2.6-1.3 1.1-1.8 1.2-.5 0-1 .3-3.3-.7-2.8-1.2-4.5-4-4.7-4.2-.1-.2-1.1-1.5-1.1-2.8s.7-2 1-2.3c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 2c.1.2.1.4 0 .5l-.4.6-.4.5c-.1.1-.3.3-.1.6.2.3.8 1.3 1.7 2.1 1.2 1 2.2 1.300 2.500 1.500.3.1.5.1.7-.1l.9-1.100c.2-.3.4-.2.7-.1l1.900.9c.3.1.5.2.6.3.1.2.1.8-.1 1.400Z"/></svg></div>
-                  } @else if (f().qrIcon === 'brand') {
-                    <div class="badge" aria-hidden="true"><svg viewBox="0 0 24 24" fill="#c8922a"><circle cx="12" cy="12" r="10" fill="#fff"/><path d="M12 4l2.5 5 5.5.8-4 3.9.9 5.5-4.9-2.6-4.9 2.6.9-5.5-4-3.9 5.5-.8z"/></svg></div>
-                  }
-                </div>
-              </div>
-            }
           </div>
+
+          @if (hasQr()) {
+            <div class="qrblock" data-testid="gratitude-qr">
+              <div class="lab">{{ f().qrLabel }}</div>
+              <div class="qrcard" [class.lg]="f().qrSize === 'lg'">
+                @if (f().qrImageUrl) {
+                  <img class="qr-img" [src]="f().qrImageUrl!" alt="QR code" loading="eager" />
+                } @else if (qrSvg()) {
+                  <div class="qr-svg" [innerHTML]="qrSvg()"></div>
+                }
+                @if (f().qrIcon === 'whatsapp') {
+                  <div class="badge" aria-hidden="true"><svg viewBox="0 0 24 24" fill="#1e8a3c"><path d="M12 2a10 10 0 0 0-8.6 15L2 22l5.2-1.4A10 10 0 1 0 12 2Zm5.2 13.6c-.2.6-1.3 1.1-1.8 1.2-.5 0-1 .3-3.3-.7-2.8-1.2-4.5-4-4.7-4.2-.1-.2-1.1-1.5-1.1-2.8s.7-2 1-2.3c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 2c.1.2.1.4 0 .5l-.4.6-.4.5c-.1.1-.3.3-.1.6.2.3.8 1.3 1.7 2.1 1.2 1 2.2 1.300 2.500 1.500.3.1.5.1.7-.1l.9-1.100c.2-.3.4-.2.7-.1l1.900.9c.3.1.5.2.6.3.1.2.1.8-.1 1.400Z"/></svg></div>
+                } @else if (f().qrIcon === 'brand') {
+                  <div class="badge" aria-hidden="true"><svg viewBox="0 0 24 24" fill="#c8922a"><circle cx="12" cy="12" r="10" fill="#fff"/><path d="M12 4l2.5 5 5.5.8-4 3.9.9 5.5-4.9-2.6-4.9 2.6.9-5.5-4-3.9 5.5-.8z"/></svg></div>
+                }
+              </div>
+            </div>
+          }
 
           <div class="dress" [class.off]="!f().dressCode" data-testid="gratitude-dresscode">
             <svg viewBox="0 0 64 56" aria-hidden="true"><path d="M20 3 4 12l6 14 8-3v28h28V23l8 3 6-14L44 3c-2 5-6 8-12 8S22 8 20 3Z" fill="#d49a1a"/><path d="M20 3c2 5 6 8 12 8s10-3 12-8" fill="none" stroke="#b27a0e" stroke-width="2"/></svg>
             <div><small>DRESS-CODE:</small><strong>{{ f().dressCode }}</strong></div>
           </div>
-        </div>
       </div>
     </section>
   `,
@@ -209,8 +227,12 @@ export class GratitudeInvitationComponent implements AfterViewInit {
   readonly logoEdit = output<void>();
 
   private readonly sanitizer = inject(DomSanitizer);
-  private readonly titleSvg = viewChild<ElementRef<SVGSVGElement>>('titleSvg');
-  private readonly titleText = viewChild<ElementRef<SVGTextElement>>('titleText');
+  private readonly fontsTick = signal(0);
+
+  readonly titleFontSize = signal(TITLE_BASE_FONT_SIZE);
+  readonly titleX = signal(TITLE_PAD);
+  readonly titleY = signal(TITLE_PAD + TITLE_BASE_FONT_SIZE * 0.89);
+  readonly titleViewBox = signal(`0 0 ${TITLE_VIEWBOX_WIDTH} ${TITLE_VIEWBOX_HEIGHT}`);
 
   protected readonly f = computed<GratitudeFields>(() => {
     const e = this.event();
@@ -281,40 +303,64 @@ export class GratitudeInvitationComponent implements AfterViewInit {
 
   constructor() {
     effect(() => {
-      void this.f().title;
-      queueMicrotask(() => this.fitTitle());
+      const title = this.f().title;
+      this.fontsTick();
+      queueMicrotask(() => this.fitTitle(title));
     });
   }
 
   ngAfterViewInit(): void {
-    this.fitTitle();
     if (typeof document !== 'undefined' && 'fonts' in document) {
-      void (document as Document & { fonts: { load: (f: string) => Promise<unknown[]> } }).fonts.load('300px Anton').then(() => this.fitTitle());
+      void (document as Document & { fonts: { load: (f: string) => Promise<unknown[]> } })
+        .fonts.load(`${TITLE_BASE_FONT_SIZE}px Anton`)
+        .then(() => this.fontsTick.update((n) => n + 1));
     }
   }
 
-  private fitTitle(): void {
-    const svg = this.titleSvg()?.nativeElement;
-    const text = this.titleText()?.nativeElement;
-    if (!svg || !text || typeof document === 'undefined') return;
-    const txt = (this.f().title || ' ').toUpperCase();
-    text.textContent = txt;
+  /**
+   * Gradual font-size step-down: measure with canvas/Anton, keep the glyph
+   * proportions (xMidYMid meet) and only enlarge the viewBox when even the
+   * legibility floor cannot fit an exceptionally long title.
+   */
+  private fitTitle(title: string): void {
+    if (typeof document === 'undefined') return;
+    let ctx: CanvasRenderingContext2D | null;
     try {
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return;
-      ctx.font = '300px Anton, "Arial Narrow", Impact, sans-serif';
+      ctx = document.createElement('canvas').getContext('2d');
+    } catch {
+      return;
+    }
+    if (!ctx) return;
+    const txt = (title || ' ').toUpperCase();
+    const fontFor = (size: number) => `${size}px ${TITLE_FONT_STACK}`;
+    let size = TITLE_BASE_FONT_SIZE;
+    while (size > TITLE_MIN_FONT_SIZE) {
+      ctx.font = fontFor(size);
       const m = ctx.measureText(txt);
       const w = m.actualBoundingBoxLeft + m.actualBoundingBoxRight;
       const h = m.actualBoundingBoxAscent + m.actualBoundingBoxDescent;
-      if (!w || !h) return;
-      const p = 4;
-      text.setAttribute('x', String(m.actualBoundingBoxLeft + p));
-      text.setAttribute('y', String(m.actualBoundingBoxAscent + p));
-      svg.setAttribute('viewBox', `0 0 ${w + 2 * p} ${h + 2 * p}`);
-    } catch {
-      // keep default viewBox
+      if (w > 0 && h > 0 && w <= TITLE_BAND_WIDTH && h <= TITLE_BAND_HEIGHT) break;
+      size -= TITLE_FONT_STEP;
     }
+    ctx.font = fontFor(size);
+    const m = ctx.measureText(txt);
+    const left = m.actualBoundingBoxLeft;
+    const right = m.actualBoundingBoxRight;
+    const ascent = m.actualBoundingBoxAscent;
+    const descent = m.actualBoundingBoxDescent;
+    const w = left + right;
+    const h = ascent + descent;
+    if (!w || !h) return;
+    // Mesma regra do PDF: scale = VIEWBOX_WIDTH / viewWidth; exigir viewWidth >=
+    // w * VIEWBOX_WIDTH / BAND_WIDTH mantém o texto dentro da faixa de 91%.
+    const viewWidth = Math.max(
+      TITLE_VIEWBOX_WIDTH,
+      Math.ceil((w * TITLE_VIEWBOX_WIDTH) / TITLE_BAND_WIDTH) + TITLE_PAD
+    );
+    this.titleViewBox.set(`0 0 ${viewWidth} ${TITLE_VIEWBOX_HEIGHT}`);
+    this.titleFontSize.set(size);
+    this.titleX.set(left + (viewWidth - w) / 2);
+    this.titleY.set((TITLE_VIEWBOX_HEIGHT - h) / 2 + ascent);
   }
 
   private dateParts(iso: string | null | undefined, timeZone: string): { date: string; time: string; year: string } {

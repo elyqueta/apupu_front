@@ -109,15 +109,14 @@ export class ShellComponent {
   ];
 
   /**
-   * Itens da barra inferior (apenas mobile). Os quatro destinos mais usados do
-   * anfitrião; o resto fica acessível pelo botão "Mais", que abre o drawer.
+   * Itens da barra inferior (apenas mobile). Quatro destinos + "Mais", no
+   * mesmo formato do feed; tarefas e os restantes ficam no drawer lateral.
    */
   protected readonly bottomNavItems: NavItem[] = [
     { path: '/', labelKey: 'nav.feed', icon: ICONS['home'], exact: true },
     { path: '/painel', labelKey: 'nav.dashboard', icon: ICONS['dashboard'], exact: true },
     { path: '/eventos', labelKey: 'nav.events', icon: ICONS['events'], exact: false },
     { path: '/convidados', labelKey: 'nav.guests', icon: ICONS['guests'], exact: false },
-    { path: '/tarefas', labelKey: 'nav.tasks', icon: ICONS['checklist'], exact: false },
   ];
 
   /** Os mesmos destinos do rail, reutilizados no drawer da barra superior. */

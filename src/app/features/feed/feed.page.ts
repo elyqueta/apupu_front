@@ -320,6 +320,15 @@ export class FeedPage {
     void this.router.navigate(['/criar-evento']);
   }
 
+  /** O botão central da navegação inferior abre diretamente a criação do convite. */
+  protected createInvite(): void {
+    if (!this.signedIn()) {
+      void this.router.navigate(['/criar-conta']);
+      return;
+    }
+    void this.router.navigate(['/criar-evento']);
+  }
+
   /* ─────────────────────────────── Pesquisa ─────────────────────────────── */
 
   protected openSearch(): void {

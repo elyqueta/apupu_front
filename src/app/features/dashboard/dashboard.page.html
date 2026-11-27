@@ -636,7 +636,9 @@
             (keydown)="onCarouselKeydown($event)"
           >
             @for (page of guestPages(); track $index) {
-              <li class="grid w-full shrink-0 grid-cols-3 gap-3 snap-start">
+              <li
+                class="grid w-full shrink-0 snap-start grid-cols-1 items-stretch gap-3 px-0.5 py-1 sm:grid-cols-2 lg:grid-cols-3"
+              >
                 @for (entry of page; track entry.guest.id) {
                   <div class="h-full min-w-0">
                     <app-person-card

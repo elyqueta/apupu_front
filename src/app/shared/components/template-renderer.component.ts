@@ -77,7 +77,7 @@ export interface TemplateRenderData {
             >
               @switch (block.type) {
                 @case ('title') {
-                  <h2 class="font-display text-3xl font-semibold tracking-tight sm:text-4xl" [style.font-family]="displayFont()" [style]="blockStyle(block)">
+                  <h2 class="font-display min-w-0 text-3xl font-semibold tracking-tight sm:text-4xl [overflow-wrap:anywhere]" [style.font-family]="displayFont()" [style]="blockStyle(block)">
                     {{ blockText(block, data().title) }}
                   </h2>
                 }

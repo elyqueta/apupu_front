@@ -6,8 +6,8 @@ export type EventStatus = 'draft' | 'published' | 'scheduled' | 'completed' | 'c
 
 export type RsvpStatus = 'pending' | 'confirmed' | 'declined';
 
-/** Papel de quem consulta o evento: proprietário (`host`) ou gestor. */
-export type EventAccessRole = 'host' | 'manager';
+/** Papel de quem consulta o evento: proprietário, gestor ou membro da comunidade. */
+export type EventAccessRole = 'host' | 'manager' | 'communityMember';
 
 export type TemplateId = string;
 
@@ -46,8 +46,10 @@ export interface HostEvent {
   status: EventStatus;
   contributionEnabled: boolean;
   bankDetails: BankDetails | null;
-  /** Papel de quem consulta o evento: o anfitrião ou um gestor. */
+  /** Papel de quem consulta o evento: anfitrião, gestor ou membro da comunidade. */
   accessRole: EventAccessRole;
+  /** Comunidade do evento (Bloco 11); `null` = evento pessoal. */
+  communityId?: string | null;
   /** Bloco 10: privado (só convites individuais) ou público (link aberto). */
   visibility: EventVisibility;
   /** Link aberto do evento; `null` quando é privado. */
@@ -559,7 +561,29 @@ export function managerPermissions(
   };
 }
 
+/**
+ * Membro activo da comunidade: pode adicionar convidados e exportar o
+ * convite/documentos do evento, mas não editar o evento, equipas ou gestores.
+ */
+export function communityMemberPermissions(): EventPermissions {
+  return {
+    canEditEvent: false,
+    canManageGuests: true,
+    canManageTeams: false,
+    canManageManagers: false,
+    canExport: true,
+    canCancelEvent: false,
+    canChangeEventStatus: false,
+    canEditExistingGuests: false,
+    canDeleteActivity: false,
+    canManageTasks: false,
+    canResendManageLink: false,
+  };
+}
+
 /** Fábrica única usada pelas duas páginas do painel do evento. */
 export function eventPermissionsFor(accessRole: EventAccessRole): EventPermissions {
-  return accessRole === 'host' ? hostPermissions() : managerPermissions({ accessRole });
+  if (accessRole === 'host') return hostPermissions();
+  if (accessRole === 'communityMember') return communityMemberPermissions();
+  return managerPermissions({ accessRole });
 }

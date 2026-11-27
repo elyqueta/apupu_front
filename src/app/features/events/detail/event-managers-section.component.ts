@@ -51,7 +51,19 @@ type ManagerLinkStatus = 'active' | 'expired' | 'revoked' | 'blocked' | 'pending
       @if (loading()) {
         <app-skeleton variant="cards" />
       } @else if (managers().length === 0) {
-        <p class="rounded-2xl border border-dashed border-line p-4 text-xs text-muted">{{ i18n.t('eventDetail.managersEmptyPanel') }}</p>
+        <div class="mt-4 flex flex-col items-center justify-center rounded-3xl border border-dashed border-line bg-surface-raised/30 px-5 py-10 text-center">
+          <span class="grid size-14 place-items-center rounded-2xl border border-brand/25 bg-brand/15 text-brand-strong">
+            <fa-icon [icon]="icons['userPlus']" class="text-xl" aria-hidden="true" />
+          </span>
+          <h3 class="mt-4 font-display text-lg font-semibold text-ink">{{ i18n.t('eventDetail.managersEmptyPanel') }}</h3>
+          <p class="mt-1.5 max-w-md text-sm leading-6 text-muted">{{ i18n.t('eventDetail.managersEmptyHint') }}</p>
+          @if (permissions().canManageManagers) {
+            <button type="button" data-testid="add-manager" class="mt-5 inline-flex h-11 cursor-pointer items-center gap-2 rounded-xl bg-brand px-4 text-xs font-semibold text-on-secondary transition hover:bg-secondary-hover" (click)="newManager.emit()">
+              <fa-icon [icon]="icons['plus']" class="text-xs" aria-hidden="true" />
+              {{ i18n.t('eventDetail.newManager') }}
+            </button>
+          }
+        </div>
       } @else {
         <ul class="grid grid-cols-1 gap-3 sm:grid-cols-2">
           @for (manager of managers(); track manager.id) {
@@ -63,7 +75,7 @@ type ManagerLinkStatus = 'active' | 'expired' | 'revoked' | 'blocked' | 'pending
           }
         </ul>
       }
-      @if (permissions().canManageManagers) {
+      @if (permissions().canManageManagers && !loading() && managers().length > 0) {
         <button type="button" data-testid="add-manager" class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-brand px-4 text-xs font-semibold text-on-secondary transition hover:bg-secondary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60" (click)="newManager.emit()">
           <fa-icon [icon]="icons['plus']" aria-hidden="true" />
           {{ i18n.t('eventDetail.newManager') }}

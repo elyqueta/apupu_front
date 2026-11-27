@@ -32,7 +32,7 @@ export class ManagementStore implements Resettable {
 
   readonly activeEventId = this.activeEventIdState.asReadonly();
   readonly manageEmailStatus = this.manageEmailStatusState.asReadonly();
-  /** Papel da sessão de gestão ativa (`host` ou `manager`). */
+  /** Papel da sessão de gestão ativa (`host`, `manager` ou `communityMember`). */
   readonly role = this.roleState.asReadonly();
 
   constructor() {

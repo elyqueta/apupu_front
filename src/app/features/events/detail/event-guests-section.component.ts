@@ -288,7 +288,7 @@ export class EventGuestsSectionComponent {
     return items;
   }
 
-  /** `canExport` é uma capacidade exclusiva do anfitrião (ver `hostPermissions`). */
+  /** `canExport` inclui anfitriões e membros da comunidade (ver `eventPermissionsFor`). */
   protected primaryFor(entry: GuestListEntry): PersonPrimaryAction | null {
     if (!this.permissions().canExport || !entry.guest.phone) {
       return null;

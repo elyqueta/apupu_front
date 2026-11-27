@@ -103,7 +103,7 @@
 
 :root {
   color-scheme: light;
-  --ap-font-scale: 1;
+  --ap-font-scale: 1.15;
 
   --ap-bg: var(--cc-bg);
   --ap-surface: var(--cc-surface);
@@ -135,6 +135,10 @@
   --isy-gold-4: #ecd596;
   --isy-ink: #7a5d25;
   --isy-line: rgba(169, 131, 54, 0.55);
+}
+
+:root[data-font-size='normal'] {
+  --ap-font-scale: 1.15;
 }
 
 :root[data-font-size='large'] {
@@ -175,6 +179,42 @@
 
   :root[data-font-size] [class~='text-[11px]'] {
     font-size: calc(11px * var(--ap-font-scale));
+  }
+
+  :root[data-font-size] [class~='text-[12px]'] {
+    font-size: calc(12px * var(--ap-font-scale));
+  }
+
+  :root[data-font-size] [class~='text-[13px]'] {
+    font-size: calc(13px * var(--ap-font-scale));
+  }
+
+  :root[data-font-size] [class~='text-[14px]'] {
+    font-size: calc(14px * var(--ap-font-scale));
+  }
+
+  :root[data-font-size] [class~='text-[15px]'] {
+    font-size: calc(15px * var(--ap-font-scale));
+  }
+
+  :root[data-font-size] [class~='text-[20px]'] {
+    font-size: calc(20px * var(--ap-font-scale));
+  }
+
+  :root[data-font-size] [class~='text-[26px]'] {
+    font-size: calc(26px * var(--ap-font-scale));
+  }
+
+  :root[data-font-size] [class~='text-[30px]'] {
+    font-size: calc(30px * var(--ap-font-scale));
+  }
+
+  :root[data-font-size] [class~='text-[34px]'] {
+    font-size: calc(34px * var(--ap-font-scale));
+  }
+
+  :root[data-font-size] [class~='text-[0.75rem]'] {
+    font-size: calc(0.75rem * var(--ap-font-scale));
   }
 
   /* Convite / Isilda — brilho metálico e entrada escalonada. */
@@ -297,6 +337,7 @@
     background-color: var(--ap-bg);
     color: var(--ap-text);
     font-family: var(--font-sans);
+    font-size: calc(1rem * var(--ap-font-scale));
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }

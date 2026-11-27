@@ -258,7 +258,9 @@ export class EventDetailPage {
     if (this.isManagement()) {
       badges.push(this.i18n.t('settings.active'));
     }
-    if (!this.isHost()) {
+    if (this.accessRole() === 'communityMember') {
+      badges.push(this.i18n.t('eventDetail.roleCommunityMember'));
+    } else if (!this.isHost()) {
       badges.push(this.i18n.t('eventDetail.roleManager'));
     }
     return badges;
@@ -1481,6 +1483,7 @@ export class EventDetailPage {
         minAge: parseAge(visibilitySettings.minAge),
         maxAge: parseAge(visibilitySettings.maxAge),
       });
+      this.closeEditModal();
       this.toasts.success(this.i18n.t('eventDetail.changesSaved'));
     } catch (error: unknown) {
       this.toasts.error(toApiError(error).message);

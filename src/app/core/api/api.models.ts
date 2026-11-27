@@ -28,8 +28,8 @@ export interface ApiPage<T> {
 export type EventCategory = 'wedding' | 'birthday' | 'corporate' | 'baby' | 'other';
 export type ApiEventStatus = 'draft' | 'scheduled' | 'cancelled' | 'completed';
 export type ApiRsvpStatus = 'pending' | 'accepted' | 'declined';
-/** Papel de quem consulta o evento: proprietário (`host`) ou gestor. */
-export type ApiEventAccessRole = 'host' | 'manager';
+/** Papel de quem consulta o evento: proprietário, gestor ou membro da comunidade. */
+export type ApiEventAccessRole = 'host' | 'manager' | 'communityMember';
 
 export interface HostProfileData {
   display_name: string;
@@ -110,6 +110,8 @@ export interface ApiEvent {
   max_age?: number | null;
   /** Papel de quem consulta o evento; ausente na vista pública. */
   access_role?: ApiEventAccessRole;
+  /** Comunidade do evento (Bloco 11); `null` = evento pessoal. */
+  community_id?: string | null;
   /** Bloco 14: vídeo de convite (só o ID) e mesas. */
   youtube_video_id?: string | null;
   use_tables?: boolean;

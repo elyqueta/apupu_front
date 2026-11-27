@@ -130,6 +130,7 @@ export function mapEvent(event: ApiEvent): HostEvent {
           }
         : null,
     accessRole: event.access_role ?? 'host',
+    communityId: event.community_id ?? null,
     visibility: event.visibility ?? 'private',
     publicUrl: event.public_url ?? null,
     showAttendeeCount: event.show_attendee_count ?? false,

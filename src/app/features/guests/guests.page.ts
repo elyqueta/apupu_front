@@ -18,11 +18,13 @@ import { ActionMenuItem } from '../../shared/components/action-menu.component';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog.component';
 import { GuestDialogComponent } from '../../shared/components/guest-dialog.component';
 import { MobileFabComponent } from '../../shared/components/mobile-fab.component';
+import { ModalComponent } from '../../shared/components/modal.component';
 import { PageHeaderComponent } from '../../shared/components/page-header.component';
 import { PersonCardComponent, PersonMetaItem, PersonPrimaryAction } from '../../shared/components/person-card.component';
 import { LinkCopyService } from '../../shared/services/link-copy.service';
 import { SkeletonComponent } from '../../shared/components/skeleton.component';
 import { StatCardComponent } from '../../shared/components/stat-card.component';
+import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
 import { StatGridComponent } from '../../shared/components/stat-grid.component';
 import { whatsappSharedLabel } from '../../shared/services/whatsapp-share.presenter';
 
@@ -46,11 +48,13 @@ const SEARCH_DEBOUNCE_MS = 300;
     ConfirmDialogComponent,
     GuestDialogComponent,
     MobileFabComponent,
+    ModalComponent,
     PageHeaderComponent,
     PersonCardComponent,
     SkeletonComponent,
     StatCardComponent,
     StatGridComponent,
+    StatusBadgeComponent,
   ],
   templateUrl: './guests.page.html',
 })
@@ -78,6 +82,7 @@ export class GuestsPage {
   protected readonly dialogOpen = signal(false);
   protected readonly editTarget = signal<Guest | null>(null);
   protected readonly removeTarget = signal<Guest | null>(null);
+  protected readonly detailTarget = signal<GuestListEntry | null>(null);
   protected readonly exporting = signal(false);
   /** Em mobile os filtros começam recolhidos; em `md+` estão sempre visíveis. */
   protected readonly filtersOpen = signal(false);
@@ -106,7 +111,7 @@ export class GuestsPage {
     }
     const start = (pagination.page - 1) * pagination.page_size + 1;
     const end = Math.min(pagination.page * pagination.page_size, pagination.total);
-    return `${start}–${end} / ${pagination.total}`;
+    return this.i18n.t('guests.showingRange', { start, end, total: pagination.total });
   });
 
   protected readonly statusOptions: Array<{
@@ -252,6 +257,52 @@ export class GuestsPage {
     this.editTarget.set(null);
   }
 
+  protected openDetails(entry: GuestListEntry): void {
+    this.detailTarget.set(entry);
+  }
+
+  protected closeDetails(): void {
+    this.detailTarget.set(null);
+  }
+
+  protected async copyEmailFromDetails(entry: GuestListEntry): Promise<void> {
+    const copied = await this.share.copy(entry.guest.email);
+    this.toasts[copied ? 'success' : 'error'](
+      this.i18n.t(copied ? 'common.copied' : 'common.copyFailed'),
+    );
+  }
+
+  protected viewInvitationFromDetails(entry: GuestListEntry): void {
+    if (entry.guest.invitationUrl) {
+      this.share.openExternal(entry.guest.invitationUrl);
+    }
+  }
+
+  protected editFromDetails(entry: GuestListEntry): void {
+    this.closeDetails();
+    this.openEdit(entry.guest);
+  }
+
+  protected viewEventFromDetails(entry: GuestListEntry): void {
+    this.closeDetails();
+    void this.router.navigate(['/eventos', entry.event.id]);
+  }
+
+  protected async resendFromDetails(entry: GuestListEntry): Promise<void> {
+    this.closeDetails();
+    await this.resend(entry.guest);
+  }
+
+  protected whatsappFromDetails(entry: GuestListEntry): void {
+    this.closeDetails();
+    this.forwardWhatsApp(entry.guest, entry.event.title);
+  }
+
+  protected removeFromDetails(entry: GuestListEntry): void {
+    this.closeDetails();
+    this.removeTarget.set(entry.guest);
+  }
+
   /** Linhas curtas do cartão: mensagem do convidado, evento, abertura, convite e resposta. */
   protected metaFor(entry: GuestListEntry): PersonMetaItem[] {
     const meta: PersonMetaItem[] = [
@@ -317,6 +368,10 @@ export class GuestsPage {
     } else if (action === 'copy') {
       void this.linkCopy.copy(entry.guest.invitationUrl);
     }
+  }
+
+  protected iconFor(key: string) {
+    return ICONS[key as keyof typeof ICONS] ?? ICONS['user'];
   }
 
   /** Email e/ou telefone (confirmações pelo link aberto podem ter só um). */

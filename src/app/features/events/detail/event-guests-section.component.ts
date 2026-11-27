@@ -1,14 +1,18 @@
-import { Component, inject, input, output } from '@angular/core';
+import { Component, computed, inject, input, output, signal } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Pagination } from '../../../core/api/api.models';
 import { GuestListEntry } from '../../../core/data/guests.repository';
 import { I18nService } from '../../../core/i18n/i18n.service';
 import { EventPermissions, EventStats, Guest } from '../../../core/models/models';
+import { ShareService } from '../../../core/services/share.service';
+import { ToastService } from '../../../core/services/toast.service';
 import { ICONS } from '../../../core/ui/icons';
 import { ActionMenuItem } from '../../../shared/components/action-menu.component';
+import { ModalComponent } from '../../../shared/components/modal.component';
 import { PersonCardComponent, PersonMetaItem, PersonPrimaryAction } from '../../../shared/components/person-card.component';
 import { LinkCopyService } from '../../../shared/services/link-copy.service';
 import { SkeletonComponent } from '../../../shared/components/skeleton.component';
+import { StatusBadgeComponent } from '../../../shared/components/status-badge.component';
 import { StatCardComponent } from '../../../shared/components/stat-card.component';
 import { StatGridComponent } from '../../../shared/components/stat-grid.component';
 import { whatsappSharedLabel } from '../../../shared/services/whatsapp-share.presenter';
@@ -17,7 +21,15 @@ import { GUEST_FILTERS, GuestFilter } from './detail.models';
 /** Secção de convidados do detalhe do evento (lista paginada no servidor). */
 @Component({
   selector: 'app-event-guests-section',
-  imports: [FaIconComponent, PersonCardComponent, SkeletonComponent, StatCardComponent, StatGridComponent],
+  imports: [
+    FaIconComponent,
+    ModalComponent,
+    PersonCardComponent,
+    SkeletonComponent,
+    StatCardComponent,
+    StatGridComponent,
+    StatusBadgeComponent,
+  ],
   template: `
     <section class="flex flex-col gap-4">
       <app-stat-grid>
@@ -127,11 +139,13 @@ import { GUEST_FILTERS, GuestFilter } from './detail.models';
               }
             </div>
           } @else {
-            <ul class="mt-4 grid auto-rows-fr grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+            <ul class="mt-4 flex flex-col gap-2">
               @for (entry of entries(); track entry.guest.id) {
-                <li class="h-full min-w-0">
+                <li class="min-w-0">
                   <app-person-card
-                    variant="rich"
+                    layout="linear"
+                    [clickable]="true"
+                    [clickLabel]="i18n.t('common.viewDetails') + ': ' + entry.guest.name"
                     [name]="entry.guest.name"
                     [subtitle]="contactLine(entry.guest)"
                     [status]="entry.guest.status"
@@ -144,6 +158,7 @@ import { GUEST_FILTERS, GuestFilter } from './detail.models';
                     [actionsLabel]="i18n.t('eventDetail.table.actions')"
                     (actionSelected)="onAction($event, entry)"
                     (primaryTriggered)="onPrimary($event, entry)"
+                    (open)="openDetails(entry)"
                   />
                 </li>
               }
@@ -154,7 +169,13 @@ import { GUEST_FILTERS, GuestFilter } from './detail.models';
                 class="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4"
                 [attr.aria-label]="i18n.t('guests.pagination')"
               >
-                <span class="text-xs text-muted">{{ rangeLabel() }}</span>
+                <span
+                  data-testid="event-guests-range"
+                  class="inline-flex items-center gap-2 rounded-full border border-line bg-surface-raised/60 px-3 py-1.5 text-[11px] font-medium text-muted shadow-card"
+                >
+                  <fa-icon [icon]="icons['guests']" class="text-[10px] text-brand-strong" aria-hidden="true" />
+                  {{ showingLabel() }}
+                </span>
                 <div class="flex items-center gap-2">
                   <button
                     type="button"
@@ -183,6 +204,115 @@ import { GUEST_FILTERS, GuestFilter } from './detail.models';
           }
         </div>
       </article>
+
+      <app-modal
+        [open]="detailTarget() !== null"
+        [title]="detailTarget()?.guest?.name ?? i18n.t('common.viewDetails')"
+        size="sm"
+        (closed)="closeDetails()"
+      >
+        @if (detailTarget(); as entry) {
+          <div class="flex items-center gap-3 rounded-2xl border border-line bg-surface-raised/40 p-3">
+            <div class="min-w-0 flex-1">
+              <p class="truncate text-sm font-semibold text-ink">{{ entry.guest.name }}</p>
+              <p class="truncate text-xs text-muted">{{ contactLine(entry.guest) }}</p>
+            </div>
+            <app-status-badge [value]="entry.guest.status" />
+          </div>
+          <ul class="mt-3 space-y-2 text-xs text-muted">
+            @for (item of metaFor(entry); track $index) {
+              <li class="flex min-w-0 items-start gap-2">
+                <fa-icon [icon]="iconFor(item.icon)" class="mt-0.5 shrink-0 text-[11px] text-brand-strong" aria-hidden="true" />
+                <span class="min-w-0">{{ item.label }}</span>
+              </li>
+            }
+            @if (entry.guest.message) {
+              <li class="flex min-w-0 items-start gap-2">
+                <fa-icon [icon]="icons['envelopeOpen']" class="mt-0.5 shrink-0 text-[11px] text-brand-strong" aria-hidden="true" />
+                <span class="min-w-0">{{ i18n.t('guests.guestMessage', { message: entry.guest.message }) }}</span>
+              </li>
+            }
+          </ul>
+        }
+        @if (detailTarget(); as entry) {
+          <div modal-footer class="flex flex-col gap-2">
+            <button
+              type="button"
+              class="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-line bg-surface-raised px-3 text-xs font-semibold text-ink transition hover:border-brand/40"
+              (click)="copyEmailFromDetails(entry)"
+            >
+              <fa-icon [icon]="icons['copy']" class="text-muted" aria-hidden="true" />
+              {{ i18n.t('guests.copyEmail') }}
+            </button>
+            @if (entry.guest.invitationUrl) {
+              <button
+                type="button"
+                class="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-line bg-surface-raised px-3 text-xs font-semibold text-ink transition hover:border-brand/40"
+                (click)="viewInvitationFromDetails(entry)"
+              >
+                <fa-icon [icon]="icons['link']" class="text-muted" aria-hidden="true" />
+                {{ i18n.t('guests.viewInvitation') }}
+              </button>
+            }
+            @if (permissions().canEditExistingGuests) {
+              <button
+                type="button"
+                class="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-line bg-surface-raised px-3 text-xs font-semibold text-ink transition hover:border-brand/40"
+                (click)="emitGuest(editGuest, entry)"
+              >
+                <fa-icon [icon]="icons['pen']" class="text-muted" aria-hidden="true" />
+                {{ i18n.t('guests.editAction') }}
+              </button>
+              <button
+                type="button"
+                class="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-line bg-surface-raised px-3 text-xs font-semibold text-ink transition hover:border-brand/40"
+                (click)="emitGuest(resendGuest, entry)"
+              >
+                <fa-icon [icon]="icons['paperPlane']" class="text-muted" aria-hidden="true" />
+                {{ i18n.t('eventDetail.resend') }}
+              </button>
+              <button
+                type="button"
+                class="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-line bg-surface-raised px-3 text-xs font-semibold text-ink transition hover:border-brand/40"
+                (click)="emitGuest(editGuestLink, entry)"
+              >
+                <fa-icon [icon]="icons['link']" class="text-muted" aria-hidden="true" />
+                {{ i18n.t('eventDetail.linkValidityAction') }}
+              </button>
+            }
+            @if (permissions().canExport) {
+              @if (entry.guest.phone) {
+                <button
+                  type="button"
+                  class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-brand px-3 text-xs font-semibold text-on-secondary transition hover:bg-secondary-hover"
+                  (click)="emitGuest(whatsappGuest, entry)"
+                >
+                  <fa-icon [icon]="icons['whatsapp']" aria-hidden="true" />
+                  {{ i18n.t('guests.whatsapp') }}
+                </button>
+              }
+              <button
+                type="button"
+                class="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-line bg-surface-raised px-3 text-xs font-semibold text-ink transition hover:border-brand/40"
+                (click)="emitGuest(ticketGuest, entry)"
+              >
+                <fa-icon [icon]="icons['ticket']" class="text-muted" aria-hidden="true" />
+                {{ i18n.t('eventDetail.ticket') }}
+              </button>
+            }
+            @if (permissions().canEditExistingGuests) {
+              <button
+                type="button"
+                class="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-coral/30 px-3 text-xs font-semibold text-coral transition hover:bg-coral/10"
+                (click)="emitGuest(removeGuest, entry)"
+              >
+                <fa-icon [icon]="icons['trash']" aria-hidden="true" />
+                {{ i18n.t('guests.remove') }}
+              </button>
+            }
+          </div>
+        }
+      </app-modal>
     </section>
   `,
 })
@@ -212,7 +342,51 @@ export class EventGuestsSectionComponent {
   protected readonly i18n = inject(I18nService);
   protected readonly icons = ICONS;
   protected readonly filters = GUEST_FILTERS;
+  protected readonly detailTarget = signal<GuestListEntry | null>(null);
   private readonly linkCopy = inject(LinkCopyService);
+  private readonly share = inject(ShareService);
+  private readonly toasts = inject(ToastService);
+
+  /** Texto da paginação derivado dos dados locais (o input rangeLabel é legado). */
+  protected readonly showingLabel = computed(() => {
+    const pagination = this.pagination();
+    if (!pagination || pagination.total === 0) {
+      return '';
+    }
+    const start = (pagination.page - 1) * pagination.page_size + 1;
+    const end = Math.min(pagination.page * pagination.page_size, pagination.total);
+    return this.i18n.t('guests.showingRange', { start, end, total: pagination.total });
+  });
+
+  protected openDetails(entry: GuestListEntry): void {
+    this.detailTarget.set(entry);
+  }
+
+  protected closeDetails(): void {
+    this.detailTarget.set(null);
+  }
+
+  protected async copyEmailFromDetails(entry: GuestListEntry): Promise<void> {
+    const copied = await this.share.copy(entry.guest.email);
+    this.toasts[copied ? 'success' : 'error'](
+      this.i18n.t(copied ? 'common.copied' : 'common.copyFailed'),
+    );
+  }
+
+  protected viewInvitationFromDetails(entry: GuestListEntry): void {
+    if (entry.guest.invitationUrl) {
+      this.share.openExternal(entry.guest.invitationUrl);
+    }
+  }
+
+  protected emitGuest(target: { emit(value: Guest): void }, entry: GuestListEntry): void {
+    this.closeDetails();
+    target.emit(entry.guest);
+  }
+
+  protected iconFor(key: string) {
+    return ICONS[key as keyof typeof ICONS] ?? ICONS['user'];
+  }
 
   /** Email e/ou telefone (confirmações pelo link aberto podem ter só um). */
   protected contactLine(guest: Guest): string {

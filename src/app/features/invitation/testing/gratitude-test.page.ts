@@ -43,12 +43,12 @@ function baseEvent(overrides: Partial<InvitationEventView> = {}): InvitationEven
 }
 
 const CASES: Record<string, { event: Partial<InvitationEventView>; manifest: Partial<TemplateManifest> }> = {
-  a: { event: { title: 'Gratitude', dressCode: '' }, manifest: { pdf: { ...DEFAULT_MANIFEST.pdf, logo_url: null } as any } },
-  b: { event: { title: 'Gratitude', dressCode: '' }, manifest: { pdf: { ...DEFAULT_MANIFEST.pdf, logo_url: 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==', logo_shape: 'circle', logo_size: 'md' } as any } },
-  c: { event: { title: 'Gratitude', dressCode: 'Traje africano' }, manifest: { pdf: { ...DEFAULT_MANIFEST.pdf, logo_url: null } as any } },
+  a: { event: { title: 'Gratitude', dressCode: '' }, manifest: { pdf: { ...DEFAULT_MANIFEST.pdf, logo_url: null as unknown as TemplateManifest['pdf']['logo_url'] } } },
+  b: { event: { title: 'Gratitude', dressCode: '' }, manifest: { pdf: { ...DEFAULT_MANIFEST.pdf, logo_url: 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==', logo_shape: 'circle', logo_size: 'md' } } },
+  c: { event: { title: 'Gratitude', dressCode: 'Traje africano' }, manifest: { pdf: { ...DEFAULT_MANIFEST.pdf, logo_url: null as unknown as TemplateManifest['pdf']['logo_url'] } } },
   d: {
     event: { title: 'Gratitude', dressCode: 'Traje africano', venue: 'Igreja Cristã Reino Church, Bairro Central, Talatona, Luanda' },
-    manifest: { pdf: { ...DEFAULT_MANIFEST.pdf, logo_url: 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==', logo_shape: 'circle', logo_size: 'md' } as any } },
+    manifest: { pdf: { ...DEFAULT_MANIFEST.pdf, logo_url: 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==', logo_shape: 'circle', logo_size: 'md' } } },
 };
 
 @Component({

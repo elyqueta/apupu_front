@@ -198,10 +198,13 @@
         }
       </div>
     } @else {
-      <ul class="mt-4 grid auto-rows-fr grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+      <ul class="mt-4 flex flex-col gap-2">
         @for (entry of items(); track entry.guest.id) {
-          <li class="h-full min-w-0">
+          <li class="min-w-0">
             <app-person-card
+              layout="linear"
+              [clickable]="true"
+              [clickLabel]="i18n.t('common.viewDetails') + ': ' + entry.guest.name"
               [name]="entry.guest.name"
               [subtitle]="contactLine(entry.guest)"
               [status]="entry.guest.status"
@@ -214,6 +217,7 @@
               [actionsLabel]="i18n.t('guests.tableActions')"
               (actionSelected)="onMenuAction($event, entry)"
               (primaryTriggered)="onPrimary($event, entry)"
+              (open)="openDetails(entry)"
             />
           </li>
         }
@@ -223,7 +227,13 @@
         class="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4"
         [attr.aria-label]="i18n.t('guests.pagination')"
       >
-        <span class="text-[11px] text-muted">{{ rangeLabel() }}</span>
+        <span
+          data-testid="guests-range"
+          class="inline-flex items-center gap-2 rounded-full border border-line bg-surface-raised/60 px-3 py-1.5 text-[11px] font-medium text-muted shadow-card"
+        >
+          <fa-icon [icon]="icons['guests']" class="text-[10px] text-brand-strong" aria-hidden="true" />
+          {{ rangeLabel() }}
+        </span>
         <div class="flex items-center gap-2">
           <button
             type="button"
@@ -257,6 +267,103 @@
       {{ i18n.t('guests.shareText') }}
     </p>
   </article>
+
+  <app-modal
+    [open]="detailTarget() !== null"
+    [title]="detailTarget()?.guest?.name ?? i18n.t('common.viewDetails')"
+    size="sm"
+    (closed)="closeDetails()"
+  >
+    @if (detailTarget(); as entry) {
+      <div class="flex items-center gap-3 rounded-2xl border border-line bg-surface-raised/40 p-3">
+        <div class="min-w-0 flex-1">
+          <p class="truncate text-sm font-semibold text-ink">{{ entry.guest.name }}</p>
+          <p class="truncate text-xs text-muted">{{ contactLine(entry.guest) }}</p>
+        </div>
+        <app-status-badge [value]="entry.guest.status" />
+      </div>
+      <ul class="mt-3 space-y-2 text-xs text-muted">
+        @for (item of metaFor(entry); track $index) {
+          <li class="flex min-w-0 items-start gap-2">
+            <fa-icon [icon]="iconFor(item.icon)" class="mt-0.5 shrink-0 text-[11px] text-brand-strong" aria-hidden="true" />
+            <span class="min-w-0">{{ item.label }}</span>
+          </li>
+        }
+        @if (entry.guest.message) {
+          <li class="flex min-w-0 items-start gap-2">
+            <fa-icon [icon]="icons['envelopeOpen']" class="mt-0.5 shrink-0 text-[11px] text-brand-strong" aria-hidden="true" />
+            <span class="min-w-0">{{ i18n.t('guests.guestMessage', { message: entry.guest.message }) }}</span>
+          </li>
+        }
+      </ul>
+    }
+    @if (detailTarget(); as entry) {
+      <div modal-footer class="flex flex-col gap-2">
+        <button
+          type="button"
+          class="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-line bg-surface-raised px-3 text-xs font-semibold text-ink transition hover:border-brand/40"
+          (click)="copyEmailFromDetails(entry)"
+        >
+          <fa-icon [icon]="icons['copy']" class="text-muted" aria-hidden="true" />
+          {{ i18n.t('guests.copyEmail') }}
+        </button>
+        @if (entry.guest.invitationUrl) {
+          <button
+            type="button"
+            class="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-line bg-surface-raised px-3 text-xs font-semibold text-ink transition hover:border-brand/40"
+            (click)="viewInvitationFromDetails(entry)"
+          >
+            <fa-icon [icon]="icons['link']" class="text-muted" aria-hidden="true" />
+            {{ i18n.t('guests.viewInvitation') }}
+          </button>
+        }
+        <button
+          type="button"
+          class="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-line bg-surface-raised px-3 text-xs font-semibold text-ink transition hover:border-brand/40"
+          (click)="viewEventFromDetails(entry)"
+        >
+          <fa-icon [icon]="icons['arrowUpRight']" class="text-muted" aria-hidden="true" />
+          {{ i18n.t('guests.viewEvent') }}
+        </button>
+        @if (isHostFor(entry.event.id)) {
+          <button
+            type="button"
+            class="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-line bg-surface-raised px-3 text-xs font-semibold text-ink transition hover:border-brand/40"
+            (click)="editFromDetails(entry)"
+          >
+            <fa-icon [icon]="icons['pen']" class="text-muted" aria-hidden="true" />
+            {{ i18n.t('guests.editAction') }}
+          </button>
+          <button
+            type="button"
+            class="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-line bg-surface-raised px-3 text-xs font-semibold text-ink transition hover:border-brand/40"
+            (click)="resendFromDetails(entry)"
+          >
+            <fa-icon [icon]="icons['paperPlane']" class="text-muted" aria-hidden="true" />
+            {{ i18n.t('eventDetail.resend') }}
+          </button>
+          @if (entry.guest.phone) {
+            <button
+              type="button"
+              class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-brand px-3 text-xs font-semibold text-on-secondary transition hover:bg-secondary-hover"
+              (click)="whatsappFromDetails(entry)"
+            >
+              <fa-icon [icon]="icons['whatsapp']" aria-hidden="true" />
+              {{ i18n.t('guests.whatsapp') }}
+            </button>
+          }
+          <button
+            type="button"
+            class="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-coral/30 px-3 text-xs font-semibold text-coral transition hover:bg-coral/10"
+            (click)="removeFromDetails(entry)"
+          >
+            <fa-icon [icon]="icons['trash']" aria-hidden="true" />
+            {{ i18n.t('guests.remove') }}
+          </button>
+        }
+      </div>
+    }
+  </app-modal>
 
   <app-guest-dialog
     [open]="dialogOpen() || editTarget() !== null"

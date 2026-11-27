@@ -81,7 +81,6 @@ import {
   parseAge,
 } from '../../shared/components/event-visibility-fields.component';
 import { LocationPickerDialogComponent, LocationPickResult } from '../../shared/components/location-picker-dialog.component';
-import { LocationMapComponent } from '../../shared/components/location-map.component';
 import { extractYoutubeId } from '../../core/utils/youtube';
 import { readPreferredLocation, writePreferredLocation, type PreferredLocation } from '../../core/utils/preferred-location';
 import { PublicLinkCardComponent } from '../../shared/components/public-link-card.component';

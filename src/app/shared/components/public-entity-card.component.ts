@@ -14,7 +14,7 @@ import { ICONS } from '../../core/ui/icons';
   imports: [RouterLink, FaIconComponent],
   template: `
     <article
-      class="flex h-full min-w-0 flex-col overflow-hidden rounded-4xl border border-line/40 bg-surface/60 shadow-card backdrop-blur-xl transition duration-200 hover:-translate-y-0.5 hover:border-brand/40"
+      class="flex h-full min-w-0 flex-col overflow-hidden rounded-4xl border border-line/40 bg-surface shadow-card transition duration-200 hover:-translate-y-0.5 hover:border-brand/40"
       [attr.data-testid]="testId()"
     >
       <div class="relative h-28 shrink-0 overflow-hidden bg-gradient-to-br from-brand/35 via-surface-raised to-surface">

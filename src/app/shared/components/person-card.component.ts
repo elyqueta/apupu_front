@@ -96,7 +96,7 @@ export interface PersonPrimaryAction {
                 (click)="triggerPrimary($event, primary)"
               >
                 @if (primary.icon) {
-                  <fa-icon [icon]="primary.icon" class="text-[11px]" aria-hidden="true" />
+                  @if (primary.icon) { <fa-icon [icon]="primary.icon" class="text-[11px]" aria-hidden="true" /> }
                 }
                 <span class="min-w-0 truncate">{{ primary.label }}</span>
               </button>
@@ -112,7 +112,7 @@ export interface PersonPrimaryAction {
                 (click)="triggerPrimary($event, secondary)"
               >
                 @if (secondary.icon) {
-                  <fa-icon [icon]="secondary.icon" aria-hidden="true" />
+                  @if (secondary.icon) { <fa-icon [icon]="secondary.icon" aria-hidden="true" /> }
                 }
               </button>
             }

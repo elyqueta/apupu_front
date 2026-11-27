@@ -91,7 +91,7 @@ const activeMenu = signal<ActionMenuComponent | null>(null);
             [class]="itemClass(item)"
             (click)="select(item)"
           >
-            <fa-icon [icon]="item.icon" class="w-4 shrink-0 text-xs" aria-hidden="true" />
+            @if (item.icon) { <fa-icon [icon]="item.icon" class="w-4 shrink-0 text-xs" aria-hidden="true" /> }
             <span class="min-w-0 flex-1 truncate text-left">{{ item.label }}</span>
           </button>
         }

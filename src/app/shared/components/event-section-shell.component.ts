@@ -84,7 +84,7 @@ export interface EventSectionItem {
               [disabled]="primary.disabled"
               (click)="selectAction(primary)"
             >
-              <fa-icon [icon]="primary.icon" class="text-[11px]" aria-hidden="true" />
+              @if (primary.icon) { <fa-icon [icon]="primary.icon" class="text-[11px]" aria-hidden="true" /> }
               <span class="truncate">{{ primary.label }}</span>
             </button>
           }
@@ -154,7 +154,7 @@ export interface EventSectionItem {
                 [attr.aria-selected]="activeSection() === section.id"
                 (click)="selectSection(section.id)"
               >
-                <fa-icon [icon]="section.icon" class="w-4 shrink-0" aria-hidden="true" />
+                @if (section.icon) { <fa-icon [icon]="section.icon" class="w-4 shrink-0" aria-hidden="true" /> }
                 @if (!railCollapsed()) {
                   <span class="min-w-0 flex-1 truncate">{{ section.label }}</span>
                   @if (section.count !== null && section.count !== undefined) {
@@ -186,7 +186,7 @@ export interface EventSectionItem {
                     [attr.title]="action.disabled ? disabledHint() || null : railCollapsed() ? action.label : null"
                     (click)="selectAction(action)"
                   >
-                    <fa-icon [icon]="action.icon" class="w-4 shrink-0" aria-hidden="true" />
+                    @if (action.icon) { <fa-icon [icon]="action.icon" class="w-4 shrink-0" aria-hidden="true" /> }
                     @if (!railCollapsed()) {
                       <span class="min-w-0 flex-1 truncate">{{ action.label }}</span>
                     }

@@ -66,7 +66,7 @@ const PRIMARY_ACTION_CLASS = 'inline-flex h-11 items-center gap-2 rounded-2xl bg
           <div class="flex flex-wrap items-center gap-2 border-t border-line pt-4">
             @for (action of actions(); track action.id) {
               <button type="button" [class]="action.classes" (click)="runAction(action.id)">
-                <fa-icon [icon]="action.icon" aria-hidden="true" /> {{ action.label }}
+                @if (action.icon) { <fa-icon [icon]="action.icon" aria-hidden="true" /> } {{ action.label }}
               </button>
             }
             @if (permissions().canEditEvent) {
@@ -143,7 +143,7 @@ const PRIMARY_ACTION_CLASS = 'inline-flex h-11 items-center gap-2 rounded-2xl bg
                   <div class="my-3 h-px bg-line"></div>
                   @for (item of documentExports(); track item.document + item.format) {
                     <button type="button" role="menuitem" class="flex min-h-11 w-full items-center gap-3 rounded-2xl px-2 py-2 text-left transition hover:bg-surface-raised/60 disabled:opacity-50" [disabled]="exporting() !== null" (click)="requestDocument(item.document, item.format)">
-                      <fa-icon [icon]="item.icon" class="shrink-0 text-brand" aria-hidden="true" />
+                      @if (item.icon) { <fa-icon [icon]="item.icon" class="shrink-0 text-brand" aria-hidden="true" /> }
                       <span class="min-w-0"><span class="block text-xs font-semibold text-ink">{{ item.label }}</span><span class="block text-xs text-muted">{{ item.hint }}</span></span>
                     </button>
                   }

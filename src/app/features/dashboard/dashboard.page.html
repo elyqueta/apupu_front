@@ -387,8 +387,8 @@
       </div>
     </section>
 
-    <section class="rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl">
-      <div class="flex items-start justify-between gap-3">
+    <section class="flex h-96 flex-col rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl">
+      <div class="flex shrink-0 items-start justify-between gap-3">
         <div>
           <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-brand-strong">
             {{ i18n.t('dashboard.activityTitle') }}
@@ -403,9 +403,15 @@
       </div>
 
       @if (activity().length === 0) {
-        <p class="mt-6 text-sm text-muted">{{ i18n.t('dashboard.activityEmpty') }}</p>
+        <div class="flex flex-1 flex-col items-center justify-center rounded-2xl border border-dashed border-line bg-surface-raised/30 p-6 text-center">
+          <span class="grid size-12 place-items-center rounded-2xl border border-line bg-surface-raised text-muted">
+            <fa-icon [icon]="icons['history']" class="text-lg" aria-hidden="true" />
+          </span>
+          <p class="mt-4 text-sm font-semibold text-ink">{{ i18n.t('dashboard.activityTitle') }}</p>
+          <p class="mt-1 max-w-xs text-xs leading-5 text-muted">{{ i18n.t('dashboard.activityEmpty') }}</p>
+        </div>
       } @else {
-        <ol class="mt-4 flex flex-col gap-1">
+        <ol class="no-scrollbar mt-3 min-h-0 flex-1 space-y-1 overflow-y-auto pr-0.5">
           @for (entry of activity(); track entry.item.id) {
             <li
               class="flex items-start gap-3 rounded-2xl p-2 transition hover:bg-surface-raised/60"
@@ -462,50 +468,52 @@
             {{ day.ariaLabel }}
           </div>
         }
-        <svg
-          viewBox="0 0 100 36"
-          preserveAspectRatio="none"
-          class="h-28 w-full sm:h-32"
-          role="img"
-          [attr.aria-label]="i18n.t('dashboard.chartTitle')"
-        >
-          <line x1="0" y1="35.5" x2="100" y2="35.5" class="stroke-line" stroke-width="0.3" />
-          @for (day of week(); track $index) {
-            <g
-              role="img"
-              tabindex="0"
-              [attr.aria-label]="day.ariaLabel"
-              class="cursor-pointer outline-none"
-              (mouseenter)="setActiveDay($index)"
-              (mouseleave)="setActiveDay(null)"
-              (focus)="setActiveDay($index)"
-              (blur)="setActiveDay(null)"
-              (click)="setActiveDay($index)"
-            >
-              <rect [attr.x]="$index * 14" y="0" width="14" height="36" fill="transparent" />
-              @if (day.value === 0) {
-                <rect
-                  [attr.x]="$index * 14 + 3"
-                  y="35"
-                  width="8"
-                  height="0.8"
-                  rx="0.4"
-                  class="fill-line"
-                />
-              } @else {
-                <rect
-                  [attr.x]="$index * 14 + 3"
-                  [attr.y]="35 - day.height"
-                  width="8"
-                  [attr.height]="day.height"
-                  rx="2"
-                  [attr.class]="activeDay() === $index ? 'fill-brand' : 'fill-brand/70'"
-                />
-              }
-            </g>
-          }
-        </svg>
-        <div class="mt-1 grid grid-cols-7 gap-1 text-center">
+        <div class="relative min-h-28 flex-1 sm:min-h-32">
+          <svg
+            viewBox="0 0 100 36"
+            preserveAspectRatio="none"
+            class="absolute inset-0 h-full w-full"
+            role="img"
+            [attr.aria-label]="i18n.t('dashboard.chartTitle')"
+          >
+            <line x1="0" y1="35.5" x2="100" y2="35.5" class="stroke-line" stroke-width="0.3" />
+            @for (day of week(); track $index) {
+              <g
+                role="img"
+                tabindex="0"
+                [attr.aria-label]="day.ariaLabel"
+                class="cursor-pointer outline-none"
+                (mouseenter)="setActiveDay($index)"
+                (mouseleave)="setActiveDay(null)"
+                (focus)="setActiveDay($index)"
+                (blur)="setActiveDay(null)"
+                (click)="setActiveDay($index)"
+              >
+                <rect [attr.x]="$index * 14" y="0" width="14" height="36" fill="transparent" />
+                @if (day.value === 0) {
+                  <rect
+                    [attr.x]="$index * 14 + 3"
+                    y="35"
+                    width="8"
+                    height="0.8"
+                    rx="0.4"
+                    class="fill-line"
+                  />
+                } @else {
+                  <rect
+                    [attr.x]="$index * 14 + 3"
+                    [attr.y]="35 - day.height"
+                    width="8"
+                    [attr.height]="day.height"
+                    rx="2"
+                    [attr.class]="activeDay() === $index ? 'fill-brand' : 'fill-brand/70'"
+                  />
+                }
+              </g>
+            }
+          </svg>
+        </div>
+        <div class="mt-1 grid shrink-0 grid-cols-7 gap-1 text-center">
           @for (day of week(); track $index) {
             <div>
               <p
@@ -537,7 +545,7 @@
       </div>
 
       <div
-        class="mt-4 flex flex-wrap gap-2"
+        class="no-scrollbar mt-4 flex flex-nowrap gap-2 overflow-x-auto"
         role="group"
         [attr.aria-label]="i18n.t('common.filter')"
       >
@@ -595,8 +603,8 @@
             <p class="text-[11px] font-semibold tabular-nums text-muted" aria-live="polite">
               {{
                 i18n.t('block9.dashboard.carouselPosition', {
-                  current: carouselIndex(),
-                  total: filteredGuests().length,
+                  current: Math.min(carouselIndex(), carouselPages()),
+                  total: carouselPages(),
                 })
               }}
             </p>
@@ -621,25 +629,30 @@
           </div>
           <ul
             #guestCarousel
-            class="no-scrollbar mt-3 flex snap-x snap-mandatory gap-3 overflow-x-auto pb-1"
+            class="no-scrollbar mt-3 flex snap-x snap-mandatory overflow-x-auto"
             tabindex="0"
             [attr.aria-label]="i18n.t('dashboard.pendingTitle')"
             (scroll)="onCarouselScroll()"
             (keydown)="onCarouselKeydown($event)"
           >
-            @for (entry of filteredGuests(); track entry.guest.id) {
-              <li class="min-w-[17rem] max-w-[calc(100vw-3rem)] shrink-0 snap-start sm:min-w-[20rem]">
-                <app-person-card
-                  [name]="entry.guest.name"
-                  [subtitle]="subtitleFor(entry.guest)"
-                  [status]="entry.guest.status"
-                  [meta]="metaFor(entry)"
-                  [actions]="guestActions(entry)"
-                  [primaryAction]="primaryFor(entry)"
-                  [actionsLabel]="i18n.t('guests.tableActions')"
-                  (actionSelected)="onGuestAction($event, entry)"
-                  (primaryTriggered)="onGuestAction($event, entry)"
-                />
+            @for (page of guestPages(); track $index) {
+              <li class="grid w-full shrink-0 grid-cols-3 gap-3 snap-start">
+                @for (entry of page; track entry.guest.id) {
+                  <div class="h-full min-w-0">
+                    <app-person-card
+                      layout="linear"
+                      [name]="entry.guest.name"
+                      [subtitle]="subtitleFor(entry.guest)"
+                      [status]="entry.guest.status"
+                      [meta]="metaFor(entry)"
+                      [actions]="guestActions(entry)"
+                      [primaryAction]="primaryFor(entry)"
+                      [actionsLabel]="i18n.t('guests.tableActions')"
+                      (actionSelected)="onGuestAction($event, entry)"
+                      (primaryTriggered)="onGuestAction($event, entry)"
+                    />
+                  </div>
+                }
               </li>
             }
           </ul>

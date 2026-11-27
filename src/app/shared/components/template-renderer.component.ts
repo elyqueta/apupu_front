@@ -2,7 +2,7 @@ import { Component, computed, inject, input, output } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { TemplateManifest, fontFamily, manifestStyle } from '../../core/models/template-manifest';
-import { TemplateBlock } from '../../core/models/template-document';
+import { ActionButton, TemplateBlock, TimelineItem } from '../../core/models/template-document';
 import { GratitudeInvitationComponent } from '../../features/invitation/parts/gratitude-invitation.component';
 import { InvitationEventView } from '../../features/invitation/invitation.models';
 import { TemplatePreviewComponent } from './template-preview.component';
@@ -71,7 +71,9 @@ export interface TemplateRenderData {
               [class.ring-offset-2]="selectedBlockId() === block.id"
               [attr.data-block-id]="block.id"
               [attr.data-block-type]="block.type"
+              [attr.tabindex]="editable() ? 0 : null"
               (click)="editable() && blockSelect.emit(block.id)"
+              (keydown.enter)="editable() && blockSelect.emit(block.id)"
             >
               @switch (block.type) {
                 @case ('title') {
@@ -298,29 +300,34 @@ export class TemplateRendererComponent {
   }
 
   protected timelineItems(block: TemplateBlock): Array<{ time?: string; label: string }> {
-    return block.type === 'timeline' && Array.isArray((block as any).items) ? (block as any).items : [];
+    const items: unknown = block.type === 'timeline' ? block.items : null;
+    return Array.isArray(items) ? (items as TimelineItem[]) : [];
   }
   protected imageUrl(block: TemplateBlock): string | null {
-    return block.type === 'image' && typeof (block as any).url === 'string' ? (block as any).url : null;
+    const url: unknown = block.type === 'image' ? block.url : null;
+    return typeof url === 'string' ? url : null;
   }
   protected imageAlt(block: TemplateBlock): string {
-    return block.type === 'image' && typeof (block as any).alt === 'string' ? (block as any).alt : '';
+    const alt: unknown = block.type === 'image' ? block.alt : null;
+    return typeof alt === 'string' ? alt : '';
   }
   protected galleryUrls(block: TemplateBlock): string[] {
-    return block.type === 'gallery' && Array.isArray((block as any).urls) ? (block as any).urls.filter((u: unknown) => typeof u === 'string') : [];
+    const urls: unknown = block.type === 'gallery' ? block.urls : null;
+    return Array.isArray(urls) ? urls.filter((u): u is string => typeof u === 'string') : [];
   }
   protected youtubeEmbed(block: TemplateBlock): SafeResourceUrl | null {
-    const id = block.type === 'music_video' ? (block as any).youtubeId : null;
+    const id: unknown = block.type === 'music_video' ? block.youtubeId : null;
     return typeof id === 'string' && /^[A-Za-z0-9_-]{11}$/.test(id)
       ? this.sanitizer.bypassSecurityTrustResourceUrl(`https://www.youtube-nocookie.com/embed/${id}`)
       : null;
   }
   protected qrLabel(block: TemplateBlock): string {
-    const label = block.type === 'qr' ? (block as any).label : null;
+    const label: unknown = block.type === 'qr' ? block.label : null;
     return typeof label === 'string' && label.trim() ? label : this.i18n.t('block15.editor.qrPlaceholder');
   }
   protected buttons(block: TemplateBlock): Array<{ label: string }> {
-    return block.type === 'buttons' && Array.isArray((block as any).buttons) ? (block as any).buttons : [];
+    const buttons: unknown = block.type === 'buttons' ? block.buttons : null;
+    return Array.isArray(buttons) ? (buttons as ActionButton[]) : [];
   }
 
   private v1Block(block: string, i: number): TemplateBlock {

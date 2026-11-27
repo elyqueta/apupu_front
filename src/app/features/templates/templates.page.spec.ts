@@ -1,5 +1,6 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { API_BASE_URL } from '../../core/api/api-config';
@@ -36,6 +37,10 @@ const TEMPLATES: ApiTemplate[] = [
   makeTemplate({ id: 't2', slug: 'minimal', name: 'Minimal', kind: 'user' }),
 ];
 
+/** Destino mínimo das navegações "/templates/:slug/editar" destes testes. */
+@Component({ template: '' })
+class TemplateEditStubPage {}
+
 async function settle(fixture: ComponentFixture<TemplatesPage>): Promise<void> {
   for (let pass = 0; pass < 3; pass += 1) {
     await fixture.whenStable();
@@ -53,7 +58,7 @@ describe('TemplatesPage', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        provideRouter([]),
+        provideRouter([{ path: 'templates/:slug/editar', component: TemplateEditStubPage }]),
         { provide: API_BASE_URL, useValue: BASE },
       ],
     }).compileComponents();

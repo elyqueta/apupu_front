@@ -15,7 +15,7 @@
     </p>
   </header>
 
-  <!-- Cabeçalho do perfil -->
+  <!-- Faixa de identidade e resumo da atividade -->
   <article
     class="overflow-hidden rounded-4xl border border-line bg-surface shadow-card backdrop-blur-2xl"
   >
@@ -38,7 +38,7 @@
       </button>
     </div>
 
-    <div class="px-4 pb-4 sm:px-5 sm:pb-5">
+    <div class="px-4 pb-4 sm:px-6 sm:pb-6">
       <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div class="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-end">
           <button
@@ -96,7 +96,7 @@
       </div>
 
       <!-- Faixa de estatísticas -->
-      <dl class="mt-5 grid grid-cols-2 gap-y-4 border-t border-line pt-4 sm:grid-cols-4">
+      <dl class="mt-6 grid grid-cols-2 gap-x-4 gap-y-5 border-t border-line pt-5 sm:grid-cols-4">
         @for (metric of metrics(); track metric.labelKey) {
           <div
             class="flex flex-col gap-1 sm:border-l sm:border-line sm:px-4 sm:first:border-l-0 sm:first:pl-0"
@@ -111,109 +111,117 @@
     </div>
   </article>
 
-  <!-- Grelha de duas colunas -->
-  <div class="grid min-w-0 gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(0,0.65fr)]">
-    <!-- Os meus eventos -->
+  <!-- Zona principal: eventos em destaque e informações rápidas ao lado -->
+  <div
+    class="grid min-w-0 gap-4 md:gap-5 xl:grid-cols-[minmax(0,1fr)_22rem] 2xl:grid-cols-[minmax(0,1fr)_24rem]"
+  >
     <article
-      class="flex min-w-0 flex-col rounded-4xl border border-line bg-surface p-4 shadow-card backdrop-blur-2xl sm:p-5"
+      class="flex min-w-0 flex-col rounded-4xl border border-line bg-surface p-4 shadow-card backdrop-blur-2xl sm:p-6"
     >
-      <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div class="min-w-0">
-          <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-brand-strong">
-            {{ i18n.t('profile.events.title') }}
-          </p>
-          <p class="mt-1 text-xs text-muted">{{ i18n.t('profile.events.subtitle') }}</p>
-        </div>
-        <div class="flex w-full items-center gap-2 sm:w-auto">
-          <label class="relative flex min-w-0 flex-1 items-center sm:flex-none">
-            <fa-icon
-              [icon]="icons['search']"
-              class="pointer-events-none absolute left-3 text-xs text-muted"
-              aria-hidden="true"
-            />
-            <input
-              type="search"
-              [value]="searchTerm()"
-              (input)="searchTerm.set($any($event.target).value)"
-              [placeholder]="i18n.t('profile.events.search')"
-              [attr.aria-label]="i18n.t('profile.events.search')"
-              class="h-10 w-full rounded-xl border border-line bg-surface-raised/70 pl-9 pr-3 text-xs text-ink outline-none transition placeholder:text-muted/60 focus:border-brand/50 sm:w-52"
-            />
-          </label>
-          <div class="relative">
-            <button
-              type="button"
-              [attr.aria-expanded]="exportOpen()"
-              aria-haspopup="menu"
-              [disabled]="exporting() !== null"
-              (click)="toggleExport()"
-              class="inline-flex h-10 shrink-0 items-center gap-2 rounded-xl border border-line bg-surface-raised/70 px-3 text-xs font-semibold text-ink transition hover:border-brand/40 disabled:opacity-60"
-            >
+      <!-- Cabeçalho e barra de ferramentas alinhados -->
+      <div class="flex flex-col gap-4 border-b border-line pb-4">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div class="min-w-0">
+            <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-brand-strong">
+              {{ i18n.t('profile.events.title') }}
+            </p>
+            <p class="mt-1 text-xs text-muted">{{ i18n.t('profile.events.subtitle') }}</p>
+          </div>
+          <div class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+            <label class="relative flex w-full items-center sm:w-64">
               <fa-icon
-                [icon]="exporting() ? icons['spinner'] : icons['download']"
-                class="text-[11px] text-muted"
-                [class.animate-spin]="exporting() !== null"
+                [icon]="icons['search']"
+                class="pointer-events-none absolute left-3 text-xs text-muted"
                 aria-hidden="true"
               />
-              <span class="hidden sm:inline">
-                {{ exporting() ? i18n.t('reports.exporting') : i18n.t('profile.events.export') }}
-              </span>
-              <fa-icon [icon]="icons['chevronDown']" class="text-[9px]" aria-hidden="true" />
-            </button>
-
-            @if (exportOpen()) {
+              <input
+                type="search"
+                [value]="searchTerm()"
+                (input)="searchTerm.set($any($event.target).value)"
+                [placeholder]="i18n.t('profile.events.search')"
+                [attr.aria-label]="i18n.t('profile.events.search')"
+                class="h-10 w-full rounded-xl border border-line bg-surface-raised/70 pl-9 pr-3 text-xs text-ink outline-none transition placeholder:text-muted/60 focus:border-brand/50"
+              />
+            </label>
+            <div class="relative">
               <button
                 type="button"
-                class="fixed inset-0 z-20 cursor-default"
-                aria-label="{{ i18n.t('common.close') }}"
+                [attr.aria-expanded]="exportOpen()"
+                aria-haspopup="menu"
+                [disabled]="exporting() !== null"
                 (click)="toggleExport()"
-              ></button>
-              <div
-                class="absolute right-0 z-30 mt-2 w-60 overflow-hidden rounded-2xl border border-line bg-surface p-1.5 shadow-card backdrop-blur-2xl"
-                role="menu"
+                class="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-line bg-surface-raised/70 px-3 text-xs font-semibold text-ink transition hover:border-brand/40 disabled:opacity-60 sm:w-auto"
               >
+                <fa-icon
+                  [icon]="exporting() ? icons['spinner'] : icons['download']"
+                  class="text-[11px] text-muted"
+                  [class.animate-spin]="exporting() !== null"
+                  aria-hidden="true"
+                />
+                <span>
+                  {{ exporting() ? i18n.t('reports.exporting') : i18n.t('profile.events.export') }}
+                </span>
+                <fa-icon [icon]="icons['chevronDown']" class="text-[9px]" aria-hidden="true" />
+              </button>
+
+              @if (exportOpen()) {
                 <button
                   type="button"
-                  role="menuitem"
-                  class="flex w-full items-start gap-3 rounded-xl px-3 py-2.5 text-left transition hover:bg-surface-raised/70"
-                  (click)="exportReport('pdf')"
+                  class="fixed inset-0 z-20 cursor-default"
+                  aria-label="{{ i18n.t('common.close') }}"
+                  (click)="toggleExport()"
+                ></button>
+                <div
+                  class="absolute right-0 z-30 mt-2 w-60 overflow-hidden rounded-2xl border border-line bg-surface p-1.5 shadow-card backdrop-blur-2xl"
+                  role="menu"
                 >
-                  <span
-                    class="mt-0.5 grid size-8 shrink-0 place-items-center rounded-lg border border-line bg-surface-raised text-brand-strong"
+                  <button
+                    type="button"
+                    role="menuitem"
+                    class="flex w-full items-start gap-3 rounded-xl px-3 py-2.5 text-left transition hover:bg-surface-raised/70"
+                    (click)="exportReport('pdf')"
                   >
-                    <fa-icon [icon]="icons['lines']" class="text-[11px]" aria-hidden="true" />
-                  </span>
-                  <span class="min-w-0">
-                    <span class="block text-xs font-semibold text-ink">{{
-                      i18n.t('reports.exportPdf')
-                    }}</span>
-                    <span class="mt-0.5 block text-[10px] leading-4 text-muted">{{
-                      i18n.t('reports.exportPdfHint')
-                    }}</span>
-                  </span>
-                </button>
-                <button
-                  type="button"
-                  role="menuitem"
-                  class="flex w-full items-start gap-3 rounded-xl px-3 py-2.5 text-left transition hover:bg-surface-raised/70"
-                  (click)="exportReport('csv')"
-                >
-                  <span
-                    class="mt-0.5 grid size-8 shrink-0 place-items-center rounded-lg border border-line bg-surface-raised text-brand-strong"
+                    <span
+                      class="mt-0.5 grid size-8 shrink-0 place-items-center rounded-lg border border-line bg-surface-raised text-brand-strong"
+                    >
+                      <fa-icon [icon]="icons['lines']" class="text-[11px]" aria-hidden="true" />
+                    </span>
+                    <span class="min-w-0">
+                      <span class="block text-xs font-semibold text-ink">{{
+                        i18n.t('reports.exportPdf')
+                      }}</span>
+                      <span class="mt-0.5 block text-[10px] leading-4 text-muted">{{
+                        i18n.t('reports.exportPdfHint')
+                      }}</span>
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    class="flex w-full items-start gap-3 rounded-xl px-3 py-2.5 text-left transition hover:bg-surface-raised/70"
+                    (click)="exportReport('csv')"
                   >
-                    <fa-icon [icon]="icons['chartSimple']" class="text-[11px]" aria-hidden="true" />
-                  </span>
-                  <span class="min-w-0">
-                    <span class="block text-xs font-semibold text-ink">{{
-                      i18n.t('reports.exportCsv')
-                    }}</span>
-                    <span class="mt-0.5 block text-[10px] leading-4 text-muted">{{
-                      i18n.t('reports.exportCsvHint')
-                    }}</span>
-                  </span>
-                </button>
-              </div>
-            }
+                    <span
+                      class="mt-0.5 grid size-8 shrink-0 place-items-center rounded-lg border border-line bg-surface-raised text-brand-strong"
+                    >
+                      <fa-icon
+                        [icon]="icons['chartSimple']"
+                        class="text-[11px]"
+                        aria-hidden="true"
+                      />
+                    </span>
+                    <span class="min-w-0">
+                      <span class="block text-xs font-semibold text-ink">{{
+                        i18n.t('reports.exportCsv')
+                      }}</span>
+                      <span class="mt-0.5 block text-[10px] leading-4 text-muted">{{
+                        i18n.t('reports.exportCsvHint')
+                      }}</span>
+                    </span>
+                  </button>
+                </div>
+              }
+            </div>
           </div>
         </div>
       </div>
@@ -238,8 +246,11 @@
           }
         </div>
       } @else {
-        <div class="relative mt-4 min-w-0 flex-1 overflow-x-auto">
-          <div class="pointer-events-none absolute bottom-2 right-2 select-none opacity-[0.06] sm:bottom-4 sm:right-4" aria-hidden="true">
+        <div class="relative mt-5 min-w-0 flex-1 overflow-x-auto">
+          <div
+            class="pointer-events-none absolute bottom-2 right-2 select-none opacity-[0.06] sm:bottom-4 sm:right-4"
+            aria-hidden="true"
+          >
             <app-logo variant="symbol" [height]="112" theme="default" />
           </div>
           <table class="relative z-[1] w-full min-w-full border-collapse text-left text-sm">
@@ -283,7 +294,7 @@
           </table>
         </div>
 
-        <div class="mt-4 flex justify-end border-t border-line pt-4">
+        <div class="mt-5 flex justify-end border-t border-line pt-4">
           <a
             routerLink="/eventos"
             class="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-strong transition hover:gap-2"
@@ -295,13 +306,13 @@
       }
     </article>
 
-    <!-- Coluna direita -->
-    <div class="flex min-w-0 flex-col gap-4">
+    <!-- Coluna de informações rápidas -->
+    <div class="flex min-w-0 flex-col gap-4 md:gap-5">
       <article
-        class="min-w-0 rounded-4xl border border-line bg-surface p-4 shadow-card backdrop-blur-2xl sm:p-5"
+        class="min-w-0 rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl sm:p-6"
       >
         <div class="flex items-start justify-between gap-3">
-          <div>
+          <div class="min-w-0">
             <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-brand-strong">
               {{ i18n.t('profile.personal.title') }}
             </p>
@@ -317,7 +328,7 @@
           </button>
         </div>
 
-        <dl class="mt-4 flex flex-col divide-y divide-line/70 text-sm">
+        <dl class="mt-5 flex flex-col divide-y divide-line/70 text-sm">
           <div
             class="flex flex-col gap-0.5 py-2.5 sm:flex-row sm:items-start sm:justify-between sm:gap-3"
           >
@@ -386,18 +397,34 @@
       </article>
 
       <article
-        class="min-w-0 rounded-4xl border border-line bg-surface p-4 shadow-card backdrop-blur-2xl sm:p-5"
+        class="min-w-0 rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl sm:p-6"
         data-testid="profile-visibility"
       >
         <label class="flex min-h-11 cursor-pointer items-start justify-between gap-3">
           <span class="min-w-0">
             <span class="flex items-center gap-2 text-sm font-semibold text-ink">
-              <fa-icon [icon]="icons[profile().profileVisibility === 'public' ? 'globe' : 'lock']" class="text-brand" aria-hidden="true" />
+              <fa-icon
+                [icon]="icons[profile().profileVisibility === 'public' ? 'globe' : 'lock']"
+                class="text-brand"
+                aria-hidden="true"
+              />
               {{ i18n.t('block10.profile.publicTitle') }}
             </span>
-            <span class="mt-1 block text-xs leading-5 text-muted">{{ i18n.t('block10.profile.publicHint') }}</span>
-            <span class="mt-2 block text-xs font-semibold" [class]="profile().profileVisibility === 'public' ? 'text-brand-strong' : 'text-muted'" role="status">
-              {{ profile().profileVisibility === 'public' ? i18n.t('block10.profile.publicOn') : i18n.t('block10.profile.publicOff') }}
+            <span class="mt-1 block text-xs leading-5 text-muted">{{
+              i18n.t('block10.profile.publicHint')
+            }}</span>
+            <span
+              class="mt-2 block text-xs font-semibold"
+              [class]="
+                profile().profileVisibility === 'public' ? 'text-brand-strong' : 'text-muted'
+              "
+              role="status"
+            >
+              {{
+                profile().profileVisibility === 'public'
+                  ? i18n.t('block10.profile.publicOn')
+                  : i18n.t('block10.profile.publicOff')
+              }}
             </span>
           </span>
           <input
@@ -412,7 +439,11 @@
           <span
             aria-hidden="true"
             class="relative mt-1 h-6 w-11 shrink-0 rounded-full border transition peer-focus-visible:ring-2 peer-focus-visible:ring-brand/60"
-            [class]="profile().profileVisibility === 'public' ? 'border-brand/40 bg-brand/70' : 'border-line bg-surface-raised'"
+            [class]="
+              profile().profileVisibility === 'public'
+                ? 'border-brand/40 bg-brand/70'
+                : 'border-line bg-surface-raised'
+            "
           >
             <span
               class="absolute top-0.5 size-4.5 rounded-full bg-surface-solid shadow transition-all"
@@ -423,15 +454,21 @@
       </article>
 
       <article
-        class="min-w-0 rounded-4xl border border-line bg-surface p-4 shadow-card backdrop-blur-2xl sm:p-5"
+        class="min-w-0 rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl sm:p-6"
       >
-        <p
-          class="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-brand-strong"
-        >
-          <fa-icon [icon]="icons['shield']" class="text-[10px]" aria-hidden="true" />
-          {{ i18n.t('profile.security.title') }}
-        </p>
-        <p class="mt-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">
+        <div class="flex items-start justify-between gap-3">
+          <div class="min-w-0">
+            <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-brand-strong">
+              {{ i18n.t('profile.security.title') }}
+            </p>
+          </div>
+          <span
+            class="grid size-9 shrink-0 place-items-center rounded-xl border border-line bg-surface-raised text-muted"
+          >
+            <fa-icon [icon]="icons['shield']" class="text-xs" aria-hidden="true" />
+          </span>
+        </div>
+        <p class="mt-5 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">
           {{ i18n.t('profile.security.password') }}
         </p>
         <p class="mt-1 text-xs leading-5 text-muted">

@@ -85,6 +85,8 @@ export class DashboardPage {
   protected readonly activity = computed(() => this.store.activityFeed().slice(0, 5));
   protected readonly guestStatusFilter = signal<RsvpStatus>('pending');
   protected readonly carouselIndex = signal(1);
+  /** Cada painel do carrossel mostra exatamente três cartões lineares. */
+  private readonly carouselPageSize = 3;
   protected readonly activeDay = signal<number | null>(null);
   private readonly guestCarousel = viewChild<ElementRef<HTMLUListElement>>('guestCarousel');
 
@@ -116,6 +118,18 @@ export class DashboardPage {
       .filter((entry) => entry.guest.status === this.guestStatusFilter())
       .slice(0, 6),
   );
+
+  /** Agrupa os convidados em painéis de três cartões lineares. */
+  protected readonly guestPages = computed<GuestEntry[][]>(() => {
+    const entries = this.filteredGuests();
+    const pages: GuestEntry[][] = [];
+    for (let index = 0; index < entries.length; index += this.carouselPageSize) {
+      pages.push(entries.slice(index, index + this.carouselPageSize));
+    }
+    return pages;
+  });
+
+  protected readonly carouselPages = computed(() => Math.max(1, this.guestPages().length));
 
   protected readonly firstName = computed(() => this.store.profile().name.split(' ')[0]);
   protected readonly greeting = computed(() => {
@@ -243,9 +257,11 @@ export class DashboardPage {
     if (!element) {
       return;
     }
-    const cardWidth = element.firstElementChild?.getBoundingClientRect().width ?? element.clientWidth;
-    if (cardWidth > 0) {
-      this.carouselIndex.set(Math.min(this.filteredGuests().length, Math.round(element.scrollLeft / cardWidth) + 1));
+    // Cada <li> ocupa exatamente a largura visível: um painel = clientWidth.
+    const pageWidth = element.clientWidth;
+    if (pageWidth > 0) {
+      const page = Math.round(element.scrollLeft / pageWidth) + 1;
+      this.carouselIndex.set(Math.min(this.carouselPages(), Math.max(1, page)));
     }
   }
 
@@ -255,8 +271,9 @@ export class DashboardPage {
     if (!element) {
       return;
     }
-    const cardWidth = element.firstElementChild?.getBoundingClientRect().width ?? element.clientWidth;
-    element.scrollBy({ left: direction * cardWidth, behavior: 'smooth' });
+    const target = Math.min(this.carouselPages(), Math.max(1, this.carouselIndex() + direction));
+    this.carouselIndex.set(target);
+    element.scrollTo({ left: (target - 1) * element.clientWidth, behavior: 'smooth' });
   }
 
   protected onCarouselKeydown(event: KeyboardEvent): void {
@@ -268,7 +285,8 @@ export class DashboardPage {
   }
 
   protected filterClass(status: RsvpStatus): string {
-    const base = 'ui-chip-interactive';
+    // shrink-0 mantém os três filtros na mesma linha (o contentor faz scroll).
+    const base = 'ui-chip-interactive shrink-0';
     if (this.guestStatusFilter() !== status) {
       return `${base} border-line bg-surface-raised text-muted`;
     }

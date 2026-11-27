@@ -86,7 +86,7 @@ const ARTWORK: Record<string, ArtworkStyle> = {
     </div>
   `,
 })
-export class TemplateArtworkComponent {
+export class TemplateArtworkComponent implements OnDestroy {
   readonly templateId = input<string | null>('');
   readonly variant = input<'thumb' | 'cover' | 'hero'>('cover');
   readonly title = input<string>('');

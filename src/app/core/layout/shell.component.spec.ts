@@ -214,6 +214,57 @@ describe('ShellComponent · global search', () => {
     expect(localStorage.getItem('apupu.sidebar.collapsed')).toBe('false');
   });
 
+  it('rail recolhido usa alvo de 44 px, rótulo acessível e indicador do item ativo', async () => {
+    const router = TestBed.inject(Router);
+    await router.navigateByUrl('/painel');
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const toggle = query<HTMLButtonElement>('[data-testid="sidebar-toggle"]');
+    toggle.click();
+    fixture.detectChanges();
+
+    const active = query<HTMLAnchorElement>('aside nav a[href="/painel"]');
+    const idle = query<HTMLAnchorElement>('aside nav a[href="/eventos"]');
+    const settings = query<HTMLAnchorElement>('aside a[href="/definicoes"]');
+    const logout = query<HTMLButtonElement>('aside button[aria-label="Terminar sessão"]');
+
+    expect(active?.getAttribute('aria-label')).toBe('Painel');
+    expect(active?.getAttribute('data-tooltip')).toBe('Painel');
+    expect(active?.classList.contains('size-11')).toBe(true);
+    expect(active?.classList.contains('rounded-xl')).toBe(true);
+    expect(active?.classList.contains('bg-brand/15')).toBe(true);
+    expect(active?.querySelector('span.bg-brand')).not.toBeNull();
+    expect(active?.querySelector('span.size-12')).toBeNull();
+
+    expect(idle?.classList.contains('size-11')).toBe(true);
+    expect(idle?.classList.contains('border')).toBe(false);
+    expect(idle?.querySelector('span.bg-brand')).toBeNull();
+    expect(idle?.querySelector('span.size-12')).toBeNull();
+    expect(idle?.querySelector('span.border')).toBeNull();
+    expect(settings?.getAttribute('aria-label')).toBe('Definições');
+    expect(settings?.classList.contains('size-11')).toBe(true);
+    expect(logout?.getAttribute('aria-label')).toBe('Terminar sessão');
+    expect(logout?.classList.contains('size-11')).toBe(true);
+  });
+
+  it('fecha as sugestões ao clicar fora sem reabrir pelo foco', async () => {
+    const input = query<HTMLInputElement>('input[aria-controls="search-suggestions-desktop"]');
+    input.focus();
+    flushWarm();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(query('#search-suggestions-desktop')).not.toBeNull();
+    expect(query('#search-suggestions-desktop')?.classList.contains('no-scrollbar')).toBe(true);
+
+    document.body.click();
+    fixture.detectChanges();
+
+    expect(query('#search-suggestions-desktop')).toBeNull();
+    expect(input.getAttribute('aria-expanded')).toBe('false');
+  });
+
   it('mostra voltar e menu do evento na barra superior em /eventos/:id', async () => {
     const router = TestBed.inject(Router);
     await router.navigateByUrl('/eventos/evt-1');

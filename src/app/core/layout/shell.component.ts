@@ -357,10 +357,15 @@ export class ShellComponent {
     if (target?.closest('[data-search-root], [data-search-trigger]')) {
       return;
     }
+    // Fechar por clique fora não deve devolver o foco ao campo: o `focus`
+    // voltaria a abrir o painel de sugestões.
     if (this.mobileSearchOpen()) {
       this.closeMobileSearch();
     } else if (this.searchOpen()) {
-      this.closeSearch('desktop');
+      this.closeSearch();
+    }
+    if (!target?.closest('[data-notification-root]') && this.notificationsOpen()) {
+      this.notificationsOpen.set(false);
     }
   }
 

@@ -203,6 +203,8 @@ describe('FeedPage', () => {
     await settle(context.fixture);
     const native = context.fixture.nativeElement as HTMLElement;
     expect(native.querySelector('[data-testid="feed-load-more"]')).not.toBeNull();
+    const personCard = native.querySelector('app-feed-person-card') as HTMLElement;
+    expect(personCard.className).toContain('w-full');
     (native.querySelector('[data-testid="feed-person-p1"] button') as HTMLButtonElement).click();
     await settle(context.fixture);
     expect(document.body.querySelector('[data-testid="feed-gate"]')).not.toBeNull();

@@ -266,7 +266,9 @@
                 </li>
               }
               @for (person of people(); track person.id) {
-                <li class="flex h-full min-w-0"><app-feed-person-card [person]="person" (open)="openPerson($event)" /></li>
+                <li class="flex h-full min-w-0">
+                  <app-feed-person-card class="w-full" [person]="person" (open)="openPerson($event)" />
+                </li>
               }
             </ul>
           </section>

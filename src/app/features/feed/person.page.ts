@@ -73,7 +73,7 @@ type State = 'loading' | 'ready' | 'not_found' | 'error';
                       }
                     }
                     @if (detail()?.is_self) {
-                      <p class="mt-1 inline-flex items-center gap-1.5 text-[11px] font-semibold text-brand-strong">
+                      <p class="mt-1 inline-flex items-center gap-1.5 text-xs font-semibold text-brand-strong">
                         <fa-icon [icon]="icons['check']" aria-hidden="true" />
                         {{ i18n.t('block12.profile.self') }}
                       </p>

@@ -98,19 +98,19 @@ const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
               <fa-icon [icon]="icons['image']" class="absolute right-5 top-5 text-2xl text-white/25" aria-hidden="true" />
             }
             <div class="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#0a2b2c]/75 via-[#0a2b2c]/10 to-transparent"></div>
-            <span class="absolute left-3 top-3 inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-white/25 bg-[#0a2b2c]/25 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-white/90 backdrop-blur-md">
-              <fa-icon [icon]="icons['image']" class="text-[10px]" aria-hidden="true" />
+            <span class="absolute left-3 top-3 inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-white/25 bg-[#0a2b2c]/25 px-2.5 py-1 text-xs font-semibold uppercase tracking-wider text-white/90 backdrop-blur-md">
+              <fa-icon [icon]="icons['image']" class="text-xs" aria-hidden="true" />
               {{ i18n.t('block11.form.coverUpload') }}
             </span>
             <div class="absolute inset-x-0 bottom-0 flex items-center justify-between gap-3 p-3.5 sm:p-4">
-              <span class="min-w-0 flex-1 truncate text-[10px] text-white/80" [attr.title]="i18n.t('block11.form.imageHint')">{{ i18n.t('block11.form.imageHint') }}</span>
+              <span class="min-w-0 flex-1 truncate text-xs text-white/80" [attr.title]="i18n.t('block11.form.imageHint')">{{ i18n.t('block11.form.imageHint') }}</span>
               <div class="flex shrink-0 items-center gap-1.5">
                 <label
-                  class="inline-flex h-9 shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-xl border border-white/30 bg-[#0a2b2c]/40 px-2.5 text-[11px] font-semibold text-white backdrop-blur-md transition hover:border-brand/60 hover:bg-[#0a2b2c]/60"
+                  class="inline-flex min-h-11 shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-xl border border-white/30 bg-[#0a2b2c]/40 px-2.5 text-xs font-semibold text-white backdrop-blur-md transition hover:border-brand/60 hover:bg-[#0a2b2c]/60"
                   [class.pointer-events-none]="uploadingCover() || saving()"
                   [class.opacity-60]="uploadingCover() || saving()"
                 >
-                  <fa-icon [icon]="icons['camera']" class="shrink-0 text-[10px]" aria-hidden="true" />
+                  <fa-icon [icon]="icons['camera']" class="shrink-0 text-xs" aria-hidden="true" />
                   <span class="whitespace-nowrap">{{ uploadingCover() ? i18n.t('block11.form.coverUploading') : i18n.t('block11.form.coverUpload') }}</span>
                   <input
                     type="file"
@@ -147,15 +147,15 @@ const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
             <div class="relative flex min-w-0 flex-1 items-center justify-between gap-3">
               <div class="min-w-0">
                 <p class="truncate text-xs font-semibold text-ink">{{ i18n.t('block11.form.avatarUpload') }}</p>
-                <p class="mt-0.5 truncate text-[10px] text-muted" [attr.title]="i18n.t('block11.form.imageHint')">{{ i18n.t('block11.form.imageHint') }}</p>
+                <p class="mt-0.5 truncate text-xs text-muted" [attr.title]="i18n.t('block11.form.imageHint')">{{ i18n.t('block11.form.imageHint') }}</p>
               </div>
               <div class="flex shrink-0 items-center gap-1.5">
                 <label
-                  class="inline-flex h-9 shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-xl border border-brand/30 bg-brand px-3 text-[11px] font-semibold text-on-secondary transition hover:bg-secondary-hover"
+                  class="inline-flex min-h-11 shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-xl border border-brand/30 bg-brand px-3 text-xs font-semibold text-on-secondary transition hover:bg-secondary-hover"
                   [class.pointer-events-none]="uploadingAvatar() || saving()"
                   [class.opacity-60]="uploadingAvatar() || saving()"
                 >
-                  <fa-icon [icon]="icons['camera']" class="shrink-0 text-[10px]" aria-hidden="true" />
+                  <fa-icon [icon]="icons['camera']" class="shrink-0 text-xs" aria-hidden="true" />
                   <span class="whitespace-nowrap">{{ uploadingAvatar() ? i18n.t('block11.form.avatarUploading') : i18n.t('block11.form.avatarUpload') }}</span>
                   <input
                     type="file"

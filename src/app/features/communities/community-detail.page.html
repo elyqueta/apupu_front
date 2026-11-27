@@ -172,9 +172,9 @@
                           }
                         </span>
                         <div class="min-w-0 flex-1">
-                          <p class="truncate text-[11px] text-muted">{{ i18n.t('common.by', { name: item.host_name }) }}</p>
+                          <p class="truncate text-xs text-muted">{{ i18n.t('common.by', { name: item.host_name }) }}</p>
                           <a [routerLink]="['/e', item.event_slug]" class="block truncate text-sm font-semibold text-brand-strong hover:underline" data-testid="community-activity-event">{{ item.event_title }}</a>
-                          <p class="mt-0.5 text-[11px] text-muted/80">{{ i18n.dateTime(item.created_at, 'Africa/Luanda') }}</p>
+                          <p class="mt-0.5 text-xs text-muted/80">{{ i18n.dateTime(item.created_at, 'Africa/Luanda') }}</p>
                         </div>
                       </li>
                     }
@@ -223,7 +223,7 @@
                             </span>
                             <div class="min-w-0 flex-1">
                               <p class="truncate text-xs font-semibold text-ink">{{ suggestion.display_name || i18n.t('block11.role.member') }}</p>
-                              <p class="truncate text-[11px] text-muted">{{ i18n.shortDate(suggestion.created_at, 'Africa/Luanda') }}</p>
+                              <p class="truncate text-xs text-muted">{{ i18n.shortDate(suggestion.created_at, 'Africa/Luanda') }}</p>
                             </div>
                             <span class="ui-chip shrink-0">{{ i18n.t('block11.events.pending') }}</span>
                           </div>
@@ -298,11 +298,11 @@
                           <fa-icon [icon]="icons['chevronRight']" class="mt-1 shrink-0 text-sm text-muted transition group-hover:translate-x-0.5 group-hover:text-brand-strong" aria-hidden="true" />
                         </div>
                         <div class="relative mt-auto flex flex-wrap gap-2 border-t border-line pt-3">
-                          <span class="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface-raised/60 px-2.5 py-1 text-[11px] font-semibold text-muted">
+                          <span class="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface-raised/60 px-2.5 py-1 text-xs font-semibold text-muted">
                             <fa-icon [icon]="icons['user']" class="text-[10px] text-brand-strong" aria-hidden="true" />
                             {{ i18n.t('block11.teams.members', { count: team.member_count }) }}
                           </span>
-                          <span class="inline-flex items-center gap-1.5 rounded-full border border-brand/20 bg-brand/10 px-2.5 py-1 text-[11px] font-semibold text-brand-strong">
+                          <span class="inline-flex items-center gap-1.5 rounded-full border border-brand/20 bg-brand/10 px-2.5 py-1 text-xs font-semibold text-brand-strong">
                             <fa-icon [icon]="icons['events']" class="text-[10px]" aria-hidden="true" />
                             {{ i18n.t('block11.teams.events', { count: team.event_count }) }}
                           </span>
@@ -352,7 +352,7 @@
                           <p class="mt-0.5 truncate text-xs text-muted" [title]="member.email">{{ member.email }}</p>
                         }
                         @if (member.joined_at) {
-                          <p class="mt-1 inline-flex items-center gap-1.5 text-[11px] text-muted/80">
+                          <p class="mt-1 inline-flex items-center gap-1.5 text-xs text-muted/80">
                             <fa-icon [icon]="icons['clock']" class="text-[10px] text-brand-strong" aria-hidden="true" />
                             {{ i18n.shortDate(member.joined_at, 'Africa/Luanda') }}
                           </p>
@@ -416,7 +416,7 @@
                     <p class="mt-1 truncate text-xs text-muted" [title]="i18n.t('block11.shares.hint')">{{ i18n.t('block11.shares.hint') }}</p>
                   </div>
                 </div>
-                <span class="shrink-0 rounded-full border border-line bg-surface-raised px-3 py-1 text-[11px] font-semibold text-muted">
+                <span class="shrink-0 rounded-full border border-line bg-surface-raised px-3 py-1 text-xs font-semibold text-muted">
                   {{ i18n.t('block11.list.members', { count: referrals()?.length ?? 0 }) }}
                 </span>
               </header>
@@ -442,11 +442,11 @@
                           <span class="min-w-0 truncate text-sm font-semibold text-ink">{{ stat.display_name || '—' }}</span>
                         </div>
                         <div class="flex flex-wrap items-center gap-1.5">
-                          <span class="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface px-2.5 py-1 text-[11px] font-semibold text-muted">
+                          <span class="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface px-2.5 py-1 text-xs font-semibold text-muted">
                             <fa-icon [icon]="icons['envelope']" class="text-[10px]" aria-hidden="true" />
                             {{ i18n.t('block11.shares.invitations', { count: stat.invitations }) }}
                           </span>
-                          <span class="inline-flex items-center gap-1.5 rounded-full border border-mint/30 bg-mint/10 px-2.5 py-1 text-[11px] font-semibold text-mint">
+                          <span class="inline-flex items-center gap-1.5 rounded-full border border-mint/30 bg-mint/10 px-2.5 py-1 text-xs font-semibold text-mint">
                             <fa-icon [icon]="icons['success']" class="text-[10px]" aria-hidden="true" />
                             {{ i18n.t('block11.shares.accepted', { count: stat.accepted }) }}
                           </span>

@@ -14,7 +14,7 @@ import { ICONS } from '../../../core/ui/icons';
 import { ActionMenuItem } from '../../../shared/components/action-menu.component';
 import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialog.component';
 import { ModalComponent } from '../../../shared/components/modal.component';
-import { PersonCardComponent, PersonMetaItem } from '../../../shared/components/person-card.component';
+import { PersonCardComponent, PersonMetaItem, PersonPrimaryAction } from '../../../shared/components/person-card.component';
 import { SkeletonComponent } from '../../../shared/components/skeleton.component';
 import { ManagerCredentialsDialogComponent } from '../../team/manager-credentials-dialog.component';
 
@@ -51,19 +51,35 @@ type ManagerLinkStatus = 'active' | 'expired' | 'revoked' | 'blocked' | 'pending
       @if (loading()) {
         <app-skeleton variant="cards" />
       } @else if (managers().length === 0) {
-        <p class="rounded-2xl border border-dashed border-line p-4 text-xs text-muted">{{ i18n.t('eventDetail.managersEmptyPanel') }}</p>
+        <div class="mt-4 flex flex-col items-center justify-center rounded-3xl border border-dashed border-line bg-surface-raised/30 px-5 py-10 text-center">
+          <span class="grid size-14 place-items-center rounded-2xl border border-brand/25 bg-brand/15 text-brand-strong">
+            <fa-icon [icon]="icons['userPlus']" class="text-xl" aria-hidden="true" />
+          </span>
+          <h3 class="mt-4 font-display text-lg font-semibold text-ink">{{ i18n.t('eventDetail.managersEmptyPanel') }}</h3>
+          <p class="mt-1.5 max-w-md text-sm leading-6 text-muted">{{ i18n.t('eventDetail.managersEmptyHint') }}</p>
+          @if (permissions().canManageManagers) {
+            <button type="button" data-testid="add-manager" class="mt-5 inline-flex h-11 cursor-pointer items-center gap-2 rounded-xl bg-brand px-4 text-xs font-semibold text-on-secondary transition hover:bg-secondary-hover" (click)="newManager.emit()">
+              <fa-icon [icon]="icons['plus']" class="text-xs" aria-hidden="true" />
+              {{ i18n.t('eventDetail.newManager') }}
+            </button>
+          }
+        </div>
       } @else {
-        <ul class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <ul class="flex flex-col gap-2">
           @for (manager of managers(); track manager.id) {
             <li class="min-w-0">
-              <app-person-card variant="rich" [name]="nameOf(manager)" [subtitle]="teamLabel(manager)"
-                [meta]="metaFor(manager)" [actions]="actionsFor(manager)"
-                [actionsLabel]="i18n.t('common.moreActions')" (actionSelected)="onAction(manager, $event)" />
+              <app-person-card layout="linear" [clickable]="true"
+                [clickLabel]="i18n.t('common.viewDetails') + ': ' + nameOf(manager)"
+                [name]="nameOf(manager)" [subtitle]="teamLabel(manager) || (manager.email ?? manager.phone ?? '')"
+                [meta]="metaFor(manager)" [actions]="actionsFor(manager)" [primaryAction]="primaryFor(manager)"
+                [actionsLabel]="i18n.t('common.moreActions')"
+                (actionSelected)="onAction(manager, $event)" (primaryTriggered)="onAction(manager, $event)"
+                (open)="openDetails(manager)" />
             </li>
           }
         </ul>
       }
-      @if (permissions().canManageManagers) {
+      @if (permissions().canManageManagers && !loading() && managers().length > 0) {
         <button type="button" data-testid="add-manager" class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-brand px-4 text-xs font-semibold text-on-secondary transition hover:bg-secondary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60" (click)="newManager.emit()">
           <fa-icon [icon]="icons['plus']" aria-hidden="true" />
           {{ i18n.t('eventDetail.newManager') }}
@@ -94,6 +110,42 @@ type ManagerLinkStatus = 'active' | 'expired' | 'revoked' | 'blocked' | 'pending
       <app-confirm-dialog [open]="removeTarget() !== null" [title]="i18n.t('eventDetail.removeManagerTitle')"
         [message]="i18n.t('eventDetail.removeManagerMessage')" [confirmLabel]="i18n.t('teamDetail.action.remove')"
         [cancelLabel]="i18n.t('common.cancel')" (confirmed)="confirmRemove()" (cancelled)="removeTarget.set(null)" />
+      <app-modal [open]="detailTarget() !== null" [title]="detailTarget() ? nameOf(detailTarget()) : i18n.t('common.viewDetails')"
+        size="sm" (closed)="closeDetails()">
+        @if (detailTarget(); as manager) {
+          <div class="rounded-2xl border border-line bg-surface-raised/40 p-3">
+            <p class="truncate text-sm font-semibold text-ink">{{ nameOf(manager) }}</p>
+            <p class="mt-0.5 truncate text-xs text-muted">{{ teamLabel(manager) }}</p>
+            <span class="mt-2 inline-flex rounded-full border border-line bg-surface px-2.5 py-1 text-[10px] font-semibold text-muted">
+              {{ statusLabel(manager) }}
+            </span>
+          </div>
+          <ul class="mt-3 space-y-2 text-xs text-muted">
+            @for (item of metaFor(manager); track $index) {
+              <li class="flex min-w-0 items-start gap-2">
+                <fa-icon [icon]="iconFor(item.icon)" class="mt-0.5 shrink-0 text-[11px] text-brand-strong" aria-hidden="true" />
+                <span class="min-w-0">{{ item.label }}</span>
+              </li>
+            }
+          </ul>
+        }
+        @if (detailTarget(); as manager) {
+          <div modal-footer class="flex flex-col gap-2">
+            @for (action of actionsFor(manager); track action.id) {
+              <button type="button" [disabled]="action.disabled"
+                class="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-line bg-surface-raised px-3 text-xs font-semibold transition hover:border-brand/40 disabled:cursor-not-allowed disabled:opacity-50"
+                [class.text-coral]="action.tone === 'danger'" [class.text-ink]="action.tone !== 'danger'"
+                (click)="onAction(manager, action.id)">
+                <fa-icon [icon]="action.icon" aria-hidden="true" />
+                {{ action.label }}
+              </button>
+            }
+            @if (!permissions().canManageManagers) {
+              <p class="text-xs text-muted">{{ i18n.t('eventDetail.permissionsHint') }}</p>
+            }
+          </div>
+        }
+      </app-modal>
       <app-manager-credentials-dialog [open]="credentialsOpen()" [link]="credentials()?.link ?? ''"
         [code]="credentials()?.accessCode ?? ''" [eventTitle]="credentialsEventTitle()"
         [email]="credentials()?.manager.email ?? null" [phone]="credentials()?.manager.phone ?? null"
@@ -127,6 +179,7 @@ export class EventManagersSectionComponent {
   protected readonly validityTarget = signal<EventManager | null>(null);
   protected readonly revokeTarget = signal<EventManager | null>(null);
   protected readonly removeTarget = signal<EventManager | null>(null);
+  protected readonly detailTarget = signal<EventManager | null>(null);
   protected readonly validityDate = signal('');
   protected readonly busy = computed(() => this.busyId() !== null);
   protected readonly phoneOnly = computed(() => this.managers().some((m) => !m.email && !!m.phone));
@@ -161,6 +214,30 @@ export class EventManagersSectionComponent {
     const date = manager.linkExpiresAt?.slice(0, 10) || this.maxValidityDate();
     return this.i18n.t(key, { date: date ? this.i18n.calendarDate(date) : this.formattedMaxDate() });
   }
+  protected openDetails(manager: EventManager): void {
+    this.detailTarget.set(manager);
+  }
+
+  protected closeDetails(): void {
+    this.detailTarget.set(null);
+  }
+
+  protected iconFor(key: string) {
+    return ICONS[key as keyof typeof ICONS] ?? ICONS['user'];
+  }
+
+  protected primaryFor(manager: EventManager): PersonPrimaryAction | null {
+    if (!this.permissions().canManageManagers || this.credentials()?.manager.id !== manager.id) {
+      return null;
+    }
+    return {
+      id: 'copyInvite',
+      label: this.i18n.t('common.copy'),
+      icon: ICONS['copy'],
+      hint: this.i18n.t('teamDetail.action.copyInvite'),
+    };
+  }
+
   protected metaFor(manager: EventManager): PersonMetaItem[] {
     const items: PersonMetaItem[] = [];
     const contact = manager.email ?? manager.phone;
@@ -187,6 +264,7 @@ export class EventManagersSectionComponent {
     ];
   }
   protected onAction(manager: EventManager, action: string): void {
+    this.detailTarget.set(null);
     switch (action) {
       case 'copyInvite': void this.copyInvite(manager); break;
       case 'newCode': this.newCodeTarget.set(manager); break;

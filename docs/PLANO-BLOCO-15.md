@@ -3,6 +3,12 @@
 Branch: `feat/bloco-15-templates` (front e back), criada a partir de `feat/bloco-14-convite-pdf`.
 Snapshot pré-bloco: back `f436009 chore: snapshot antes do bloco 15`; front sem alterações por commitar.
 
+> **Atualização 27/11/2026:** este plano é o documento de intenção original e contém
+> informação pré-implementação (nomeadamente a ordem do Passo 9 e o catálogo de fontes).
+> A ordem de entrega efetiva segue `docs/BLOCO-15B-CATALOGO-TEMPLATES.md`, conforme
+> decidido em `docs/DECISIONS.md`. O estado real e as evidências estão em
+> `docs/REPORT-BLOCO-15.md`; as pendências em `docs/BLOCKERS.md`.
+
 ## Leitura base
 - `docs/REGRAS-GERAIS.md`, `docs/AUDIT.md`, `docs/REPORT-BLOCO-14.md`
 - `docs/BLOCO-15-EDITOR-DE-TEMPLATES.md` (spec principal)
@@ -10,7 +16,7 @@ Snapshot pré-bloco: back `f436009 chore: snapshot antes do bloco 15`; front sem
 
 ## Estado atual relevante (confirmado no código)
 - Manifesto template v1: `apupu_front/src/app/core/models/template-manifest.ts`, `apupu_back/src/types/templateManifest.ts`. Campos: palette, fonts(display/body: sans|serif|cap|script), ornaments(frame/corners/divider), layout(align, blocks[]), cover, open_style, pdf(frame, qr_position, show_ornaments).
-- PDF convite: `apupu_back/src/services/pdf/invitationDocument.ts` usa `pdfkit` + `svg-to-pdfkit` + `qrcode`; fontes embutidas Figtree 400/700/800 em `apupu_back/src/assets/pdf/`; serif/cap/script mapeiam para Times padrão do PDF (não embutidas) — **gap Passo 1.2**.
+- PDF convite: `apupu_back/src/services/pdf/invitationDocument.ts` usa `pdfkit` + `svg-to-pdfkit` + `qrcode`; o catálogo local embute sete papéis/famílias (sans→Figtree, serif→Cormorant, cap→Cinzel, script→Pinyon, condensed→Oswald, anton→Anton, montserrat→Montserrat) via `resolveCatalogFont` — **gap Passo 1.2 resolvido**; ver `docs/REPORT-BLOCO-15.md`.
 - QR PDF: `drawQrWithLogo` em `invitationDocument.ts` — cartão branco, logo símbolo ao centro, correção H. Falta estilo configurável/legenda/bloco posicionável no editor.
 - Templates: `event_templates` com `manifest` jsonb (migração 0033). Front: `EventTemplate.manifest`, `TemplatePreviewComponent`, convite usa `manifestStyle`/`InvitationWelcomeComponent`.
 - Evento status/ordenação: `HostEvent.status`/`InvitationStatus` calculado; listas em `events.page`, `invitations.page`, feed — precisa auditoria para ordenar ativos→passados→cancelados e estado "Terminado"/"Passado".
@@ -71,8 +77,10 @@ Snapshot pré-bloco: back `f436009 chore: snapshot antes do bloco 15`; front sem
 ### Passo 8 — Perfil
 - Fora de âmbito; só observações em BLOCKERS/REPORT.
 
-### Passo 9 — Catálogo T01–T19
-- Implementar por ordem do 15B: Gratitude já feito; depois T01,T02,T03,T04; T15; T05,T06; T07,T08,T09; T16,T17,T18,T19; T10,T11,T12,T13,T14. Padrões de blocos reutilizáveis (torn-edge, fade-photo, envelope-header, monogram, countdown, music-player, timeline-vertical, calendar-month, button-pill, rsvp-panel, dress-code, gift-qr). Sem marcas/fotos reais; SVG próprio; fontes só do catálogo local. O que não couber vai para BLOCKERS.
+### Passo 9 — Catálogo T01–T19 ✔ (27/11/2026)
+- Ordem efetiva de entrega, conforme `BLOCO-15B-CATALOGO-TEMPLATES.md`: primeiro T01, T03, T05, T08, T11, T13, T17; depois T02, T04, T06, T07, T09, T10, T12, T14, T15, T16, T18, T19. Os 19 estão implementados como `kind = 'system'` (a ordem deste plano estava divergente e ficou corrigida em `DECISIONS.md`).
+- Padrões de blocos reutilizáveis (torn-edge, fade-photo, envelope-header, monogram, countdown, music-player, timeline-vertical, calendar-month, button-pill, rsvp-panel, dress-code, gift-qr) implementados como fábricas comuns em `system-templates.ts`. Sem marcas/fotos reais; SVG próprio; fontes só do catálogo local.
+- Evidências e aproximações do PDF em `REPORT-BLOCO-15.md` e `BLOCKERS.md`.
 
 ## Ficheiros/chaves previstos (a confirmar no código)
 - Back: `migrations/*_block15_*.js`, `src/types/templateManifest.ts`, `src/types/event.types.ts`, `src/services/pdf/*`, `src/services/event.service.ts`, `src/repositories/event.repository.ts`, `src/services/invitation*`, `src/routes/v1/*`, `src/jobs/*`.
@@ -86,7 +94,7 @@ Snapshot pré-bloco: back `f436009 chore: snapshot antes do bloco 15`; front sem
 
 ## Riscos / decisões a registar
 - Manifesto v1 atual é limitado; expandir para blocos/editor pode exigir v2 compatível com v1.
-- Fontes PDF: hoje serif/cap/script usam Times padrão (não embutidas). Bloco 15 exige embutidas e catálogo local fechado.
+- ~~Fontes PDF: hoje serif/cap/script usam Times padrão (não embutidas).~~ Resolvido: catálogo local fechado, todas embutidas; ver `pdfTheme.ts`.
 - "Evento terminado" vs status `completed` existente - confirmar semântica no back/front antes de migrar.
 - Catálogo 15B é grande; implementar por ordem de entrega e registar faltantes em BLOCKERS.
 - Sem dependências novas; SVG/ornamentos próprios.

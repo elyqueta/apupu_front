@@ -1,57 +1,59 @@
-<div class="relative min-h-dvh pb-28 lg:pb-10">
-  <!-- Cabeçalho. Mobile: menu à esquerda, marca ao centro, sino à direita. -->
-  <header class="sticky top-0 z-40 border-b border-line/70 bg-canvas/85 backdrop-blur-xl">
-    <div class="flex w-full items-center gap-3 px-4 py-2.5 sm:px-6 lg:px-8">
-      <button type="button" class="ui-icon-button rounded-full lg:hidden" [attr.aria-label]="i18n.t('block12.feed.menu')" data-testid="feed-menu" (click)="menuOpen.set(true)">
-        <fa-icon [icon]="icons['dashboardAlt']" aria-hidden="true" />
+<div class="relative min-h-dvh pb-[calc(4.5rem+env(safe-area-inset-bottom)+1rem)] lg:pb-10">
+  <!-- Cabeçalho público partilhado, com menu/nome/sino no mobile. -->
+  <app-public-header
+    [signedIn]="signedIn()"
+    [unreadCount]="unreadCount()"
+    [feedMode]="true"
+    menuTestId="feed-menu"
+    (menu)="menuOpen.set(true)"
+  />
+
+  <!-- Barra de ações do feed: pesquisa e atalhos com os testids legados. -->
+  <div class="sticky top-[calc(3.5rem+env(safe-area-inset-top))] z-20 border-b border-line/40 bg-canvas sm:top-[4.0625rem]">
+    <div class="mx-auto flex max-w-screen-2xl items-center gap-2 px-4 py-2 sm:px-6 lg:px-8">
+      <button
+        type="button"
+        class="flex min-h-11 min-w-0 flex-1 items-center gap-2 rounded-full border border-line/60 bg-surface px-4 text-sm text-muted transition hover:border-brand/40 hover:text-ink"
+        [attr.aria-label]="i18n.t('block12.feed.search')"
+        data-testid="feed-search-open"
+        (click)="openSearch()"
+      >
+        <fa-icon [icon]="icons['search']" class="shrink-0" aria-hidden="true" />
+        <span class="truncate">{{ i18n.t('block12.feed.search') }}</span>
       </button>
-      <div class="flex flex-1 justify-center lg:flex-none lg:justify-start">
-        <app-brand />
+      <div class="flex shrink-0 items-center gap-1.5">
+        @if (signedIn()) {
+          <a
+            routerLink="/notificacoes"
+            class="ui-icon-button relative hidden sm:grid"
+            [attr.aria-label]="i18n.t('block12.feed.notifications')"
+            data-testid="feed-notifications"
+          >
+            <fa-icon [icon]="icons['bell']" aria-hidden="true" />
+            @if (unreadCount() > 0) {
+              <span class="absolute -right-1 -top-1 grid min-w-5 place-items-center rounded-full bg-coral px-1 text-xs font-bold leading-5 text-white">{{ unreadCount() > 9 ? '9+' : unreadCount() }}</span>
+            }
+          </a>
+        } @else {
+          <a
+            routerLink="/entrar"
+            class="ui-icon-button hidden sm:grid"
+            [attr.aria-label]="i18n.t('block12.feed.login')"
+            data-testid="feed-login"
+          >
+            <fa-icon [icon]="icons['user']" aria-hidden="true" />
+          </a>
+          <a routerLink="/criar-conta" class="ui-btn hidden min-h-11 sm:inline-flex" data-testid="feed-signup">{{ i18n.t('block12.feed.signup') }}</a>
+        }
       </div>
-      <div class="hidden flex-1 justify-center px-4 lg:flex">
-        <button
-          type="button"
-          class="flex min-h-11 w-full max-w-2xl items-center gap-2 rounded-full border border-line bg-surface px-4 text-sm text-muted transition hover:border-brand/40 hover:text-ink"
-          [attr.aria-label]="i18n.t('block12.feed.search')"
-          data-testid="feed-search-open"
-          (click)="openSearch()"
-        >
-          <fa-icon [icon]="icons['search']" aria-hidden="true" />
-          <span class="truncate">{{ i18n.t('block12.feed.search') }}</span>
-        </button>
-      </div>
-      <nav class="hidden items-center gap-1 lg:flex" [attr.aria-label]="i18n.t('block12.feed.menu')">
-        <a routerLink="/" class="inline-flex min-h-11 items-center gap-2 rounded-full bg-brand/15 px-4 text-sm font-semibold text-ink">
-          <fa-icon [icon]="icons['home']" aria-hidden="true" /> {{ i18n.t('block12.feed.home') }}
-        </a>
-        <button type="button" class="ui-icon-button rounded-full" [attr.aria-label]="i18n.t('block12.feed.type.communities')" (click)="setType('communities')">
-          <fa-icon [icon]="icons['compass']" aria-hidden="true" />
-        </button>
-        <a routerLink="/ajuda" class="ui-icon-button rounded-full" [attr.aria-label]="i18n.t('nav.help')">
-          <fa-icon [icon]="icons['info']" aria-hidden="true" />
-        </a>
-      </nav>
-      <app-preference-controls class="hidden xl:flex" />
-      @if (signedIn()) {
-        <a routerLink="/notificacoes" class="ui-icon-button rounded-full" [attr.aria-label]="i18n.t('block12.feed.notifications')">
-          <fa-icon [icon]="icons['bell']" aria-hidden="true" />
-        </a>
-        <a routerLink="/painel" class="ui-btn hidden lg:inline-flex" data-testid="feed-dashboard">{{ i18n.t('block12.feed.dashboard') }}</a>
-      } @else {
-        <a routerLink="/entrar" class="ui-btn-secondary hidden sm:inline-flex" data-testid="feed-login">{{ i18n.t('block12.feed.login') }}</a>
-        <a routerLink="/criar-conta" class="ui-btn hidden sm:inline-flex" data-testid="feed-signup">{{ i18n.t('block12.feed.signup') }}</a>
-        <a routerLink="/entrar" class="ui-icon-button rounded-full sm:hidden" [attr.aria-label]="i18n.t('block12.feed.login')">
-          <fa-icon [icon]="icons['user']" aria-hidden="true" />
-        </a>
-      }
     </div>
-  </header>
+  </div>
 
   <div class="mx-auto grid max-w-screen-2xl gap-5 px-4 pt-4 sm:px-6 lg:grid-cols-[18.5rem_minmax(0,1fr)_19rem] lg:items-start lg:px-8 xl:gap-6">
     <!-- Coluna esquerda (desktop): perfil e atalhos. -->
-    <aside class="hidden flex-col gap-4 lg:sticky lg:top-20 lg:flex">
+    <aside class="hidden flex-col gap-4 lg:sticky lg:top-[9rem] lg:flex">
       @if (me(); as host) {
-        <article class="overflow-hidden rounded-4xl border border-line bg-surface shadow-card" data-testid="feed-profile-card">
+        <article class="overflow-hidden rounded-4xl border border-line/40 bg-surface shadow-card" data-testid="feed-profile-card">
           <div class="h-24 bg-gradient-to-br from-brand/40 via-surface-raised to-surface">
             @if (host.profile.cover_url) { <img [src]="host.profile.cover_url" alt="" class="size-full object-cover" /> }
           </div>
@@ -61,12 +63,12 @@
             <dl class="mt-3 grid w-full grid-cols-2 gap-2 rounded-2xl bg-surface-raised/70 px-3 py-3 text-center">
               <div class="min-w-0 px-1">
                 <dt class="sr-only">{{ i18n.t('block12.feed.statFriends') }}</dt>
-                <dd class="text-xl font-semibold leading-tight text-ink">{{ friendCount() }}</dd>
+                <dd class="text-xl font-semibold leading-tight text-ink">{{ friendCountLabel() }}</dd>
                 <dd class="mt-1 text-sm leading-tight text-muted">{{ i18n.t('block12.feed.statFriends') }}</dd>
               </div>
               <div class="min-w-0 px-1">
                 <dt class="sr-only">{{ i18n.t('block12.feed.statRequests') }}</dt>
-                <dd class="text-xl font-semibold leading-tight text-ink">{{ requestCount() }}</dd>
+                <dd class="text-xl font-semibold leading-tight text-ink">{{ requestCountLabel() }}</dd>
                 <dd class="mt-1 text-sm leading-tight text-muted">{{ i18n.t('block12.feed.statRequests') }}</dd>
               </div>
             </dl>
@@ -82,7 +84,7 @@
         </article>
       }
 
-      <article class="rounded-4xl border border-line bg-surface p-4 shadow-card">
+      <article class="rounded-4xl border border-line/40 bg-surface p-4 shadow-card">
         <div class="flex items-center justify-between">
           <h2 class="text-sm font-semibold text-ink">{{ myCommunities().length > 0 ? i18n.t('block12.feed.shortcuts') : i18n.t('block12.feed.popularCommunities') }}</h2>
           <button type="button" class="text-xs font-semibold text-brand-strong hover:underline" (click)="setType('communities')">{{ i18n.t('block12.feed.seeAll') }}</button>
@@ -113,32 +115,32 @@
 
     <!-- Coluna central -->
     <main class="flex min-w-0 flex-col gap-4">
-      <!-- Faixa de avatares em anel (estilo "stories"). -->
-      <nav class="no-scrollbar -mx-4 flex gap-4 overflow-x-auto px-4 pb-1 lg:mx-0 lg:px-0" [attr.aria-label]="i18n.t('block12.feed.communitiesStrip')" data-testid="feed-strip">
-        <button type="button" class="flex w-16 shrink-0 flex-col items-center gap-1.5 text-center" (click)="compose('event')">
-          <span class="grid size-16 place-items-center rounded-full border-2 border-dashed border-brand/60 bg-surface text-xl text-brand-strong">
-            <fa-icon [icon]="icons['plus']" aria-hidden="true" />
-          </span>
-          <span class="text-xs font-medium text-ink">{{ i18n.t('block12.feed.create') }}</span>
-        </button>
-        @for (community of strip(); track community.id) {
-          <a [routerLink]="['/comunidade', community.slug]" class="flex w-16 shrink-0 flex-col items-center gap-1.5 text-center focus-visible:outline-none">
-            <span class="rounded-full bg-gradient-to-tr from-brand via-amber to-coral p-[2px]">
-              <span class="grid size-[3.75rem] place-items-center overflow-hidden rounded-full border-2 border-canvas bg-surface-raised text-lg font-semibold text-brand-strong">
+      <!-- Faixa de avatares: só quando há pelo menos dois destinos além de "Criar". -->
+      @if (showStrip()) {
+        <nav class="no-scrollbar -mx-4 flex gap-4 overflow-x-auto px-4 pb-1 lg:mx-0 lg:px-0" [attr.aria-label]="i18n.t('block12.feed.communitiesStrip')" data-testid="feed-strip">
+          <button type="button" class="flex w-16 shrink-0 flex-col items-center gap-1.5 text-center" (click)="compose('event')">
+            <span class="grid size-16 place-items-center rounded-full border-2 border-dashed border-brand/60 bg-surface text-xl text-brand-strong">
+              <fa-icon [icon]="icons['plus']" aria-hidden="true" />
+            </span>
+            <span class="text-xs font-medium text-ink">{{ i18n.t('block12.feed.create') }}</span>
+          </button>
+          @for (community of strip(); track community.id) {
+            <a [routerLink]="['/comunidade', community.slug]" class="flex w-16 shrink-0 flex-col items-center gap-1.5 text-center focus-visible:outline-none">
+              <span class="grid size-[3.75rem] place-items-center overflow-hidden rounded-full border-2 border-line bg-surface-raised text-lg font-semibold text-brand-strong">
                 @if (community.avatar_url) {
                   <img [src]="community.avatar_url" alt="" class="size-full object-cover" />
                 } @else {
                   {{ community.name.charAt(0).toUpperCase() }}
                 }
               </span>
-            </span>
-            <span class="line-clamp-1 w-full text-xs font-medium text-ink">{{ community.name }}</span>
-          </a>
-        }
-      </nav>
+              <span class="line-clamp-2 w-full break-words text-xs font-medium leading-4 text-ink">{{ community.name }}</span>
+            </a>
+          }
+        </nav>
+      }
 
       <!-- Compositor (desktop), como "Share something…" na referência. -->
-      <article class="hidden rounded-4xl border border-line bg-surface p-4 shadow-card lg:block" data-testid="feed-composer">
+      <article class="hidden rounded-4xl border border-line/40 bg-surface p-4 shadow-card lg:block" data-testid="feed-composer">
         <div class="flex items-center gap-3">
           <app-avatar [name]="myName() || '?'" [imageUrl]="me()?.profile?.avatar_url ?? null" size="md" />
           <button type="button" class="flex min-h-11 flex-1 items-center rounded-full bg-surface-raised px-4 text-left text-sm text-muted hover:text-ink" (click)="compose('event')">
@@ -152,112 +154,166 @@
         </div>
       </article>
 
-      <!-- Tipos, categorias e ordenação. -->
-      <div class="flex flex-col gap-2">
-        <div class="flex items-center gap-2">
-          <nav role="tablist" class="no-scrollbar flex flex-1 gap-2 overflow-x-auto" [attr.aria-label]="i18n.t('block12.feed.title')">
-            @for (option of types; track option.id) {
-              <button
-                type="button"
-                role="tab"
-                class="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-full border px-4 text-sm font-semibold transition"
-                [class]="type() === option.id ? 'border-ink bg-ink text-canvas' : 'border-line bg-surface text-muted hover:text-ink'"
-                [attr.aria-selected]="type() === option.id"
-                [attr.data-testid]="'feed-type-' + option.id"
-                (click)="setType(option.id)"
-              >
-                <fa-icon [icon]="icons[option.icon]" aria-hidden="true" />
-                {{ i18n.t(option.label) }}
-              </button>
-            }
-          </nav>
-          <span class="hidden shrink-0 text-xs text-muted sm:inline">{{ i18n.t('block12.feed.sortUpcoming') }}</span>
-        </div>
-        @if (type() === 'events') {
-          <div class="no-scrollbar flex gap-2 overflow-x-auto" role="group" [attr.aria-label]="i18n.t('block12.feed.type.events')">
-            <button type="button" class="inline-flex min-h-11 shrink-0 items-center rounded-full border px-3 text-xs font-semibold" [class]="!category() ? 'border-brand bg-brand/15 text-ink' : 'border-line text-muted'" (click)="category.set('')">{{ i18n.t('block12.feed.category.all') }}</button>
-            @for (id of categories; track id) {
-              <button type="button" class="inline-flex min-h-11 shrink-0 items-center rounded-full border px-3 text-xs font-semibold" [class]="category() === id ? 'border-brand bg-brand/15 text-ink' : 'border-line text-muted'" (click)="category.set(id)">{{ categoryLabel(id) }}</button>
-            }
-          </div>
-        }
+      <!-- Uma só fila de tipos; categorias abrem num modal no mobile. -->
+      <div class="relative flex min-w-0 items-center gap-2">
+        <nav role="tablist" class="no-scrollbar flex min-w-0 flex-1 gap-2 overflow-x-auto pr-8" [attr.aria-label]="i18n.t('block12.feed.title')">
+          @for (option of types; track option.id) {
+            <button
+              type="button"
+              role="tab"
+              class="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-full border px-4 text-xs font-semibold transition sm:text-sm"
+              [class]="type() === option.id ? 'border-brand bg-brand/15 text-brand' : 'border-line bg-transparent text-muted hover:text-ink'"
+              [attr.aria-selected]="type() === option.id"
+              [attr.data-testid]="'feed-type-' + option.id"
+              (click)="setType(option.id)"
+            >
+              <fa-icon [icon]="icons[option.icon]" aria-hidden="true" />
+              {{ i18n.t(option.label) }}
+            </button>
+          }
+        </nav>
+        <span class="pointer-events-none absolute right-8 top-0 h-11 w-8 bg-gradient-to-l from-canvas to-transparent" aria-hidden="true"></span>
+        <button
+          type="button"
+          [class]="category()
+            ? 'inline-flex min-h-11 shrink-0 items-center gap-2 rounded-full border border-brand bg-brand/15 px-3 text-xs font-semibold text-brand-strong shadow-card transition'
+            : 'inline-flex min-h-11 shrink-0 items-center gap-2 rounded-full border border-line bg-surface px-3 text-xs font-semibold text-ink shadow-card transition hover:border-brand/40 hover:text-brand-strong'"
+          [attr.aria-label]="i18n.t('block15.feed.categoriesHint')"
+          [attr.data-testid]="'feed-categories-open'"
+          (click)="categoriesOpen.set(true)"
+        >
+          <fa-icon [icon]="icons['filter']" aria-hidden="true" />
+          <span class="max-w-24 truncate">{{ selectedCategoryLabel() }}</span>
+        </button>
       </div>
+      @if (type() === 'events') {
+        <div class="no-scrollbar hidden gap-2 overflow-x-auto lg:flex" role="group" [attr.aria-label]="i18n.t('block15.feed.categories')">
+          <button type="button" [class]="!category()
+            ? 'inline-flex min-h-11 shrink-0 items-center rounded-full border border-brand/50 bg-surface px-3 text-xs font-semibold text-brand-strong shadow-card transition'
+            : 'inline-flex min-h-11 shrink-0 items-center rounded-full border border-line bg-surface px-3 text-xs font-semibold text-muted shadow-card transition hover:text-ink'" (click)="category.set('')">{{ i18n.t('block12.feed.category.all') }}</button>
+          @for (id of categories; track id) {
+            <button type="button" [class]="category() === id
+              ? 'inline-flex min-h-11 shrink-0 items-center rounded-full border border-brand/50 bg-surface px-3 text-xs font-semibold text-brand-strong shadow-card transition'
+              : 'inline-flex min-h-11 shrink-0 items-center rounded-full border border-line bg-surface px-3 text-xs font-semibold text-muted shadow-card transition hover:text-ink'" (click)="category.set(id)">{{ categoryLabel(id) }}</button>
+          }
+        </div>
+      }
 
       @if (!signedIn()) {
         <div class="flex items-center justify-between gap-3 rounded-3xl border border-brand/25 bg-brand/10 p-3 lg:hidden">
           <p class="text-sm font-medium text-ink">{{ i18n.t('block12.feed.visitorBanner') }}</p>
-          <a routerLink="/criar-conta" class="ui-btn shrink-0" data-testid="feed-signup-mobile">{{ i18n.t('block12.feed.signup') }}</a>
+          <a routerLink="/criar-conta" class="ui-btn min-h-11 shrink-0" data-testid="feed-signup-mobile">{{ i18n.t('block12.feed.signup') }}</a>
         </div>
       }
 
       @if (loading()) {
         <app-skeleton variant="cards" />
       } @else if (error()) {
-        <div class="rounded-4xl border border-coral/30 bg-coral/10 p-6 text-center" role="alert">
-          <p class="text-sm font-semibold text-coral">{{ i18n.t('block12.feed.error') }}</p>
-          <button type="button" class="ui-btn-secondary mt-3" (click)="load()">
+        <div class="flex flex-col items-center gap-3">
+          <app-info-block icon="warning" [title]="i18n.t('block12.feed.error')" [message]="i18n.t('block12.common.error')" testId="feed-error" />
+          <button type="button" class="ui-btn-secondary min-h-11" (click)="load()">
             <fa-icon [icon]="icons['refresh']" aria-hidden="true" />
             {{ i18n.t('block12.feed.retry') }}
           </button>
         </div>
       } @else if (items().length === 0) {
-        <div class="flex flex-col items-center rounded-4xl border border-dashed border-line bg-surface/60 p-8 text-center" data-testid="feed-empty">
-          <fa-icon [icon]="icons['calendar']" class="text-2xl text-brand" aria-hidden="true" />
-          <h2 class="mt-3 font-display text-lg font-semibold text-ink">{{ i18n.t('block12.feed.empty') }}</h2>
-          <p class="mt-1 text-sm text-muted">{{ i18n.t('block12.feed.emptyHint') }}</p>
-          <button type="button" class="ui-btn mt-4" (click)="compose('event')">{{ i18n.t('block12.feed.createEvent') }}</button>
-        </div>
+        <app-info-block
+          icon="calendar"
+          [title]="i18n.t('block12.feed.empty')"
+          [message]="i18n.t('block12.feed.emptyHint')"
+          [actionLabel]="i18n.t('block12.feed.createEvent')"
+          [actionLink]="emptyActionLink()"
+          testId="feed-empty"
+        />
       } @else {
-        @if (type() === 'events') {
-          <ul class="flex flex-col gap-4" data-testid="feed-grid">
+        @if (events().length > 0) {
+          <ul class="flex flex-col gap-4" data-testid="feed-grid-events">
             @for (event of events(); track event.id) {
-              <li><app-feed-post [event]="event" /></li>
-            }
-          </ul>
-        } @else {
-          <ul class="grid auto-rows-fr grid-cols-1 gap-3 sm:grid-cols-2" data-testid="feed-grid">
-            @for (institution of institutions(); track institution.id) {
-              <li class="h-full min-w-0"><app-feed-institution-card [institution]="institution" /></li>
-            }
-            @for (community of communities(); track community.id) {
-              <li class="h-full min-w-0"><app-feed-community-card [community]="community" /></li>
-            }
-            @for (person of people(); track person.id) {
-              <li class="h-full min-w-0"><app-feed-person-card [person]="person" (open)="openPerson($event)" /></li>
+              <li class="min-w-0"><app-public-event-card [event]="event" variant="default" /></li>
             }
           </ul>
         }
+        @if (institutions().length > 0 || communities().length > 0 || people().length > 0) {
+          <section class="flex min-w-0 flex-col gap-2">
+            @if (events().length > 0) {
+              <h2 class="text-sm font-semibold text-ink">{{ i18n.t('block12.feed.type.communities') }}</h2>
+            }
+            <ul class="grid auto-rows-fr grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-3" data-testid="feed-grid">
+              @for (institution of institutions(); track institution.id) {
+                <li class="flex h-full min-w-0">
+                  <app-public-entity-card
+                    class="w-full"
+                    kind="institution"
+                    [name]="institution.name"
+                    [slug]="institution.slug"
+                    [description]="institution.description"
+                    [avatarUrl]="institution.avatar_url"
+                    [coverUrl]="institution.cover_url"
+                    [count]="institution.community_count"
+                  />
+                </li>
+              }
+              @for (community of communities(); track community.id) {
+                <li class="flex h-full min-w-0">
+                  <app-public-entity-card
+                    class="w-full"
+                    kind="community"
+                    [name]="community.name"
+                    [slug]="community.slug"
+                    [description]="community.description"
+                    [avatarUrl]="community.avatar_url"
+                    [coverUrl]="community.cover_url"
+                    [count]="community.member_count"
+                  />
+                </li>
+              }
+              @for (person of people(); track person.id) {
+                <li class="flex h-full min-w-0">
+                  <app-feed-person-card class="w-full" [person]="person" (open)="openPerson($event)" />
+                </li>
+              }
+            </ul>
+          </section>
+        } @else if (type() === 'communities') {
+          <app-info-block
+            icon="globe"
+            [title]="i18n.t('block12.feed.empty')"
+            [message]="i18n.t('block12.feed.emptyHint')"
+            testId="feed-communities-empty"
+          />
+        }
         @if (cursor()) {
-          <button type="button" class="ui-btn-secondary self-center" [disabled]="loadingMore()" data-testid="feed-load-more" (click)="loadMore()">
+          <button type="button" class="ui-btn-secondary min-h-11 self-center" [disabled]="loadingMore()" data-testid="feed-load-more" (click)="loadMore()">
             {{ i18n.t('block12.feed.loadMore') }}
           </button>
         }
       }
 
-      <footer class="mt-2 flex flex-wrap items-center justify-center gap-4 border-t border-line pt-4 text-xs text-muted lg:hidden">
-        <a routerLink="/sobre" class="inline-flex min-h-11 items-center hover:text-ink">{{ i18n.t('block12.feed.about') }}</a>
-        <a routerLink="/ajuda" class="inline-flex min-h-11 items-center hover:text-ink">{{ i18n.t('nav.help') }}</a>
+      <footer class="mt-2 flex flex-col items-center gap-2 border-t border-line pt-5 text-center text-xs text-muted lg:hidden">
+        <app-brand [height]="28" />
+        <p class="flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
+          <a routerLink="/sobre" class="inline-flex min-h-11 items-center hover:text-ink">{{ i18n.t('block12.feed.about') }}</a>
+          <a routerLink="/ajuda" class="inline-flex min-h-11 items-center hover:text-ink">{{ i18n.t('nav.help') }}</a>
+        </p>
+        <p>{{ i18n.t('footer.rights', { year: 2026 }) }}</p>
       </footer>
     </main>
 
     <!-- Coluna direita (desktop): próximos eventos e sugestões. -->
-    <aside class="hidden flex-col gap-4 lg:sticky lg:top-20 lg:flex">
-      <article class="rounded-4xl border border-line bg-surface p-4 shadow-card">
+    <aside class="hidden flex-col gap-4 lg:sticky lg:top-[9rem] lg:flex">
+      <article class="rounded-4xl border border-line/40 bg-surface p-4 shadow-card">
         <h2 class="text-sm font-semibold text-ink">{{ i18n.t('block12.feed.upcomingTitle') }}</h2>
         <ul class="mt-2 flex flex-col">
           @for (event of upcoming(); track event.id) {
             <li>
               <a [routerLink]="eventLink(event)" class="flex min-h-11 items-center gap-3 rounded-xl px-1 py-1.5 hover:bg-surface-raised">
-                <span class="grid size-11 shrink-0 place-items-center overflow-hidden rounded-xl bg-brand/15 text-xs font-semibold text-brand-strong">
-                  @if (event.cover_url) {
-                    <img [src]="event.cover_url" alt="" class="size-full object-cover" />
-                  } @else {
-                    {{ i18n.shortDate(event.starts_at, event.timezone).split(' ').slice(0, 2).join(' ') }}
-                  }
+                <span class="grid w-14 shrink-0 place-items-center rounded-xl border border-brand/20 bg-brand/10 py-1 text-brand-strong" [attr.aria-label]="i18n.dateTime(event.starts_at, event.timezone)">
+                  <span class="text-base font-bold leading-none">{{ eventDay(event) }}</span>
+                  <span class="text-xs font-semibold uppercase leading-4">{{ eventMonth(event) }}</span>
                 </span>
                 <span class="min-w-0 flex-1">
                   <span class="block truncate text-sm font-medium text-ink">{{ event.title }}</span>
-                  <span class="block truncate text-xs text-muted">{{ i18n.dateTime(event.starts_at, event.timezone) }}</span>
+                  <span class="block truncate text-xs text-muted">{{ eventLongDate(event) }}</span>
                 </span>
               </a>
             </li>
@@ -272,7 +328,7 @@
         </ul>
       </article>
       @if (suggestions().length > 0) {
-        <article class="rounded-4xl border border-line bg-surface p-4 shadow-card" data-testid="feed-suggestions">
+        <article class="rounded-4xl border border-line/40 bg-surface p-4 shadow-card" data-testid="feed-suggestions">
           <div class="flex items-center justify-between">
             <h2 class="text-sm font-semibold text-ink">{{ i18n.t('block12.feed.suggestions') }}</h2>
             <button type="button" class="text-xs font-semibold text-brand-strong hover:underline" (click)="setType('people')">{{ i18n.t('block12.feed.seeAll') }}</button>
@@ -302,27 +358,61 @@
     </aside>
   </div>
 
-  <!-- Navegação inferior flutuante (mobile), como na referência. -->
+  <!-- Navegação inferior flutuante: vidro escuro, cinco destinos com rótulo. -->
   <nav
-    class="fixed inset-x-0 z-40 mx-auto flex w-[min(22rem,calc(100%-2rem))] items-center justify-between rounded-full border border-white/10 bg-ink/85 p-1.5 shadow-card backdrop-blur-xl lg:hidden"
-    style="bottom: max(1rem, env(safe-area-inset-bottom))"
+    class="fixed inset-x-0 z-40 mx-auto flex w-[min(28rem,calc(100%-1rem))] items-center justify-around gap-0.5 rounded-full border border-line/40 bg-surface/80 p-1.5 shadow-card backdrop-blur-xl lg:hidden"
+    style="bottom: max(0.75rem, env(safe-area-inset-bottom))"
     [attr.aria-label]="i18n.t('block12.feed.menu')"
     data-testid="feed-bottom-nav"
   >
-    <a routerLink="/" class="grid size-12 place-items-center rounded-full bg-canvas text-ink" [attr.aria-label]="i18n.t('block12.feed.home')" aria-current="page">
+    <a
+      routerLink="/"
+      class="flex min-h-11 min-w-11 flex-col items-center justify-center gap-0.5 rounded-full px-2 text-xs font-semibold transition"
+      [class]="type() === 'all' ? 'bg-brand/15 text-brand' : 'text-muted'"
+      [attr.aria-label]="i18n.t('block12.feed.home')"
+      [attr.aria-current]="type() === 'all' ? 'page' : null"
+      (click)="setType('all')"
+    >
       <fa-icon [icon]="icons['home']" aria-hidden="true" />
+      <span class="whitespace-nowrap">{{ i18n.t('block12.feed.home') }}</span>
     </a>
-    <button type="button" class="grid size-12 place-items-center rounded-full text-canvas/80 hover:text-canvas" [attr.aria-label]="i18n.t('block12.feed.search')" data-testid="feed-search-open-mobile" (click)="openSearch()">
+    <button
+      type="button"
+      class="flex min-h-11 min-w-11 flex-col items-center justify-center gap-0.5 rounded-full px-2 text-xs font-semibold text-muted transition"
+      [attr.aria-label]="i18n.t('block15.feed.explore')"
+      (click)="openSearch()"
+    >
       <fa-icon [icon]="icons['search']" aria-hidden="true" />
+      <span class="whitespace-nowrap">{{ i18n.t('block15.feed.explore') }}</span>
     </button>
-    <button type="button" class="grid size-12 place-items-center rounded-full text-canvas/80 hover:text-canvas" [attr.aria-label]="i18n.t('block12.feed.discover')" (click)="setType('communities')">
-      <fa-icon [icon]="icons['compass']" aria-hidden="true" />
-    </button>
-    <button type="button" class="grid size-12 place-items-center rounded-full text-canvas/80 hover:text-canvas" [attr.aria-label]="i18n.t('block12.feed.create')" (click)="compose('event')">
+    <button
+      type="button"
+      class="flex min-h-11 min-w-11 flex-col items-center justify-center gap-0.5 rounded-full bg-brand px-2 text-xs font-semibold text-white transition"
+      [attr.aria-label]="i18n.t('block12.feed.createInvite')"
+      (click)="createInvite()"
+    >
       <fa-icon [icon]="icons['plus']" aria-hidden="true" />
+      <span class="whitespace-nowrap">{{ i18n.t('block12.feed.create') }}</span>
     </button>
-    <button type="button" class="grid size-12 place-items-center rounded-full text-canvas/80 hover:text-canvas" [attr.aria-label]="i18n.t('block12.feed.profile')" (click)="openProfile()">
+    <button
+      type="button"
+      class="flex min-h-11 min-w-11 flex-col items-center justify-center gap-0.5 rounded-full px-2 text-xs font-semibold transition"
+      [class]="type() === 'communities' ? 'bg-brand/15 text-brand' : 'text-muted'"
+      [attr.aria-label]="i18n.t('block12.feed.type.communities')"
+      [attr.aria-current]="type() === 'communities' ? 'page' : null"
+      (click)="setType('communities')"
+    >
+      <fa-icon [icon]="icons['globe']" aria-hidden="true" />
+      <span class="whitespace-nowrap">{{ i18n.t('block12.feed.type.communities') }}</span>
+    </button>
+    <button
+      type="button"
+      class="flex min-h-11 min-w-11 flex-col items-center justify-center gap-0.5 rounded-full px-2 text-xs font-semibold text-muted transition"
+      [attr.aria-label]="bottomProfileLabel()"
+      (click)="openProfile()"
+    >
       <fa-icon [icon]="icons['user']" aria-hidden="true" />
+      <span class="whitespace-nowrap">{{ bottomProfileLabel() }}</span>
     </button>
   </nav>
 
@@ -337,13 +427,41 @@
         <a routerLink="/criar-conta" class="ui-btn w-full">{{ i18n.t('block12.feed.signup') }}</a>
         <a routerLink="/entrar" class="ui-btn-secondary mb-2 w-full">{{ i18n.t('block12.feed.login') }}</a>
       }
+      <a routerLink="/templates" class="flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm font-semibold text-ink hover:bg-surface-raised"><fa-icon [icon]="icons['templates']" class="w-4 text-brand" aria-hidden="true" /> {{ i18n.t('block15.feed.templates') }}</a>
       <a routerLink="/sobre" class="flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm font-semibold text-ink hover:bg-surface-raised"><fa-icon [icon]="icons['info']" class="w-4 text-brand" aria-hidden="true" /> {{ i18n.t('block12.feed.about') }}</a>
       <a routerLink="/ajuda" class="flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm font-semibold text-ink hover:bg-surface-raised"><fa-icon [icon]="icons['info']" class="w-4 text-brand" aria-hidden="true" /> {{ i18n.t('nav.help') }}</a>
       <div class="mt-2 border-t border-line pt-3"><app-preference-controls /></div>
     </div>
   </app-modal>
 
-  <!-- Pesquisa agrupada (abre pronta a escrever). -->
+  <!-- Categorias do feed, abertas num modal para não criar uma segunda fila de chips. -->
+  <app-modal [open]="categoriesOpen()" [title]="i18n.t('block15.feed.categories')" presentation="sheet" size="sm" (closed)="categoriesOpen.set(false)">
+    <div class="flex flex-col gap-2" role="group" [attr.aria-label]="i18n.t('block15.feed.categories')" data-testid="feed-categories-modal">
+      <button
+        type="button"
+        [class]="!category()
+          ? 'inline-flex min-h-11 items-center rounded-full border border-brand/50 bg-surface px-4 text-sm font-semibold text-brand-strong shadow-card transition'
+          : 'inline-flex min-h-11 items-center rounded-full border border-line bg-surface px-4 text-sm font-semibold text-muted shadow-card transition'"
+        (click)="selectCategory('')"
+      >
+        {{ i18n.t('block12.feed.category.all') }}
+      </button>
+      @for (id of categories; track id) {
+        <button
+          type="button"
+          [class]="category() === id
+            ? 'inline-flex min-h-11 items-center rounded-full border border-brand/50 bg-surface px-4 text-sm font-semibold text-brand-strong shadow-card transition'
+            : 'inline-flex min-h-11 items-center rounded-full border border-line bg-surface px-4 text-sm font-semibold text-muted shadow-card transition'"
+          [attr.data-testid]="'feed-category-' + id"
+          (click)="selectCategory(id)"
+        >
+          {{ categoryLabel(id) }}
+        </button>
+      }
+    </div>
+  </app-modal>
+
+  <!-- Pesquisa agrupada, aberta pela barra de ações do feed. -->
   <app-modal [open]="searchOpen()" [title]="i18n.t('block12.feed.search')" presentation="sheet" (closed)="closeSearch()">
     <div class="flex flex-col gap-4">
       <label class="relative block">
@@ -405,6 +523,56 @@
           }
         }
       }
+    </div>
+  </app-modal>
+
+  <!-- Partilhar evento existente no feed. -->
+  <app-modal [open]="shareOpen()" [title]="i18n.t('block12.feed.shareTitle')" size="sm" (closed)="shareOpen.set(false)">
+    <div class="flex flex-col gap-3">
+      <p class="text-sm text-muted">{{ i18n.t('block12.feed.shareHint') }}</p>
+      @if (ownedEvents().length === 0) {
+        <p class="rounded-2xl border border-dashed border-line p-4 text-center text-sm text-muted">{{ i18n.t('block12.feed.noEvents') }}</p>
+        <button type="button" class="ui-btn w-full" (click)="createFirstEvent()">{{ i18n.t('block12.feed.createEvent') }}</button>
+      } @else if (shareCommunities().length === 0) {
+        <p class="rounded-2xl border border-dashed border-line p-4 text-center text-sm text-muted">{{ i18n.t('block12.feed.shareNoCommunities') }}</p>
+      } @else {
+        <label class="flex flex-col gap-1.5 text-xs font-semibold text-ink">
+          {{ i18n.t('block12.feed.type.events') }}
+          <select
+            class="min-h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink outline-none focus:border-brand/50"
+            data-testid="feed-share-event-select"
+            [value]="shareEvent()?.id ?? ''"
+            (change)="shareSelected($any($event.target).value)"
+          >
+            @for (event of ownedEvents(); track event.id) {
+              <option [value]="event.id">{{ event.title }}</option>
+            }
+          </select>
+        </label>
+        <label class="flex flex-col gap-1.5 text-xs font-semibold text-ink">
+          {{ i18n.t('block12.feed.shareCommunity') }}
+          <select
+            class="min-h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink outline-none focus:border-brand/50"
+            data-testid="feed-share-community-select"
+            [value]="shareCommunityId()"
+            (change)="shareCommunityId.set($any($event.target).value)"
+          >
+            @for (community of shareCommunities(); track community.id) {
+              <option [value]="community.id">{{ community.name }}</option>
+            }
+          </select>
+        </label>
+        <button type="button" class="ui-btn min-h-11 w-full" [disabled]="!shareEvent() || !shareCommunityId()" data-testid="feed-share-submit" (click)="shareToFeed()">{{ i18n.t('block12.feed.shareAction') }}</button>
+      }
+    </div>
+  </app-modal>
+
+  <!-- Sem eventos: sugestões para criar o primeiro. -->
+  <app-modal [open]="suggestionsOpen()" [title]="i18n.t('block12.feed.suggestTitle')" size="sm" (closed)="suggestionsOpen.set(false)">
+    <div class="flex flex-col items-center gap-3 text-center">
+      <span class="grid size-14 place-items-center rounded-2xl border border-brand/20 bg-brand/10 text-brand-strong"><fa-icon [icon]="icons['calendarPlus']" aria-hidden="true" /></span>
+      <p class="text-sm leading-6 text-muted">{{ i18n.t('block12.feed.suggestHint') }}</p>
+      <button type="button" class="ui-btn w-full" (click)="createFirstEvent()" data-testid="feed-create-suggestion">{{ i18n.t('block12.feed.createEvent') }}</button>
     </div>
   </app-modal>
 

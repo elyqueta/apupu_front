@@ -140,6 +140,18 @@ export const BLOCK15_KEYS_PT = {
   'block15.editor.blockQr': 'QR',
   'block15.editor.blockButtons': 'Botões',
   'block15.editor.blockOrnament': 'Ornamento',
+  'block15.feed.openFlyer': 'Ampliar flyer: {title}',
+  'block15.feed.react': 'Reagir',
+  'block15.feed.comment': 'Comentar',
+  'block15.feed.share': 'Partilhar',
+  'block15.feed.reactionsUnavailable': 'As reações ainda não estão disponíveis.',
+  'block15.feed.commentsUnavailable': 'Os comentários ainda não estão disponíveis.',
+  'block15.feed.explore': 'Explorar',
+  'block15.feed.categories': 'Categorias',
+  'block15.feed.categoriesHint': 'Escolher categoria',
+  'block15.feed.menuButton': 'Menu',
+  'block15.feed.notifications': 'Notificações',
+  'block15.feed.templates': 'Modelos',
 } as const;
 
 export const BLOCK15_KEYS_EN: Record<keyof typeof BLOCK15_KEYS_PT, string> = {
@@ -283,6 +295,18 @@ export const BLOCK15_KEYS_EN: Record<keyof typeof BLOCK15_KEYS_PT, string> = {
   'block15.editor.blockQr': 'QR',
   'block15.editor.blockButtons': 'Buttons',
   'block15.editor.blockOrnament': 'Ornament',
+  'block15.feed.openFlyer': 'Enlarge flyer: {title}',
+  'block15.feed.react': 'React',
+  'block15.feed.comment': 'Comment',
+  'block15.feed.share': 'Share',
+  'block15.feed.reactionsUnavailable': 'Reactions are not available yet.',
+  'block15.feed.commentsUnavailable': 'Comments are not available yet.',
+  'block15.feed.explore': 'Explore',
+  'block15.feed.categories': 'Categories',
+  'block15.feed.categoriesHint': 'Choose a category',
+  'block15.feed.menuButton': 'Menu',
+  'block15.feed.notifications': 'Notifications',
+  'block15.feed.templates': 'Templates',
 };
 
 export type GuestKindValue = 'male' | 'female' | 'couple' | 'family' | null | undefined;

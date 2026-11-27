@@ -80,7 +80,7 @@ import {
   ageRangeError,
   parseAge,
 } from '../../shared/components/event-visibility-fields.component';
-import { MapPickerDialogComponent, MapPickResult, reverseGeocodeGoogle, roundCoord } from '../../shared/components/map-picker-dialog.component';
+import { LocationPickerDialogComponent, LocationPickResult } from '../../shared/components/location-picker-dialog.component';
 import { extractYoutubeId } from '../../core/utils/youtube';
 import { readPreferredLocation, writePreferredLocation, type PreferredLocation } from '../../core/utils/preferred-location';
 import { PublicLinkCardComponent } from '../../shared/components/public-link-card.component';
@@ -133,7 +133,7 @@ function isoDaysAgo(days: number): string {
     EventVisibilityFieldsComponent,
     PublicLinkCardComponent,
     DeleteEventDialogComponent,
-    MapPickerDialogComponent,
+    LocationPickerDialogComponent,
   ],
   templateUrl: './event-detail.page.html',
 })
@@ -257,7 +257,9 @@ export class EventDetailPage {
     if (this.isManagement()) {
       badges.push(this.i18n.t('settings.active'));
     }
-    if (!this.isHost()) {
+    if (this.accessRole() === 'communityMember') {
+      badges.push(this.i18n.t('eventDetail.roleCommunityMember'));
+    } else if (!this.isHost()) {
       badges.push(this.i18n.t('eventDetail.roleManager'));
     }
     return badges;
@@ -1310,7 +1312,7 @@ export class EventDetailPage {
     }
   }
 
-  /** Descarrega o bilhete individual com o QR do convite. */
+  /** Descarrega o convite individual com o QR. */
   protected async downloadTicket(guest: Guest): Promise<void> {
     const key = `ticket-${guest.id}`;
     if (this.exporting() !== null) {
@@ -1321,7 +1323,13 @@ export class EventDetailPage {
 
     try {
       const file = await this.reports.exportEvent(this.eventId(), 'ticket', 'pdf', guest.id);
-      this.downloads.save(file, 'conto-contigo-bilhete.pdf');
+      const guestSlug = guest.name
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-zA-Z0-9]+/g, '-')
+        .replace(/^-|-$/g, '')
+        .toLowerCase() || 'convidado';
+      this.downloads.save(file, `conto-contigo-convite-${guestSlug}.pdf`);
       this.toasts.success(this.i18n.t('eventDetail.ticketDownloaded', { name: guest.name }));
     } catch (error: unknown) {
       this.toasts.error(toApiError(error).message);
@@ -1420,14 +1428,13 @@ export class EventDetailPage {
 
   protected openMapPicker(): void { this.mapPickerOpen.set(true); }
   protected closeMapPicker(): void { this.mapPickerOpen.set(false); }
-  protected onMapPicked(point: MapPickResult): void {
+  protected onMapPicked(point: LocationPickResult): void {
     this.settingsForm.controls.latitude.setValue(point.latitude);
     this.settingsForm.controls.longitude.setValue(point.longitude);
-    if (point.city) this.settingsForm.controls.city.setValue(point.city);
-    if (point.venue) this.settingsForm.controls.venue.setValue(point.venue);
+    this.settingsForm.controls.placeLabel.setValue(point.placeName ?? '');
     this.syncLocationValidators();
     this.closeMapPicker();
-    this.promptSaveLocation(point.latitude, point.longitude, point.city, point.venue);
+    this.promptSaveLocation(point.latitude, point.longitude);
   }
   protected removeExactLocation(): void {
     this.settingsForm.controls.latitude.setValue(null);
@@ -1442,24 +1449,13 @@ export class EventDetailPage {
     }
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        const lat = roundCoord(pos.coords.latitude);
-        const lng = roundCoord(pos.coords.longitude);
+        const lat = Math.round(pos.coords.latitude * 1e6) / 1e6;
+        const lng = Math.round(pos.coords.longitude * 1e6) / 1e6;
         this.settingsForm.controls.latitude.setValue(lat);
         this.settingsForm.controls.longitude.setValue(lng);
         this.syncLocationValidators();
         this.promptSaveLocation(lat, lng);
-        void reverseGeocodeGoogle(lat, lng).then((address) => {
-          if (address.city) this.settingsForm.controls.city.setValue(address.city);
-          if (address.venue) this.settingsForm.controls.venue.setValue(address.venue);
-          const pending = this.pendingSaveLocation();
-          if (pending && pending.latitude === lat && pending.longitude === lng) {
-            this.pendingSaveLocation.set({
-              ...pending,
-              city: address.city ?? pending.city,
-              venue: address.venue ?? pending.venue,
-            });
-          }
-        });
+        this.settingsForm.markAsDirty();
       },
       () => this.toasts.error(this.i18n.t('block14.location.error')),
       { enableHighAccuracy: true, timeout: 10_000 },
@@ -1484,6 +1480,7 @@ export class EventDetailPage {
     try {
       await this.store.updateEvent(this.eventId(), {
         ...fields,
+        placeName: fields.placeLabel.trim() || null,
         youtubeVideoId: extractYoutubeId(youtubeVideoUrl) ?? null,
         visibility: visibilitySettings.visibility,
         showAttendeeCount:
@@ -1491,6 +1488,7 @@ export class EventDetailPage {
         minAge: parseAge(visibilitySettings.minAge),
         maxAge: parseAge(visibilitySettings.maxAge),
       });
+      this.closeEditModal();
       this.toasts.success(this.i18n.t('eventDetail.changesSaved'));
     } catch (error: unknown) {
       this.toasts.error(toApiError(error).message);

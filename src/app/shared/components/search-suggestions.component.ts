@@ -17,7 +17,7 @@ import { ICONS } from '../../core/ui/icons';
       [attr.id]="listId()"
       role="listbox"
       [attr.aria-label]="i18n.t('search.hint')"
-      class="max-h-[min(70dvh,26rem)] overflow-y-auto rounded-3xl border border-line bg-surface-solid/95 p-2 shadow-card backdrop-blur-2xl animate-rise"
+      class="no-scrollbar max-h-[min(70dvh,26rem)] overflow-y-auto rounded-3xl border border-line bg-surface-solid/95 p-2 shadow-card backdrop-blur-2xl animate-rise"
     >
       @if (groups().length === 0) {
         <p class="px-3 py-4 text-center text-xs text-muted">

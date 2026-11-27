@@ -45,6 +45,7 @@ Migração reversível, não destrutiva:
 
 Segue os padrões existentes (rotas em `routes/v1`, schemas Zod, serviços, repositórios).
 - Comunidades: CRUD (`POST/GET/PATCH/DELETE /host/communities…`), membros (listar, convidar, remover, sair, mudar papel), pedidos (`POST /host/communities/:id/join-requests`, aprovar/rejeitar), transferência (`POST …/transfer/start`, `…/transfer/verify-otp`, `…/transfer/accept`, `…/transfer/cancel`).
+- Imagem e capa: `POST /host/communities/:id/{avatar,cover}/upload` (multipart, campos `avatar`/`cover`), `DELETE …/{avatar,cover}` e variantes por URL (`POST …/{avatar,cover}`); o `public_id` anterior é limpo no Cloudinary.
 - Equipas: criar sem comunidade ou dentro de uma; `POST /host/teams/:id/events` (só criador), `DELETE …/events/:eventId`; sair (`POST …/leave`); convidar/remover só criador/gestor.
 - Criar evento dentro de uma comunidade: `community_id` no corpo; só gestores/responsável.
 - Permissões num único módulo (`communityPermissions`), com testes negativos para cada papel.

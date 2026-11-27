@@ -60,15 +60,16 @@ const activeMenu = signal<ActionMenuComponent | null>(null);
       <button
         #trigger
         type="button"
-        class="grid size-11 shrink-0 place-items-center rounded-xl border border-line bg-surface text-muted transition hover:border-brand/40 hover:text-ink"
+        [class]="plainTrigger() ? 'ui-icon-button' : 'grid size-11 shrink-0 place-items-center rounded-xl border border-line bg-surface text-muted transition hover:border-brand/40 hover:text-ink'"
         [attr.aria-label]="triggerLabel() || i18n.t('common.moreActions')"
         [attr.title]="triggerLabel() || i18n.t('common.moreActions')"
         aria-haspopup="menu"
         [attr.aria-expanded]="open()"
+        [attr.data-testid]="triggerTestId() || null"
         (click)="toggle()"
         (keydown)="onTriggerKeydown($event)"
       >
-        <fa-icon [icon]="icons['ellipsis']" class="text-sm" aria-hidden="true" />
+        <fa-icon [icon]="vertical() ? icons['ellipsisVertical'] : icons['ellipsis']" class="text-sm" aria-hidden="true" />
       </button>
     </div>
 
@@ -91,7 +92,7 @@ const activeMenu = signal<ActionMenuComponent | null>(null);
             [class]="itemClass(item)"
             (click)="select(item)"
           >
-            <fa-icon [icon]="item.icon" class="w-4 shrink-0 text-xs" aria-hidden="true" />
+            @if (item.icon) { <fa-icon [icon]="item.icon" class="w-4 shrink-0 text-xs" aria-hidden="true" /> }
             <span class="min-w-0 flex-1 truncate text-left">{{ item.label }}</span>
           </button>
         }
@@ -113,6 +114,12 @@ export class ActionMenuComponent {
   readonly triggerLabel = input<string>('');
   /** Explicação mostrada como tooltip quando um item está desativado. */
   readonly disabledHint = input<string>('');
+  /** Usa o estilo padrão `ui-icon-button`, sem borda própria nem sombra. */
+  readonly plainTrigger = input(false);
+  /** Mostra ⋮ vertical em vez de ⋯ horizontal. */
+  readonly vertical = input(false);
+  /** Teste opcional do botão de abertura. */
+  readonly triggerTestId = input('');
 
   readonly selected = output<string>();
 

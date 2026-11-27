@@ -63,8 +63,13 @@ describe('PublicEventPage (link aberto)', () => {
   let http: HttpTestingController;
 
   afterEach(() => {
-    http?.verify();
-    TestBed.resetTestingModule();
+    try {
+      http?.verify();
+    } finally {
+      // Um pedido por fechar não pode deixar o TestBed configurado: isso
+      // impediria o setup() do teste seguinte de o reconfigurar.
+      TestBed.resetTestingModule();
+    }
   });
 
   it('confirma presença com nome + telefone e nunca mostra limites de idade', async () => {

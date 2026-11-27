@@ -266,15 +266,16 @@ function hasToast(toasts: ToastService, text: string): boolean {
 }
 
 function openMemberActions(native: HTMLElement, memberId: string): void {
-  const card = native.querySelector(`[data-testid="member-${memberId}"]`) as HTMLElement;
-  (card.querySelector('button[aria-haspopup="menu"]') as HTMLButtonElement).click();
+  const row = native.querySelector(`[data-testid="member-${memberId}"] button`) as HTMLButtonElement;
+  row.click();
 }
 
 function clickMenuItem(native: HTMLElement, label: string): void {
-  const item = Array.from(document.querySelectorAll('[role="menuitem"]')).find((button) =>
+  const drawer = native.querySelector('[data-testid="member-drawer"]') as HTMLElement | null;
+  const item = Array.from((drawer ?? document).querySelectorAll('button')).find((button) =>
     button.textContent?.includes(label),
-  ) as HTMLButtonElement;
-  item.click();
+  ) as HTMLButtonElement | undefined;
+  item?.click();
 }
 
 describe('TeamDetailPage', () => {

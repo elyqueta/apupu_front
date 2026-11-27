@@ -130,6 +130,7 @@ export function mapEvent(event: ApiEvent): HostEvent {
           }
         : null,
     accessRole: event.access_role ?? 'host',
+    communityId: event.community_id ?? null,
     visibility: event.visibility ?? 'private',
     publicUrl: event.public_url ?? null,
     showAttendeeCount: event.show_attendee_count ?? false,
@@ -139,6 +140,7 @@ export function mapEvent(event: ApiEvent): HostEvent {
     latitude: event.location.latitude ?? null,
     longitude: event.location.longitude ?? null,
     placeLabel: event.location.place_label ?? null,
+    placeName: event.location.place_name ?? null,
     useTables: event.use_tables ?? false,
     createdAt: event.created_at,
     stats: event.stats
@@ -408,12 +410,13 @@ export function locationFromInput(input: CreateEventInput): EventLocation {
     latitude: input.latitude ?? null,
     longitude: input.longitude ?? null,
     place_label: input.placeLabel ?? null,
+    place_name: input.placeName ?? null,
   };
 }
 
 export function locationFromView(
   current: HostEvent,
-  patch: { venue?: string; city?: string; latitude?: number | null; longitude?: number | null; placeLabel?: string | null },
+  patch: { venue?: string; city?: string; latitude?: number | null; longitude?: number | null; placeLabel?: string | null; placeName?: string | null },
 ): EventLocation {
   if (current.onlineLink) {
     return { type: 'online', online_url: current.onlineLink };
@@ -425,6 +428,7 @@ export function locationFromView(
     latitude: patch.latitude !== undefined ? patch.latitude : current.latitude,
     longitude: patch.longitude !== undefined ? patch.longitude : current.longitude,
     place_label: patch.placeLabel !== undefined ? patch.placeLabel : current.placeLabel,
+    place_name: patch.placeName !== undefined ? patch.placeName : current.placeName,
   };
 }
 

@@ -4,13 +4,14 @@ import { I18nService } from '../../../core/i18n/i18n.service';
 import { ICONS } from '../../../core/ui/icons';
 import { ShareService } from '../../../core/services/share.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { LocationMapComponent } from '../../../shared/components/location-map.component';
 import { ModalComponent } from '../../../shared/components/modal.component';
 import { InvitationEventView } from '../invitation.models';
 
 /** Localização do evento: copiar endereço e abrir Google Maps por link simples. */
 @Component({
   selector: 'app-invitation-location-dialog',
-  imports: [FaIconComponent, ModalComponent],
+  imports: [FaIconComponent, ModalComponent, LocationMapComponent],
   template: `
     <app-modal
       [open]="open()"
@@ -46,6 +47,9 @@ import { InvitationEventView } from '../invitation.models';
           <div class="rounded-2xl border border-line bg-surface-raised p-4">
             <p class="text-xs font-semibold text-muted">{{ i18n.t('invitation.address') }}</p>
             <p class="mt-1 text-sm leading-6 text-ink">{{ fullAddress() }}</p>
+            @if (event().placeName) {
+              <p class="mt-2 text-xs text-muted">{{ event().placeName }}</p>
+            }
             @if (hasCoordinates()) {
               <p class="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-mint" data-testid="invitation-exact-location">
                 <fa-icon [icon]="icons['mapPin']" aria-hidden="true" />
@@ -53,6 +57,17 @@ import { InvitationEventView } from '../invitation.models';
               </p>
             }
           </div>
+          @if (hasCoordinates()) {
+            <app-location-map
+              [latitude]="event().latitude"
+              [longitude]="event().longitude"
+              [placeName]="event().placeName || event().venue || fullAddress()"
+              [interactive]="false"
+              [tapToActivate]="true"
+              activateLabel="Toque para ver o mapa"
+              ariaLabel="Mapa da localização do evento"
+            />
+          }
           <div class="flex flex-col gap-2 sm:flex-row">
             <button
               type="button"

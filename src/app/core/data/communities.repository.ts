@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { ApiClient } from '../api/api-client';
+import { CreateEventRequest } from '../api/api.models';
 
 /** Bloco 11 — contrato da API de comunidades (`/host/communities`). */
 export type CommunityRole = 'owner' | 'manager' | 'member';
@@ -75,6 +76,41 @@ export interface ApiTransfer {
   created_at: string;
 }
 
+/** Sugestão de evento enviada por um membro (`/host/communities/:id/event-suggestions`). */
+export interface ApiEventSuggestion {
+  id: string;
+  host_id: string;
+  display_name: string | null;
+  avatar_url: string | null;
+  title: string;
+  message: string | null;
+  status: 'pending' | 'approved' | 'rejected' | 'cancelled';
+  event_id: string | null;
+  decided_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Entrada do feed de atividade da comunidade (evento partilhado por um membro). */
+export interface ApiCommunityActivity {
+  id: string;
+  community_id: string;
+  host_id: string;
+  host_name: string;
+  host_avatar_url: string | null;
+  event_id: string;
+  event_title: string;
+  event_slug: string;
+  created_at: string;
+}
+
+/** Corpo da sugestão: o payload completo de criação de evento + mensagem opcional. */
+export interface EventSuggestionInput {
+  event: CreateEventRequest['event'] & { community_id: string };
+  guests: CreateEventRequest['guests'];
+  message?: string;
+}
+
 export interface CommunityPermissions {
   canEdit: boolean;
   canDelete: boolean;
@@ -88,6 +124,10 @@ export interface CommunityPermissions {
   canViewAllReferrals: boolean;
   canTransfer: boolean;
   canRequestToJoin: boolean;
+  /** Qualquer membro ativo (incluindo staff) pode sugerir um evento. */
+  canSuggestEvent?: boolean;
+  /** Responsável/gestor pode aprovar ou recusar sugestões. */
+  canDecideEventSuggestions?: boolean;
   isMember: boolean;
   isInvited: boolean;
 }
@@ -100,6 +140,7 @@ export interface ApiCommunityDetail {
   teams: ApiCommunityTeam[];
   members: ApiCommunityMember[];
   pending_requests: number;
+  pending_event_suggestions?: number;
   transfer: ApiTransfer | null;
 }
 
@@ -150,6 +191,28 @@ export class CommunitiesRepository {
 
   update(id: string, input: Partial<CommunityInput>): Promise<ApiCommunity> {
     return this.api.patch<ApiCommunity>(this.path(id), input);
+  }
+
+  /** Envia o avatar em `multipart/form-data` (campo `avatar`). */
+  uploadAvatar(id: string, file: File): Promise<ApiCommunity> {
+    const body = new FormData();
+    body.append('avatar', file);
+    return this.api.postForm<ApiCommunity>(this.path(id, '/avatar/upload'), body);
+  }
+
+  removeAvatar(id: string): Promise<ApiCommunity> {
+    return this.api.deleteWithData<ApiCommunity>(this.path(id, '/avatar'));
+  }
+
+  /** Envia a capa em `multipart/form-data` (campo `cover`). */
+  uploadCover(id: string, file: File): Promise<ApiCommunity> {
+    const body = new FormData();
+    body.append('cover', file);
+    return this.api.postForm<ApiCommunity>(this.path(id, '/cover/upload'), body);
+  }
+
+  removeCover(id: string): Promise<ApiCommunity> {
+    return this.api.deleteWithData<ApiCommunity>(this.path(id, '/cover'));
   }
 
   remove(id: string, confirmName: string): Promise<void> {
@@ -213,5 +276,46 @@ export class CommunitiesRepository {
 
   referrals(id: string): Promise<ApiReferral[]> {
     return this.api.get<ApiReferral[]>(this.path(id, '/referrals'));
+  }
+
+  /** Sugestões pendentes para revisão (staff). */
+  eventSuggestions(id: string): Promise<ApiEventSuggestion[]> {
+    return this.api.get<ApiEventSuggestion[]>(this.path(id, '/event-suggestions'));
+  }
+
+  /** Sugestões enviadas pelo próprio membro. */
+  myEventSuggestions(id: string): Promise<ApiEventSuggestion[]> {
+    return this.api.get<ApiEventSuggestion[]>(this.path(id, '/event-suggestions/mine'));
+  }
+
+  /** Envia um evento completo para aprovação; nunca cria o evento diretamente. */
+  suggestEvent(id: string, body: EventSuggestionInput): Promise<ApiEventSuggestion> {
+    return this.api.post<ApiEventSuggestion>(this.path(id, '/event-suggestions'), body);
+  }
+
+  decideEventSuggestion(
+    id: string,
+    suggestionId: string,
+    decision: 'approve' | 'reject',
+  ): Promise<ApiEventSuggestion> {
+    return this.api.post<ApiEventSuggestion>(
+      this.path(id, `/event-suggestions/${encodeURIComponent(suggestionId)}/decision`),
+      { decision },
+    );
+  }
+
+  /** O autor cancela a própria sugestão enquanto estiver pendente. */
+  cancelEventSuggestion(id: string, suggestionId: string): Promise<void> {
+    return this.api.delete(this.path(id, `/event-suggestions/${encodeURIComponent(suggestionId)}`));
+  }
+
+  /** Regista no feed da comunidade um evento público partilhado pelo membro. */
+  shareEventActivity(id: string, eventId: string): Promise<ApiCommunityActivity> {
+    return this.api.post<ApiCommunityActivity>(this.path(id, '/activity'), { event_id: eventId });
+  }
+
+  /** Atividade recente (apenas para membros ativos). */
+  communityActivity(id: string): Promise<ApiCommunityActivity[]> {
+    return this.api.get<ApiCommunityActivity[]>(this.path(id, '/activity'));
   }
 }

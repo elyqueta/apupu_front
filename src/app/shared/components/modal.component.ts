@@ -184,7 +184,7 @@ export class ModalComponent {
 
   /** Com teclado aberto, centra o campo activo no scroll do painel. */
   protected onFocusIn(event: FocusEvent): void {
-    if (!isPlatformBrowser(this.platformId)) {
+    if (!isPlatformBrowser(this.platformId) || openModals.at(-1) !== this) {
       return;
     }
     const target = event.target;
@@ -193,7 +193,11 @@ export class ModalComponent {
       target.matches('input, select, textarea, [contenteditable="true"]') &&
       typeof target.scrollIntoView === 'function'
     ) {
-      target.scrollIntoView({ block: 'center' });
+      try {
+        target.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+      } catch {
+        // Browsers antigos ou elementos desligados não devem bloquear o modal.
+      }
     }
   }
 
@@ -286,15 +290,19 @@ export class ModalComponent {
     if (openModals.length === 0 && isPlatformBrowser(this.platformId)) {
       this.document.body.style.overflow = previousBodyOverflow;
     }
-    if (restore && this.restoreFocus) {
-      const target = this.restoreFocus;
+    const target = this.restoreFocus;
+    this.restoreFocus = null;
+    if (restore && target) {
       this.scheduleFocus(() => {
-        if (target.isConnected) {
-          target.focus();
+        try {
+          if (target.isConnected) {
+            target.focus({ preventScroll: true });
+          }
+        } catch {
+          // O elemento pode ter sido removido entre o fecho e o restauro.
         }
       });
     }
-    this.restoreFocus = null;
   }
 
   private scheduleFocus(callback: () => void): void {

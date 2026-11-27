@@ -111,41 +111,45 @@ type Scope = 'mine' | 'discover';
           }
         </div>
       } @else {
-        <ul class="grid auto-rows-fr grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+        <ul class="flex flex-col overflow-hidden rounded-3xl border border-line bg-surface-raised/20" data-testid="institutions-list">
           @for (institution of items(); track institution.id) {
-            <li class="h-full min-w-0">
-              <article class="flex h-full flex-col overflow-hidden rounded-4xl border border-line bg-surface shadow-card transition hover:border-brand/30" [attr.data-testid]="'institution-card-' + institution.slug">
-                <div class="relative h-24 shrink-0 bg-gradient-to-br from-amber/30 via-surface-raised to-surface">
-                  @if (institution.cover_url) {
-                    <img [src]="institution.cover_url" alt="" class="size-full object-cover" loading="lazy" />
+            <li class="min-w-0 border-b border-line last:border-b-0">
+              <a
+                [routerLink]="['/instituicoes', institution.slug]"
+                class="group flex min-h-[5.5rem] w-full items-center gap-3 px-3 py-3 text-left transition hover:bg-surface-raised/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand/60 sm:px-4"
+                [attr.data-testid]="'institution-card-' + institution.slug"
+                [attr.aria-label]="i18n.t('block13.list.open') + ': ' + institution.name"
+              >
+                <span class="relative grid size-12 shrink-0 place-items-center overflow-hidden rounded-full border border-brand/25 bg-brand/15 text-sm font-semibold text-brand-strong">
+                  @if (institution.avatar_url) {
+                    <img [src]="institution.avatar_url" alt="" class="size-full object-cover" loading="lazy" />
+                  } @else {
+                    {{ initials(institution.name) }}
                   }
-                  <span class="absolute -bottom-6 left-4 grid size-12 place-items-center overflow-hidden rounded-2xl border-2 border-surface bg-surface-raised text-lg text-brand-strong shadow-card">
-                    @if (institution.avatar_url) {
-                      <img [src]="institution.avatar_url" alt="" class="size-full object-cover" />
-                    } @else {
-                      <fa-icon [icon]="icons['bank']" aria-hidden="true" />
-                    }
-                  </span>
-                </div>
-                <div class="flex flex-1 flex-col gap-3 p-4 pt-8">
-                  <div class="flex flex-wrap items-start justify-between gap-2">
-                    <h3 class="min-w-0 flex-1 line-clamp-2 font-display text-base font-semibold text-ink" [title]="institution.name">{{ institution.name }}</h3>
+                </span>
+                <div class="min-w-0 flex-1">
+                  <div class="flex flex-wrap items-center gap-2">
+                    <p class="truncate text-sm font-semibold text-ink" [title]="institution.name">{{ institution.name }}</p>
                     <span class="ui-chip shrink-0">
                       <fa-icon [icon]="icons[institution.visibility === 'public' ? 'globe' : 'lock']" aria-hidden="true" />
                       {{ i18n.t(institution.visibility === 'public' ? 'block13.form.public' : 'block13.form.private') }}
                     </span>
+                    @if (institution.is_creator) {
+                      <span class="rounded-full border border-line bg-surface px-2 py-0.5 text-[10px] font-semibold text-brand-strong">
+                        {{ i18n.t('block13.list.creator') }}
+                      </span>
+                    }
                   </div>
-                  <p class="line-clamp-2 min-h-10 text-xs leading-5 text-muted">{{ institution.description || '' }}</p>
-                  <p class="text-xs text-muted">{{ i18n.t('block13.list.communities', { count: institution.community_count }) }}</p>
-                  <div class="mt-auto flex flex-wrap items-center justify-between gap-2 border-t border-line pt-3">
-                    <span class="text-xs font-semibold text-brand-strong">{{ institution.is_creator ? i18n.t('block13.list.creator') : '' }}</span>
-                    <a [routerLink]="['/instituicoes', institution.slug]" class="ui-btn-secondary" [attr.aria-label]="i18n.t('block13.list.open') + ': ' + institution.name">
-                      {{ i18n.t('block13.list.open') }}
-                      <fa-icon [icon]="icons['chevronRight']" aria-hidden="true" />
-                    </a>
-                  </div>
+                  @if (institution.description) {
+                    <p class="mt-0.5 truncate text-xs text-muted" [title]="institution.description">{{ institution.description }}</p>
+                  }
+                  <p class="mt-1 inline-flex items-center gap-1.5 text-[11px] text-muted/80">
+                    <fa-icon [icon]="icons['globe']" class="text-[10px] text-brand-strong" aria-hidden="true" />
+                    {{ i18n.t('block13.list.communities', { count: institution.community_count }) }}
+                  </p>
                 </div>
-              </article>
+                <fa-icon [icon]="icons['chevronRight']" class="shrink-0 text-xs text-muted transition group-hover:translate-x-0.5 group-hover:text-brand-strong" aria-hidden="true" />
+              </a>
             </li>
           }
         </ul>
@@ -214,6 +218,15 @@ export class InstitutionsPage {
     this.query.set(value);
     if (this.searchTimer) clearTimeout(this.searchTimer);
     this.searchTimer = setTimeout(() => void this.load(), 300);
+  }
+
+  protected initials(name: string): string {
+    return name
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase() ?? '')
+      .join('');
   }
 
   protected async respond(invite: ApiInstitutionRequest, accept: boolean): Promise<void> {

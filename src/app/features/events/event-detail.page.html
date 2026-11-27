@@ -185,9 +185,9 @@
     </div>
   </app-modal>
 
-  <app-map-picker-dialog
+  <app-location-picker-dialog
     [open]="mapPickerOpen()"
-    [initial]="hasExactLocation() ? { latitude: settingsForm.controls.latitude.value!, longitude: settingsForm.controls.longitude.value! } : null"
+    [initial]="hasExactLocation() ? { latitude: settingsForm.controls.latitude.value!, longitude: settingsForm.controls.longitude.value!, placeName: settingsForm.controls.placeLabel.value || null } : null"
     (picked)="onMapPicked($event)"
     (closed)="closeMapPicker()"
   />

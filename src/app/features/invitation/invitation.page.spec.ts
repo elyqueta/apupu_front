@@ -51,9 +51,12 @@ describe('InvitationPage', () => {
   let http: HttpTestingController;
 
   afterEach(() => {
-    http?.verify();
-    TestBed.resetTestingModule();
-    vi.restoreAllMocks();
+    try {
+      http?.verify();
+    } finally {
+      TestBed.resetTestingModule();
+      vi.restoreAllMocks();
+    }
   });
 
   it('envia a mensagem opcional no RSVP e fecha o modal de confirmação', async () => {
@@ -162,10 +165,13 @@ describe('InvitationPage', () => {
     (native.querySelector('[data-testid="invitation-welcome-continue"]') as HTMLButtonElement).click();
     await settle(context.fixture);
 
-    expect(native.querySelector('[data-testid="invitation-video"] iframe')).toBeNull();
+    // O iframe vive no modal do componente de vídeo, não dentro da secção
+    // com data-testid="invitation-video" (que só contém a miniatura/play).
+    expect(native.querySelector('[data-testid="invitation-video"]')).not.toBeNull();
+    expect(native.querySelector('app-invitation-video iframe')).toBeNull();
     (native.querySelector('[data-testid="invitation-video-play"]') as HTMLButtonElement).click();
     await settle(context.fixture);
-    const iframe = native.querySelector('[data-testid="invitation-video"] iframe');
+    const iframe = native.querySelector('app-invitation-video iframe');
     expect(iframe?.getAttribute('src')).toContain('https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ');
     expect(native.querySelector('[data-testid="invitation-organizers"]')?.textContent).toContain('Ana');
   });

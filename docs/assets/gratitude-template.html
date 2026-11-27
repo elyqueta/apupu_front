@@ -63,6 +63,13 @@ button{min-height:44px;padding:0 16px;border-radius:12px;border:0;background:#1f
 button.sec{background:transparent;border:1px solid var(--line);color:var(--ink)}
 :focus-visible{outline:3px solid #d4a017;outline-offset:2px}
 @media (max-width:420px){.grid{grid-template-columns:1fr}}
+@page{size:8in 10in;margin:0}
+@media print{
+ html,body{margin:0!important;padding:0!important;background:#fff!important}
+ .wrap{max-width:none;margin:0;display:block;gap:0}
+ .panel{display:none!important}
+ .poster{width:100%!important;height:auto!important;aspect-ratio:4/5;border-radius:0;box-shadow:none;break-inside:avoid;page-break-inside:avoid}
+}
 </style>
 </head>
 <body>
@@ -102,7 +109,7 @@ button.sec{background:transparent;border:1px solid var(--line);color:var(--ink)}
   <div class="org" id="o-org">Igreja Cristã Reino-Church</div>
   <div class="sub" id="o-sub">Festival de Adolescentes</div>
 
-  <svg class="title" id="titleSvg" viewBox="0 0 1000 300" preserveAspectRatio="none" role="img" aria-label="Título">
+  <svg class="title" id="titleSvg" viewBox="0 0 1000 300" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Título">
     <text id="o-title" x="0" y="0" font-family="Anton,'Arial Narrow',Impact,sans-serif" font-size="300" fill="url(#afro)" stroke="#161616" stroke-width="2.2" vector-effect="non-scaling-stroke" paint-order="stroke fill" stroke-linejoin="round">GRATITUDE</text>
   </svg>
 
@@ -157,23 +164,41 @@ button.sec{background:transparent;border:1px solid var(--line);color:var(--ink)}
 (function(){
   var $=function(s){return document.querySelector(s)};
   var map={org:'#o-org',sub:'#o-sub',year:'#o-year',date:'#o-date',time:'#o-time',qrlab:'#o-qrlab'};
+  /* Same constants/algorithm as the Angular poster (PDF base is 195, screen 300). */
+  var TITLE_VIEWBOX_WIDTH=1000,TITLE_VIEWBOX_HEIGHT=300,TITLE_BAND_WIDTH=910,TITLE_BAND_HEIGHT=300,
+      TITLE_BASE_FONT_SIZE=300,TITLE_MIN_FONT_SIZE=90,TITLE_FONT_STEP=10,TITLE_PAD=4,
+      TITLE_FONT_STACK='Anton,"Arial Narrow",Impact,sans-serif';
   function fitTitle(t){
     var el=$('#o-title'),svg=$('#titleSvg');
     var txt=(t||' ').toUpperCase();
     el.textContent=txt;
     var run=function(){
       var c=document.createElement('canvas').getContext('2d');
-      c.font='300px Anton, "Arial Narrow", Impact, sans-serif';
-      var m=c.measureText(txt);
-      var w=m.actualBoundingBoxLeft+m.actualBoundingBoxRight,h=m.actualBoundingBoxAscent+m.actualBoundingBoxDescent;
+      if(!c)return;
+      var fontFor=function(s){return s+'px '+TITLE_FONT_STACK};
+      var size=TITLE_BASE_FONT_SIZE,m,w,h;
+      while(size>TITLE_MIN_FONT_SIZE){
+        c.font=fontFor(size);m=c.measureText(txt);
+        w=m.actualBoundingBoxLeft+m.actualBoundingBoxRight;
+        h=m.actualBoundingBoxAscent+m.actualBoundingBoxDescent;
+        if(w>0&&h>0&&w<=TITLE_BAND_WIDTH&&h<=TITLE_BAND_HEIGHT)break;
+        size-=TITLE_FONT_STEP;
+      }
+      c.font=fontFor(size);m=c.measureText(txt);
+      var left=m.actualBoundingBoxLeft,right=m.actualBoundingBoxRight,
+          asc=m.actualBoundingBoxAscent,desc=m.actualBoundingBoxDescent;
+      w=left+right;h=asc+desc;
       if(!w||!h)return;
-      var p=4;
-      el.setAttribute('x',m.actualBoundingBoxLeft+p);
-      el.setAttribute('y',m.actualBoundingBoxAscent+p);
-      svg.setAttribute('viewBox','0 0 '+(w+2*p)+' '+(h+2*p));
+      /* Mesma regra do PDF: scale = VIEWBOX_WIDTH / vw; manter dentro da faixa de 91%. */
+      var vw=Math.max(TITLE_VIEWBOX_WIDTH,Math.ceil(w*TITLE_VIEWBOX_WIDTH/TITLE_BAND_WIDTH)+TITLE_PAD);
+      el.setAttribute('font-size',String(size));
+      el.setAttribute('x',String(left+(vw-w)/2));
+      el.setAttribute('y',String((TITLE_VIEWBOX_HEIGHT-h)/2+asc));
+      svg.setAttribute('viewBox','0 0 '+vw+' '+TITLE_VIEWBOX_HEIGHT);
+      svg.setAttribute('preserveAspectRatio','xMidYMid meet');
     };
     run();
-    if(document.fonts&&document.fonts.load)document.fonts.load('300px Anton').then(run);
+    if(document.fonts&&document.fonts.load)document.fonts.load(TITLE_BASE_FONT_SIZE+'px Anton').then(run);
   }
   function qr(url){
     var h=$('#qr');

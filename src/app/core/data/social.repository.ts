@@ -16,6 +16,7 @@ export interface FeedEvent {
   location: string | null;
   online: boolean;
   cover_url: string | null;
+  youtube_video_id?: string | null;
   template: { id: string | null; palette: string; mode: string };
   host_name: string;
   host_avatar_url?: string | null;

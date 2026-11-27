@@ -17,12 +17,10 @@ import { HELP_DOCS } from './help-docs';
   template: `
     <div class="mx-auto flex min-h-dvh max-w-6xl flex-col gap-4 px-4 pb-16 pt-4 sm:px-6">
       <header class="flex items-center justify-between gap-3">
-        <div class="flex items-center gap-1">
-          <a routerLink="/" class="ui-icon-button" [attr.aria-label]="i18n.t('block12.feed.title')">
-            <fa-icon [icon]="icons['chevronLeft']" aria-hidden="true" />
-          </a>
-          <app-brand />
-        </div>
+        <a routerLink="/" class="ui-icon-button" [attr.aria-label]="i18n.t('block12.feed.title')">
+          <fa-icon [icon]="icons['chevronLeft']" aria-hidden="true" />
+        </a>
+        <app-brand [height]="44" />
       </header>
       <section>
         <h1 class="font-display text-3xl font-semibold tracking-tight text-ink">{{ i18n.t('block12.help.title') }}</h1>
@@ -46,13 +44,29 @@ import { HELP_DOCS } from './help-docs';
           <div class="sticky top-6 flex flex-col gap-1">
             <p class="mb-1 text-xs font-semibold uppercase tracking-[0.16em] text-muted">{{ i18n.t('block12.help.contents') }}</p>
             @for (doc of docs(); track doc.id) {
-              <a [href]="'#' + doc.id" class="inline-flex min-h-11 items-center rounded-xl px-3 text-sm text-muted hover:bg-surface-raised hover:text-ink">{{ doc.title }}</a>
+              <a
+                [href]="'#' + doc.id"
+                [class]="
+                  activeId() === doc.id
+                    ? 'inline-flex min-h-11 items-center rounded-xl bg-brand/10 px-3 text-sm font-semibold text-brand-strong'
+                    : 'inline-flex min-h-11 items-center rounded-xl px-3 text-sm text-muted transition hover:bg-surface-raised hover:text-ink'
+                "
+                (click)="goTo(doc.id, $event)"
+              >
+                {{ doc.title }}
+              </a>
             }
           </div>
         </nav>
         <div class="flex flex-col gap-3">
           @for (doc of docs(); track doc.id) {
-            <details [id]="doc.id" class="group rounded-3xl border border-line bg-surface shadow-card" [open]="openAll()" [attr.data-testid]="'help-doc-' + doc.id">
+            <details
+              [id]="doc.id"
+              class="group scroll-mt-24 rounded-3xl border border-line bg-surface shadow-card"
+              [open]="isOpen(doc.id)"
+              (toggle)="onToggle(doc.id, $event)"
+              [attr.data-testid]="'help-doc-' + doc.id"
+            >
               <summary class="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 font-display text-base font-semibold text-ink">
                 {{ doc.title }}
                 <fa-icon [icon]="icons['chevronRight']" class="text-muted transition group-open:rotate-90" aria-hidden="true" />
@@ -99,12 +113,37 @@ export class HelpPage {
   protected readonly i18n = inject(I18nService);
   protected readonly icons = ICONS;
   protected readonly query = signal('');
+  protected readonly activeId = signal('');
+  private readonly manualOpen = signal<ReadonlySet<string>>(new Set());
   protected readonly docs = computed(() => {
     const term = this.query().trim().toLowerCase();
     return term ? HELP_DOCS.filter((doc) => doc.text.includes(term)) : HELP_DOCS;
   });
   /** Ao pesquisar, os resultados abrem para mostrar o texto. */
   protected readonly openAll = computed(() => this.query().trim().length > 1);
+
+  protected isOpen(id: string): boolean {
+    return this.openAll() || this.manualOpen().has(id);
+  }
+
+  protected onToggle(id: string, event: Event): void {
+    const open = (event.target as HTMLDetailsElement).open;
+    this.manualOpen.update((ids) => {
+      const next = new Set(ids);
+      if (open) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  }
+
+  protected goTo(id: string, event: Event): void {
+    event.preventDefault();
+    this.activeId.set(id);
+    this.manualOpen.update((ids) => new Set(ids).add(id));
+    requestAnimationFrame(() => {
+      document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }
 
   constructor() {
     inject(Title).setTitle(this.i18n.t('route.help'));

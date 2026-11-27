@@ -7,6 +7,5 @@ export const environment = {
    * associado a apupu-front.vercel.app e é enviado nas chamadas `/api/v1`.
    */
   oauthBaseUrl: '',
-  /** Google Maps Platform (Maps JavaScript API + Geocoding API). */
-  googleMapsApiKey: 'AIzaSyCemWsnwPtBQuJQEVVynOeFRxD_hzlG7Nc',
+  mapStyleUrl: 'https://tiles.openfreemap.org/styles/liberty',
 };

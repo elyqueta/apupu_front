@@ -1,5 +1,7 @@
 import { Component, computed, effect, inject, input, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { tap } from 'rxjs';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { toApiError } from '../../core/api/api-error';
 import { I18nService } from '../../core/i18n/i18n.service';
@@ -45,7 +47,21 @@ type AnsweredFilter = NonNullable<MessagesQuery['answered']>;
         </label>
       }
 
-      <form class="flex flex-col gap-3" [formGroup]="filters" (ngSubmit)="applyFilters()">
+      <div class="flex flex-col gap-3" [formGroup]="filters">
+        <label class="group relative block">
+          <span class="sr-only">{{ i18n.t('messages.searchPlaceholder') }}</span>
+          <fa-icon
+            [icon]="icons['search']"
+            class="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-sm text-muted transition group-focus-within:text-brand-strong"
+            aria-hidden="true"
+          />
+          <input
+            type="search"
+            formControlName="q"
+            class="h-12 w-full rounded-2xl border border-line bg-surface-raised/80 pl-11 pr-4 text-sm text-ink shadow-sm outline-none backdrop-blur-xl transition placeholder:text-muted/80 focus:border-brand/50 focus:ring-2 focus:ring-brand/15"
+            [placeholder]="i18n.t('messages.searchPlaceholder')"
+          />
+        </label>
         <app-filter-panel
           [label]="i18n.t('messages.filters')"
           controlsId="messages-filters"
@@ -53,41 +69,28 @@ type AnsweredFilter = NonNullable<MessagesQuery['answered']>;
           [activeCount]="activeFilterCount()"
           (expandedChange)="filtersOpen.set($event)"
         >
-          <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
-        <label class="sm:col-span-2 lg:col-span-1">
-          <span class="sr-only">{{ i18n.t('messages.searchPlaceholder') }}</span>
-          <input
-            type="search"
-            formControlName="q"
-            class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink outline-none focus:border-brand/50"
-            [placeholder]="i18n.t('messages.searchPlaceholder')"
-          />
-        </label>
-        <select formControlName="read" class="h-11 rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink" [attr.aria-label]="i18n.t('messages.readAll')">
-          <option value="all">{{ i18n.t('messages.readAll') }}</option>
-          <option value="unread">{{ i18n.t('messages.readUnread') }}</option>
-          <option value="read">{{ i18n.t('messages.readRead') }}</option>
-        </select>
-        <select formControlName="answered" class="h-11 rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink" [attr.aria-label]="i18n.t('messages.answeredAll')">
-          <option value="all">{{ i18n.t('messages.answeredAll') }}</option>
-          <option value="unanswered">{{ i18n.t('messages.answeredNo') }}</option>
-          <option value="answered">{{ i18n.t('messages.answeredYes') }}</option>
-        </select>
-        <label>
-          <span class="sr-only">{{ i18n.t('messages.from') }}</span>
-          <input type="date" formControlName="from" class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink" />
-        </label>
-        <label>
-          <span class="sr-only">{{ i18n.t('messages.to') }}</span>
-          <input type="date" formControlName="to" class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink" />
-        </label>
-            <button type="submit" class="ui-btn-secondary sm:col-span-2 lg:col-span-5">
-              <fa-icon [icon]="icons['search']" aria-hidden="true" />
-              {{ i18n.t('common.search') }}
-            </button>
+          <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+            <select formControlName="read" class="h-11 rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink" [attr.aria-label]="i18n.t('messages.readAll')">
+              <option value="all">{{ i18n.t('messages.readAll') }}</option>
+              <option value="unread">{{ i18n.t('messages.readUnread') }}</option>
+              <option value="read">{{ i18n.t('messages.readRead') }}</option>
+            </select>
+            <select formControlName="answered" class="h-11 rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink" [attr.aria-label]="i18n.t('messages.answeredAll')">
+              <option value="all">{{ i18n.t('messages.answeredAll') }}</option>
+              <option value="unanswered">{{ i18n.t('messages.answeredNo') }}</option>
+              <option value="answered">{{ i18n.t('messages.answeredYes') }}</option>
+            </select>
+            <label>
+              <span class="sr-only">{{ i18n.t('messages.from') }}</span>
+              <input type="date" formControlName="from" class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink" />
+            </label>
+            <label>
+              <span class="sr-only">{{ i18n.t('messages.to') }}</span>
+              <input type="date" formControlName="to" class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink" />
+            </label>
           </div>
         </app-filter-panel>
-      </form>
+      </div>
 
       @if (loading()) {
         <p role="status" class="rounded-2xl border border-line bg-surface p-6 text-center text-xs text-muted">{{ i18n.t('common.loading') }}</p>
@@ -229,6 +232,12 @@ export class MessagesInboxComponent {
     to: '',
   });
 
+  /** Pesquisa instantânea: qualquer alteração nos filtros dispara o reload. */
+  private readonly filterValues = toSignal(
+    this.filters.valueChanges.pipe(tap(() => this.page.set(1))),
+    { initialValue: this.filters.getRawValue() },
+  );
+
   protected readonly answerForm = this.fb.nonNullable.group({
     answer: ['', [Validators.required]],
   });
@@ -241,14 +250,10 @@ export class MessagesInboxComponent {
 
     effect(() => {
       const eventId = this.fixedEventId() || this.selectedEventId();
-      const q = this.filters.controls.q.value;
-      const read = this.filters.controls.read.value;
-      const answered = this.filters.controls.answered.value;
-      const from = this.filters.controls.from.value;
-      const to = this.filters.controls.to.value;
+      const values = this.filterValues();
       const page = this.page();
       // A leitura das signals acima regista a dependência do efeito.
-      void [eventId, q, read, answered, from, to, page];
+      void [eventId, values, page];
       void this.reload();
     });
   }

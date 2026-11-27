@@ -1,10 +1,15 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { API_BASE_URL } from '../../core/api/api-config';
 import { ApiTemplate } from '../../core/api/api.models';
+import { SYSTEM_TEMPLATES } from '../../core/data/system-templates';
 import { TemplatesRepository } from '../../core/data/templates.repository';
+import { EventTemplate } from '../../core/models/models';
+import { normalizeManifest } from '../../core/models/template-manifest';
+import { TemplateRenderData } from '../../shared/components/template-renderer.component';
 import { TemplatesPage } from './templates.page';
 
 const BASE = 'http://localhost:3000/api/v1';
@@ -36,6 +41,10 @@ const TEMPLATES: ApiTemplate[] = [
   makeTemplate({ id: 't2', slug: 'minimal', name: 'Minimal', kind: 'user' }),
 ];
 
+/** Destino mínimo das navegações "/templates/:slug/editar" destes testes. */
+@Component({ template: '' })
+class TemplateEditStubPage {}
+
 async function settle(fixture: ComponentFixture<TemplatesPage>): Promise<void> {
   for (let pass = 0; pass < 3; pass += 1) {
     await fixture.whenStable();
@@ -53,7 +62,7 @@ describe('TemplatesPage', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        provideRouter([]),
+        provideRouter([{ path: 'templates/:slug/editar', component: TemplateEditStubPage }]),
         { provide: API_BASE_URL, useValue: BASE },
       ],
     }).compileComponents();
@@ -168,7 +177,89 @@ describe('TemplatesPage', () => {
     expect(gridAfter!.className).toContain('sm:grid-cols-2');
     expect(gridAfter!.className).toContain('lg:grid-cols-3');
     expect(gridAfter!.className).toContain('xl:grid-cols-4');
-    expect(native.querySelectorAll('article.h-full').length).toBe(TEMPLATES.length + extra.length);
-    expect(native.querySelectorAll('button.aspect-\\[4\\/3\\]').length).toBe(TEMPLATES.length + extra.length);
+    const expected = TEMPLATES.length + extra.length + SYSTEM_TEMPLATES.length;
+    expect(native.querySelectorAll('article.h-full').length).toBe(expected);
+    expect(native.querySelectorAll('button.aspect-\\[4\\/3\\]').length).toBe(expected);
+  });
+
+  it('mostra os 19 templates de sistema e deduplica por slug', async () => {
+    await flushTemplates();
+    const native = fixture.nativeElement as HTMLElement;
+    for (const template of SYSTEM_TEMPLATES) {
+      expect(native.querySelector(`[data-testid="template-use-${template.slug}"]`)).not.toBeNull();
+    }
+
+    const remoteDuplicate = makeTemplate({
+      id: 'remote-t01',
+      slug: 't01-papel-creme',
+      name: 'Cópia remota',
+    });
+    const items = [...TEMPLATES, remoteDuplicate];
+    const repo = TestBed.inject(TemplatesRepository);
+    const load = repo.load({ force: true });
+    http.expectOne(`${BASE}/templates`).flush({ data: items });
+    await load;
+    await settle(fixture);
+
+    expect(native.querySelectorAll('[data-testid="template-use-t01-papel-creme"]').length).toBe(1);
+    expect(native.querySelector('button[aria-label*="Papel creme com fio"]')).not.toBeNull();
+    expect(native.querySelector('button[aria-label*="Cópia remota"]')).toBeNull();
+    expect(native.querySelectorAll('article.h-full').length).toBe(items.length + SYSTEM_TEMPLATES.length - 1);
+  });
+
+  it('usa previewData e orientação do manifesto nos cartões', async () => {
+    await flushTemplates();
+    const native = fixture.nativeElement as HTMLElement;
+    const first = SYSTEM_TEMPLATES.find((template) => template.slug === 't01-papel-creme')!;
+    const page = fixture.componentInstance as unknown as {
+      sampleData: (template: EventTemplate) => TemplateRenderData;
+      orientationClass: (template: EventTemplate) => string;
+    };
+
+    const data = page.sampleData(first);
+    expect(data.title).toBe('Ana & João');
+    expect(data.hostName).toBe('As famílias');
+    expect(data.startsAt).toBe('2026-06-14T16:00:00.000Z');
+    expect(data.city).toBe('Luanda');
+    expect(data.venue).toBe('Quinta das Palmeiras');
+    expect(data.message).toContain('Queridos familiares e amigos');
+    expect(data.dressCode).toBe('Traje elegante');
+    expect(data.templateSlug).toBe('t01-papel-creme');
+    expect(data.type).toBe('wedding');
+    expect(page.orientationClass(first)).toBe('tpl-orientation-strip');
+
+    expect(native.querySelector('[data-orientation="strip"]')).not.toBeNull();
+    expect(native.querySelector('[data-orientation="story"]')).not.toBeNull();
+    expect(native.querySelector('[data-orientation="landscape"]')).not.toBeNull();
+    expect(native.querySelector('.tpl-orientation-strip')).not.toBeNull();
+  });
+
+  it('abre a pré-visualização com o exemplo e a orientação do template', async () => {
+    await flushTemplates();
+    const native = fixture.nativeElement as HTMLElement;
+    const thumb = native.querySelector<HTMLButtonElement>('button[aria-label*="Papel creme com fio"]');
+    expect(thumb).not.toBeNull();
+    thumb!.click();
+    await settle(fixture);
+
+    const modal = document.querySelector<HTMLElement>('[data-testid="app-modal"]');
+    expect(modal).not.toBeNull();
+    expect(modal!.textContent).toContain('Ana & João');
+    expect(modal!.querySelector('[data-orientation="strip"]')).not.toBeNull();
+    expect(modal!.querySelector('.tpl-preview.tpl-orientation-strip')).not.toBeNull();
+  });
+
+  it('normaliza orientation e previewData sem aceitar valores arbitrários', () => {
+    const base = makeTemplate({ id: 'x', slug: 'x', name: 'X' }).manifest as Record<string, unknown>;
+    const manifest = normalizeManifest({
+      ...base,
+      orientation: 'story',
+      previewData: { title: 'Ana & João', total: 2, nested: { value: 1 } },
+    });
+    expect(manifest.orientation).toBe('story');
+    expect(manifest.previewData?.['title']).toBe('Ana & João');
+    expect(manifest.previewData?.['total']).toBeUndefined();
+    expect(manifest.previewData?.['nested']).toBeUndefined();
+    expect(normalizeManifest({ ...base, orientation: 'weird' }).orientation).toBeUndefined();
   });
 });

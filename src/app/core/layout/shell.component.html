@@ -86,7 +86,9 @@
       aria-label="Navegação principal"
     >
       <div
-        class="flex h-full flex-col rounded-4xl border border-line bg-surface/85 p-4 shadow-card backdrop-blur-2xl"
+        class="flex h-full flex-col rounded-4xl border border-line bg-surface/85 shadow-card backdrop-blur-2xl"
+        [class.p-2]="sidebarCollapsed()"
+        [class.p-4]="!sidebarCollapsed()"
       >
         <div class="flex items-center gap-3" [class.justify-between]="!sidebarCollapsed()" [class.justify-center]="sidebarCollapsed()" [class.px-3]="!sidebarCollapsed()">
           @if (sidebarCollapsed()) {
@@ -112,7 +114,12 @@
           </button>
         </div>
 
-        <nav class="no-scrollbar mt-6 flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto pr-0.5">
+        <nav
+          class="no-scrollbar mt-6 flex min-h-0 flex-1 flex-col overflow-y-auto"
+          [class.gap-2]="sidebarCollapsed()"
+          [class.gap-1]="!sidebarCollapsed()"
+          [class.pr-0.5]="!sidebarCollapsed()"
+        >
           <p
             class="mb-2 px-2 text-xs font-semibold uppercase tracking-[0.24em] text-muted/80"
             [class.hidden]="sidebarCollapsed()"
@@ -126,24 +133,34 @@
               routerLinkActive
               #rla="routerLinkActive"
               [routerLinkActiveOptions]="{ exact: item.exact }"
-              [attr.title]="sidebarCollapsed() ? null : i18n.t(item.labelKey)"
+              [attr.aria-label]="sidebarCollapsed() ? i18n.t(item.labelKey) : null"
+              [attr.title]="sidebarCollapsed() ? i18n.t(item.labelKey) : null"
               [attr.data-tooltip]="sidebarCollapsed() ? i18n.t(item.labelKey) : null"
               [class]="
-                (rla.isActive
-                  ? 'group flex items-center gap-3 rounded-2xl border border-brand/30 bg-secondary-soft py-2.5 text-brand-strong'
-                  : 'group flex items-center gap-3 rounded-2xl border border-transparent py-2.5 text-muted transition hover:border-line hover:bg-surface-raised/60 hover:text-ink') +
-                (sidebarCollapsed() ? ' justify-center px-2' : ' px-3')
+                sidebarCollapsed()
+                  ? (rla.isActive
+                      ? 'relative grid size-11 shrink-0 place-items-center rounded-xl bg-brand/15 text-brand transition-colors duration-150 hover:bg-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60 motion-reduce:transition-none'
+                      : 'relative grid size-11 shrink-0 place-items-center rounded-xl text-muted transition-colors duration-150 hover:bg-surface-raised hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60 motion-reduce:transition-none')
+                  : (rla.isActive
+                      ? 'group flex items-center gap-3.5 rounded-2xl border border-brand/30 bg-secondary-soft py-3 text-brand-strong'
+                      : 'group flex items-center gap-3.5 rounded-2xl border border-transparent py-3 text-muted transition hover:border-line hover:bg-surface-raised/60 hover:text-ink') +
+                    ' px-3.5'
               "
               (click)="closeMenus()"
             >
+              @if (sidebarCollapsed() && rla.isActive) {
+                <span class="absolute left-0 top-1/2 h-6 w-[3px] -translate-y-1/2 rounded-full bg-brand"></span>
+              }
               <span
                 [class]="
-                  rla.isActive
-                    ? 'grid size-11 place-items-center rounded-xl border border-brand/30 bg-brand/15 text-brand-strong shadow-sm'
-                    : 'grid size-11 place-items-center rounded-xl border border-line bg-surface-raised text-muted transition group-hover:border-brand/20 group-hover:bg-brand/5 group-hover:text-ink'
+                  sidebarCollapsed()
+                    ? 'grid place-items-center'
+                    : rla.isActive
+                      ? 'grid size-12 place-items-center rounded-xl border border-brand/30 bg-brand/15 text-brand-strong shadow-sm'
+                      : 'grid size-12 place-items-center rounded-xl border border-line bg-surface-raised text-muted transition group-hover:border-brand/20 group-hover:bg-brand/5 group-hover:text-ink'
                 "
               >
-                <fa-icon [icon]="item.icon" class="text-lg" aria-hidden="true" />
+                <fa-icon [icon]="item.icon" [class]="sidebarCollapsed() ? 'text-xl' : 'text-lg'" aria-hidden="true" />
               </span>
               @if (!sidebarCollapsed()) {
                 <span class="min-w-0 flex-1 truncate text-sm font-medium">
@@ -155,39 +172,6 @@
               }
             </a>
           }
-
-          <div class="my-3 h-px bg-line"></div>
-
-          <a
-            routerLink="/gestao"
-            routerLinkActive
-            #mgmt="routerLinkActive"
-            [attr.title]="sidebarCollapsed() ? null : i18n.t('nav.management')"
-            [attr.data-tooltip]="sidebarCollapsed() ? i18n.t('nav.management') : null"
-            [class]="
-              (mgmt.isActive
-                ? 'group flex items-center gap-3 rounded-2xl border border-brand/30 bg-secondary-soft py-2.5 text-brand-strong'
-                : 'group flex items-center gap-3 rounded-2xl border border-transparent py-2.5 text-muted transition hover:border-line hover:bg-surface-raised/60 hover:text-ink') +
-              (sidebarCollapsed() ? ' justify-center px-2' : ' px-3')
-            "
-            (click)="closeMenus()"
-          >
-            <span
-              class="grid size-11 place-items-center rounded-xl border border-brand/30 bg-brand/15 text-brand-strong shadow-sm"
-            >
-              <fa-icon [icon]="icons['shield']" class="text-lg" aria-hidden="true" />
-            </span>
-            @if (!sidebarCollapsed()) {
-              <span class="min-w-0 flex-1 truncate text-sm font-medium">
-                {{ i18n.t('nav.management') }}
-              </span>
-              <fa-icon
-                [icon]="icons['key']"
-                class="text-[10px] text-brand-strong"
-                aria-hidden="true"
-              />
-            }
-          </a>
         </nav>
 
         <div class="mt-3 flex items-center justify-between gap-2" [class.hidden]="sidebarCollapsed()">
@@ -198,36 +182,39 @@
         </div>
 
         @if (sidebarCollapsed()) {
-          <div class="mt-2 flex flex-col items-center gap-2">
+          <div class="mt-3 flex shrink-0 flex-col items-center gap-2 border-t border-line pt-3">
             <a
               routerLink="/perfil"
-              class="grid size-11 shrink-0 place-items-center rounded-2xl border border-line bg-surface-raised/60 transition hover:border-brand/35"
+              class="grid size-11 shrink-0 place-items-center rounded-xl text-muted transition-colors duration-150 hover:bg-surface-raised hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60 motion-reduce:transition-none"
               [attr.aria-label]="i18n.t('shell.openProfile')"
+              [attr.title]="i18n.t('shell.openProfile')"
               [attr.data-tooltip]="i18n.t('shell.openProfile')"
             >
               <app-avatar
                 [name]="store.profile().name"
                 [imageUrl]="store.profile().avatarUrl"
-                size="sm"
+                size="md"
               />
             </a>
             <a
               routerLink="/definicoes"
-              class="grid size-11 shrink-0 place-items-center rounded-2xl border border-line bg-surface-raised/60 text-muted transition hover:border-brand/40 hover:text-ink"
+              class="grid size-11 shrink-0 place-items-center rounded-xl text-muted transition-colors duration-150 hover:bg-surface-raised hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60 motion-reduce:transition-none"
               [attr.aria-label]="i18n.t('nav.settings')"
+              [attr.title]="i18n.t('nav.settings')"
               [attr.data-tooltip]="i18n.t('nav.settings')"
             >
-              <fa-icon [icon]="icons['settings']" class="text-sm" aria-hidden="true" />
+              <fa-icon [icon]="icons['settings']" class="text-xl" aria-hidden="true" />
             </a>
             <button
               type="button"
               [disabled]="loggingOut()"
-              class="grid size-11 shrink-0 place-items-center rounded-2xl border border-line bg-surface-raised/60 text-muted transition hover:border-coral/40 hover:text-coral disabled:cursor-wait disabled:opacity-60"
+              class="grid size-11 shrink-0 place-items-center rounded-xl text-muted transition-colors duration-150 hover:bg-surface-raised hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60 disabled:cursor-wait disabled:opacity-60 motion-reduce:transition-none"
               [attr.aria-label]="i18n.t('settings.logout')"
+              [attr.title]="i18n.t('settings.logout')"
               [attr.data-tooltip]="i18n.t('settings.logout')"
               (click)="logout()"
             >
-              <fa-icon [icon]="icons['logout']" class="text-sm" aria-hidden="true" />
+              <fa-icon [icon]="icons['logout']" class="text-xl" aria-hidden="true" />
             </button>
           </div>
         } @else {
@@ -330,7 +317,11 @@
             </h1>
           </div>
 
-          <div class="relative hidden md:block md:w-56 lg:w-72" data-search-root>
+          <div
+            class="relative hidden md:block md:w-56 lg:w-72"
+            [class.z-40]="searchOpen()"
+            data-search-root
+          >
             <form
               class="relative flex items-center"
               role="search"
@@ -360,6 +351,12 @@
             </form>
 
             @if (searchOpen()) {
+              <button
+                type="button"
+                class="fixed inset-0 z-30 cursor-default"
+                [attr.aria-label]="i18n.t('common.close')"
+                (click)="closeSearch()"
+              ></button>
               <div class="absolute right-0 top-full z-50 mt-2 w-[min(calc(100vw-1.5rem),22rem)]">
                 <app-search-suggestions
                   [groups]="suggestions()"
@@ -410,9 +407,10 @@
                 <fa-icon [icon]="icons['menu']" class="text-sm" aria-hidden="true" />
               </button>
             } @else {
-            <div>
+            <div data-notification-root>
               <button
                 type="button"
+                data-testid="notifications-trigger"
                 class="relative grid size-9 place-items-center rounded-xl border border-line bg-surface-raised/60 text-muted transition hover:border-brand/40 hover:text-ink sm:size-10"
                 [attr.aria-label]="i18n.t('common.notifications')"
                 [attr.aria-expanded]="notificationsOpen()"
@@ -436,7 +434,8 @@
                   (click)="notificationsOpen.set(false)"
                 ></button>
                 <div
-                  class="absolute right-0 top-full z-50 mt-2 max-h-[calc(100dvh-6rem)] w-[min(calc(100vw-1.5rem),24rem)] overflow-y-auto rounded-3xl border border-line bg-surface-solid/95 shadow-card backdrop-blur-2xl animate-rise sm:w-[min(92vw,24rem)]"
+                  data-testid="notifications-panel"
+                  class="no-scrollbar absolute right-0 top-full z-50 mt-2 max-h-[calc(100dvh-6rem)] w-[min(calc(100vw-1.5rem),24rem)] overflow-y-auto rounded-3xl border border-line bg-surface-solid/95 shadow-card backdrop-blur-2xl animate-rise sm:w-[min(92vw,24rem)]"
                 >
                   <div class="flex items-center justify-between gap-3 border-b border-line p-4">
                     <p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted">
@@ -594,43 +593,39 @@
     </div>
   </div>
 
+  <!-- Barra inferior: mesma cápsula do feed, com safe-area e alvos de 44 px. -->
   <nav
-    class="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface/90 backdrop-blur-2xl lg:hidden"
-    style="padding-bottom: env(safe-area-inset-bottom)"
+    class="fixed inset-x-0 z-40 mx-auto flex w-[min(28rem,calc(100%-1rem))] items-center justify-around gap-0.5 rounded-full border border-line/40 bg-surface/80 p-1.5 shadow-card backdrop-blur-xl lg:hidden"
+    style="bottom: max(0.75rem, env(safe-area-inset-bottom))"
     [attr.aria-label]="i18n.t('nav.hostArea')"
+    data-testid="host-bottom-nav"
   >
-    <div class="mx-auto flex max-w-lg items-stretch justify-around px-2">
-      @for (item of bottomNavItems; track item.path) {
-        <a
-          [routerLink]="item.path"
-          routerLinkActive
-          #bna="routerLinkActive"
-          [routerLinkActiveOptions]="{ exact: item.exact }"
-          [class]="
-            bna.isActive
-              ? 'flex flex-1 flex-col items-center gap-1 py-2.5 text-[10px] font-semibold text-brand-strong'
-              : 'flex flex-1 flex-col items-center gap-1 py-2.5 text-[10px] font-semibold text-muted transition hover:text-ink'
-          "
-          (click)="closeMenus()"
-        >
-          <fa-icon [icon]="item.icon" class="text-base" aria-hidden="true" />
-          <span class="truncate">{{ i18n.t(item.labelKey) }}</span>
-        </a>
-      }
-      <button
-        type="button"
-        [class]="
-          mobileOpen()
-            ? 'flex flex-1 flex-col items-center gap-1 py-2.5 text-[10px] font-semibold text-brand-strong'
-            : 'flex flex-1 flex-col items-center gap-1 py-2.5 text-[10px] font-semibold text-muted transition hover:text-ink'
-        "
-        [attr.aria-label]="i18n.t('shell.more')"
-        (click)="mobileOpen.set(true)"
+    @for (item of bottomNavItems; track item.path) {
+      <a
+        [routerLink]="item.path"
+        routerLinkActive
+        #bna="routerLinkActive"
+        [routerLinkActiveOptions]="{ exact: item.exact }"
+        class="flex min-h-11 min-w-11 flex-col items-center justify-center gap-0.5 rounded-full px-2 text-xs font-semibold transition"
+        [class]="bna.isActive ? 'bg-brand/15 text-brand' : 'text-muted'"
+        [attr.aria-current]="bna.isActive ? 'page' : null"
+        (click)="closeMenus()"
       >
-        <fa-icon [icon]="icons['ellipsis']" class="text-base" aria-hidden="true" />
-        <span class="truncate">{{ i18n.t('shell.more') }}</span>
-      </button>
-    </div>
+        <fa-icon [icon]="item.icon" class="text-base" aria-hidden="true" />
+        <span class="whitespace-nowrap">{{ i18n.t(item.labelKey) }}</span>
+      </a>
+    }
+    <button
+      type="button"
+      class="flex min-h-11 min-w-11 flex-col items-center justify-center gap-0.5 rounded-full px-2 text-xs font-semibold transition"
+      [class]="mobileOpen() ? 'bg-brand/15 text-brand' : 'text-muted'"
+      [attr.aria-label]="i18n.t('shell.more')"
+      [attr.aria-expanded]="mobileOpen()"
+      (click)="mobileOpen.set(true)"
+    >
+      <fa-icon [icon]="icons['ellipsis']" class="text-base" aria-hidden="true" />
+      <span class="whitespace-nowrap">{{ i18n.t('shell.more') }}</span>
+    </button>
   </nav>
 
   @if (isEventDetail()) {

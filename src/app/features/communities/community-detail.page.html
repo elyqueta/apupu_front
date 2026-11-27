@@ -147,19 +147,106 @@
               } @else {
                 <ul class="mt-3 grid auto-rows-fr grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
                   @for (event of upcoming().slice(0, 3); track event.id) {
-                    <ng-container *ngTemplateOutlet="eventCard; context: { $implicit: event }" />
+                    <li class="h-full min-w-0" [attr.data-testid]="'community-event-' + event.id">
+                      <app-public-event-card
+                        [event]="feedEvent(event)"
+                        variant="compact"
+                        [shareUrl]="eventShareUrl(event)"
+                        [editPath]="perms.canEdit ? '/eventos/' + event.id : null"
+                      />
+                    </li>
                   }
                 </ul>
               }
             </section>
+
+            @if (perms.isMember && c.my_status === 'active') {
+              <section class="rounded-4xl border border-line bg-surface p-4 shadow-card sm:p-5" data-testid="community-activity">
+                <h2 class="text-sm font-semibold text-ink">{{ i18n.t('block15.teams.lastActivity') }}</h2>
+                @if (activity() === null) {
+                  <app-skeleton variant="table" />
+                } @else if (activity()!.length === 0) {
+                  <p class="mt-3 text-sm text-muted">{{ i18n.t('block12.community.noEvents') }}</p>
+                } @else {
+                  <ul class="mt-3 flex flex-col gap-2">
+                    @for (item of activity()!; track item.id) {
+                      <li class="flex min-h-11 items-center gap-3 rounded-2xl border border-line bg-surface-raised/40 p-3" data-testid="community-activity-item">
+                        <span class="grid size-9 shrink-0 place-items-center overflow-hidden rounded-full border border-brand/25 bg-brand/10 text-xs font-semibold text-brand-strong">
+                          @if (item.host_avatar_url) {
+                            <img [src]="item.host_avatar_url" alt="" class="size-full object-cover" loading="lazy" />
+                          } @else {
+                            {{ initials(item.host_name) }}
+                          }
+                        </span>
+                        <div class="min-w-0 flex-1">
+                          <p class="truncate text-xs text-muted">{{ i18n.t('common.by', { name: item.host_name }) }}</p>
+                          <a [routerLink]="['/e', item.event_slug]" class="block truncate text-sm font-semibold text-brand-strong hover:underline" data-testid="community-activity-event">{{ item.event_title }}</a>
+                          <p class="mt-0.5 text-xs text-muted/80">{{ i18n.dateTime(item.created_at, 'Africa/Luanda') }}</p>
+                        </div>
+                      </li>
+                    }
+                  </ul>
+                }
+              </section>
+            }
           }
           @case ('events') {
             <section class="flex flex-col gap-4">
-              @if (perms.canCreateEvent) {
-                <button type="button" class="ui-btn self-start" data-testid="community-new-event" (click)="newEvent()">
+              @if (perms.canSuggestEvent) {
+                <button type="button" class="ui-btn min-h-11 self-start" data-testid="community-suggest-event" (click)="suggestEvent()">
                   <fa-icon [icon]="icons['plus']" aria-hidden="true" />
-                  {{ i18n.t('block11.events.new') }}
+                  {{ i18n.t('block11.events.suggest') }}
                 </button>
+              }
+
+              @if (perms.canDecideEventSuggestions) {
+                <section class="rounded-4xl border border-line bg-surface p-4 shadow-card sm:p-5" data-testid="community-suggestions">
+                  <header class="flex flex-wrap items-start justify-between gap-2">
+                    <div class="min-w-0">
+                      <h2 class="text-sm font-semibold text-ink">{{ i18n.t('block11.events.suggestTitle') }}</h2>
+                      <p class="mt-1 text-xs text-muted">{{ i18n.t('block11.events.suggestHint') }}</p>
+                    </div>
+                    @if (data.pending_event_suggestions !== undefined) {
+                      <span class="ui-chip shrink-0" data-testid="community-suggestions-count">
+                        {{ i18n.t('block11.events.pending') }} · {{ data.pending_event_suggestions }}
+                      </span>
+                    }
+                  </header>
+                  @if (suggestions() === null) {
+                    <app-skeleton variant="table" />
+                  } @else if (suggestions()!.length === 0) {
+                    <p class="mt-3 text-sm text-muted" data-testid="community-suggestions-empty">{{ i18n.t('block11.events.suggestEmpty') }}</p>
+                  } @else {
+                    <ul class="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                      @for (suggestion of suggestions()!; track suggestion.id) {
+                        <li class="flex h-full min-w-0 flex-col gap-2 rounded-2xl border border-line bg-surface-raised/40 p-3" [attr.data-testid]="'community-suggestion-' + suggestion.id">
+                          <div class="flex min-w-0 items-center gap-2">
+                            <span class="grid size-9 shrink-0 place-items-center overflow-hidden rounded-full border border-brand/25 bg-brand/10 text-xs font-semibold text-brand-strong">
+                              @if (suggestion.avatar_url) {
+                                <img [src]="suggestion.avatar_url" alt="" class="size-full object-cover" loading="lazy" />
+                              } @else {
+                                {{ initials(suggestion.display_name || i18n.t('block11.role.member')) }}
+                              }
+                            </span>
+                            <div class="min-w-0 flex-1">
+                              <p class="truncate text-xs font-semibold text-ink">{{ suggestion.display_name || i18n.t('block11.role.member') }}</p>
+                              <p class="truncate text-xs text-muted">{{ i18n.shortDate(suggestion.created_at, 'Africa/Luanda') }}</p>
+                            </div>
+                            <span class="ui-chip shrink-0">{{ i18n.t('block11.events.pending') }}</span>
+                          </div>
+                          <h3 class="min-w-0 font-display text-base font-semibold text-ink">{{ suggestion.title }}</h3>
+                          @if (suggestion.message) {
+                            <p class="text-xs leading-5 text-muted">{{ suggestion.message }}</p>
+                          }
+                          <div class="mt-auto flex flex-wrap gap-2 border-t border-line pt-3">
+                            <button type="button" class="ui-btn-secondary min-h-11" [disabled]="busy()" [attr.data-testid]="'community-suggestion-reject-' + suggestion.id" (click)="decideSuggestion(suggestion, 'reject')">{{ i18n.t('block11.events.reject') }}</button>
+                            <button type="button" class="ui-btn min-h-11" [disabled]="busy()" [attr.data-testid]="'community-suggestion-approve-' + suggestion.id" (click)="decideSuggestion(suggestion, 'approve')">{{ i18n.t('block11.events.approve') }}</button>
+                          </div>
+                        </li>
+                      }
+                    </ul>
+                  }
+                </section>
               }
               @for (group of [{ label: 'block11.events.upcoming', items: upcoming() }, { label: 'block11.events.past', items: past() }]; track group.label) {
                 @if (group.items.length > 0) {
@@ -167,7 +254,14 @@
                     <h2 class="mb-2 text-sm font-semibold text-ink">{{ i18n.t($any(group.label)) }}</h2>
                     <ul class="grid auto-rows-fr grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
                       @for (event of group.items; track event.id) {
-                        <ng-container *ngTemplateOutlet="eventCard; context: { $implicit: event }" />
+                        <li class="h-full min-w-0" [attr.data-testid]="'community-event-' + event.id">
+                          <app-public-event-card
+                            [event]="feedEvent(event)"
+                            variant="compact"
+                            [shareUrl]="eventShareUrl(event)"
+                            [editPath]="perms.canEdit ? '/eventos/' + event.id : null"
+                          />
+                        </li>
                       }
                     </ul>
                   </div>
@@ -199,19 +293,18 @@
                   <p class="text-sm text-muted">{{ i18n.t('block11.teams.empty') }}</p>
                 </div>
               } @else {
-                <ul class="grid auto-rows-fr grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+                <ul class="flex flex-col gap-2 overflow-hidden rounded-3xl border border-line bg-surface-raised/20" data-testid="community-teams-list">
                   @for (team of data.teams; track team.id) {
-                    <li class="h-full min-w-0">
-                      <a
-                        [routerLink]="['/equipas', team.id]"
-                        class="flex h-full flex-col gap-2 rounded-3xl border border-line bg-surface p-4 shadow-card transition hover:border-brand/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60"
-                      >
-                        <span class="line-clamp-2 font-display text-base font-semibold text-ink">{{ team.name }}</span>
-                        <span class="mt-auto flex flex-wrap gap-x-3 text-xs text-muted">
-                          <span>{{ i18n.t('block11.teams.members', { count: team.member_count }) }}</span>
-                          <span>{{ i18n.t('block11.teams.events', { count: team.event_count }) }}</span>
-                        </span>
-                      </a>
+                    <li class="min-w-0 border-b border-line last:border-b-0">
+                      <app-team-card
+                        [name]="team.name"
+                        [meta]="[
+                          i18n.t('block11.teams.members', { count: team.member_count }) + ' · ' +
+                          i18n.t('block11.teams.events', { count: team.event_count })
+                        ]"
+                        [testId]="'community-team-' + team.id"
+                        (selected)="openTeam(team.id)"
+                      />
                     </li>
                   }
                 </ul>
@@ -226,19 +319,50 @@
                   {{ i18n.t('block11.members.invite') }}
                 </button>
               }
-              <ul class="grid auto-rows-fr grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+              <ul class="flex flex-col overflow-hidden rounded-3xl border border-line bg-surface-raised/20" data-testid="community-members-list">
                 @for (member of data.members; track member.id) {
-                  <li class="h-full min-w-0">
-                    <app-person-card
-                      [name]="member.display_name || member.email || roleLabel(member.role)"
-                      [avatarUrl]="member.avatar_url"
-                      [subtitle]="member.email || ''"
-                      [status]="member.status === 'invited' ? i18n.t('block11.members.invited') : null"
-                      [meta]="memberMeta(member)"
-                      [actions]="memberActions(member)"
-                      [actionsLabel]="i18n.t('common.moreActions')"
-                      (actionSelected)="onMemberAction(member, $event)"
-                    />
+                  <li class="min-w-0 border-b border-line last:border-b-0">
+                    <div class="flex min-h-[5.25rem] items-center gap-3 px-3 py-3 sm:px-4">
+                      <span class="relative grid size-12 shrink-0 place-items-center overflow-hidden rounded-full border border-brand/25 bg-brand/15 text-sm font-semibold text-brand-strong">
+                        @if (member.avatar_url) {
+                          <img [src]="member.avatar_url" alt="" class="size-full object-cover" loading="lazy" />
+                        } @else {
+                          {{ initials(member.display_name || member.email || roleLabel(member.role)) }}
+                        }
+                      </span>
+                      <div class="min-w-0 flex-1">
+                        <div class="flex flex-wrap items-center gap-2">
+                          <p class="truncate text-sm font-semibold text-ink" [title]="member.display_name || member.email">
+                            {{ member.display_name || member.email || roleLabel(member.role) }}
+                          </p>
+                          <span class="ui-chip shrink-0">
+                            <fa-icon [icon]="icons['user']" aria-hidden="true" />
+                            {{ roleLabel(member.role) }}
+                          </span>
+                          @if (member.status === 'invited') {
+                            <span class="rounded-full border border-amber/30 bg-amber/10 px-2 py-0.5 text-[10px] font-semibold text-amber">
+                              {{ i18n.t('block11.list.invited') }}
+                            </span>
+                          }
+                        </div>
+                        @if (member.email) {
+                          <p class="mt-0.5 truncate text-xs text-muted" [title]="member.email">{{ member.email }}</p>
+                        }
+                        @if (member.joined_at) {
+                          <p class="mt-1 inline-flex items-center gap-1.5 text-xs text-muted/80">
+                            <fa-icon [icon]="icons['clock']" class="text-[10px] text-brand-strong" aria-hidden="true" />
+                            {{ i18n.shortDate(member.joined_at, 'Africa/Luanda') }}
+                          </p>
+                        }
+                      </div>
+                      @if (memberActions(member).length) {
+                        <app-action-menu
+                          [items]="memberActions(member)"
+                          [triggerLabel]="i18n.t('common.moreActions')"
+                          (selected)="onMemberAction(member, $event)"
+                        />
+                      }
+                    </div>
                   </li>
                 }
               </ul>
@@ -272,87 +396,120 @@
             </section>
           }
           @case ('shares') {
-            <section class="rounded-4xl border border-line bg-surface p-4 shadow-card sm:p-5">
-              <h2 class="text-sm font-semibold text-ink">
-                {{ perms.canViewAllReferrals ? i18n.t('block11.shares.all') : i18n.t('block11.shares.mine') }}
-              </h2>
-              <p class="mt-1 text-xs text-muted">{{ i18n.t('block11.shares.hint') }}</p>
-              @if (referrals() === null) {
-                <app-skeleton variant="table" />
-              } @else if (referrals()!.length === 0) {
-                <p class="mt-3 text-sm text-muted">{{ i18n.t('block11.shares.empty') }}</p>
-              } @else {
-                <ul class="mt-3 divide-y divide-line">
-                  @for (stat of referrals(); track stat.member_id) {
-                    <li class="flex flex-wrap items-center justify-between gap-2 py-2.5 text-sm">
-                      <span class="min-w-0 truncate font-semibold text-ink">{{ stat.display_name || '—' }}</span>
-                      <span class="flex gap-3 text-xs text-muted">
-                        <span>{{ i18n.t('block11.shares.invitations', { count: stat.invitations }) }}</span>
-                        <span class="font-semibold text-brand-strong">{{ i18n.t('block11.shares.accepted', { count: stat.accepted }) }}</span>
-                      </span>
-                    </li>
-                  }
-                </ul>
-              }
+            <section class="relative overflow-hidden rounded-4xl border border-line bg-surface p-4 shadow-card sm:p-5">
+              <div class="pointer-events-none absolute inset-x-0 top-0 h-28 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.14),transparent_60%)]"></div>
+              <header class="relative flex flex-wrap items-start justify-between gap-3">
+                <div class="flex min-w-0 items-start gap-3">
+                  <span class="grid size-11 shrink-0 place-items-center rounded-2xl border border-brand/20 bg-brand/10 text-brand-strong shadow-inner">
+                    <fa-icon [icon]="icons['share']" class="text-base" aria-hidden="true" />
+                  </span>
+                  <div class="min-w-0 flex-1">
+                    <p class="text-[10px] font-semibold uppercase tracking-[0.18em] text-brand-strong">
+                      {{ i18n.t('block11.shares.title') }}
+                    </p>
+                    <h2 class="mt-0.5 text-base font-semibold text-ink">
+                      {{ perms.canViewAllReferrals ? i18n.t('block11.shares.all') : i18n.t('block11.shares.mine') }}
+                    </h2>
+                    <p class="mt-1 truncate text-xs text-muted" [title]="i18n.t('block11.shares.hint')">{{ i18n.t('block11.shares.hint') }}</p>
+                  </div>
+                </div>
+                <span class="shrink-0 rounded-full border border-line bg-surface-raised px-3 py-1 text-xs font-semibold text-muted">
+                  {{ i18n.t('block11.list.members', { count: referrals()?.length ?? 0 }) }}
+                </span>
+              </header>
+
+              <div class="relative mt-4 border-t border-line pt-4">
+                @if (referrals() === null) {
+                  <app-skeleton variant="table" />
+                } @else if (referrals()!.length === 0) {
+                  <div class="flex flex-col items-center justify-center gap-3 rounded-3xl border border-dashed border-line bg-surface-raised/40 px-6 py-10 text-center">
+                    <span class="grid size-12 place-items-center rounded-2xl border border-brand/20 bg-brand/10 text-brand-strong">
+                      <fa-icon [icon]="icons['share']" class="text-lg" aria-hidden="true" />
+                    </span>
+                    <p class="text-sm text-muted">{{ i18n.t('block11.shares.empty') }}</p>
+                  </div>
+                } @else {
+                  <ul class="grid gap-2 sm:grid-cols-2">
+                    @for (stat of referrals(); track stat.member_id) {
+                      <li class="group flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-line/80 bg-surface-raised/60 p-3 transition hover:border-brand/30 hover:bg-brand/5">
+                        <div class="flex min-w-0 items-center gap-2.5">
+                          <span class="grid size-9 shrink-0 place-items-center rounded-xl border border-brand/20 bg-brand/10 text-xs font-bold text-brand-strong">
+                            {{ (stat.display_name || '—').slice(0, 1).toUpperCase() }}
+                          </span>
+                          <span class="min-w-0 truncate text-sm font-semibold text-ink">{{ stat.display_name || '—' }}</span>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-1.5">
+                          <span class="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface px-2.5 py-1 text-xs font-semibold text-muted">
+                            <fa-icon [icon]="icons['envelope']" class="text-[10px]" aria-hidden="true" />
+                            {{ i18n.t('block11.shares.invitations', { count: stat.invitations }) }}
+                          </span>
+                          <span class="inline-flex items-center gap-1.5 rounded-full border border-mint/30 bg-mint/10 px-2.5 py-1 text-xs font-semibold text-mint">
+                            <fa-icon [icon]="icons['success']" class="text-[10px]" aria-hidden="true" />
+                            {{ i18n.t('block11.shares.accepted', { count: stat.accepted }) }}
+                          </span>
+                        </div>
+                      </li>
+                    }
+                  </ul>
+                }
+              </div>
             </section>
           }
           @case ('settings') {
-            <section class="grid gap-3 md:grid-cols-2">
-              <article class="flex flex-col gap-3 rounded-4xl border border-line bg-surface p-4 shadow-card sm:p-5">
-                <h2 class="text-sm font-semibold text-ink">{{ i18n.t('block11.settings.edit') }}</h2>
-                <button type="button" class="ui-btn-secondary self-start" data-testid="community-edit" (click)="editOpen.set(true)">
+            <section class="flex flex-col overflow-hidden rounded-3xl border border-line bg-surface-raised/20" data-testid="community-settings-list">
+              <button
+                type="button"
+                class="flex min-h-[4.75rem] w-full items-center gap-3 border-b border-line px-3 py-3 text-left transition hover:bg-surface-raised/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand/60 sm:px-4"
+                data-testid="community-edit"
+                (click)="editOpen.set(true)"
+              >
+                <span class="grid size-10 shrink-0 place-items-center rounded-xl border border-brand/20 bg-brand/10 text-brand-strong">
                   <fa-icon [icon]="icons['pen']" aria-hidden="true" />
-                  {{ i18n.t('block11.settings.edit') }}
-                </button>
-              </article>
+                </span>
+                <span class="min-w-0 flex-1">
+                  <span class="block truncate text-sm font-semibold text-ink">{{ i18n.t('block11.settings.edit') }}</span>
+                  <span class="mt-0.5 block truncate text-xs text-muted">{{ i18n.t('block11.settings.editHint') }}</span>
+                </span>
+                <fa-icon [icon]="icons['chevronRight']" class="shrink-0 text-xs text-muted" aria-hidden="true" />
+              </button>
+
               @if (perms.canTransfer) {
-                <article class="flex flex-col gap-3 rounded-4xl border border-line bg-surface p-4 shadow-card sm:p-5">
-                  <h2 class="text-sm font-semibold text-ink">{{ i18n.t('block11.settings.transferTitle') }}</h2>
-                  <p class="text-xs leading-5 text-muted">{{ i18n.t('block11.settings.transferHint') }}</p>
-                  <button type="button" class="ui-btn-secondary self-start" data-testid="community-transfer" (click)="openTransfer()">
+                <button
+                  type="button"
+                  class="flex min-h-[4.75rem] w-full items-center gap-3 border-b border-line px-3 py-3 text-left transition hover:bg-surface-raised/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand/60 sm:px-4"
+                  data-testid="community-transfer"
+                  (click)="openTransfer()"
+                >
+                  <span class="grid size-10 shrink-0 place-items-center rounded-xl border border-amber/30 bg-amber/10 text-amber">
                     <fa-icon [icon]="icons['key']" aria-hidden="true" />
-                    {{ i18n.t('block11.transfer.title') }}
-                  </button>
-                </article>
+                  </span>
+                  <span class="min-w-0 flex-1">
+                    <span class="block truncate text-sm font-semibold text-ink">{{ i18n.t('block11.settings.transferTitle') }}</span>
+                    <span class="mt-0.5 block truncate text-xs text-muted">{{ i18n.t('block11.settings.transferHint') }}</span>
+                  </span>
+                  <fa-icon [icon]="icons['chevronRight']" class="shrink-0 text-xs text-muted" aria-hidden="true" />
+                </button>
               }
+
               @if (perms.canDelete) {
-                <article class="flex flex-col gap-3 rounded-4xl border border-coral/30 bg-coral/5 p-4 shadow-card sm:p-5 md:col-span-2">
-                  <h2 class="text-sm font-semibold text-coral">{{ i18n.t('block11.settings.delete') }}</h2>
-                  <p class="text-xs leading-5 text-muted">{{ i18n.t('block11.settings.deleteBody') }}</p>
-                  <button type="button" class="ui-btn-danger self-start" (click)="deleteTyped.set(''); deleteOpen.set(true)">
+                <button
+                  type="button"
+                  class="flex min-h-[4.75rem] w-full items-center gap-3 px-3 py-3 text-left transition hover:bg-coral/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-coral/60 sm:px-4"
+                  (click)="deleteTyped.set(''); deleteOpen.set(true)"
+                >
+                  <span class="grid size-10 shrink-0 place-items-center rounded-xl border border-coral/30 bg-coral/10 text-coral">
                     <fa-icon [icon]="icons['trash']" aria-hidden="true" />
-                    {{ i18n.t('block11.settings.delete') }}
-                  </button>
-                </article>
+                  </span>
+                  <span class="min-w-0 flex-1">
+                    <span class="block truncate text-sm font-semibold text-coral">{{ i18n.t('block11.settings.delete') }}</span>
+                    <span class="mt-0.5 block truncate text-xs text-muted">{{ i18n.t('block11.settings.deleteBody') }}</span>
+                  </span>
+                  <fa-icon [icon]="icons['chevronRight']" class="shrink-0 text-xs text-coral" aria-hidden="true" />
+                </button>
               }
             </section>
           }
         }
-
-        <!-- Cartão de evento reutilizado no resumo e na lista de eventos. -->
-        <ng-template #eventCard let-event>
-          <li class="h-full min-w-0">
-            <article class="flex h-full flex-col gap-2 rounded-3xl border border-line bg-surface p-4 shadow-card" [attr.data-testid]="'community-event-' + event.id">
-              <div class="flex flex-wrap items-start justify-between gap-2">
-                <h3 class="min-w-0 flex-1 line-clamp-2 font-display text-base font-semibold text-ink">{{ event.title }}</h3>
-                <span class="ui-chip shrink-0">{{ i18n.t(event.visibility === 'public' ? 'block11.events.publicBadge' : 'block11.events.privateBadge') }}</span>
-              </div>
-              <p class="text-xs text-muted">{{ i18n.dateTime(event.starts_at, 'Africa/Luanda') }}</p>
-              <p class="text-xs font-semibold text-brand-strong">{{ i18n.t('block11.events.confirmed', { count: event.accepted_count }) }}</p>
-              <div class="mt-auto flex flex-wrap gap-2 border-t border-line pt-3">
-                @if (perms.canEdit) {
-                  <a [routerLink]="['/eventos', event.id]" class="ui-btn-secondary">{{ i18n.t('block11.list.open') }}</a>
-                }
-                @if (perms.canShare && event.public_url) {
-                  <button type="button" class="ui-btn-secondary" [attr.data-testid]="'community-share-' + event.id" (click)="copyShare(event)">
-                    <fa-icon [icon]="icons['copy']" aria-hidden="true" />
-                    {{ i18n.t('block11.events.copyShare') }}
-                  </button>
-                }
-              </div>
-            </article>
-          </li>
-        </ng-template>
 
         <!-- Modais -->
         <app-community-form-dialog [open]="editOpen()" [community]="c" (saved)="onSaved()" (closed)="editOpen.set(false)" />

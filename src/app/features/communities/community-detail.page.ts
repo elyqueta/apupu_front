@@ -1,28 +1,31 @@
 import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
-import { NgTemplateOutlet } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { toApiError } from '../../core/api/api-error';
 import {
+  ApiCommunityActivity,
   ApiCommunityDetail,
   ApiCommunityEvent,
   ApiCommunityMember,
+  ApiEventSuggestion,
   ApiJoinRequest,
   ApiReferral,
   CommunitiesRepository,
   shareUrl,
 } from '../../core/data/communities.repository';
+import { FeedEvent } from '../../core/data/social.repository';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { TranslationKey } from '../../core/i18n/translations';
 import { ToastService } from '../../core/services/toast.service';
 import { ICONS } from '../../core/ui/icons';
-import { ActionMenuItem } from '../../shared/components/action-menu.component';
+import { ActionMenuComponent, ActionMenuItem } from '../../shared/components/action-menu.component';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog.component';
 import { ModalComponent } from '../../shared/components/modal.component';
 import { PersonCardComponent, PersonMetaItem } from '../../shared/components/person-card.component';
+import { PublicEventCardComponent } from '../../shared/components/public-event-card.component';
 import { SkeletonComponent } from '../../shared/components/skeleton.component';
+import { TeamCardComponent } from '../../shared/components/team-card.component';
 import { PhoneMaskDirective } from '../../shared/directives/phone-mask.directive';
-import { LinkCopyService } from '../../shared/services/link-copy.service';
 import { phoneDigits } from '../../core/utils/phone.util';
 import { CommunityFormDialogComponent } from './community-form-dialog.component';
 
@@ -39,14 +42,16 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 @Component({
   selector: 'app-community-detail-page',
   imports: [
-    NgTemplateOutlet,
     RouterLink,
     FaIconComponent,
     SkeletonComponent,
     ModalComponent,
     ConfirmDialogComponent,
+    ActionMenuComponent,
     PersonCardComponent,
     PhoneMaskDirective,
+    PublicEventCardComponent,
+    TeamCardComponent,
     CommunityFormDialogComponent,
   ],
   templateUrl: './community-detail.page.html',
@@ -57,7 +62,6 @@ export class CommunityDetailPage {
   private readonly repo = inject(CommunitiesRepository);
   private readonly toasts = inject(ToastService);
   private readonly router = inject(Router);
-  private readonly linkCopy = inject(LinkCopyService);
 
   /** `:slug` da rota. */
   readonly slug = input('');
@@ -69,6 +73,9 @@ export class CommunityDetailPage {
 
   protected readonly requests = signal<ApiJoinRequest[]>([]);
   protected readonly referrals = signal<ApiReferral[] | null>(null);
+  /** `null` = ainda não carregado (o painel de revisão é lazy). */
+  protected readonly suggestions = signal<ApiEventSuggestion[] | null>(null);
+  protected readonly activity = signal<ApiCommunityActivity[] | null>(null);
 
   protected readonly editOpen = signal(false);
   protected readonly joinOpen = signal(false);
@@ -134,6 +141,7 @@ export class CommunityDetailPage {
       untracked(() => {
         if (tab === 'requests') void this.loadRequests();
         if (tab === 'shares') void this.loadReferrals();
+        if (tab === 'events') void this.loadSuggestions();
       });
     });
   }
@@ -147,6 +155,32 @@ export class CommunityDetailPage {
       if (!this.tabs().some((item) => item.id === this.tab())) this.tab.set('summary');
     } catch (error: unknown) {
       this.state.set(toApiError(error).status === 404 ? 'not_found' : 'error');
+    }
+    // A atividade é carregada com o detalhe (membros ativos), pelo que fica
+    // atualizada quando se volta à comunidade depois de partilhar no feed.
+    void this.loadActivity();
+  }
+
+  private async loadActivity(): Promise<void> {
+    const community = this.community();
+    if (!community || !this.can()?.isMember || community.my_status !== 'active') {
+      this.activity.set([]);
+      return;
+    }
+    try {
+      this.activity.set(await this.repo.communityActivity(community.id));
+    } catch {
+      this.activity.set([]);
+    }
+  }
+
+  private async loadSuggestions(): Promise<void> {
+    const community = this.community();
+    if (!community || !this.can()?.canDecideEventSuggestions) return;
+    try {
+      this.suggestions.set(await this.repo.eventSuggestions(community.id));
+    } catch {
+      this.suggestions.set([]);
     }
   }
 
@@ -238,17 +272,63 @@ export class CommunityDetailPage {
 
   /* ─────────────────────────────── eventos ─────────────────────────────── */
 
-  protected async copyShare(event: ApiCommunityEvent): Promise<void> {
-    if (!event.public_url) return;
-    const copied = await this.linkCopy.copy(shareUrl(event.public_url, this.detail()?.my_ref_code ?? null));
-    if (copied && this.detail()?.my_ref_code) {
-      this.toasts.info(this.i18n.t('block11.events.shareCopied'));
+  /** Adapta o evento da comunidade ao contrato do cartão partilhado do feed. */
+  protected feedEvent(event: ApiCommunityEvent): FeedEvent {
+    const community = this.community();
+    const status = ['scheduled', 'published', 'completed', 'cancelled'].includes(event.status)
+      ? (event.status as FeedEvent['status'])
+      : undefined;
+    return {
+      type: 'event',
+      id: event.id,
+      title: event.title,
+      category: null,
+      starts_at: event.starts_at,
+      ends_at: null,
+      timezone: 'Africa/Luanda',
+      status,
+      location: null,
+      online: false,
+      cover_url: event.cover_url,
+      template: { id: null, palette: 'default', mode: 'light' },
+      host_name: community?.name ?? '',
+      excerpt: null,
+      public_url: event.public_url ?? '',
+      slug: event.public_url?.split('/').filter(Boolean).pop() ?? event.id,
+      community: community ? { name: community.name, slug: community.slug } : null,
+      attendee_count: event.accepted_count,
+    };
+  }
+
+  protected eventShareUrl(event: ApiCommunityEvent): string {
+    const ref = this.can()?.canShare ? (this.detail()?.my_ref_code ?? null) : null;
+    return shareUrl(event.public_url ?? '', ref);
+  }
+
+  protected openTeam(id: string): void {
+    void this.router.navigate(['/equipas', id]);
+  }
+
+  /** Qualquer membro ativo sugere o evento; a criação direta é só para eventos pessoais. */
+  protected suggestEvent(): void {
+    const community = this.community();
+    if (community) {
+      void this.router.navigate(['/criar-evento'], { queryParams: { community: community.slug } });
     }
   }
 
-  protected newEvent(): void {
+  protected async decideSuggestion(
+    suggestion: ApiEventSuggestion,
+    decision: 'approve' | 'reject',
+  ): Promise<void> {
     const community = this.community();
-    if (community) void this.router.navigate(['/criar-evento'], { queryParams: { comunidade: community.id } });
+    if (!community) return;
+    const ok = await this.run(
+      () => this.repo.decideEventSuggestion(community.id, suggestion.id, decision),
+      decision === 'approve' ? 'block11.events.approved' : 'block11.events.rejected',
+    );
+    // `run` recarrega o detalhe (e os eventos); atualiza também a lista revisada.
+    if (ok) await this.loadSuggestions();
   }
 
   /* ─────────────────────────────── membros ─────────────────────────────── */

@@ -1,10 +1,11 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FeedEvent } from '../../core/data/social.repository';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { ShareService } from '../../core/services/share.service';
 import { ICONS } from '../../core/ui/icons';
+import { ActionMenuComponent, ActionMenuItem } from '../../shared/components/action-menu.component';
 import { AvatarComponent } from '../../shared/components/avatar.component';
 import { ModalComponent } from '../../shared/components/modal.component';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
@@ -24,7 +25,7 @@ import { LinkCopyService } from '../../shared/services/link-copy.service';
  */
 @Component({
   selector: 'app-feed-post',
-  imports: [RouterLink, FaIconComponent, AvatarComponent, ModalComponent, StatusBadgeComponent, TemplateArtworkComponent],
+  imports: [RouterLink, FaIconComponent, ActionMenuComponent, AvatarComponent, ModalComponent, StatusBadgeComponent, TemplateArtworkComponent],
   template: `
     <!-- Mobile: imersivo -->
     <article
@@ -35,7 +36,7 @@ import { LinkCopyService } from '../../shared/services/link-copy.service';
         @if (event().cover_url) {
           <img [src]="event().cover_url" [alt]="event().title" class="absolute inset-0 size-full object-cover" loading="lazy" />
         } @else {
-          <app-template-artwork [templateId]="event().template.id" variant="cover" title="" class="absolute inset-0 block size-full" />
+          <app-template-artwork [templateId]="event().template.id" [videoId]="event().youtube_video_id ?? null" variant="cover" title="" class="absolute inset-0 block size-full" />
         }
         <!-- Link a toda a área; as pílulas ficam por cima (z-10). -->
         <a [routerLink]="path()" class="absolute inset-0" [attr.aria-label]="i18n.t('block12.feed.viewEvent') + ': ' + event().title" [attr.data-testid]="'feed-event-open-' + event().id"></a>
@@ -57,6 +58,7 @@ import { LinkCopyService } from '../../shared/services/link-copy.service';
             type="button"
             class="pointer-events-auto grid size-11 shrink-0 place-items-center rounded-full border border-white/20 bg-black/35 text-white backdrop-blur-md transition hover:bg-black/50"
             [attr.aria-label]="i18n.t('common.moreActions')"
+            data-testid="feed-post-menu-mobile"
             (click)="menuOpen.set(true)"
           >
             <fa-icon [icon]="icons['ellipsisVertical']" aria-hidden="true" />
@@ -97,9 +99,13 @@ import { LinkCopyService } from '../../shared/services/link-copy.service';
           </p>
           <p class="text-xs text-muted">{{ subline() }}</p>
         </div>
-        <button type="button" class="ui-icon-button" [attr.aria-label]="i18n.t('common.moreActions')" (click)="menuOpen.set(true)">
-          <fa-icon [icon]="icons['ellipsisVertical']" aria-hidden="true" />
-        </button>
+        <div class="hidden lg:block" data-testid="feed-post-menu-desktop">
+          <app-action-menu
+            [items]="actions()"
+            [triggerLabel]="i18n.t('common.moreActions')"
+            (selected)="onAction($event)"
+          />
+        </div>
       </header>
 
       <div class="mt-3">
@@ -117,7 +123,7 @@ import { LinkCopyService } from '../../shared/services/link-copy.service';
         @if (event().cover_url) {
           <img [src]="event().cover_url" [alt]="event().title" class="aspect-[16/9] w-full object-cover transition duration-500 hover:scale-[1.02]" loading="lazy" />
         } @else {
-          <app-template-artwork [templateId]="event().template.id" variant="cover" title="" class="block aspect-[16/9] w-full" />
+          <app-template-artwork [templateId]="event().template.id" [videoId]="event().youtube_video_id ?? null" variant="cover" title="" class="block aspect-[16/9] w-full" />
         }
       </a>
 
@@ -164,6 +170,7 @@ export class FeedPostComponent {
   protected readonly icons = ICONS;
   private readonly share = inject(ShareService);
   private readonly linkCopy = inject(LinkCopyService);
+  private readonly router = inject(Router);
 
   readonly event = input.required<FeedEvent>();
   protected readonly menuOpen = signal(false);
@@ -191,6 +198,38 @@ export class FeedPostComponent {
     parts.push(this.event().online ? '#online' : '#evento');
     return parts.join(' ');
   });
+
+  protected actions(): ActionMenuItem[] {
+    const items: ActionMenuItem[] = [
+      { id: 'view', label: this.i18n.t('block12.feed.viewEvent'), icon: ICONS['calendar'] },
+      { id: 'copy', label: this.i18n.t('block10.copy.link'), icon: ICONS['copy'] },
+      { id: 'whatsapp', label: this.i18n.t('block10.publicLink.whatsapp'), icon: ICONS['whatsapp'] },
+    ];
+    const community = this.event().community;
+    if (community?.slug) {
+      items.push({ id: 'community', label: community.name ?? community.slug, icon: ICONS['globe'] });
+    }
+    return items;
+  }
+
+  protected onAction(id: string): void {
+    switch (id) {
+      case 'view':
+        void this.router.navigateByUrl(this.path());
+        break;
+      case 'copy':
+        this.copy();
+        break;
+      case 'whatsapp':
+        this.whatsapp();
+        break;
+      case 'community': {
+        const slug = this.event().community?.slug;
+        if (slug) void this.router.navigate(['/comunidade', slug]);
+        break;
+      }
+    }
+  }
 
   protected copy(): void {
     void this.linkCopy.copy(this.event().public_url);

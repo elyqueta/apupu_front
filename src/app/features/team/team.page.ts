@@ -42,6 +42,7 @@ import { StatusBadgeComponent } from '../../shared/components/status-badge.compo
 import { StatCardComponent } from '../../shared/components/stat-card.component';
 import { TeamMemberDetailDialogComponent } from '../../shared/components/team-member-detail-dialog.component';
 import { StatGridComponent } from '../../shared/components/stat-grid.component';
+import { TeamCardComponent } from '../../shared/components/team-card.component';
 import { TeamFormDialogComponent, TeamFormValue } from './team-form-dialog.component';
 import { TeamManagerDialogComponent } from './team-manager-dialog.component';
 
@@ -94,6 +95,7 @@ interface ManagerGroup {
     TeamMemberDetailDialogComponent,
     TeamFormDialogComponent,
     TeamManagerDialogComponent,
+    TeamCardComponent,
   ],
   templateUrl: './team.page.html',
 })

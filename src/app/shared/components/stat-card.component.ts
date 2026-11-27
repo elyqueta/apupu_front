@@ -55,7 +55,7 @@ const TONES: Record<IconTone, { tile: string; line: string }> = {
           class="grid size-9 shrink-0 place-items-center rounded-2xl border backdrop-blur-md transition duration-300 group-hover:scale-105 sm:size-11"
           [class]="toneStyles().tile"
         >
-          <fa-icon [icon]="icon()" class="text-sm sm:text-base" aria-hidden="true" />
+          @if (icon()) { <fa-icon [icon]="icon()" class="text-sm sm:text-base" aria-hidden="true" /> }
         </span>
       </div>
 

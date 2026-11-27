@@ -78,6 +78,7 @@ export function mapPublicEventView(event: PublicEvent): InvitationEventView {
     latitude: location.latitude ?? null,
     longitude: location.longitude ?? null,
     placeLabel: location.place_label ?? null,
+    placeName: location.place_name ?? null,
     organizers: (event.organizers ?? []).map((organizer) => ({
       name: organizer.display_name,
       avatarUrl: organizer.avatar_url,

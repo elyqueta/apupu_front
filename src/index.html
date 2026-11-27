@@ -4,12 +4,13 @@
     <meta charset="utf-8" />
     <title>Conto Contigo · Eventos e convites</title>
     <base href="/" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta
       name="description"
       content="Conto Contigo — cria eventos, envia convites individuais e acompanha as respostas num só lugar."
     />
-    <meta name="theme-color" content="#0F3D3E" />
+    <!-- Mesmos valores dos tokens --cc-bg (claro/escuro) em styles/brand-tokens.css. -->
+    <meta id="app-theme-color" name="theme-color" content="#f6f5ef" />
     <meta name="color-scheme" content="dark light" />
     <!-- Fontes da página /isy (carregadas uma única vez para toda a aplicação). -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -33,6 +34,10 @@
           var root = document.documentElement;
           root.classList.toggle('dark', dark);
           root.classList.toggle('light', !dark);
+          var themeColor = document.getElementById('app-theme-color');
+          if (themeColor) {
+            themeColor.setAttribute('content', dark ? '#0a1e1f' : '#f6f5ef');
+          }
         } catch (error) {
           /* storage indisponível: mantém o tema por omissão */
         }

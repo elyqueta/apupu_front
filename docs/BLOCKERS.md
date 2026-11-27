@@ -104,5 +104,29 @@
 | Testes exigidos pela spec | `e2e/gratitude.spec.ts` atualizado como fixture estática; não executados testes Playwright completos contra app, `pdffonts` embed check, nem `zbarimg`. | Executar em ambiente com deps Playwright/browser; registar resultados. |
 | Migrações em DB de teste | `1739900000034/0035/0036` up/down em DB de teste dedicada não executadas neste ambiente. | Validar antes de merge. |
 | Lint global | `npm run lint` tem erros preexistentes fora dos ficheiros alterados; ficheiros alterados nesta sessão sem erros de lint. | Não ampliar escopo; registar estado real. |
-| Validação digital Gratitude 1024×1280 | Capturas Playwright 1024×1280 do componente digital Gratitude para os 4 casos A não foram executadas neste ambiente; validação digital ficou por build + inspeção de layout/CSS. | Executar Playwright/e2e dedicado antes de fechar A visualmente; PDF já validado por bbox/pdftoppm/pdffonts. |
+| Validação digital Gratitude 1024×1280 | Resolvida nesta sessão com Playwright real-component 1024×1280 (`e2e/gratitude-real.spec.ts`, rota `__test/gratitude/:case`, 4 casos a-d, 4 passed). | Screenshots reais em `docs/assets/gratitude-a.png..d.png`; manter spec como evidência de regressão. |
 | Validação bbox vetorial | `pdftotext -bbox` não cobre separadores/ícones/QR vetoriais. | Conferir visualmente `docs/assets/gratitude-a.png..d.png`; QR dentro do cartão verificado pelo layout calculado. |
+
+## Bloco 15 — Passo 6 (27/11/2026)
+
+| Passo / área | Observação | Estado / decisão |
+|---|---|---|
+| Perfil público — eventos anteriores | `GET /host/profiles/:id/events` devolve também eventos com `status: 'cancelled'`, pelo que o histórico mostraria eventos cancelados como "Eventos anteriores". | O front filtra `status !== 'cancelled'` antes de renderizar; não alterámos o contrato da API. Se a API passar a excluí-los, o filtro não tem efeito. |
+| Capa do feed — flyer vs. fotografia | O contrato `FeedEvent` não tem campo explícito a indicar se `cover_url` é um flyer (imagem com texto/QR) ou uma fotografia. | Modo único "cartaz": a imagem é sempre tratada como flyer, inteira e sem sobreposições. O modo imersivo (vidro sobre a imagem) só faria sentido com esse campo; não implementado. |
+| Reações e comentários no feed | A API pública do feed não devolve contadores de reações/comentários. | Botões desativados com `disabledHint`; nenhum endpoint ou lógica de backend alterada. |
+| Faixa de stories | O feed público devolve comunidades mas não indica quais têm eventos a decorrer nem amigos. | A faixa aparece quando há pelo menos 2 comunidades; não é possível filtrar por eventos em curso sem alterar a API. |
+
+## Bloco 15B — catálogo e Gratitude título longo (27/11/2026)
+
+**Bloqueios:** nenhum para a funcionalidade. Limitações/observações residuais abaixo.
+
+| Área | Observação | Estado |
+|---|---|---|
+| Fidelidade decorativa do PDF | O PDF usa o mesmo documento v2 e já desenha eixo da timeline, pílulas dos botões, divisores variados, ornamento e placeholders de média. Continuam sem reprodução exata o relevo 3D de flores, o papel enrolado/recortado e as máscaras de gradiente em fotografias; os botões são vetoriais, não interactivos. | Aproximação vetorial documentada; contrato comum é o documento v2. Ver `REPORT-BLOCO-15.md` e `DECISIONS.md`. |
+| Discrepância documental (resolvida) | `PLANO-BLOCO-15.md` tinha ordem de entrega divergente e informação pré-implementação sobre fontes. | Plano alinhado com o anexo 15B e com o estado real do código. |
+| Lint backend (resolvido) | 159 erros pré-existentes em 11 ficheiros. | ✔ Corrigidos por tipagem real em `geocode.service.ts` e `invitationDocument.ts`, sem `eslint-disable` e sem mudança de comportamento. `npm run lint`: 0 erros/60 avisos legados. |
+| Migração 15B (resolvida) | `up/down` não tinham sido executados em DB real. | ✔ Executados com `node-pg-migrate` num PostgreSQL descartável; upsert idempotente e preservação de templates em uso cobertos por `tests/bloco15b.migration.test.ts`. Não cobertos: esquema completo do baseline, concorrência/carga de produção. |
+| Legibilidade a 320 px (resolvida) | Não existia captura automatizada dos 19 templates. | ✔ `e2e/templates-320.spec.ts` mede o render Angular real em 4 projetos Playwright; encontrou e corrigiu corte no T18. As miniaturas em `mode="preview"` e títulos arbitrários do utilizador não são exercitados pela spec. |
+| Contraste das paletas (resolvido) | Seis templates tinham `ink`/`muted` abaixo de 4.5:1 sobre o fundo (T10 chegava a 1.00:1). | ✔ Paletas ajustadas no catálogo front e no espelho back; teste puro em `system-templates.spec.ts` valida os 19. |
+| `zbarimg` no pipeline | A leitura automática do QR renderizado com `zbarimg` não faz parte dos testes executados. | Cobertura atual: QR gerado e desenhado, PDFs gerados e validados por `pdftotext`/`pdftoppm`; leitura por scanner externo pendente. |
+| Artefacto de título longo | `docs/assets/gratitude-long-title.pdf` / `.png` usam um título sintético extenso; não substituem a validação visual com dados reais do anfitrião. | ✔ Complementado pelo caso `e` real-component em `e2e/gratitude-real.spec.ts` e pelos testes puros de `fitGratitudeTitle()`. |

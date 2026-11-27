@@ -106,3 +106,9 @@
 | Lint global | `npm run lint` tem erros preexistentes fora dos ficheiros alterados; ficheiros alterados nesta sessão sem erros de lint. | Não ampliar escopo; registar estado real. |
 | Validação digital Gratitude 1024×1280 | Resolvida nesta sessão com Playwright real-component 1024×1280 (`e2e/gratitude-real.spec.ts`, rota `__test/gratitude/:case`, 4 casos a-d, 4 passed). | Screenshots reais em `docs/assets/gratitude-a.png..d.png`; manter spec como evidência de regressão. |
 | Validação bbox vetorial | `pdftotext -bbox` não cobre separadores/ícones/QR vetoriais. | Conferir visualmente `docs/assets/gratitude-a.png..d.png`; QR dentro do cartão verificado pelo layout calculado. |
+
+## Bloco 15 — Passo 6 (27/11/2026)
+
+| Passo / área | Observação | Estado / decisão |
+|---|---|---|
+| Perfil público — eventos anteriores | `GET /host/profiles/:id/events` devolve também eventos com `status: 'cancelled'`, pelo que o histórico mostraria eventos cancelados como "Eventos anteriores". | O front filtra `status !== 'cancelled'` antes de renderizar; não alterámos o contrato da API. Se a API passar a excluí-los, o filtro não tem efeito. |

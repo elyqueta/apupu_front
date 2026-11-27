@@ -49,6 +49,7 @@ export type EventUpdatePatch = Partial<
     | 'latitude'
     | 'longitude'
     | 'placeLabel'
+    | 'placeName'
     | 'useTables'
   >
 >;
@@ -165,7 +166,8 @@ export class EventsRepository extends CachedRepository<HostEvent[]> {
       patch.city !== undefined ||
       patch.latitude !== undefined ||
       patch.longitude !== undefined ||
-      patch.placeLabel !== undefined
+      patch.placeLabel !== undefined ||
+      patch.placeName !== undefined
     ) {
       body['location'] = locationFromView(current, {
         venue: patch.venue,
@@ -173,6 +175,7 @@ export class EventsRepository extends CachedRepository<HostEvent[]> {
         latitude: patch.latitude,
         longitude: patch.longitude,
         placeLabel: patch.placeLabel,
+        placeName: patch.placeName,
       });
     }
     const response = await this.api.patch<ApiEvent>(

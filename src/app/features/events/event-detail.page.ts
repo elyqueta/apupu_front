@@ -1473,6 +1473,7 @@ export class EventDetailPage {
     try {
       await this.store.updateEvent(this.eventId(), {
         ...fields,
+        placeName: fields.placeLabel.trim() || null,
         youtubeVideoId: extractYoutubeId(youtubeVideoUrl) ?? null,
         visibility: visibilitySettings.visibility,
         showAttendeeCount:

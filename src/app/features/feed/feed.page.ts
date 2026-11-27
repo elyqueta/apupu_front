@@ -42,8 +42,8 @@ const CATEGORIES = ['wedding', 'birthday', 'corporate', 'baby', 'other'] as cons
  *
  * - desktop em três colunas: perfil + atalhos | compositor + publicações |
  *   próximos eventos + sugestões;
- * - mobile imersivo: faixa de avatares em anel, publicações a toda a
- *   largura com sobreposições em vidro e navegação inferior flutuante.
+ * - mobile: filtros numa só fila, cartões de flyer sem sobreposições e
+ *   navegação inferior flutuante com rótulos visíveis.
  *
  * Sem conta vê tudo o que é público e é convidado a criar conta para ver
  * perfis.
@@ -106,6 +106,7 @@ export class FeedPage {
   protected readonly requestCount = signal(0);
 
   protected readonly menuOpen = signal(false);
+  protected readonly categoriesOpen = signal(false);
   protected readonly searchOpen = signal(false);
   protected readonly query = signal('');
   protected readonly results = signal<SearchResults | null>(null);
@@ -138,6 +139,12 @@ export class FeedPage {
     this.items().filter((item): item is FeedCommunity => item.type === 'community'),
   );
   protected readonly people = computed(() => this.items().filter((item): item is FeedPerson => item.type === 'person'));
+
+  /** A faixa só aparece quando há pelo menos dois destinos além de "Criar". */
+  protected readonly showStrip = computed(() => this.strip().length >= 2);
+  protected readonly bottomProfileLabel = computed(() =>
+    this.signedIn() ? this.i18n.t('block12.feed.profile') : this.i18n.t('block12.feed.login'),
+  );
 
   constructor() {
     this.title.setTitle(this.i18n.t('route.feed'));
@@ -244,6 +251,16 @@ export class FeedPage {
 
   protected categoryLabel(id: string): string {
     return this.i18n.t(`type.${id}` as TranslationKey);
+  }
+
+  protected selectedCategoryLabel(): string {
+    const category = this.category();
+    return category ? this.categoryLabel(category) : this.i18n.t('block12.feed.category.all');
+  }
+
+  protected selectCategory(id: string): void {
+    this.category.set(id);
+    this.categoriesOpen.set(false);
   }
 
   protected compose(kind: 'event' | 'community'): void {

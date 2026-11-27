@@ -94,6 +94,47 @@ describe('FeedPage', () => {
     expect(native.querySelector('[data-testid="feed-load-more"]')).toBeNull();
   });
 
+  it('mostra a navegação inferior com rótulos e estado ativo', async () => {
+    const context = setup();
+    http = context.http;
+    flushFeed(http, 'events');
+    flushFeed(http, 'communities');
+    flushFeed(http, 'people');
+    await settle(context.fixture);
+
+    const nav = (context.fixture.nativeElement as HTMLElement).querySelector('[data-testid="feed-bottom-nav"]') as HTMLElement;
+    const labels = [...nav.querySelectorAll('span')].map((node) => node.textContent?.trim());
+    expect(labels).toEqual(['Início', 'Explorar', 'Criar', 'Comunidades', 'Entrar']);
+    expect(nav.querySelector('[aria-current="page"]')?.textContent).toContain('Início');
+    expect((context.fixture.nativeElement as HTMLElement).querySelector('[data-testid="feed-menu"]')).not.toBeNull();
+  });
+
+  it('abre as categorias num modal em vez de uma segunda fila de chips', async () => {
+    const context = setup();
+    http = context.http;
+    flushFeed(http, 'events');
+    flushFeed(http, 'communities');
+    flushFeed(http, 'people');
+    await settle(context.fixture);
+
+    const native = context.fixture.nativeElement as HTMLElement;
+    (native.querySelector('[data-testid="feed-categories-open"]') as HTMLButtonElement).click();
+    context.fixture.detectChanges();
+    expect(native.querySelector('[data-testid="feed-categories-modal"]')).not.toBeNull();
+    expect((native.querySelector('[data-testid="feed-categories-modal"]') as HTMLElement).textContent).toContain('Todas');
+  });
+
+  it('esconde a faixa de stories quando só existiria o botão "Criar"', async () => {
+    const context = setup();
+    http = context.http;
+    flushFeed(http, 'events');
+    flushFeed(http, 'communities');
+    flushFeed(http, 'people');
+    await settle(context.fixture);
+
+    expect((context.fixture.nativeElement as HTMLElement).querySelector('[data-testid="feed-strip"]')).toBeNull();
+  });
+
   it('sem conta, abrir uma pessoa mostra o convite a criar conta', async () => {
     const context = setup();
     http = context.http;

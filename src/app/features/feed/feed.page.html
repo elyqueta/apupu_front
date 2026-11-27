@@ -9,7 +9,7 @@
   />
 
   <!-- Barra de ações do feed: pesquisa e atalhos com os testids legados. -->
-  <div class="sticky top-[calc(3.5rem+env(safe-area-inset-top))] z-20 border-b border-line/40 bg-canvas/80 backdrop-blur-xl lg:top-12">
+  <div class="sticky top-[calc(3.5rem+env(safe-area-inset-top))] z-20 border-b border-line/40 bg-canvas lg:top-12">
     <div class="mx-auto flex max-w-screen-2xl items-center gap-2 px-4 py-2 sm:px-6 lg:px-8">
       <button
         type="button"
@@ -54,7 +54,7 @@
     <!-- Coluna esquerda (desktop): perfil e atalhos. -->
     <aside class="hidden flex-col gap-4 lg:sticky lg:top-[9rem] lg:flex">
       @if (me(); as host) {
-        <article class="overflow-hidden rounded-4xl border border-line/40 bg-surface/60 shadow-card backdrop-blur-xl" data-testid="feed-profile-card">
+        <article class="overflow-hidden rounded-4xl border border-line/40 bg-surface shadow-card" data-testid="feed-profile-card">
           <div class="h-24 bg-gradient-to-br from-brand/40 via-surface-raised to-surface">
             @if (host.profile.cover_url) { <img [src]="host.profile.cover_url" alt="" class="size-full object-cover" /> }
           </div>
@@ -77,7 +77,7 @@
           </div>
         </article>
       } @else {
-        <article class="rounded-4xl border border-brand/25 bg-brand/10 p-5 shadow-card backdrop-blur-xl" data-testid="feed-visitor-banner">
+        <article class="rounded-4xl border border-brand/25 bg-brand/10 p-5 shadow-card" data-testid="feed-visitor-banner">
           <h2 class="font-display text-lg font-semibold text-ink">{{ i18n.t('block12.feed.welcomeTitle') }}</h2>
           <p class="mt-1 text-sm leading-6 text-muted">{{ i18n.t('block12.feed.welcomeBody') }}</p>
           <a routerLink="/criar-conta" class="ui-btn mt-4 w-full">{{ i18n.t('block12.feed.signup') }}</a>
@@ -85,7 +85,7 @@
         </article>
       }
 
-      <article class="rounded-4xl border border-line/40 bg-surface/60 p-4 shadow-card backdrop-blur-xl">
+      <article class="rounded-4xl border border-line/40 bg-surface p-4 shadow-card">
         <div class="flex items-center justify-between">
           <h2 class="text-sm font-semibold text-ink">{{ myCommunities().length > 0 ? i18n.t('block12.feed.shortcuts') : i18n.t('block12.feed.popularCommunities') }}</h2>
           <button type="button" class="text-xs font-semibold text-brand-strong hover:underline" (click)="setType('communities')">{{ i18n.t('block12.feed.seeAll') }}</button>
@@ -141,7 +141,7 @@
       }
 
       <!-- Compositor (desktop), como "Share something…" na referência. -->
-      <article class="hidden rounded-4xl border border-line/40 bg-surface/60 p-4 shadow-card backdrop-blur-xl lg:block" data-testid="feed-composer">
+      <article class="hidden rounded-4xl border border-line/40 bg-surface p-4 shadow-card lg:block" data-testid="feed-composer">
         <div class="flex items-center gap-3">
           <app-avatar [name]="myName() || '?'" [imageUrl]="me()?.profile?.avatar_url ?? null" size="md" />
           <button type="button" class="flex min-h-11 flex-1 items-center rounded-full bg-surface-raised px-4 text-left text-sm text-muted hover:text-ink" (click)="compose('event')">
@@ -195,7 +195,7 @@
       }
 
       @if (!signedIn()) {
-        <div class="flex items-center justify-between gap-3 rounded-3xl border border-brand/25 bg-brand/10 p-3 backdrop-blur-xl lg:hidden">
+        <div class="flex items-center justify-between gap-3 rounded-3xl border border-brand/25 bg-brand/10 p-3 lg:hidden">
           <p class="text-sm font-medium text-ink">{{ i18n.t('block12.feed.visitorBanner') }}</p>
           <a routerLink="/criar-conta" class="ui-btn min-h-11 shrink-0" data-testid="feed-signup-mobile">{{ i18n.t('block12.feed.signup') }}</a>
         </div>
@@ -292,7 +292,7 @@
 
     <!-- Coluna direita (desktop): próximos eventos e sugestões. -->
     <aside class="hidden flex-col gap-4 lg:sticky lg:top-[9rem] lg:flex">
-      <article class="rounded-4xl border border-line/40 bg-surface/60 p-4 shadow-card backdrop-blur-xl">
+      <article class="rounded-4xl border border-line/40 bg-surface p-4 shadow-card">
         <h2 class="text-sm font-semibold text-ink">{{ i18n.t('block12.feed.upcomingTitle') }}</h2>
         <ul class="mt-2 flex flex-col">
           @for (event of upcoming(); track event.id) {
@@ -319,7 +319,7 @@
         </ul>
       </article>
       @if (suggestions().length > 0) {
-        <article class="rounded-4xl border border-line/40 bg-surface/60 p-4 shadow-card backdrop-blur-xl" data-testid="feed-suggestions">
+        <article class="rounded-4xl border border-line/40 bg-surface p-4 shadow-card" data-testid="feed-suggestions">
           <div class="flex items-center justify-between">
             <h2 class="text-sm font-semibold text-ink">{{ i18n.t('block12.feed.suggestions') }}</h2>
             <button type="button" class="text-xs font-semibold text-brand-strong hover:underline" (click)="setType('people')">{{ i18n.t('block12.feed.seeAll') }}</button>

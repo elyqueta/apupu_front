@@ -59,6 +59,20 @@ export class I18nService {
     });
   }
 
+  /**
+   * Selecciona a forma singular/plural e interpola a contagem.
+   * Uma única função para todas as contagens visíveis (membros, amigos,
+   * comunidades, eventos, confirmados, …).
+   */
+  plural(
+    count: number,
+    one: TranslationKey,
+    many: TranslationKey,
+    params: Record<string, string | number> = {},
+  ): string {
+    return this.t(count === 1 ? one : many, { ...params, count });
+  }
+
   formatDate(
     value: string | Date,
     timeZone: string,

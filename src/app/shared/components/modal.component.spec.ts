@@ -134,13 +134,13 @@ describe('ModalComponent', () => {
     expect(footer.className).not.toContain('fixed');
   });
 
-  it('centra o campo de formulário focado no modo dialog', async () => {
+  it('mantém visível o campo de formulário focado sem saltos de página no modo dialog', async () => {
     const scrollIntoView = vi.fn();
     await open();
     const field = fixture.nativeElement.querySelector('input.first-field') as HTMLInputElement;
     field.scrollIntoView = scrollIntoView;
     field.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
-    expect(scrollIntoView).toHaveBeenCalledWith({ block: 'center' });
+    expect(scrollIntoView).toHaveBeenCalledWith({ block: 'nearest', inline: 'nearest' });
   });
 
   it('circula o foco com Tab dentro do modal', async () => {

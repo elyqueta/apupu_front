@@ -33,6 +33,89 @@ export interface PersonPrimaryAction {
   selector: 'app-person-card',
   imports: [FaIconComponent, ActionMenuComponent, AvatarComponent, StatusBadgeComponent],
   template: `
+    @if (layout() === 'linear') {
+      <article [class]="linearClasses()">
+        <div
+          class="flex min-w-0 flex-1 items-center gap-3 rounded-xl px-2 py-1.5 outline-none transition focus-visible:ring-2 focus-visible:ring-brand/60"
+          [class.cursor-pointer]="clickable()"
+          [attr.role]="clickable() ? 'button' : null"
+          [attr.tabindex]="clickable() ? 0 : null"
+          [attr.aria-label]="clickable() ? clickLabel() || name() : null"
+          data-testid="person-card-open"
+          (click)="onClick()"
+          (keydown.enter)="onKeydown($event)"
+          (keydown.space)="onKeydown($event)"
+        >
+          <app-avatar [name]="name()" [imageUrl]="avatarUrl()" size="sm" />
+          <div class="min-w-0 flex-1">
+            <div class="flex min-w-0 items-center gap-2">
+              <p class="min-w-0 truncate text-sm font-semibold text-ink" [title]="name()">{{ name() }}</p>
+              @if (flag(); as alert) {
+                <span
+                  class="inline-flex shrink-0 items-center gap-1 rounded-full border border-coral/30 bg-coral/10 px-2 py-0.5 text-[10px] font-semibold text-coral"
+                  [attr.title]="flagHint() || null"
+                  data-testid="person-card-flag"
+                >
+                  <fa-icon [icon]="icons['warning']" class="text-[10px]" aria-hidden="true" />
+                  {{ alert }}
+                </span>
+              }
+            </div>
+            @if (subtitle()) {
+              <p class="truncate text-xs text-muted" [title]="subtitle()">{{ subtitle() }}</p>
+            }
+            @if (meta().length > 0) {
+              <p class="flex min-w-0 items-center gap-1.5 truncate text-[11px] text-muted">
+                <fa-icon [icon]="iconFor(meta()[0].icon)" class="shrink-0 text-[10px]" aria-hidden="true" />
+                <span class="min-w-0 truncate">{{ meta()[0].label }}</span>
+                @if (meta().length > 1) {
+                  <span class="shrink-0">+{{ meta().length - 1 }}</span>
+                }
+              </p>
+            }
+          </div>
+          @if (status(); as value) {
+            <app-status-badge class="hidden shrink-0 sm:inline-flex" [value]="value" />
+          }
+        </div>
+        @if (primaryAction() || secondaryAction() || actions().length > 0) {
+          <div class="flex shrink-0 items-center gap-1.5 border-l border-line/70 pl-2">
+            @if (primaryAction(); as primary) {
+              <button
+                type="button"
+                class="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-xl bg-brand px-2.5 text-[11px] font-semibold text-on-secondary transition hover:bg-secondary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60 disabled:cursor-not-allowed disabled:opacity-50"
+                [disabled]="primary.disabled"
+                [attr.title]="primary.hint || null"
+                (click)="triggerPrimary($event, primary)"
+              >
+                @if (primary.icon) { <fa-icon [icon]="primary.icon" class="text-[11px]" aria-hidden="true" /> }
+                <span class="truncate">{{ primary.label }}</span>
+              </button>
+            }
+            @if (secondaryAction(); as secondary) {
+              <button
+                type="button"
+                class="grid size-9 shrink-0 place-items-center rounded-xl border border-line text-muted transition hover:border-brand/40 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60 disabled:cursor-not-allowed disabled:opacity-50"
+                [attr.aria-label]="secondary.hint || secondary.label"
+                [attr.title]="secondary.hint || secondary.label"
+                [attr.data-testid]="'person-card-' + secondary.id"
+                [disabled]="secondary.disabled"
+                (click)="triggerPrimary($event, secondary)"
+              >
+                @if (secondary.icon) { <fa-icon [icon]="secondary.icon" aria-hidden="true" /> }
+              </button>
+            }
+            @if (actions().length > 0) {
+              <app-action-menu
+                [items]="actions()"
+                [triggerLabel]="actionsLabel()"
+                (selected)="actionSelected.emit($event)"
+              />
+            }
+          </div>
+        }
+      </article>
+    } @else {
     <article
       [class]="classes()"
       [attr.role]="clickable() ? 'button' : null"
@@ -136,6 +219,7 @@ export interface PersonPrimaryAction {
         }
       </div>
     </article>
+    }
   `,
 })
 export class PersonCardComponent {
@@ -157,12 +241,24 @@ export class PersonCardComponent {
   readonly clickLabel = input<string>('');
   readonly actionsLabel = input<string>('');
   readonly variant = input<'default' | 'rich'>('default');
+  /** `linear` é a linha compacta usada em listas; `card` mantém o cartão em grelha. */
+  readonly layout = input<'card' | 'linear'>('card');
 
   readonly actionSelected = output<string>();
   readonly primaryTriggered = output<string>();
   readonly cardClicked = output<void>();
+  /** Abre os detalhes da pessoa (alias semântico de `cardClicked`). */
+  readonly open = output<void>();
 
   protected readonly icons = ICONS;
+
+  /** Cartão de linha: mesmo vocabulário visual, muito menos altura. */
+  protected readonly linearClasses = (): string => {
+    const base = 'flex min-w-0 items-stretch gap-1 rounded-2xl border p-1.5 shadow-card transition';
+    return this.highlight()
+      ? `${base} border-brand/50 bg-brand/5`
+      : `${base} border-line bg-surface hover:border-brand/40`;
+  };
 
   protected readonly classes = (): string => {
     // Todos os cartões de pessoa ocupam a altura da célula da grelha
@@ -182,6 +278,7 @@ export class PersonCardComponent {
 
   protected onClick(): void {
     if (this.clickable()) {
+      this.open.emit();
       this.cardClicked.emit();
     }
   }
@@ -191,6 +288,7 @@ export class PersonCardComponent {
       return;
     }
     event.preventDefault();
+    this.open.emit();
     this.cardClicked.emit();
   }
 

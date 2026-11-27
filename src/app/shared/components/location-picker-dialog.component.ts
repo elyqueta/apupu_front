@@ -1,4 +1,4 @@
-import { Component, DestroyRef, computed, effect, inject, input, output, signal } from '@angular/core';
+import { Component, DestroyRef, effect, inject, input, output, signal } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
@@ -12,6 +12,14 @@ import { LocationMapComponent, LocationPoint } from './location-map.component';
 export interface LocationPickResult extends LocationPoint {
   placeName: string | null;
 }
+
+interface LocationDraft {
+  latitude: number | null;
+  longitude: number | null;
+  placeName: string | null;
+}
+
+const EMPTY_DRAFT: LocationDraft = { latitude: null, longitude: null, placeName: null };
 
 @Component({
   selector: 'app-location-picker-dialog',
@@ -67,7 +75,7 @@ export interface LocationPickResult extends LocationPoint {
         </div>
 
         <div class="rounded-xl border border-line bg-surface-raised/50 px-3 py-2 text-xs text-muted">
-          @if (draft().latitude != null && draft().longitude != null) {
+          @if (draft().latitude !== null && draft().longitude !== null) {
             <div><span class="font-semibold text-ink">Coordenadas:</span> {{ draft().latitude | number:'1.4-6' }}, {{ draft().longitude | number:'1.4-6' }}</div>
             @if (draft().placeName) { <div class="mt-1"><span class="font-semibold text-ink">Local:</span> {{ draft().placeName }}</div> }
           } @else {
@@ -78,7 +86,7 @@ export interface LocationPickResult extends LocationPoint {
         <div class="flex flex-wrap items-center justify-end gap-2 border-t border-line pt-3">
           <button type="button" class="ui-btn-muted" (click)="clear()">Limpar</button>
           <button type="button" class="ui-btn-muted" (click)="closed.emit()">Cancelar</button>
-          <button type="button" class="ui-btn-primary" [disabled]="draft().latitude == null || draft().longitude == null" (click)="confirm()">Usar localização</button>
+          <button type="button" class="ui-btn-primary" [disabled]="draft().latitude === null || draft().longitude === null" (click)="confirm()">Usar localização</button>
         </div>
       </div>
     </app-modal>
@@ -99,13 +107,13 @@ export class LocationPickerDialogComponent {
   protected readonly searching = signal(false);
   protected readonly searched = signal(false);
   protected readonly searchError = signal('');
-  protected readonly draft = signal<LocationPickResult>({ latitude: null as any, longitude: null as any, placeName: null });
+  protected readonly draft = signal<LocationDraft>({ ...EMPTY_DRAFT });
 
   constructor() {
     effect(() => {
       if (this.open()) {
         const init = this.initial();
-        this.draft.set(init ? { ...init } : { latitude: null as any, longitude: null as any, placeName: null });
+        this.draft.set(init ? { ...init } : { ...EMPTY_DRAFT });
         this.results.set([]);
         this.searchError.set('');
         this.searched.set(false);
@@ -149,7 +157,7 @@ export class LocationPickerDialogComponent {
   }
 
   protected clear(): void {
-    this.draft.set({ latitude: null as any, longitude: null as any, placeName: null });
+    this.draft.set({ ...EMPTY_DRAFT });
     this.query.setValue('', { emitEvent: false });
     this.results.set([]);
     this.searched.set(false);
@@ -157,7 +165,7 @@ export class LocationPickerDialogComponent {
 
   protected confirm(): void {
     const d = this.draft();
-    if (d.latitude == null || d.longitude == null) return;
+    if (d.latitude === null || d.longitude === null) return;
     const placeName = (d.placeName ?? this.query.value).trim() || null;
     this.picked.emit({ latitude: d.latitude, longitude: d.longitude, placeName });
   }

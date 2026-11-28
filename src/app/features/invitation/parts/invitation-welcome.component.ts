@@ -31,7 +31,7 @@ import {
             <img data-testid="invitation-welcome-cover" [src]="cover" [alt]="eventTitle()" class="block max-h-[46dvh] w-full object-cover" />
           </div>
         } @else {
-          <div class="mx-auto overflow-hidden rounded-4xl" data-testid="invitation-welcome-art">
+          <div class="welcome-art mx-auto overflow-hidden rounded-4xl" data-testid="invitation-welcome-art">
             <app-template-renderer
               [manifest]="manifest()"
               [data]="renderData()"
@@ -51,7 +51,7 @@ import {
           <button
             type="button"
             data-testid="invitation-welcome-continue"
-            class="inv-btn mt-1 w-full sm:w-auto sm:min-w-56"
+            class="inv-btn sticky bottom-4 z-10 mt-1 w-full sm:w-auto sm:min-w-56"
             (click)="continue.emit()"
           >
             <fa-icon [icon]="icons['arrowRight']" aria-hidden="true" />
@@ -61,6 +61,20 @@ import {
       </section>
     </main>
   `,
+  styles: [
+    `
+      /* Na entrada, a arte do template nunca pode empurrar o botão para fora
+         da viewport — sobretudo no desktop, onde o cartaz Gratitude é 4:5. */
+      :host .welcome-art {
+        width: min(100%, calc(56dvh * 4 / 5));
+      }
+      @media (max-width: 640px) {
+        :host .welcome-art {
+          width: min(100%, calc(58dvh * 4 / 5));
+        }
+      }
+    `,
+  ],
 })
 export class InvitationWelcomeComponent {
   protected readonly i18n = inject(I18nService);

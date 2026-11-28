@@ -52,7 +52,7 @@ type MapLibre = typeof import('maplibre-gl');
     </div>
     <p class="attribution">{{ i18n.t('block16.map.attribution') }}</p>
     @if (statusKey()) {
-      <div class="status" role="status" aria-live="polite">{{ i18n.t(statusKey()) }}</div>
+      <div class="status" role="status" aria-live="polite">{{ i18n.t(statusKey()!) }}</div>
     }
   `,
 })
@@ -72,7 +72,7 @@ export class LocationMapComponent implements AfterViewInit, OnDestroy {
   private readonly mapEl = viewChild.required<ElementRef<HTMLDivElement>>('mapEl');
 
   protected readonly activated = signal(false);
-  protected readonly statusKey = signal<TranslationKey | ''>('');
+  protected readonly statusKey = signal<TranslationKey | null>(null);
   protected readonly mapAria = () => this.ariaLabel() || this.i18n.t('block16.locations.mapAria');
   protected readonly mapActivateLabel = () =>
     this.activateLabel() || this.i18n.t('block16.locations.activateMap');
@@ -139,7 +139,7 @@ export class LocationMapComponent implements AfterViewInit, OnDestroy {
         el.querySelector(selector)?.setAttribute('aria-label', this.i18n.t(key));
       }
       map.on('load', () => {
-        this.zone.run(() => this.statusKey.set(''));
+        this.zone.run(() => this.statusKey.set(null));
         if (hasPoint) this.setMarker(this.latitude()!, this.longitude()!, this.placeName());
         if (this.interactive()) {
           map.on('click', (e) => {

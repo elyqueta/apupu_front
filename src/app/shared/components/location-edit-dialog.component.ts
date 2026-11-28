@@ -215,7 +215,7 @@ export class LocationEditDialogComponent {
   protected readonly searchError = signal(false);
   protected readonly mapOpen = signal(false);
   protected readonly pendingSave = signal<PreferredLocation | null>(null);
-  protected readonly errorKey = signal<TranslationKey | ''>('');
+  protected readonly errorKey = signal<TranslationKey | null>(null);
   protected readonly placeName = signal<string | null>(null);
 
   protected readonly exact = () => this.form.controls.latitude.value != null && this.form.controls.longitude.value != null;
@@ -239,7 +239,7 @@ export class LocationEditDialogComponent {
       this.placeName.set(location?.venueName ?? null);
       this.results.set([]);
       this.searchError.set(false);
-      this.errorKey.set('');
+      this.errorKey.set(null);
       this.mapOpen.set(false);
       this.pendingSave.set(null);
     });
@@ -251,7 +251,7 @@ export class LocationEditDialogComponent {
 
   protected setKind(kind: 'venue' | 'online'): void {
     this.form.controls.kind.setValue(kind);
-    this.errorKey.set('');
+    this.errorKey.set(null);
   }
 
   private async search(value: string): Promise<void> {

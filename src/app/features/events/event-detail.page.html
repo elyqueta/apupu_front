@@ -111,6 +111,22 @@
         <span class="mb-1.5 block text-xs font-semibold text-muted">{{ i18n.t('eventDetail.fieldTitle') }}</span>
         <input type="text" formControlName="title" class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink outline-none focus:border-brand/50" />
       </label>
+      <label class="block">
+        <span class="mb-1.5 block text-xs font-semibold text-muted">
+          {{ i18n.t('block16.field.subtitle') }}
+          <span class="text-muted/60">({{ i18n.t('common.optional') }})</span>
+        </span>
+        <input
+          type="text"
+          formControlName="subtitle"
+          autocomplete="off"
+          maxlength="150"
+          data-testid="event-subtitle"
+          [placeholder]="i18n.t('block16.placeholder.subtitle')"
+          class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink outline-none focus:border-brand/50"
+        />
+        <span class="mt-1 block text-[10px] text-muted">{{ i18n.t('block16.hint.subtitle') }}</span>
+      </label>
       <app-event-locations-field
         [locations]="locations()"
         [timezone]="timezone()"

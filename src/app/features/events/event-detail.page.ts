@@ -81,6 +81,7 @@ import {
   parseAge,
 } from '../../shared/components/event-visibility-fields.component';
 import { extractYoutubeId } from '../../core/utils/youtube';
+import { SUBTITLE_MAX_LENGTH, subtitleValue } from '../../core/utils/event-subtitle';
 import {
   locationError,
   moveLocation,
@@ -487,6 +488,7 @@ export class EventDetailPage {
 
   protected readonly settingsForm = this.fb.group({
     title: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(120)]],
+    subtitle: ['', [Validators.maxLength(SUBTITLE_MAX_LENGTH)]],
     venue: [''],
     city: [''],
     youtubeVideoUrl: [''],
@@ -537,6 +539,7 @@ export class EventDetailPage {
       }
       this.settingsForm.reset({
         title: event.title,
+        subtitle: event.subtitle ?? '',
         venue: event.venue,
         city: event.city,
         youtubeVideoUrl: event.youtubeVideoId ? `https://www.youtube.com/watch?v=${event.youtubeVideoId}` : '',
@@ -1476,7 +1479,8 @@ export class EventDetailPage {
       this.settingsForm.markAllAsTouched();
       return;
     }
-    const { visibilitySettings, youtubeVideoUrl, ...fields } = this.settingsForm.getRawValue();
+    const { visibilitySettings, youtubeVideoUrl, subtitle, ...fields } =
+      this.settingsForm.getRawValue();
     const ytError = this.youtubeUrlError();
     if (ytError) {
       this.settingsForm.controls.youtubeVideoUrl.markAsTouched();
@@ -1501,6 +1505,7 @@ export class EventDetailPage {
     try {
       await this.store.updateEvent(this.eventId(), {
         ...fields,
+        subtitle: subtitleValue(subtitle),
         locations: normalizeLocations(locations),
         youtubeVideoId: extractYoutubeId(youtubeVideoUrl) ?? null,
         visibility: visibilitySettings.visibility,

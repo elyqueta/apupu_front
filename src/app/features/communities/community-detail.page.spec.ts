@@ -246,6 +246,32 @@ describe('CommunityDetailPage', () => {
     expect(native.querySelector('[data-testid="community-join"]')).toBeNull();
   });
 
+  it('todas as abas usam o mesmo estilo da aba Resumo, mesmo após navegar', async () => {
+    const context = setup();
+    http = context.http;
+    http.expectOne(`${BASE}/host/communities/${SLUG}`).flush({ data: staff() });
+    await flushPending(http, ACTIVITY_URL, { data: [] });
+    await settle(context.fixture);
+    const native = context.fixture.nativeElement as HTMLElement;
+    const tabs = () => Array.from(native.querySelectorAll<HTMLButtonElement>('[role="tab"]'));
+    expect(tabs().length).toBeGreaterThan(1);
+    const summaryClass = tabs()[0].className;
+    expect(summaryClass).toContain('border-brand/30');
+    expect(summaryClass).toContain('bg-brand/15');
+    expect(summaryClass).toContain('text-ink');
+    expect(summaryClass).not.toContain('text-muted');
+    expect(summaryClass).not.toContain('opacity-');
+    for (const button of tabs()) {
+      expect(button.className).toBe(summaryClass);
+      expect(button.querySelector('span')?.className ?? '').not.toContain('text-muted');
+    }
+    openTab(context.fixture, 'settings');
+    for (const button of tabs()) {
+      expect(button.className).toBe(summaryClass);
+    }
+    expect(tabs().find((button) => button.getAttribute('aria-selected') === 'true')?.getAttribute('data-testid')).toBe('community-tab-settings');
+  });
+
   it('comunidade privada sem acesso mostra "não encontrada"', async () => {
     const context = setup();
     http = context.http;

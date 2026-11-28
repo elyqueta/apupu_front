@@ -119,15 +119,14 @@
             <button
               type="button"
               role="tab"
-              class="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-xl border px-3 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60"
-              [class]="tab() === item.id ? 'border-brand/30 bg-brand/15 text-ink' : 'border-line bg-surface text-muted hover:text-ink'"
+              class="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-xl border border-brand/30 bg-brand/15 px-3 text-sm font-semibold text-ink transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60"
               [attr.aria-selected]="tab() === item.id"
               [attr.data-testid]="'community-tab-' + item.id"
               (click)="tab.set(item.id)"
             >
               {{ i18n.t(item.label) }}
               @if (item.count !== undefined && item.count !== null) {
-                <span class="rounded-full bg-surface-raised px-2 text-xs text-muted">{{ item.count }}</span>
+                <span class="rounded-full bg-surface-raised px-2 text-xs text-ink">{{ item.count }}</span>
               }
             </button>
           }

@@ -290,7 +290,7 @@ describe('CommunityDetailPage', () => {
     }
   });
 
-  it('todas as abas usam o mesmo estilo da aba Resumo, mesmo após navegar', async () => {
+  it('todas as abas usam a mesma família visual com destaque só na selecionada', async () => {
     const context = setup();
     http = context.http;
     http.expectOne(`${BASE}/host/communities/${SLUG}`).flush({ data: staff() });
@@ -298,21 +298,31 @@ describe('CommunityDetailPage', () => {
     await settle(context.fixture);
     const native = context.fixture.nativeElement as HTMLElement;
     const tabs = () => Array.from(native.querySelectorAll<HTMLButtonElement>('[role="tab"]'));
+    const assertStyles = (): void => {
+      for (const button of tabs()) {
+        const classes = button.className;
+        expect(classes).toContain('text-ink');
+        expect(classes).not.toContain('text-muted');
+        expect(classes).not.toContain('opacity-');
+        expect(button.querySelector('span')?.className ?? '').not.toContain('text-muted');
+        if (button.getAttribute('aria-selected') === 'true') {
+          expect(classes).toContain('border-brand/30');
+          expect(classes).toContain('bg-brand/15');
+          expect(classes).not.toContain('bg-surface');
+        } else {
+          expect(classes).toContain('border-line');
+          expect(classes).toContain('bg-surface');
+          expect(classes).toContain('hover:border-brand/30');
+          expect(classes).toContain('hover:bg-brand/10');
+          expect(classes).not.toContain('bg-brand/15');
+        }
+      }
+    };
     expect(tabs().length).toBeGreaterThan(1);
-    const summaryClass = tabs()[0].className;
-    expect(summaryClass).toContain('border-brand/30');
-    expect(summaryClass).toContain('bg-brand/15');
-    expect(summaryClass).toContain('text-ink');
-    expect(summaryClass).not.toContain('text-muted');
-    expect(summaryClass).not.toContain('opacity-');
-    for (const button of tabs()) {
-      expect(button.className).toBe(summaryClass);
-      expect(button.querySelector('span')?.className ?? '').not.toContain('text-muted');
-    }
+    assertStyles();
+    expect(tabs()[0].getAttribute('aria-selected')).toBe('true');
     openTab(context.fixture, 'settings');
-    for (const button of tabs()) {
-      expect(button.className).toBe(summaryClass);
-    }
+    assertStyles();
     expect(tabs().find((button) => button.getAttribute('aria-selected') === 'true')?.getAttribute('data-testid')).toBe('community-tab-settings');
   });
 

@@ -102,6 +102,7 @@ export function mapEvent(event: ApiEvent): HostEvent {
   return {
     id: event.id,
     title: event.title,
+    subtitle: event.subtitle ?? null,
     type: event.category,
     hostName: event.host_name,
     hostEmail: event.host_email,

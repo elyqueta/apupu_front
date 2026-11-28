@@ -44,6 +44,8 @@ export interface EventLocationEntry {
 export interface HostEvent {
   id: string;
   title: string;
+  /** Bloco 16: subtítulo opcional do convite. */
+  subtitle: string | null;
   type: EventType | null;
   hostName: string;
   hostEmail: string;
@@ -307,6 +309,8 @@ export interface GuestInput {
 
 export interface CreateEventInput {
   title: string;
+  /** Bloco 16: opcional; `null` quando não preenchido. */
+  subtitle?: string | null;
   type: EventType;
   hostName: string;
   hostEmail: string;

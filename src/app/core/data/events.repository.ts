@@ -9,6 +9,7 @@ import {
   EventLocation,
 } from '../api/api.models';
 import { entriesToApi, legacyFromEntries } from '../api/event-locations';
+import { subtitleValue } from '../utils/event-subtitle';
 import {
   contributionFromInput,
   locationFromInput,
@@ -38,6 +39,7 @@ export type EventUpdatePatch = Partial<
   Pick<
     HostEvent,
     | 'title'
+    | 'subtitle'
     | 'venue'
     | 'city'
     | 'message'
@@ -73,6 +75,7 @@ export function buildEventCreateRequest(input: CreateEventInput): CreateEventReq
   return {
     event: {
       title: input.title,
+      subtitle: subtitleValue(input.subtitle),
       host_name: input.hostName,
       host_email: input.hostEmail,
       category: input.type,
@@ -171,6 +174,7 @@ export class EventsRepository extends CachedRepository<HostEvent[]> {
     }
     const body: Record<string, unknown> = {};
     if (patch.title !== undefined) body['title'] = patch.title;
+    if (patch.subtitle !== undefined) body['subtitle'] = subtitleValue(patch.subtitle);
     if (patch.message !== undefined) body['message'] = patch.message;
     if (patch.rules !== undefined) body['rules'] = patch.rules;
     if (patch.dressCode !== undefined) body['dress_code'] = patch.dressCode;

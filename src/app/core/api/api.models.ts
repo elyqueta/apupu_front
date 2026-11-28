@@ -554,6 +554,8 @@ export interface ReportSummary {
 export interface CreateEventRequest {
   event: {
     title: string;
+    /** Bloco 16: `null` limpa o subtítulo. */
+    subtitle?: string | null;
     host_name: string;
     host_email: string;
     category: EventCategory;

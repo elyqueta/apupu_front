@@ -37,7 +37,8 @@ export interface TemplateManifest {
     qr_whatsapp_message?: string;
     qr_image_url?: string;
     qr_image_public_id?: string;
-    qr_icon?: 'none' | 'whatsapp' | 'brand';
+    /** Bloco 16: `platform` (default) embute o símbolo no QR; `none` desliga-o. */
+    qr_icon?: 'none' | 'platform';
     qr_size?: 'md' | 'lg';
   };
   /** Bloco 15, Passo 2: documento de blocos (fonte única para editor/convite/PDF). */
@@ -103,6 +104,11 @@ export function normalizeManifest(raw: unknown): TemplateManifest {
     orientation,
     previewData: normalizePreviewData(value.previewData),
     open_style: OPEN.includes(value.open_style as OpenStyle) ? (value.open_style as OpenStyle) : 'fade',
+    pdf: {
+      ...value.pdf,
+      // Valores antigos do Bloco 15 passam a usar o símbolo da plataforma.
+      qr_icon: value.pdf?.qr_icon === 'none' ? 'none' : 'platform',
+    },
   } as TemplateManifest;
 }
 

@@ -2,65 +2,63 @@ import { Component, computed, inject, input, output } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { guestPlural, GuestKindValue } from '../../../core/i18n/block15-keys';
 import { I18nService } from '../../../core/i18n/i18n.service';
-import { ICONS } from '../../../core/ui/icons';
 import { DEFAULT_MANIFEST, TemplateManifest } from '../../../core/models/template-manifest';
-import { TemplatePreviewComponent } from '../../../shared/components/template-preview.component';
+import { ICONS } from '../../../core/ui/icons';
+import {
+  TemplateRenderData,
+  TemplateRendererComponent,
+} from '../../../shared/components/template-renderer.component';
 
 /**
- * Primeira tela do convite. Com capa: a imagem sem texto por cima (Bloco
- * 5). Sem capa (Bloco 14): abre no estilo do template. A animação segue o
+ * Primeira tela do convite. Com capa: a imagem sem texto por cima. Sem capa:
+ * a arte do próprio template, em modo `cover` (Bloco 16). A animação segue o
  * `open_style` do manifesto (≤ 1,5 s, `prefers-reduced-motion` respeitado)
  * e o botão "Ver convite" está sempre disponível.
  */
 @Component({
   selector: 'app-invitation-welcome',
-  imports: [FaIconComponent, TemplatePreviewComponent],
+  imports: [FaIconComponent, TemplateRendererComponent],
   template: `
     <main class="flex flex-1 flex-col justify-center py-6 sm:py-10">
-      <article
-        class="mx-auto w-full max-w-xl overflow-hidden rounded-4xl border border-line bg-surface shadow-card"
+      <section
+        class="mx-auto w-full max-w-2xl"
         [class]="'tpl-open-' + manifest().open_style"
         data-testid="invitation-welcome"
         [attr.data-open-style]="manifest().open_style"
       >
         @if (coverUrl(); as cover) {
-          <img
-            data-testid="invitation-welcome-cover"
-            [src]="cover"
-            [alt]="eventTitle()"
-            class="block h-64 w-full object-cover sm:h-80"
-          />
+          <div class="mx-auto overflow-hidden rounded-4xl">
+            <img data-testid="invitation-welcome-cover" [src]="cover" [alt]="eventTitle()" class="block max-h-[46dvh] w-full object-cover" />
+          </div>
         } @else {
-          <app-template-preview
-            [manifest]="manifest()"
-            variant="hero"
-            [kicker]="i18n.t('block14.preview.kicker')"
-            [title]="eventTitle()"
-            class="h-64 sm:h-80"
-          />
+          <div class="mx-auto overflow-hidden rounded-4xl" data-testid="invitation-welcome-art">
+            <app-template-renderer
+              [manifest]="manifest()"
+              [data]="renderData()"
+              mode="cover"
+              [animate]="true"
+            />
+          </div>
         }
 
-        <div class="flex flex-col items-center gap-5 px-5 py-7 text-center sm:px-8 sm:py-9">
-          <p class="text-xs font-semibold uppercase tracking-[0.2em] text-brand-strong">
-            {{ i18n.t('invitation.eyebrow') }}
-          </p>
-          <h1 class="font-display text-2xl font-semibold tracking-tight text-ink sm:text-3xl">
+        <div class="flex flex-col items-center gap-4 px-5 py-7 text-center sm:py-9">
+          <h1 class="font-display text-2xl font-semibold tracking-tight inv-ink sm:text-3xl">
             {{ i18n.t(welcomeTitleKey()) }}
           </h1>
-          <p class="max-w-sm text-sm leading-6 text-muted">
+          <p class="max-w-sm text-sm leading-6 inv-muted">
             {{ i18n.t(welcomeMessageKey(), { name: guestName() }) }}
           </p>
           <button
             type="button"
             data-testid="invitation-welcome-continue"
-            class="ui-btn mt-1 w-full sm:w-auto sm:min-w-56"
+            class="inv-btn mt-1 w-full sm:w-auto sm:min-w-56"
             (click)="continue.emit()"
           >
             <fa-icon [icon]="icons['arrowRight']" aria-hidden="true" />
             {{ i18n.t('block14.welcome.open') }}
           </button>
         </div>
-      </article>
+      </section>
     </main>
   `,
 })
@@ -73,8 +71,23 @@ export class InvitationWelcomeComponent {
   readonly guestName = input('');
   readonly guestKind = input<GuestKindValue>(null);
   readonly eventTitle = input('');
+  readonly templateData = input<TemplateRenderData | null>(null);
 
   readonly continue = output<void>();
+
+  protected readonly renderData = computed<TemplateRenderData>(
+    () =>
+      this.templateData() ?? {
+        title: this.eventTitle(),
+        hostName: '',
+        startsAt: null,
+        timezone: 'Africa/Luanda',
+        venue: '',
+        city: '',
+        message: '',
+        coverUrl: this.coverUrl(),
+      },
+  );
 
   protected readonly welcomeTitleKey = computed(() =>
     guestPlural(this.guestKind()) ? 'block15.invitation.welcomeTitlePlural' : 'invitation.welcomeTitle',

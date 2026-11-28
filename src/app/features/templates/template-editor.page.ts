@@ -221,10 +221,9 @@ function sampleData(template: EventTemplate): TemplateRenderData {
                   </label>
                   <label class="block">
                     <span class="mb-1 block text-xs font-medium text-muted">{{ i18n.t('block15.editor.qrIcon') }}</span>
-                    <select class="ui-input w-full" [ngModel]="manifest().pdf.qr_icon || 'brand'" (ngModelChange)="updatePdf('qr_icon', $event)">
+                    <select class="ui-input w-full" [ngModel]="manifest().pdf.qr_icon || 'platform'" (ngModelChange)="updatePdf('qr_icon', $event)">
+                      <option value="platform">{{ i18n.t('block16.qr.platform') }}</option>
                       <option value="none">{{ i18n.t('block15.editor.qrIconNone') }}</option>
-                      <option value="whatsapp">{{ i18n.t('block15.editor.qrIconWhatsapp') }}</option>
-                      <option value="brand">{{ i18n.t('block15.editor.qrIconBrand') }}</option>
                     </select>
                   </label>
                   <label class="block">

@@ -1,4 +1,5 @@
 import { normalizeManifest } from '../models/template-manifest';
+import { entriesFromApi } from './event-locations';
 import {
   ApiActivity,
   ApiEvent,
@@ -141,6 +142,7 @@ export function mapEvent(event: ApiEvent): HostEvent {
     longitude: event.location.longitude ?? null,
     placeLabel: event.location.place_label ?? null,
     placeName: event.location.place_name ?? null,
+    locations: entriesFromApi(event.locations, event.location),
     useTables: event.use_tables ?? false,
     createdAt: event.created_at,
     stats: event.stats

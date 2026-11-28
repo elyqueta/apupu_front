@@ -201,6 +201,29 @@ export interface ApiHostEventManager extends ApiEventManager {
   };
 }
 
+/** Bloco 16: corpo enviado ao back em `locations[]` (principal primeiro). */
+export type EventLocationInput =
+  | {
+      id?: string | null;
+      kind: 'venue';
+      is_primary: boolean;
+      address: string;
+      venue_name?: string | null;
+      label?: string | null;
+      starts_at?: string | null;
+      city?: string | null;
+      latitude?: number | null;
+      longitude?: number | null;
+    }
+  | {
+      id?: string | null;
+      kind: 'online';
+      is_primary: boolean;
+      online_url: string;
+      label?: string | null;
+      starts_at?: string | null;
+    };
+
 /** Bloco 16: localização pública; coordenadas só para quem pode ver o convite. */
 export interface PublicLocation {
   id: string | null;
@@ -538,6 +561,8 @@ export interface CreateEventRequest {
     ends_at?: string;
     timezone: string;
     location: EventLocation;
+    /** Bloco 16: quando presente, substitui o espelho legado. */
+    locations?: EventLocationInput[];
     message: string;
     rules?: string;
     dress_code?: string;

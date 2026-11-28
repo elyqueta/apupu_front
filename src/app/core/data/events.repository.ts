@@ -202,18 +202,8 @@ export class EventsRepository extends CachedRepository<HostEvent[]> {
             place_label: current.placeLabel,
             place_name: current.placeName,
           };
-      const fallback = hasLegacyPatch
-        ? locationFromView(current, {
-            venue: patch.venue,
-            city: patch.city,
-            latitude: patch.latitude,
-            longitude: patch.longitude,
-            placeLabel: patch.placeLabel,
-            placeName: patch.placeName,
-          })
-        : currentLegacy;
       body['locations'] = entriesToApi(patch.locations);
-      body['location'] = legacyFromEntries(patch.locations, fallback);
+      body['location'] = legacyFromEntries(patch.locations, currentLegacy);
     } else if (hasLegacyPatch) {
       body['location'] = locationFromView(current, {
         venue: patch.venue,

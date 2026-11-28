@@ -23,6 +23,24 @@ export interface BankDetails {
   accountReference: string;
 }
 
+/**
+ * Bloco 16 — localização gerida pelo anfitrião. `address` é o título do cartão;
+ * o campo legado `location` do evento continua a ser o espelho da principal.
+ */
+export interface EventLocationEntry {
+  id?: string | null;
+  isPrimary: boolean;
+  kind: 'venue' | 'online';
+  address: string | null;
+  venueName?: string | null;
+  label?: string | null;
+  startsAt?: string | null;
+  city?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  onlineUrl?: string | null;
+}
+
 export interface HostEvent {
   id: string;
   title: string;
@@ -66,6 +84,8 @@ export interface HostEvent {
   placeLabel: string | null;
   placeName: string | null;
   useTables: boolean;
+  /** Bloco 16: principal primeiro; ausente em eventos antigos em cache. */
+  locations?: EventLocationEntry[];
   createdAt: string;
   stats?: EventStats;
 }
@@ -320,6 +340,8 @@ export interface CreateEventInput {
   placeLabel?: string | null;
   placeName?: string | null;
   useTables?: boolean;
+  /** Bloco 16: até 5 localizações; a principal é a primeira do array. */
+  locations?: EventLocationEntry[];
 }
 
 export interface AddGuestResult {

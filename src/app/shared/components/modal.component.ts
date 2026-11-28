@@ -152,10 +152,11 @@ export class ModalComponent {
     this.destroyRef.onDestroy(() => this.deactivate(false));
   }
 
+  /** Overlay preso ao viewport, acima do header/sidebar (z-40/z-50), com recuo da safe-area. */
   protected containerClass(): string {
     return this.presentation() === 'sheet'
-      ? 'fixed inset-0 z-[100] flex items-end justify-center sm:items-center sm:p-4'
-      : 'fixed inset-0 z-[100] flex items-center justify-center px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))]';
+      ? 'fixed inset-0 z-[120] flex items-end justify-center sm:items-center sm:p-4'
+      : 'fixed inset-0 z-[120] flex items-center justify-center px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))]';
   }
 
   protected panelClass(): string {

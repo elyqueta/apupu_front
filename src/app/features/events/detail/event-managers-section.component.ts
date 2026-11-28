@@ -32,7 +32,9 @@ type ManagerLinkStatus = 'active' | 'expired' | 'revoked' | 'blocked' | 'pending
     ManagerCredentialsDialogComponent,
   ],
   template: `
-    <section class="flex flex-col gap-4 rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl">
+    <!-- Sem backdrop-blur no cartão: um filtro cria containing block para position: fixed
+         e prenderia os modais ao cartão, por baixo do header sticky da página. -->
+    <section class="flex flex-col gap-4 rounded-4xl border border-line bg-surface p-5 shadow-card">
       <div class="flex items-start justify-between gap-3">
         <div>
           <p class="text-xs font-semibold uppercase tracking-[0.2em] text-brand-strong">{{ i18n.t('eventDetail.managersTitle') }}</p>
@@ -133,7 +135,7 @@ type ManagerLinkStatus = 'active' | 'expired' | 'revoked' | 'blocked' | 'pending
           <div modal-footer class="flex flex-col gap-2">
             @for (action of actionsFor(manager); track action.id) {
               <button type="button" [disabled]="action.disabled"
-                class="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-line bg-surface-raised px-3 text-xs font-semibold transition hover:border-brand/40 disabled:cursor-not-allowed disabled:opacity-50"
+                class="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-line bg-surface-raised px-3 text-sm font-semibold transition hover:border-brand/40 disabled:cursor-not-allowed disabled:opacity-50"
                 [class.text-coral]="action.tone === 'danger'" [class.text-ink]="action.tone !== 'danger'"
                 (click)="onAction(manager, action.id)">
                 <fa-icon [icon]="action.icon" aria-hidden="true" />

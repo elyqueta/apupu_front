@@ -90,3 +90,69 @@ describe('PersonCardComponent', () => {
     expect(host.clicked()).toBe(true);
   });
 });
+
+@Component({
+  imports: [PersonCardComponent],
+  template: `
+    <app-person-card
+      layout="linear"
+      [prominent]="prominent()"
+      [name]="'Ana Pereira'"
+      [subtitle]="'ana@exemplo.ao'"
+      [status]="'pending'"
+      [meta]="meta()"
+      [primaryAction]="primary()"
+      [actions]="actions()"
+    />
+  `,
+})
+class LinearPersonCardHostComponent {
+  readonly prominent = signal(false);
+  readonly meta = signal([
+    { icon: 'calendar', label: 'Casamento da Rita' },
+    { icon: 'clock', label: 'há 2 dias' },
+  ]);
+  readonly primary = signal({ id: 'resend', label: 'Reenviar email', icon: ICONS['envelope'] });
+  readonly actions = signal<ActionMenuItem[]>([{ id: 'edit', label: 'Editar', icon: ICONS['pen'] }]);
+}
+
+describe('PersonCardComponent — linha proeminente do painel', () => {
+  let fixture: ComponentFixture<LinearPersonCardHostComponent>;
+  let host: LinearPersonCardHostComponent;
+
+  beforeEach(async () => {
+    TestBed.configureTestingModule({ imports: [LinearPersonCardHostComponent] });
+    fixture = TestBed.createComponent(LinearPersonCardHostComponent);
+    host = fixture.componentInstance;
+    fixture.detectChanges();
+    await fixture.whenStable();
+  });
+
+  it('mantém a linha discreta por omissão', () => {
+    const button = fixture.nativeElement.querySelector('button') as HTMLButtonElement;
+    const badge = fixture.nativeElement.querySelector('app-status-badge') as HTMLElement;
+    expect(button.className).toContain('hidden');
+    expect(badge.className).toContain('hidden');
+    expect((fixture.nativeElement.querySelector('article') as HTMLElement).className).toContain('p-1.5');
+  });
+
+  it('mostra avatar maior, detalhes, selo e ação com alvo de 44 px', () => {
+    host.prominent.set(true);
+    fixture.detectChanges();
+
+    const article = fixture.nativeElement.querySelector('article') as HTMLElement;
+    expect(article.className).toContain('p-3');
+    expect(fixture.nativeElement.querySelector('app-avatar span')?.className).toContain('size-14');
+    expect(fixture.nativeElement.querySelector('app-status-badge')?.className).not.toContain('hidden');
+    expect(article.textContent).toContain('ana@exemplo.ao');
+    expect(article.textContent).toContain('Casamento da Rita');
+    expect(article.textContent).toContain('+1');
+
+    const button = fixture.nativeElement.querySelector('button') as HTMLButtonElement;
+    expect(button.className).toContain('size-11');
+    expect(button.className).not.toContain('sm:size-auto');
+    expect(button.className).not.toContain('hidden');
+    expect(button.getAttribute('aria-label')).toBe('Reenviar email');
+    expect(button.querySelector('span')?.className).toContain('sr-only');
+  });
+});

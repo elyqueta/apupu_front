@@ -104,6 +104,29 @@ describe('InstitutionDetailPage', () => {
     expect(document.querySelector('[data-testid="institution-otp"]')).not.toBeNull();
   });
 
+  it('apagar instituição usa linha compacta e mantém a confirmação antes de apagar', async () => {
+    const context = setup();
+    http = context.http;
+    http.expectOne(`${BASE}/host/institutions/${SLUG}`).flush({ data: detail({ is_creator: true }) });
+    await settle(context.fixture);
+    const native = context.fixture.nativeElement as HTMLElement;
+    const trigger = native.querySelector('[data-testid="institution-delete"]') as HTMLButtonElement;
+    expect(trigger).not.toBeNull();
+    expect(trigger.className).not.toContain('ui-btn-danger');
+    const section = trigger.closest('section') as HTMLElement;
+    expect(section.className).not.toContain('bg-coral/5');
+    expect(section.className).not.toContain('rounded-4xl');
+    expect(section.querySelector('span.size-10')).not.toBeNull();
+    trigger.click();
+    context.fixture.detectChanges();
+    expect(native.querySelector('input[name="confirmName"]')).not.toBeNull();
+    const confirm = Array.from(native.querySelectorAll<HTMLButtonElement>('button[type="submit"]')).find((button) =>
+      button.className.includes('ui-btn-danger'),
+    );
+    expect(confirm).not.toBeUndefined();
+    expect(confirm?.disabled).toBe(true);
+  });
+
   it('instituição inexistente mostra "não encontrada"', async () => {
     const context = setup();
     http = context.http;

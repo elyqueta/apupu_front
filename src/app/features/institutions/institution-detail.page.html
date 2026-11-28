@@ -168,14 +168,21 @@
     </section>
 
     @if (isCreator()) {
-      <section class="flex flex-col gap-4 rounded-4xl border border-coral/30 bg-coral/5 p-4 sm:flex-row sm:items-center sm:justify-between md:p-5">
-        <div class="min-w-0">
-          <h2 class="text-sm font-semibold text-coral">{{ i18n.t('block13.detail.delete') }}</h2>
-          <p class="mt-1 text-xs leading-5 text-muted">{{ i18n.t('block13.detail.deleteBody') }}</p>
-        </div>
-        <button type="button" class="ui-btn-danger shrink-0 self-start sm:self-center" data-testid="institution-delete" (click)="deleteName.set(''); deleteOpen.set(true)">
-          <fa-icon [icon]="icons['trash']" aria-hidden="true" />
-          {{ i18n.t('block13.detail.delete') }}
+      <section class="flex flex-col overflow-hidden rounded-3xl border border-line bg-surface-raised/20" data-testid="institution-delete-row">
+        <button
+          type="button"
+          class="flex min-h-[4.75rem] w-full items-center gap-3 px-3 py-3 text-left transition hover:bg-coral/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-coral/60 sm:px-4"
+          data-testid="institution-delete"
+          (click)="deleteName.set(''); deleteOpen.set(true)"
+        >
+          <span class="grid size-10 shrink-0 place-items-center rounded-xl border border-coral/30 bg-coral/10 text-coral">
+            <fa-icon [icon]="icons['trash']" aria-hidden="true" />
+          </span>
+          <span class="min-w-0 flex-1">
+            <span class="block truncate text-sm font-semibold text-coral">{{ i18n.t('block13.detail.delete') }}</span>
+            <span class="mt-0.5 block truncate text-xs text-muted">{{ i18n.t('block13.detail.deleteBody') }}</span>
+          </span>
+          <fa-icon [icon]="icons['chevronRight']" class="shrink-0 text-xs text-coral" aria-hidden="true" />
         </button>
       </section>
     }

@@ -409,4 +409,48 @@ describe('FeedPage', () => {
     expect(document.body.querySelector('[data-testid="feed-gate"]')).not.toBeNull();
     expect(context.fixture.nativeElement.querySelector('[data-testid="feed-search-input"]')).toBeNull();
   });
+
+  it('mantém a barra de pesquisa curta e todos os botões de ação com 44 px', async () => {
+    const context = setup();
+    http = context.http;
+    flushFeed(http, 'events');
+    flushFeed(http, 'communities');
+    flushFeed(http, 'people');
+    await settle(context.fixture);
+
+    const trigger = (context.fixture.nativeElement as HTMLElement).querySelector(
+      '[data-testid="feed-search-open"]',
+    ) as HTMLButtonElement;
+    expect(trigger.className).toContain('max-w-md');
+    expect(trigger.className).toContain('min-w-0');
+    expect(trigger.className).toContain('flex-1');
+
+    const actions = trigger.nextElementSibling as HTMLElement;
+    expect(actions.className).toContain('shrink-0');
+    expect(actions.className).toContain('gap-2');
+    const buttons = [...actions.querySelectorAll('a, button')] as HTMLElement[];
+    expect(buttons.length).toBeGreaterThan(0);
+    buttons.forEach((button) => {
+      expect(button.className).toContain('shrink-0');
+      expect(button.className).toMatch(/size-11|min-h-11/);
+    });
+  });
+
+  it('não deixa o desvanecimento das tabs cobrir o botão de categorias', async () => {
+    const context = setup();
+    http = context.http;
+    flushFeed(http, 'events');
+    flushFeed(http, 'communities');
+    flushFeed(http, 'people');
+    await settle(context.fixture);
+
+    const native = context.fixture.nativeElement as HTMLElement;
+    const categories = native.querySelector('[data-testid="feed-categories-open"]') as HTMLButtonElement;
+    const row = categories.parentElement as HTMLElement;
+    expect(row.querySelector(':scope > span[aria-hidden="true"]')).toBeNull();
+
+    const tabsWrapper = row.querySelector('nav')?.parentElement as HTMLElement;
+    expect(tabsWrapper.className).toContain('relative');
+    expect(tabsWrapper.querySelector('span[aria-hidden="true"]')).not.toBeNull();
+  });
 });

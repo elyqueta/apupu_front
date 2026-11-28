@@ -13,7 +13,7 @@
     <div class="mx-auto flex max-w-screen-2xl items-center gap-2 px-4 py-2 sm:px-6 lg:px-8">
       <button
         type="button"
-        class="flex min-h-11 min-w-0 flex-1 items-center gap-2 rounded-full border border-line/60 bg-surface px-4 text-sm text-muted transition hover:border-brand/40 hover:text-ink"
+        class="flex min-h-11 min-w-0 max-w-md flex-1 items-center gap-2 rounded-full border border-line/60 bg-surface px-4 text-sm text-muted transition hover:border-brand/40 hover:text-ink"
         [attr.aria-label]="i18n.t('block12.feed.search')"
         data-testid="feed-search-open"
         (click)="openSearch()"
@@ -21,11 +21,11 @@
         <fa-icon [icon]="icons['search']" class="shrink-0" aria-hidden="true" />
         <span class="truncate">{{ i18n.t('block12.feed.search') }}</span>
       </button>
-      <div class="flex shrink-0 items-center gap-1.5">
+      <div class="ml-auto flex shrink-0 items-center gap-2 sm:gap-3">
         @if (signedIn()) {
           <a
             routerLink="/notificacoes"
-            class="ui-icon-button relative hidden sm:grid"
+            class="ui-icon-button relative hidden size-11 shrink-0 sm:grid"
             [attr.aria-label]="i18n.t('block12.feed.notifications')"
             data-testid="feed-notifications"
           >
@@ -37,13 +37,13 @@
         } @else {
           <a
             routerLink="/entrar"
-            class="ui-icon-button hidden sm:grid"
+            class="ui-icon-button hidden size-11 shrink-0 sm:grid"
             [attr.aria-label]="i18n.t('block12.feed.login')"
             data-testid="feed-login"
           >
             <fa-icon [icon]="icons['user']" aria-hidden="true" />
           </a>
-          <a routerLink="/criar-conta" class="ui-btn hidden min-h-11 sm:inline-flex" data-testid="feed-signup">{{ i18n.t('block12.feed.signup') }}</a>
+          <a routerLink="/criar-conta" class="ui-btn hidden min-h-11 shrink-0 sm:inline-flex" data-testid="feed-signup">{{ i18n.t('block12.feed.signup') }}</a>
         }
       </div>
     </div>
@@ -155,8 +155,10 @@
       </article>
 
       <!-- Uma só fila de tipos; categorias abrem num modal no mobile. -->
-      <div class="relative flex min-w-0 items-center gap-2">
-        <nav role="tablist" class="no-scrollbar flex min-w-0 flex-1 gap-2 overflow-x-auto pr-8" [attr.aria-label]="i18n.t('block12.feed.title')">
+      <div class="flex min-w-0 items-center gap-2">
+        <!-- O desvanecimento fica só na área rolável, sem cobrir o botão de categorias. -->
+        <div class="relative h-11 min-w-0 flex-1">
+          <nav role="tablist" class="no-scrollbar flex h-11 items-center gap-2 overflow-x-auto pr-8" [attr.aria-label]="i18n.t('block12.feed.title')">
           @for (option of types; track option.id) {
             <button
               type="button"
@@ -171,8 +173,9 @@
               {{ i18n.t(option.label) }}
             </button>
           }
-        </nav>
-        <span class="pointer-events-none absolute right-8 top-0 h-11 w-8 bg-gradient-to-l from-canvas to-transparent" aria-hidden="true"></span>
+          </nav>
+          <span class="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-canvas to-transparent" aria-hidden="true"></span>
+        </div>
         <button
           type="button"
           [class]="category()

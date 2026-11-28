@@ -395,6 +395,37 @@ describe('CommunityDetailPage', () => {
     expect(navigate).toHaveBeenCalledWith(['/equipas', 't1']);
   });
 
+  it('lista de equipas da comunidade usa o mesmo cartão destacado da página de equipas', async () => {
+    const context = setup();
+    http = context.http;
+    http.expectOne(`${BASE}/host/communities/${SLUG}`).flush({
+      data: activeMember({ teams: [communityTeam()] }),
+    });
+    await flushPending(http, ACTIVITY_URL, { data: [] });
+    await settle(context.fixture);
+    openTab(context.fixture, 'teams');
+
+    const native = context.fixture.nativeElement as HTMLElement;
+    const list = native.querySelector('[data-testid="community-teams-list"]') as HTMLElement;
+    expect(list).not.toBeNull();
+    expect(list.className).toContain('flex');
+    expect(list.className).toContain('flex-col');
+    expect(list.className).toContain('gap-2');
+    expect(list.classList.contains('overflow-hidden')).toBe(false);
+    expect(list.classList.contains('rounded-3xl')).toBe(false);
+
+    const item = list.querySelector('li') as HTMLElement;
+    expect(item).not.toBeNull();
+    expect(item.className).toContain('min-w-0');
+    expect(item.className).toContain('rounded-2xl');
+    expect(item.className).toContain('border-line');
+    expect(item.className).toContain('bg-surface');
+    expect(item.className).toContain('shadow-card');
+    expect(item.className).toContain('transition');
+    expect(item.className).toContain('hover:border-brand/35');
+    expect(item.classList.contains('border-b')).toBe(false);
+  });
+
   it('staff vê o empty state padrão quando não há sugestões de eventos', async () => {
     const context = setup();
     http = context.http;

@@ -299,9 +299,9 @@
                   <p class="text-sm text-muted">{{ i18n.t('block11.teams.empty') }}</p>
                 </div>
               } @else {
-                <ul class="flex flex-col gap-2 overflow-hidden rounded-3xl border border-line bg-surface-raised/20" data-testid="community-teams-list">
+                <ul class="flex flex-col gap-2" data-testid="community-teams-list">
                   @for (team of data.teams; track team.id) {
-                    <li class="min-w-0 border-b border-line last:border-b-0">
+                    <li class="min-w-0 rounded-2xl border border-line bg-surface shadow-card transition hover:border-brand/35">
                       <app-team-card
                         [name]="team.name"
                         [meta]="[

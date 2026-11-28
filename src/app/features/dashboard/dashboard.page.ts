@@ -1,4 +1,4 @@
-import { Component, computed, ElementRef, inject, signal, viewChild } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
@@ -93,11 +93,7 @@ export class DashboardPage {
   protected readonly tasks = computed(() => this.store.tasks().slice(0, 4));
   protected readonly activity = computed(() => this.store.activityFeed().slice(0, 5));
   protected readonly guestStatusFilter = signal<RsvpStatus>('pending');
-  protected readonly carouselIndex = signal(1);
-  /** Cada painel agrupa até três convidados; a grelha adapta-se a 1/2/3 colunas. */
-  private readonly carouselPageSize = 3;
   protected readonly activeDay = signal<number | null>(null);
-  private readonly guestCarousel = viewChild<ElementRef<HTMLUListElement>>('guestCarousel');
 
   protected readonly filters: { id: RsvpStatus; labelKey: TranslationKey }[] = [
     { id: 'confirmed', labelKey: 'dashboard.statusConfirmed' },
@@ -127,18 +123,6 @@ export class DashboardPage {
       .filter((entry) => entry.guest.status === this.guestStatusFilter())
       .slice(0, 6),
   );
-
-  /** Agrupa os convidados em painéis de até três cartões lineares. */
-  protected readonly guestPages = computed<GuestEntry[][]>(() => {
-    const entries = this.filteredGuests();
-    const pages: GuestEntry[][] = [];
-    for (let index = 0; index < entries.length; index += this.carouselPageSize) {
-      pages.push(entries.slice(index, index + this.carouselPageSize));
-    }
-    return pages;
-  });
-
-  protected readonly carouselPages = computed(() => Math.max(1, this.guestPages().length));
 
   protected readonly firstName = computed(() => this.store.profile().name.split(' ')[0]);
   protected readonly greeting = computed(() => {
@@ -224,6 +208,10 @@ export class DashboardPage {
     return index === null ? null : (this.week()[index] ?? null);
   });
 
+  protected readonly weeklyTotal = computed(() =>
+    this.week().reduce((total, day) => total + day.value, 0),
+  );
+
   protected setActiveDay(index: number | null): void {
     this.activeDay.set(index);
   }
@@ -302,41 +290,6 @@ export class DashboardPage {
 
   protected setFilter(status: RsvpStatus): void {
     this.guestStatusFilter.set(status);
-    this.carouselIndex.set(1);
-    this.guestCarousel()?.nativeElement.scrollTo({ left: 0, behavior: 'smooth' });
-  }
-
-  /** Mantém a contagem "1 de N" sincronizada com o scroll por toque/rato. */
-  protected onCarouselScroll(): void {
-    const element = this.guestCarousel()?.nativeElement;
-    if (!element) {
-      return;
-    }
-    // Cada <li> ocupa exatamente a largura visível: um painel = clientWidth.
-    const pageWidth = element.clientWidth;
-    if (pageWidth > 0) {
-      const page = Math.round(element.scrollLeft / pageWidth) + 1;
-      this.carouselIndex.set(Math.min(this.carouselPages(), Math.max(1, page)));
-    }
-  }
-
-  /** Setas do desktop e setas do teclado partilham o mesmo passo de scroll. */
-  protected moveCarousel(direction: -1 | 1): void {
-    const element = this.guestCarousel()?.nativeElement;
-    if (!element) {
-      return;
-    }
-    const target = Math.min(this.carouselPages(), Math.max(1, this.carouselIndex() + direction));
-    this.carouselIndex.set(target);
-    element.scrollTo({ left: (target - 1) * element.clientWidth, behavior: 'smooth' });
-  }
-
-  protected onCarouselKeydown(event: KeyboardEvent): void {
-    if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') {
-      return;
-    }
-    event.preventDefault();
-    this.moveCarousel(event.key === 'ArrowRight' ? 1 : -1);
   }
 
   protected filterClass(status: RsvpStatus): string {

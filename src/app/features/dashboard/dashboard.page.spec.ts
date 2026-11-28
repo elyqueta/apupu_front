@@ -147,25 +147,6 @@ describe('DashboardPage · convidados', () => {
     expect(store.markWhatsappShared).toHaveBeenCalledWith(entry.guest);
   });
 
-  it('groups guests into carousel panels of three', () => {
-    entries.set([
-      { guest: guest('p1', 'pending', null), event },
-      { guest: guest('p2', 'pending', null), event },
-      { guest: guest('p3', 'pending', null), event },
-      { guest: guest('p4', 'pending', null), event },
-    ]);
-    const view = page as unknown as {
-      guestPages: () => GuestEntry[][];
-      carouselPages: () => number;
-    };
-
-    expect(view.guestPages().map((panel) => panel.map((entry) => entry.guest.id))).toEqual([
-      ['p1', 'p2', 'p3'],
-      ['p4'],
-    ]);
-    expect(view.carouselPages()).toBe(2);
-  });
-
   it('builds a selectable response breakdown for recent events', () => {
     const other = { ...event, id: 'evt-2', title: 'Outro evento' } as HostEvent;
     store.recentEvents.set([event, other]);

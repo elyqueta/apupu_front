@@ -21,7 +21,6 @@ import {
 import {
   CreateEventInput,
   CreateManagerInput,
-  EventLocationEntry,
   EventManager,
   HostEvent,
   ManagerCreationResult,

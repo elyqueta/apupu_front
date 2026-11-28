@@ -1,6 +1,6 @@
 import { Component, DestroyRef, effect, inject, input, output, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormControl, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { GeocodeResult, GeocodeService } from '../../core/services/geocode.service';
@@ -8,7 +8,7 @@ import { I18nService } from '../../core/i18n/i18n.service';
 import type { TranslationKey } from '../../core/i18n/translations';
 import type { EventLocationEntry } from '../../core/models/models';
 import { ICONS } from '../../core/ui/icons';
-import { hasExactLocation, isoToTime, locationError, timeToIso } from '../../core/utils/event-locations';
+import { isoToTime, locationError, timeToIso } from '../../core/utils/event-locations';
 import {
   readPreferredLocation,
   writePreferredLocation,

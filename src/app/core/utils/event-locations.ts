@@ -77,7 +77,7 @@ export function timeToIso(time: string, date: string, timeZone: string): string 
   const [year, month, dateOfMonth] = day.split('-').map(Number);
   const naive = Date.UTC(year!, month! - 1, dateOfMonth!, hour!, minute!, 0);
   if (Number.isNaN(naive)) return null;
-  let offset = 0;
+  let offset: number;
   try {
     const parts = new Intl.DateTimeFormat('en-US', {
       timeZone,

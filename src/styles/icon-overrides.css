@@ -1,0 +1,582 @@
+/* Ícones Solar Broken Line (SVG Repo, Solar Icons, CC Attribution).
+   Substituem o desenho FontAwesome sem alterar os templates. */
+fa-icon > svg[data-icon="arrow-right-from-bracket"] {
+  background-color: currentColor;
+  -webkit-mask: url("/icons/solar/arrow-right-from-bracket.svg") center / contain no-repeat;
+  mask: url("/icons/solar/arrow-right-from-bracket.svg") center / contain no-repeat;
+}
+fa-icon > svg[data-icon="arrow-right-from-bracket"] > * { visibility: hidden; }
+
+fa-icon > svg[data-icon="arrow-trend-up"] {
+  background-color: currentColor;
+  -webkit-mask: url("/icons/solar/arrow-trend-up.svg") center / contain no-repeat;
+  mask: url("/icons/solar/arrow-trend-up.svg") center / contain no-repeat;
+}
+fa-icon > svg[data-icon="arrow-trend-up"] > * { visibility: hidden; }
+
+fa-icon > svg[data-icon="arrow-up-right-from-square"] {
+  background-color: currentColor;
+  -webkit-mask: url("/icons/solar/arrow-up-right-from-square.svg") center / contain no-repeat;
+  mask: url("/icons/solar/arrow-up-right-from-square.svg") center / contain no-repeat;
+}
+fa-icon > svg[data-icon="arrow-up-right-from-square"] > * { visibility: hidden; }
+
+fa-icon > svg[data-icon="ban"] {
+  background-color: currentColor;
+  -webkit-mask: url("/icons/solar/ban.svg") center / contain no-repeat;
+  mask: url("/icons/solar/ban.svg") center / contain no-repeat;
+}
+fa-icon > svg[data-icon="ban"] > * { visibility: hidden; }
+
+fa-icon > svg[data-icon="bars"] {
+  background-color: currentColor;
+  -webkit-mask: url("/icons/solar/bars.svg") center / contain no-repeat;
+  mask: url("/icons/solar/bars.svg") center / contain no-repeat;
+}
+fa-icon > svg[data-icon="bars"] > * { visibility: hidden; }
+
+fa-icon > svg[data-icon="bell"] {
+  background-color: currentColor;
+  -webkit-mask: url("/icons/solar/bell.svg") center / contain no-repeat;
+  mask: url("/icons/solar/bell.svg") center / contain no-repeat;
+}
+fa-icon > svg[data-icon="bell"] > * { visibility: hidden; }
+
+fa-icon > svg[data-icon="bolt"] {
+  background-color: currentColor;
+  -webkit-mask: url("/icons/solar/bolt.svg") center / contain no-repeat;
+  mask: url("/icons/solar/bolt.svg") center / contain no-repeat;
+}
+fa-icon > svg[data-icon="bolt"] > * { visibility: hidden; }
+
+fa-icon > svg[data-icon="briefcase"] {
+  background-color: currentColor;
+  -webkit-mask: url("/icons/solar/briefcase.svg") center / contain no-repeat;
+  mask: url("/icons/solar/briefcase.svg") center / contain no-repeat;
+}
+fa-icon > svg[data-icon="briefcase"] > * { visibility: hidden; }
+
+fa-icon > svg[data-icon="cake-candles"] {
+  background-color: currentColor;
+  -webkit-mask: url("/icons/solar/cake-candles.svg") center / contain no-repeat;
+  mask: url("/icons/solar/cake-candles.svg") center / contain no-repeat;
+}
+fa-icon > svg[data-icon="cake-candles"] > * { visibility: hidden; }
+
+fa-icon > svg[data-icon="building-columns"] {
+  background-color: currentColor;
+  -webkit-mask: url("/icons/solar/building-columns.svg") center / contain no-repeat;
+  mask: url("/icons/solar/building-columns.svg") center / contain no-repeat;
+}
+fa-icon > svg[data-icon="building-columns"] > * { visibility: hidden; }
+
+fa-icon > svg[data-icon="calendar-check"] {
+  background-color: currentColor;
+  -webkit-mask: url("/icons/solar/calendar-check.svg") center / contain no-repeat;
+  mask: url("/icons/solar/calendar-check.svg") center / contain no-repeat;
+}
+fa-icon > svg[data-icon="calendar-check"] > * { visibility: hidden; }
+
+fa-icon > svg[data-icon="calendar-days"] {
+  background-color: currentColor;
+  -webkit-mask: url("/icons/solar/calendar-days.svg") center / contain no-repeat;
+  mask: url("/icons/solar/calendar-days.svg") center / contain no-repeat;
+}
+fa-icon > svg[data-icon="calendar-days"] > * { visibility: hidden; }
+
+fa-icon > svg[data-icon="calendar-plus"] {
+  background-color: currentColor;
+  -webkit-mask: url("/icons/solar/calendar-plus.svg") center / contain no-repeat;
+  mask: url("/icons/solar/calendar-plus.svg") center / contain no-repeat;
+}
+fa-icon > svg[data-icon="calendar-plus"] > * { visibility: hidden; }
+
+fa-icon > svg[data-icon="camera"] {
+  background-color: currentColor;
+  -webkit-mask: url("/icons/solar/camera.svg") center / contain no-repeat;
+  mask: url("/icons/solar/camera.svg") center / contain no-repeat;
+}
+fa-icon > svg[data-icon="camera"] > * { visibility: hidden; }
+
+fa-icon > svg[data-icon="champagne-glasses"] {
+  background-color: currentColor;
+  -webkit-mask: url("/icons/solar/champagne-glasses.svg") center / contain no-repeat;
+  mask: url("/icons/solar/champagne-glasses.svg") center / contain no-repeat;
+}
+fa-icon > svg[data-icon="champagne-glasses"] > * { visibility: hidden; }
+
+fa-icon > svg[data-icon="chart-line"] {
+  background-color: currentColor;
+  -webkit-mask: url("/icons/solar/chart-line.svg") center / contain no-repeat;
+  mask: url("/icons/solar/chart-line.svg") center / contain no-repeat;
+}
+fa-icon > svg[data-icon="chart-line"] > * { visibility: hidden; }
+
+fa-icon > svg[data-icon="chart-pie"] {
+  background-color: currentColor;
+  -webkit-mask: url("/icons/solar/chart-pie.svg") center / contain no-repeat;
+  mask: url("/icons/solar/chart-pie.svg") center / contain no-repeat;
+}
+fa-icon > svg[data-icon="chart-pie"] > * { visibility: hidden; }
+
+fa-icon > svg[data-icon="chart-simple"] {
+  background-color: currentColor;
+  -webkit-mask: url("/icons/solar/chart-simple.svg") center / contain no-repeat;
+  mask: url("/icons/solar/chart-simple.svg") center / contain no-repeat;
+}
+fa-icon > svg[data-icon="chart-simple"] > * { visibility: hidden; }
+
+fa-icon > svg[data-icon="check"] {
+  background-color: currentColor;
+  -webkit-mask: url("/icons/solar/check.svg") center / contain no-repeat;
+  mask: url("/icons/solar/check.svg") center / contain no-repeat;
+}
+fa-icon > svg[data-icon="check"] > * { visibility: hidden; }
+
+fa-icon > svg[data-icon="check-double"] {
+  background-color: currentColor;
+  -webkit-mask: url("/icons/solar/check-double.svg") center / contain no-repeat;
+  mask: url("/icons/solar/check-double.svg") center / contain no-repeat;
+}
+fa-icon > svg[data-icon="check-double"] > * { visibility: hidden; }
+
+fa-icon > svg[data-icon="chevron-down"] {
+  background-color: currentColor;
+  -webkit-mask: url("/icons/solar/chevron-down.svg") center / contain no-repeat;
+  mask: url("/icons/solar/chevron-down.svg") center / contain no-repeat;
+}
+fa-icon > svg[data-icon="chevron-down"] > * { visibility: hidden; }
+
+fa-icon > svg[data-icon="chevron-left"] {
+  background-color: currentColor;
+  -webkit-mask: url("/icons/solar/chevron-left.svg") center / contain no-repeat;
+  mask: url("/icons/solar/chevron-left.svg") center / contain no-repeat;
+}
+fa-icon > svg[data-icon="chevron-left"] > * { visibility: hidden; }
+
+fa-icon > svg[data-icon="chevron-right"] {
+  background-color: currentColor;
+  -webkit-mask: url("/icons/solar/chevron-right.svg") center / contain no-repeat;
+  mask: url("/icons/solar/chevron-right.svg") center / contain no-repeat;
+}
+fa-icon > svg[data-icon="chevron-right"] > * { visibility: hidden; }
+
+fa-icon > svg[data-icon="circle-check"] {
+  background-color: currentColor;
+  -webkit-mask: url("/icons/solar/circle-check.svg") center / contain no-repeat;
+  mask: url("/icons/solar/circle-check.svg") center / contain no-repeat;
+}
+fa-icon > svg[data-icon="circle-check"] > * { visibility: hidden; }
+
+fa-icon > svg[data-icon="circle-exclamation"] {
+  background-color: currentColor;
+  -webkit-mask: url("/icons/solar/circle-exclamation.svg") center / contain no-repeat;
+  mask: url("/icons/solar/circle-exclamation.svg") center / contain no-repeat;
+}
+fa-icon > svg[data-icon="circle-exclamation"] > * { visibility: hidden; }
+
+fa-icon > svg[data-icon="circle-info"] {
+  background-color: currentColor;
+  -webkit-mask: url("/icons/solar/circle-info.svg") center / contain no-repeat;
+  mask: url("/icons/solar/circle-info.svg") center / contain no-repeat;
+}
+fa-icon > svg[data-icon="circle-info"] > * { visibility: hidden; }
+
+fa-icon > svg[data-icon="circle-question"] {
+  background-color: currentColor;
+  -webkit-mask: url("/icons/solar/circle-question.svg") center / contain no-repeat;
+  mask: url("/icons/solar/circle-question.svg") center / contain no-repeat;
+}
+fa-icon > svg[data-icon="circle-question"] > * { visibility: hidden; }
+
+fa-icon > svg[data-icon="circle-xmark"] {
+  background-color: currentColor;
+  -webkit-mask: url("/icons/solar/circle-xmark.svg") center / contain no-repeat;
+  mask: url("/icons/solar/circle-xmark.svg") center / contain no-repeat;
+}
+fa-icon > svg[data-icon="circle-xmark"] > * { visibility: hidden; }
+
+fa-icon > svg[data-icon="clock"] {
+  background-color: currentColor;
+  -webkit-mask: url("/icons/solar/clock.svg") center / contain no-repeat;
+  mask: url("/icons/solar/clock.svg") center / contain no-repeat;
+}
+fa-icon > svg[data-icon="clock"] > * { visibility: hidden; }
+
+fa-icon > svg[data-icon="clock-rotate-left"] {
+  background-color: currentColor;
+  -webkit-mask: url("/icons/solar/clock-rotate-left.svg") center / contain no-repeat;
+  mask: url("/icons/solar/clock-rotate-left.svg") center / contain no-repeat;
+}
+fa-icon > svg[data-icon="clock-rotate-left"] > * { visibility: hidden; }
+
+fa-icon > svg[data-icon="comment"] {
+  background-color: currentColor;
+  -webkit-mask: url("/icons/solar/comment.svg") center / contain no-repeat;
+  mask: url("/icons/solar/comment.svg") center / contain no-repeat;
+}
+fa-icon > svg[data-icon="comment"] > * { visibility: hidden; }
+
+fa-icon > svg[data-icon="copy"] {
+  background-color: currentColor;
+  -webkit-mask: url("/icons/solar/copy.svg") center / contain no-repeat;
+  mask: url("/icons/solar/copy.svg") center / contain no-repeat;
+}
+fa-icon > svg[data-icon="copy"] > * { visibility: hidden; }
+
+fa-icon > svg[data-icon="display"] {
+  background-color: currentColor;
+  -webkit-mask: url("/icons/solar/display.svg") center / contain no-repeat;
+  mask: url("/icons/solar/display.svg") center / contain no-repeat;
+}
+fa-icon > svg[data-icon="display"] > * { visibility: hidden; }
+
+fa-icon > svg[data-icon="download"] {
+  background-color: currentColor;
+  -webkit-mask: url("/icons/solar/download.svg") center / contain no-repeat;
+  mask: url("/icons/solar/download.svg") center / contain no-repeat;
+}
+fa-icon > svg[data-icon="download"] > * { visibility: hidden; }
+
+fa-icon > svg[data-icon="ellipsis"] {
+  background-color: currentColor;
+  -webkit-mask: url("/icons/solar/ellipsis.svg") center / contain no-repeat;
+  mask: url("/icons/solar/ellipsis.svg") center / contain no-repeat;
+}
+fa-icon > svg[data-icon="ellipsis"] > * { visibility: hidden; }
+
+fa-icon > svg[data-icon="envelope"] {
+  background-color: currentColor;
+  -webkit-mask: url("/icons/solar/envelope.svg") center / contain no-repeat;
+  mask: url("/icons/solar/envelope.svg") center / contain no-repeat;
+}
+fa-icon > svg[data-icon="envelope"] > * { visibility: hidden; }
+
+fa-icon > svg[data-icon="envelope-open-text"] {
+  background-color: currentColor;
+  -webkit-mask: url("/icons/solar/envelope-open-text.svg") center / contain no-repeat;
+  mask: url("/icons/solar/envelope-open-text.svg") center / contain no-repeat;
+}
+fa-icon > svg[data-icon="envelope-open-text"] > * { visibility: hidden; }
+
+fa-icon > svg[data-icon="expand"] {
+  background-color: currentColor;
+  -webkit-mask: url("/icons/solar/expand.svg") center / contain no-repeat;
+  mask: url("/icons/solar/expand.svg") center / contain no-repeat;
+}
+fa-icon > svg[data-icon="expand"] > * { visibility: hidden; }
+
+fa-icon > svg[data-icon="eye"] {
+  background-color: currentColor;
+  -webkit-mask: url("/icons/solar/eye.svg") center / contain no-repeat;
+  mask: url("/icons/solar/eye.svg") center / contain no-repeat;
+}
+fa-icon > svg[data-icon="eye"] > * { visibility: hidden; }
+
+fa-icon > svg[data-icon="eye-slash"] {
+  background-color: currentColor;
+  -webkit-mask: url("/icons/solar/eye-slash.svg") center / contain no-repeat;
+  mask: url("/icons/solar/eye-slash.svg") center / contain no-repeat;
+}
+fa-icon > svg[data-icon="eye-slash"] > * { visibility: hidden; }
+
+fa-icon > svg[data-icon="file-lines"] {
+  background-color: currentColor;
+  -webkit-mask: url("/icons/solar/file-lines.svg") center / contain no-repeat;
+  mask: url("/icons/solar/file-lines.svg") center / contain no-repeat;
+}
+fa-icon > svg[data-icon="file-lines"] > * { visibility: hidden; }
+
+fa-icon > svg[data-icon="filter"] {
+  background-color: currentColor;
+  -webkit-mask: url("/icons/solar/filter.svg") center / contain no-repeat;
+  mask: url("/icons/solar/filter.svg") center / contain no-repeat;
+}
+fa-icon > svg[data-icon="filter"] > * { visibility: hidden; }
+
+fa-icon > svg[data-icon="flag-checkered"] {
+  background-color: currentColor;
+  -webkit-mask: url("/icons/solar/flag-checkered.svg") center / contain no-repeat;
+  mask: url("/icons/solar/flag-checkered.svg") center / contain no-repeat;
+}
+fa-icon > svg[data-icon="flag-checkered"] > * { visibility: hidden; }
+
+fa-icon > svg[data-icon="gauge-high"] {
+  background-color: currentColor;
+  -webkit-mask: url("/icons/solar/gauge-high.svg") center / contain no-repeat;
+  mask: url("/icons/solar/gauge-high.svg") center / contain no-repeat;
+}
+fa-icon > svg[data-icon="gauge-high"] > * { visibility: hidden; }
+
+fa-icon > svg[data-icon="gear"] {
+  background-color: currentColor;
+  -webkit-mask: url("/icons/solar/gear.svg") center / contain no-repeat;
+  mask: url("/icons/solar/gear.svg") center / contain no-repeat;
+}
+fa-icon > svg[data-icon="gear"] > * { visibility: hidden; }
+
+fa-icon > svg[data-icon="globe"] {
+  background-color: currentColor;
+  -webkit-mask: url("/icons/solar/globe.svg") center / contain no-repeat;
+  mask: url("/icons/solar/globe.svg") center / contain no-repeat;
+}
+fa-icon > svg[data-icon="globe"] > * { visibility: hidden; }
+
+fa-icon > svg[data-icon="heart"] {
+  background-color: currentColor;
+  -webkit-mask: url("/icons/solar/heart.svg") center / contain no-repeat;
+  mask: url("/icons/solar/heart.svg") center / contain no-repeat;
+}
+fa-icon > svg[data-icon="heart"] > * { visibility: hidden; }
+
+fa-icon > svg[data-icon="hourglass-half"] {
+  background-color: currentColor;
+  -webkit-mask: url("/icons/solar/hourglass-half.svg") center / contain no-repeat;
+  mask: url("/icons/solar/hourglass-half.svg") center / contain no-repeat;
+}
+fa-icon > svg[data-icon="hourglass-half"] > * { visibility: hidden; }
+
+fa-icon > svg[data-icon="house"] {
+  background-color: currentColor;
+  -webkit-mask: url("/icons/solar/house.svg") center / contain no-repeat;
+  mask: url("/icons/solar/house.svg") center / contain no-repeat;
+}
+fa-icon > svg[data-icon="house"] > * { visibility: hidden; }
+
+fa-icon > svg[data-icon="image"] {
+  background-color: currentColor;
+  -webkit-mask: url("/icons/solar/image.svg") center / contain no-repeat;
+  mask: url("/icons/solar/image.svg") center / contain no-repeat;
+}
+fa-icon > svg[data-icon="image"] > * { visibility: hidden; }
+
+fa-icon > svg[data-icon="key"] {
+  background-color: currentColor;
+  -webkit-mask: url("/icons/solar/key.svg") center / contain no-repeat;
+  mask: url("/icons/solar/key.svg") center / contain no-repeat;
+}
+fa-icon > svg[data-icon="key"] > * { visibility: hidden; }
+
+fa-icon > svg[data-icon="language"] {
+  background-color: currentColor;
+  -webkit-mask: url("/icons/solar/language.svg") center / contain no-repeat;
+  mask: url("/icons/solar/language.svg") center / contain no-repeat;
+}
+fa-icon > svg[data-icon="language"] > * { visibility: hidden; }
+
+fa-icon > svg[data-icon="layer-group"] {
+  background-color: currentColor;
+  -webkit-mask: url("/icons/solar/layer-group.svg") center / contain no-repeat;
+  mask: url("/icons/solar/layer-group.svg") center / contain no-repeat;
+}
+fa-icon > svg[data-icon="layer-group"] > * { visibility: hidden; }
+
+fa-icon > svg[data-icon="link"] {
+  background-color: currentColor;
+  -webkit-mask: url("/icons/solar/link.svg") center / contain no-repeat;
+  mask: url("/icons/solar/link.svg") center / contain no-repeat;
+}
+fa-icon > svg[data-icon="link"] > * { visibility: hidden; }
+
+fa-icon > svg[data-icon="list-check"] {
+  background-color: currentColor;
+  -webkit-mask: url("/icons/solar/list-check.svg") center / contain no-repeat;
+  mask: url("/icons/solar/list-check.svg") center / contain no-repeat;
+}
+fa-icon > svg[data-icon="list-check"] > * { visibility: hidden; }
+
+fa-icon > svg[data-icon="location-crosshairs"] {
+  background-color: currentColor;
+  -webkit-mask: url("/icons/solar/location-crosshairs.svg") center / contain no-repeat;
+  mask: url("/icons/solar/location-crosshairs.svg") center / contain no-repeat;
+}
+fa-icon > svg[data-icon="location-crosshairs"] > * { visibility: hidden; }
+
+fa-icon > svg[data-icon="location-dot"] {
+  background-color: currentColor;
+  -webkit-mask: url("/icons/solar/location-dot.svg") center / contain no-repeat;
+  mask: url("/icons/solar/location-dot.svg") center / contain no-repeat;
+}
+fa-icon > svg[data-icon="location-dot"] > * { visibility: hidden; }
+
+fa-icon > svg[data-icon="lock"] {
+  background-color: currentColor;
+  -webkit-mask: url("/icons/solar/lock.svg") center / contain no-repeat;
+  mask: url("/icons/solar/lock.svg") center / contain no-repeat;
+}
+fa-icon > svg[data-icon="lock"] > * { visibility: hidden; }
+
+fa-icon > svg[data-icon="magnifying-glass"] {
+  background-color: currentColor;
+  -webkit-mask: url("/icons/solar/magnifying-glass.svg") center / contain no-repeat;
+  mask: url("/icons/solar/magnifying-glass.svg") center / contain no-repeat;
+}
+fa-icon > svg[data-icon="magnifying-glass"] > * { visibility: hidden; }
+
+fa-icon > svg[data-icon="map-pin"] {
+  background-color: currentColor;
+  -webkit-mask: url("/icons/solar/map-pin.svg") center / contain no-repeat;
+  mask: url("/icons/solar/map-pin.svg") center / contain no-repeat;
+}
+fa-icon > svg[data-icon="map-pin"] > * { visibility: hidden; }
+
+fa-icon > svg[data-icon="minus"] {
+  background-color: currentColor;
+  -webkit-mask: url("/icons/solar/minus.svg") center / contain no-repeat;
+  mask: url("/icons/solar/minus.svg") center / contain no-repeat;
+}
+fa-icon > svg[data-icon="minus"] > * { visibility: hidden; }
+
+fa-icon > svg[data-icon="moon"] {
+  background-color: currentColor;
+  -webkit-mask: url("/icons/solar/moon.svg") center / contain no-repeat;
+  mask: url("/icons/solar/moon.svg") center / contain no-repeat;
+}
+fa-icon > svg[data-icon="moon"] > * { visibility: hidden; }
+
+fa-icon > svg[data-icon="palette"] {
+  background-color: currentColor;
+  -webkit-mask: url("/icons/solar/palette.svg") center / contain no-repeat;
+  mask: url("/icons/solar/palette.svg") center / contain no-repeat;
+}
+fa-icon > svg[data-icon="palette"] > * { visibility: hidden; }
+
+fa-icon > svg[data-icon="paper-plane"] {
+  background-color: currentColor;
+  -webkit-mask: url("/icons/solar/paper-plane.svg") center / contain no-repeat;
+  mask: url("/icons/solar/paper-plane.svg") center / contain no-repeat;
+}
+fa-icon > svg[data-icon="paper-plane"] > * { visibility: hidden; }
+
+fa-icon > svg[data-icon="pen"] {
+  background-color: currentColor;
+  -webkit-mask: url("/icons/solar/pen.svg") center / contain no-repeat;
+  mask: url("/icons/solar/pen.svg") center / contain no-repeat;
+}
+fa-icon > svg[data-icon="pen"] > * { visibility: hidden; }
+
+fa-icon > svg[data-icon="phone"] {
+  background-color: currentColor;
+  -webkit-mask: url("/icons/solar/phone.svg") center / contain no-repeat;
+  mask: url("/icons/solar/phone.svg") center / contain no-repeat;
+}
+fa-icon > svg[data-icon="phone"] > * { visibility: hidden; }
+
+fa-icon > svg[data-icon="play"] {
+  background-color: currentColor;
+  -webkit-mask: url("/icons/solar/play.svg") center / contain no-repeat;
+  mask: url("/icons/solar/play.svg") center / contain no-repeat;
+}
+fa-icon > svg[data-icon="play"] > * { visibility: hidden; }
+
+fa-icon > svg[data-icon="plus"] {
+  background-color: currentColor;
+  -webkit-mask: url("/icons/solar/plus.svg") center / contain no-repeat;
+  mask: url("/icons/solar/plus.svg") center / contain no-repeat;
+}
+fa-icon > svg[data-icon="plus"] > * { visibility: hidden; }
+
+fa-icon > svg[data-icon="rotate-right"] {
+  background-color: currentColor;
+  -webkit-mask: url("/icons/solar/rotate-right.svg") center / contain no-repeat;
+  mask: url("/icons/solar/rotate-right.svg") center / contain no-repeat;
+}
+fa-icon > svg[data-icon="rotate-right"] > * { visibility: hidden; }
+
+fa-icon > svg[data-icon="share-nodes"] {
+  background-color: currentColor;
+  -webkit-mask: url("/icons/solar/share-nodes.svg") center / contain no-repeat;
+  mask: url("/icons/solar/share-nodes.svg") center / contain no-repeat;
+}
+fa-icon > svg[data-icon="share-nodes"] > * { visibility: hidden; }
+
+fa-icon > svg[data-icon="shield-halved"] {
+  background-color: currentColor;
+  -webkit-mask: url("/icons/solar/shield-halved.svg") center / contain no-repeat;
+  mask: url("/icons/solar/shield-halved.svg") center / contain no-repeat;
+}
+fa-icon > svg[data-icon="shield-halved"] > * { visibility: hidden; }
+
+fa-icon > svg[data-icon="shirt"] {
+  background-color: currentColor;
+  -webkit-mask: url("/icons/solar/shirt.svg") center / contain no-repeat;
+  mask: url("/icons/solar/shirt.svg") center / contain no-repeat;
+}
+fa-icon > svg[data-icon="shirt"] > * { visibility: hidden; }
+
+fa-icon > svg[data-icon="sliders"] {
+  background-color: currentColor;
+  -webkit-mask: url("/icons/solar/sliders.svg") center / contain no-repeat;
+  mask: url("/icons/solar/sliders.svg") center / contain no-repeat;
+}
+fa-icon > svg[data-icon="sliders"] > * { visibility: hidden; }
+
+fa-icon > svg[data-icon="star"] {
+  background-color: currentColor;
+  -webkit-mask: url("/icons/solar/star.svg") center / contain no-repeat;
+  mask: url("/icons/solar/star.svg") center / contain no-repeat;
+}
+fa-icon > svg[data-icon="star"] > * { visibility: hidden; }
+
+fa-icon > svg[data-icon="sun"] {
+  background-color: currentColor;
+  -webkit-mask: url("/icons/solar/sun.svg") center / contain no-repeat;
+  mask: url("/icons/solar/sun.svg") center / contain no-repeat;
+}
+fa-icon > svg[data-icon="sun"] > * { visibility: hidden; }
+
+fa-icon > svg[data-icon="table-cells-large"] {
+  background-color: currentColor;
+  -webkit-mask: url("/icons/solar/table-cells-large.svg") center / contain no-repeat;
+  mask: url("/icons/solar/table-cells-large.svg") center / contain no-repeat;
+}
+fa-icon > svg[data-icon="table-cells-large"] > * { visibility: hidden; }
+
+fa-icon > svg[data-icon="text-height"] {
+  background-color: currentColor;
+  -webkit-mask: url("/icons/solar/text-height.svg") center / contain no-repeat;
+  mask: url("/icons/solar/text-height.svg") center / contain no-repeat;
+}
+fa-icon > svg[data-icon="text-height"] > * { visibility: hidden; }
+
+fa-icon > svg[data-icon="ticket"] {
+  background-color: currentColor;
+  -webkit-mask: url("/icons/solar/ticket.svg") center / contain no-repeat;
+  mask: url("/icons/solar/ticket.svg") center / contain no-repeat;
+}
+fa-icon > svg[data-icon="ticket"] > * { visibility: hidden; }
+
+fa-icon > svg[data-icon="trash"] {
+  background-color: currentColor;
+  -webkit-mask: url("/icons/solar/trash.svg") center / contain no-repeat;
+  mask: url("/icons/solar/trash.svg") center / contain no-repeat;
+}
+fa-icon > svg[data-icon="trash"] > * { visibility: hidden; }
+
+fa-icon > svg[data-icon="user-group"] {
+  background-color: currentColor;
+  -webkit-mask: url("/icons/solar/user-group.svg") center / contain no-repeat;
+  mask: url("/icons/solar/user-group.svg") center / contain no-repeat;
+}
+fa-icon > svg[data-icon="user-group"] > * { visibility: hidden; }
+
+fa-icon > svg[data-icon="user-plus"] {
+  background-color: currentColor;
+  -webkit-mask: url("/icons/solar/user-plus.svg") center / contain no-repeat;
+  mask: url("/icons/solar/user-plus.svg") center / contain no-repeat;
+}
+fa-icon > svg[data-icon="user-plus"] > * { visibility: hidden; }
+
+fa-icon > svg[data-icon="users"] {
+  background-color: currentColor;
+  -webkit-mask: url("/icons/solar/users.svg") center / contain no-repeat;
+  mask: url("/icons/solar/users.svg") center / contain no-repeat;
+}
+fa-icon > svg[data-icon="users"] > * { visibility: hidden; }
+
+fa-icon > svg[data-icon="xmark"] {
+  background-color: currentColor;
+  -webkit-mask: url("/icons/solar/xmark.svg") center / contain no-repeat;
+  mask: url("/icons/solar/xmark.svg") center / contain no-repeat;
+}
+fa-icon > svg[data-icon="xmark"] > * { visibility: hidden; }

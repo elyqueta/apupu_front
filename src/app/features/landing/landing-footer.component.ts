@@ -118,6 +118,16 @@ import { SupportDialogComponent } from './support-dialog.component';
           <div class="text-sm text-muted md:text-right">
             <p class="font-semibold text-ink">{{ i18n.t('landing.footer.product') }}</p>
             <p class="mt-2">{{ i18n.t('footer.rights', { year: year }) }}</p>
+            <p class="mt-1 text-xs">
+              <a
+                href="https://www.svgrepo.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="underline transition hover:text-ink"
+                >Icons from SVG Repo</a
+              >
+              · Solar Icons (CC Attribution)
+            </p>
           </div>
         </div>
       </div>

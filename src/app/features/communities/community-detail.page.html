@@ -325,7 +325,7 @@
                   {{ i18n.t('block11.members.invite') }}
                 </button>
               }
-              <ul class="flex flex-col overflow-hidden rounded-3xl border border-line bg-surface-raised/20" data-testid="community-members-list">
+              <ul class="flex flex-col overflow-hidden rounded-3xl border border-line bg-surface" data-testid="community-members-list">
                 @for (member of data.members; track member.id) {
                   <li class="min-w-0 border-b border-line last:border-b-0">
                     <div class="flex min-h-[5.25rem] items-center gap-3 px-3 py-3 sm:px-4">
@@ -462,7 +462,7 @@
             </section>
           }
           @case ('settings') {
-            <section class="flex flex-col overflow-hidden rounded-3xl border border-line bg-surface-raised/20" data-testid="community-settings-list">
+            <section class="flex flex-col overflow-hidden rounded-3xl border border-line bg-surface" data-testid="community-settings-list">
               <button
                 type="button"
                 class="flex min-h-[4.75rem] w-full items-center gap-3 border-b border-line px-3 py-3 text-left transition hover:bg-surface-raised/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand/60 sm:px-4"

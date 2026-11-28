@@ -1,7 +1,9 @@
-import { Component, computed, effect, inject, input, signal } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+import { Component, computed, effect, inject, input, PLATFORM_ID, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { ApiClient } from '../../core/api/api-client';
 import { toApiError } from '../../core/api/api-error';
 import {
@@ -62,6 +64,8 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export class PublicEventPage {
   private readonly api = inject(ApiClient);
   private readonly fb = inject(NonNullableFormBuilder);
+  private readonly sanitizer = inject(DomSanitizer);
+  private readonly platformId = inject(PLATFORM_ID);
   protected readonly i18n = inject(I18nService);
   protected readonly icons = ICONS;
 
@@ -80,6 +84,8 @@ export class PublicEventPage {
   protected readonly result = signal<{ name: string; status: Answer } | null>(null);
   protected readonly rsvpOpen = signal(false);
   protected readonly menuOpen = signal(false);
+  protected readonly videoOpen = signal(false);
+  protected readonly videoPlaying = signal(false);
 
   protected readonly detailsOpen = signal(false);
   protected readonly hostOpen = signal(false);
@@ -99,6 +105,16 @@ export class PublicEventPage {
     return raw ? mapPublicEventView(raw) : null;
   });
   protected readonly shellManifest = computed(() => this.event()?.manifest ?? DEFAULT_MANIFEST);
+
+  protected readonly videoId = computed(() => this.event()?.youtubeVideoId ?? null);
+  protected readonly videoThumbnail = computed(
+    () => `https://i.ytimg.com/vi/${this.videoId()}/hqdefault.jpg`,
+  );
+  protected readonly videoEmbed = computed<SafeResourceUrl>(() =>
+    this.sanitizer.bypassSecurityTrustResourceUrl(
+      `https://www.youtube-nocookie.com/embed/${this.videoId()}?autoplay=1&rel=0`,
+    ),
+  );
 
   protected readonly renderData = computed<TemplateRenderData | null>(() => {
     const e = this.event();
@@ -165,6 +181,10 @@ export class PublicEventPage {
         void this.load(slug);
       }
     });
+    // No PC o painel lateral arranca aberto; no telemóvel o botão sobrepõe o convite.
+    if (isPlatformBrowser(this.platformId) && window.innerWidth >= 1024) {
+      this.menuOpen.set(true);
+    }
   }
 
   protected async load(slug = this.slug()): Promise<void> {
@@ -293,7 +313,7 @@ export class PublicEventPage {
   }
 
   /** Fecha o menu antes de abrir o destino, para o modal ficar sempre visível. */
-  protected openFromMenu(target: 'rsvp' | 'locations' | 'host' | 'details'): void {
+  protected openFromMenu(target: 'rsvp' | 'locations' | 'host' | 'details' | 'video'): void {
     this.menuOpen.set(false);
     if (target === 'rsvp') {
       this.openRsvp();
@@ -301,9 +321,17 @@ export class PublicEventPage {
       this.locationOpen.set(true);
     } else if (target === 'host') {
       this.hostOpen.set(true);
+    } else if (target === 'video') {
+      this.videoPlaying.set(false);
+      this.videoOpen.set(true);
     } else {
       this.detailsOpen.set(true);
     }
+  }
+
+  protected closeVideo(): void {
+    this.videoOpen.set(false);
+    this.videoPlaying.set(false);
   }
 
   protected closeRsvp(): void {

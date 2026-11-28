@@ -259,6 +259,79 @@ export function invitationThemeVars(manifest: TemplateManifest): InvitationTheme
         outline-offset: 2px;
       }
 
+      /* Modal próprio do vídeo: a capa vem do YouTube e o iframe só entra
+         depois do clique, tal como na folha de informações. */
+      app-invitation-shell .inv-video-frame {
+        position: relative;
+        aspect-ratio: 16 / 9;
+        overflow: hidden;
+        border: 1px solid var(--inv-line);
+        border-radius: 1rem;
+        background: color-mix(in srgb, var(--inv-ink) 80%, #000000);
+        box-shadow: var(--shadow-card);
+      }
+      app-invitation-shell .inv-video-cover {
+        position: absolute;
+        inset: 0;
+        display: block;
+        width: 100%;
+        height: 100%;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        cursor: pointer;
+      }
+      app-invitation-shell .inv-video-cover:focus-visible {
+        outline: 2px solid var(--inv-accent);
+        outline-offset: -4px;
+      }
+      app-invitation-shell .inv-video-thumb {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        opacity: 0.88;
+      }
+      app-invitation-shell .inv-play-badge {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        display: grid;
+        place-items: center;
+        width: clamp(3.25rem, 16%, 4.5rem);
+        aspect-ratio: 1;
+        transform: translate(-50%, -50%);
+        border-radius: 0.85rem;
+        background: #ff0000;
+        color: #ffffff;
+        font-size: clamp(1rem, 4cqw, 1.5rem);
+        box-shadow: var(--shadow-pop);
+        transition: transform 150ms ease, background 150ms ease;
+      }
+      app-invitation-shell .inv-video-cover:hover .inv-play-badge {
+        transform: translate(-50%, -50%) scale(1.06);
+        background: #cc0000;
+      }
+      app-invitation-shell .inv-video-label {
+        position: absolute;
+        bottom: 0.65rem;
+        left: 0.75rem;
+        border-radius: 999px;
+        padding: 0.35rem 0.7rem;
+        background: rgb(0 0 0 / 0.65);
+        color: #ffffff;
+        font-size: 0.7rem;
+        font-weight: 600;
+      }
+      app-invitation-shell .inv-video-embed {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        border: 0;
+      }
+
       /* A página de entrada cabe sempre na viewport: sem rolagem no telemóvel
          nem no desktop. O vídeo continua disponível na folha de informações. */
       app-invitation-shell .inv-stage {
@@ -304,6 +377,7 @@ export function invitationThemeVars(manifest: TemplateManifest): InvitationTheme
       /* No desktop o cartaz mantém a proporção 4:5 e a gaveta comprime-o
          sem criar overflow horizontal. */
       @media (min-width: 1024px) {
+        app-invitation-shell .inv-drawer-backdrop { display: none; }
         app-invitation-shell .inv-stage-main {
           display: flex;
           align-items: stretch;

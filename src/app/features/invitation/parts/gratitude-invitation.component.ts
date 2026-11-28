@@ -65,6 +65,15 @@ const TITLE_FONT_STACK = 'Anton, "Arial Narrow", Impact, sans-serif';
       width:100vw; margin-left:calc(50% - 50vw);
       border-radius:0;
     }
+    /* No convite público a saudação ganha destaque, sem deslocar o cartaz
+       usado no editor nem a capa PDF. */
+    .poster.full-bleed .sub{top:21.8%}
+    .poster.full-bleed .guest-name{
+      top:25.9%;
+      font-size:clamp(11px,3.6cqw,38px);
+    }
+    .poster.full-bleed .title{top:29.2%}
+    .poster.full-bleed .year{top:50.8%}
     .deco{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
     .logo{
       position:absolute;top:2.4%;left:50%;transform:translateX(-50%);

@@ -142,8 +142,8 @@ describe('PersonCardComponent — linha proeminente do painel', () => {
 
     const article = fixture.nativeElement.querySelector('article') as HTMLElement;
     expect(article.className).toContain('flex-col');
-    expect(article.className).toContain('border-brand/25');
-    expect(article.className).toContain('p-3');
+    expect(article.className).toContain('border-line');
+    expect(article.className).toContain('p-4');
     expect((fixture.nativeElement.querySelector('[data-testid="person-card-open"]') as HTMLElement).className).toContain('items-start');
     expect(fixture.nativeElement.querySelector('app-avatar span')?.className).toContain('size-14');
     expect(fixture.nativeElement.querySelector('app-status-badge')?.className).not.toContain('hidden');
@@ -154,6 +154,7 @@ describe('PersonCardComponent — linha proeminente do painel', () => {
     const button = fixture.nativeElement.querySelector('button') as HTMLButtonElement;
     expect(button.parentElement?.className).toContain('border-t');
     expect(button.className).toContain('h-11');
+    expect(button.className).toContain('flex-1');
     expect(button.className).not.toContain('hidden');
     expect(button.getAttribute('aria-label')).toBe('Reenviar email');
     expect(button.textContent).toContain('Reenviar email');

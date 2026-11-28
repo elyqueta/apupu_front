@@ -77,9 +77,13 @@ export interface PersonPrimaryAction {
             }
             @if (meta().length > 0) {
               <p
-                [class]="prominent() ? 'mt-1.5 inline-flex max-w-full items-center gap-1.5 rounded-lg bg-surface-raised px-2 py-0.5 text-[11px] text-muted' : 'hidden min-w-0 items-center gap-1.5 truncate text-[11px] text-muted sm:flex'"
+                [class]="prominent() ? 'mt-2 inline-flex max-w-full items-center gap-1.5 rounded-lg bg-surface-raised px-2 py-1 text-[11px] text-muted' : 'hidden min-w-0 items-center gap-1.5 truncate text-[11px] text-muted sm:flex'"
               >
-                <fa-icon [icon]="iconFor(meta()[0].icon)" class="shrink-0 text-[10px]" aria-hidden="true" />
+                <fa-icon
+                  [icon]="iconFor(meta()[0].icon)"
+                  [class]="prominent() ? 'shrink-0 text-[10px] text-brand-strong' : 'shrink-0 text-[10px]'"
+                  aria-hidden="true"
+                />
                 <span class="min-w-0 truncate">{{ meta()[0].label }}</span>
               </p>
             }
@@ -95,7 +99,7 @@ export interface PersonPrimaryAction {
             @if (primaryAction(); as primary) {
               <button
                 type="button"
-                [class]="prominent() ? 'inline-flex h-11 w-auto shrink-0 items-center justify-center gap-2 rounded-xl bg-brand px-3 text-xs font-semibold text-on-secondary transition hover:bg-secondary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60 disabled:cursor-not-allowed disabled:opacity-50' : 'hidden h-9 shrink-0 items-center gap-1.5 rounded-xl bg-brand px-2.5 text-[11px] font-semibold text-on-secondary transition hover:bg-secondary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60 disabled:cursor-not-allowed disabled:opacity-50 sm:inline-flex'"
+                [class]="prominent() ? 'inline-flex h-11 min-w-0 flex-1 items-center justify-center gap-2 rounded-xl bg-brand px-3 text-xs font-semibold text-on-secondary transition hover:bg-secondary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60 disabled:cursor-not-allowed disabled:opacity-50' : 'hidden h-9 shrink-0 items-center gap-1.5 rounded-xl bg-brand px-2.5 text-[11px] font-semibold text-on-secondary transition hover:bg-secondary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60 disabled:cursor-not-allowed disabled:opacity-50 sm:inline-flex'"
                 [disabled]="primary.disabled"
                 [attr.title]="primary.hint || null"
                 [attr.aria-label]="primary.hint || primary.label"
@@ -271,10 +275,8 @@ export class PersonCardComponent {
   /** Cartão de linha: mesmo vocabulário visual, muito menos altura. */
   protected readonly linearClasses = (): string => {
     if (this.prominent()) {
-      const base = 'relative flex min-w-0 flex-col rounded-2xl border shadow-card transition gap-3 p-3 sm:p-3.5';
-      return this.highlight()
-        ? `${base} border-brand/50 bg-brand/10`
-        : `${base} border-brand/25 bg-brand/5 hover:border-brand/40`;
+      const base = 'relative flex min-w-0 flex-col gap-4 rounded-2xl border bg-surface p-4 shadow-card transition hover:border-brand/40';
+      return this.highlight() ? `${base} border-brand/50` : `${base} border-line`;
     }
     const base = 'relative flex min-w-0 items-center rounded-2xl border shadow-card transition gap-1 p-1.5';
     return this.highlight()
@@ -285,7 +287,7 @@ export class PersonCardComponent {
   /** Área clicável; na versão proeminente ganha ar e mantém o foco visível. */
   protected readonly linearBodyClasses = (): string =>
     this.prominent()
-      ? 'flex w-full min-w-0 items-start gap-3 overflow-hidden rounded-xl px-1 py-0.5 outline-none transition focus-visible:ring-2 focus-visible:ring-brand/60'
+      ? 'flex w-full min-w-0 items-start gap-3 overflow-hidden rounded-xl px-0.5 outline-none transition focus-visible:ring-2 focus-visible:ring-brand/60'
       : 'flex min-w-0 flex-1 items-center gap-2 overflow-hidden rounded-xl px-2 py-1.5 outline-none transition focus-visible:ring-2 focus-visible:ring-brand/60';
 
   protected readonly classes = (): string => {

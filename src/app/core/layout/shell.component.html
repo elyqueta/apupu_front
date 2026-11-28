@@ -86,7 +86,7 @@
       aria-label="Navegação principal"
     >
       <div
-        class="flex h-full flex-col rounded-4xl border border-line bg-surface/85 shadow-card backdrop-blur-2xl"
+        class="flex h-full min-w-0 flex-col overflow-x-clip rounded-4xl border border-line bg-surface/85 shadow-card backdrop-blur-2xl"
         [class.p-2]="sidebarCollapsed()"
         [class.p-4]="!sidebarCollapsed()"
       >
@@ -94,9 +94,9 @@
           @if (sidebarCollapsed()) {
             <a
               routerLink="/painel"
-              class="inline-flex"
+              class="grid size-11 shrink-0 place-items-center rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60"
               [attr.aria-label]="i18n.t('app.name')"
-              [attr.data-tooltip]="i18n.t('app.name')"
+              [attr.title]="i18n.t('app.name')"
             >
               <app-logo variant="symbol" [height]="40" class="dark:hidden" />
               <app-logo variant="symbol" theme="white" [height]="40" class="hidden dark:block" />
@@ -115,7 +115,8 @@
         </div>
 
         <nav
-          class="no-scrollbar mt-6 flex min-h-0 flex-1 flex-col overflow-y-auto"
+          class="no-scrollbar mt-6 flex min-h-0 flex-1 flex-col overflow-x-hidden overflow-y-auto"
+          [class.items-center]="sidebarCollapsed()"
           [class.gap-2]="sidebarCollapsed()"
           [class.gap-1]="!sidebarCollapsed()"
           [class.pr-0.5]="!sidebarCollapsed()"
@@ -135,16 +136,15 @@
               [routerLinkActiveOptions]="{ exact: item.exact }"
               [attr.aria-label]="sidebarCollapsed() ? i18n.t(item.labelKey) : null"
               [attr.title]="sidebarCollapsed() ? i18n.t(item.labelKey) : null"
-              [attr.data-tooltip]="sidebarCollapsed() ? i18n.t(item.labelKey) : null"
               [class]="
                 sidebarCollapsed()
                   ? (rla.isActive
                       ? 'relative grid size-11 shrink-0 place-items-center rounded-xl bg-brand/15 text-brand transition-colors duration-150 hover:bg-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60 motion-reduce:transition-none'
                       : 'relative grid size-11 shrink-0 place-items-center rounded-xl text-muted transition-colors duration-150 hover:bg-surface-raised hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60 motion-reduce:transition-none')
                   : (rla.isActive
-                      ? 'group flex items-center gap-3.5 rounded-2xl border border-brand/30 bg-secondary-soft py-3 text-brand-strong'
-                      : 'group flex items-center gap-3.5 rounded-2xl border border-transparent py-3 text-muted transition hover:border-line hover:bg-surface-raised/60 hover:text-ink') +
-                    ' px-3.5'
+                      ? 'group flex min-w-0 items-center gap-3.5 rounded-2xl border border-brand/30 bg-secondary-soft py-3 text-brand-strong'
+                      : 'group flex min-w-0 items-center gap-3.5 rounded-2xl border border-transparent py-3 text-muted transition hover:border-line hover:bg-surface-raised/60 hover:text-ink') +
+                    ' px-3.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60'
               "
               (click)="closeMenus()"
             >
@@ -188,7 +188,6 @@
               class="grid size-11 shrink-0 place-items-center rounded-xl text-muted transition-colors duration-150 hover:bg-surface-raised hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60 motion-reduce:transition-none"
               [attr.aria-label]="i18n.t('shell.openProfile')"
               [attr.title]="i18n.t('shell.openProfile')"
-              [attr.data-tooltip]="i18n.t('shell.openProfile')"
             >
               <app-avatar
                 [name]="store.profile().name"
@@ -201,7 +200,6 @@
               class="grid size-11 shrink-0 place-items-center rounded-xl text-muted transition-colors duration-150 hover:bg-surface-raised hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60 motion-reduce:transition-none"
               [attr.aria-label]="i18n.t('nav.settings')"
               [attr.title]="i18n.t('nav.settings')"
-              [attr.data-tooltip]="i18n.t('nav.settings')"
             >
               <fa-icon [icon]="icons['settings']" class="text-xl" aria-hidden="true" />
             </a>
@@ -211,7 +209,6 @@
               class="grid size-11 shrink-0 place-items-center rounded-xl text-muted transition-colors duration-150 hover:bg-surface-raised hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60 disabled:cursor-wait disabled:opacity-60 motion-reduce:transition-none"
               [attr.aria-label]="i18n.t('settings.logout')"
               [attr.title]="i18n.t('settings.logout')"
-              [attr.data-tooltip]="i18n.t('settings.logout')"
               (click)="logout()"
             >
               <fa-icon [icon]="icons['logout']" class="text-xl" aria-hidden="true" />

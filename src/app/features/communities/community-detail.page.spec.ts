@@ -395,6 +395,45 @@ describe('CommunityDetailPage', () => {
     expect(navigate).toHaveBeenCalledWith(['/equipas', 't1']);
   });
 
+  it('staff vê o empty state padrão quando não há sugestões de eventos', async () => {
+    const context = setup();
+    http = context.http;
+    http.expectOne(`${BASE}/host/communities/${SLUG}`).flush({ data: staff() });
+    await flushPending(http, ACTIVITY_URL, { data: [] });
+    await settle(context.fixture);
+    openTab(context.fixture, 'events');
+    await flushPending(http, SUGGESTIONS_URL, { data: [] });
+    await settle(context.fixture);
+
+    const native = context.fixture.nativeElement as HTMLElement;
+    const empty = native.querySelector('[data-testid="community-suggestions-empty"]') as HTMLElement;
+    expect(empty).not.toBeNull();
+    expect(empty.tagName).toBe('DIV');
+    expect(empty.className).toContain('rounded-4xl');
+    expect(empty.className).toContain('border-dashed');
+    expect(empty.className).toContain('bg-surface/60');
+    expect(empty.className).toContain('px-5');
+    expect(empty.className).toContain('py-10');
+
+    const iconBox = empty.querySelector('span') as HTMLElement;
+    expect(iconBox.className).toContain('size-14');
+    expect(iconBox.className).toContain('border-brand/25');
+    expect(iconBox.className).toContain('bg-brand/15');
+    expect(iconBox.className).toContain('text-brand-strong');
+    expect(iconBox.querySelector('fa-icon')).not.toBeNull();
+
+    const title = empty.querySelector('h3') as HTMLElement;
+    expect(title.className).toContain('font-display');
+    expect(title.className).toContain('text-lg');
+    expect(title.textContent).toContain('Nenhuma sugestão por agora');
+
+    const hint = empty.querySelector('p') as HTMLElement;
+    expect(hint.className).toContain('text-sm');
+    expect(hint.className).toContain('leading-6');
+    expect(hint.className).toContain('text-muted');
+    expect(hint.textContent).toContain('Sem sugestões pendentes.');
+  });
+
   it('staff revê sugestões pendentes e aprova, recarregando detalhe e eventos', async () => {
     const context = setup();
     http = context.http;

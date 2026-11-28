@@ -28,6 +28,8 @@ export interface TemplateRenderData {
   templateSlug?: string | null;
   /** Bloco 16: lista de localizações para a linha "+N locais". */
   locations?: InvitationEventView['locations'];
+  /** Nome do convidado, quando o link foi aberto por alguém identificado. */
+  guestName?: string | null;
 }
 
 @Component({
@@ -288,6 +290,7 @@ export class TemplateRendererComponent {
       placeLabel: null,
       placeName: null,
       locations: d.locations ?? [],
+      guestName: d.guestName ?? null,
       organizers: [],
       community: null,
     };

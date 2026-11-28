@@ -6,6 +6,7 @@ import { provideRouter } from '@angular/router';
 import { API_BASE_URL } from '../../core/api/api-config';
 import { ApiOpenEvent, ApiOpenEventEnvelope } from '../../core/api/api.models';
 import { I18nService } from '../../core/i18n/i18n.service';
+import { DEFAULT_MANIFEST } from '../../core/models/template-manifest';
 import { publicInvitationFixture } from '../invitation/testing/public-invitation.fixture';
 import { PublicEventPage } from './public-event.page';
 
@@ -19,6 +20,14 @@ function openEvent(overrides: Partial<ApiOpenEvent> = {}): ApiOpenEvent {
     slug: SLUG,
     has_age_restriction: false,
     rsvp_deadline_passed: false,
+    template: {
+      slug: 'gratitude',
+      name: 'Gratitude',
+      manifest: {
+        ...DEFAULT_MANIFEST,
+        ornaments: { ...DEFAULT_MANIFEST.ornaments, frame: 'gratitude' },
+      },
+    },
     ...overrides,
   };
 }
@@ -86,6 +95,9 @@ describe('PublicEventPage (link aberto)', () => {
     await settle(context.fixture);
     const native = context.fixture.nativeElement as HTMLElement;
 
+    // Sem nome identificado, o cartaz não mostra saudação.
+    expect(native.querySelector('[data-testid="gratitude-guest-name"]')).toBeNull();
+
     // A contagem de confirmados é só do feed: nunca aparece no convite público.
     expect(native.querySelector('[data-testid="public-event-attendees"]')).toBeNull();
     expect(native.textContent).not.toContain('confirmados');
@@ -117,7 +129,35 @@ describe('PublicEventPage (link aberto)', () => {
     expect(native.querySelector('[data-testid="public-rsvp-open"]')?.textContent).toContain(
       TestBed.inject(I18nService).t('block10.public.change'),
     );
+    expect(native.querySelector('[data-testid="gratitude-guest-name"]')?.textContent).toContain(
+      TestBed.inject(I18nService).t('invitation.guestGreeting', { name: 'Rui Costa' }),
+    );
     expect(native.querySelector('[data-testid="app-modal"]')).toBeNull();
+  });
+
+  it('mostra o nome da conta autenticada no cartaz do convite', async () => {
+    const context = setup();
+    http = context.http;
+    http.expectOne(`${BASE}/public/events/${SLUG}`).flush({
+      data: envelope({
+        viewer: {
+          name: 'Ana Silva',
+          email: 'ana@exemplo.ao',
+          phone: null,
+          has_birth_date: true,
+          rsvp_status: null,
+        },
+      }),
+    });
+    await settle(context.fixture);
+    const native = context.fixture.nativeElement as HTMLElement;
+
+    expect(native.querySelector('[data-testid="gratitude-guest-name"]')?.textContent).toContain(
+      TestBed.inject(I18nService).t('invitation.guestGreeting', { name: 'Ana Silva' }),
+    );
+    expect(native.querySelector('[data-testid="gratitude-title"] text')?.textContent).toContain(
+      publicInvitationFixture().event.title.toUpperCase(),
+    );
   });
 
   it('sem contacto não envia nada', async () => {

@@ -120,6 +120,7 @@ export class PublicEventPage {
       type: e.type,
       templateSlug: e.templateSlug,
       locations: e.locations,
+      guestName: this.viewer()?.name ?? this.result()?.name ?? null,
     };
   });
 

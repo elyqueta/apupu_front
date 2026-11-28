@@ -70,6 +70,8 @@ export interface InvitationEventView {
   placeName: string | null;
   /** Bloco 16: lista completa, principal primeiro. */
   locations: InvitationLocation[];
+  /** Nome do convidado quando o link foi aberto por alguém identificado. */
+  guestName?: string | null;
   organizers: InvitationOrganizer[];
   community: { name: string; slug: string; avatarUrl: string | null; isPublic: boolean } | null;
 }

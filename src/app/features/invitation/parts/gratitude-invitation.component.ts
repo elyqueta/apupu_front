@@ -86,6 +86,12 @@ const TITLE_FONT_STACK = 'Anton, "Arial Narrow", Impact, sans-serif';
       font-weight:800;font-size:4.7cqw;color:#111;line-height:1.1;
       text-transform:uppercase;letter-spacing:.01em;
     }
+    .guest-name{
+      position:absolute;top:26.5%;left:5%;right:5%;margin:0;
+      text-align:center;font-weight:700;color:#111;line-height:1.05;
+      font-size:clamp(8px,2cqw,26px);letter-spacing:.02em;
+      white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-sizing:border-box;
+    }
     .title{
       position:absolute;left:4.5%;top:28.6%;width:91%;height:20.7%;
       display:block;overflow:visible;box-sizing:border-box;
@@ -196,6 +202,10 @@ const TITLE_FONT_STACK = 'Anton, "Arial Narrow", Impact, sans-serif';
 
           <div class="org" data-testid="gratitude-org">{{ f().organization }}</div>
           <div class="sub" data-testid="gratitude-subtitle">{{ f().subtitle }}</div>
+
+          @if (guestGreeting(); as greeting) {
+            <p class="guest-name" data-testid="gratitude-guest-name">{{ greeting }}</p>
+          }
 
           <svg class="title" [attr.viewBox]="titleViewBox()" preserveAspectRatio="xMidYMid meet" role="img" [attr.aria-label]="f().title" data-testid="gratitude-title">
             <text x="0" y="0" font-family="Anton,'Arial Narrow',Impact,sans-serif" [attr.font-size]="titleFontSize()" [attr.x]="titleX()" [attr.y]="titleY()" fill="url(#afro)" stroke="#161616" stroke-width="2.2" vector-effect="non-scaling-stroke" paint-order="stroke fill" stroke-linejoin="round">{{ f().title }}</text>
@@ -317,6 +327,12 @@ export class GratitudeInvitationComponent implements AfterViewInit {
       qrIcon: pdf.qr_icon === 'none' ? 'none' : 'platform',
       qrSize: pdf.qr_size === 'lg' ? 'lg' : 'md',
     };
+  });
+
+  /** Só mostra a saudação quando existe um nome real (conta ou resposta RSVP). */
+  protected readonly guestGreeting = computed(() => {
+    const name = this.event().guestName?.trim();
+    return name ? this.i18n.t('invitation.guestGreeting', { name }) : null;
   });
 
   protected readonly qrSvg = computed<SafeHtml | null>(() => {

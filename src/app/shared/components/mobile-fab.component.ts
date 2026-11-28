@@ -11,7 +11,7 @@ import { ICONS } from '../../core/ui/icons';
       type="button"
       [attr.data-testid]="testId()"
       [attr.aria-label]="label()"
-      class="fixed right-4 z-30 inline-flex h-12 items-center gap-2 rounded-full bg-brand px-4 text-sm font-semibold text-on-secondary shadow-card transition hover:bg-secondary-hover md:hidden"
+      class="fixed right-4 z-30 inline-flex h-12 items-center gap-2 rounded-full bg-brand px-4 text-sm font-semibold text-on-secondary shadow-pop transition hover:bg-secondary-hover md:hidden"
       style="bottom: calc(env(safe-area-inset-bottom) + 4.5rem)"
       (click)="pressed.emit()"
     >

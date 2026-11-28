@@ -367,3 +367,32 @@ Mapeamento feito antes de alterar código. O frontend parte de `feat/bloco-3-det
 | WhatsApp nos cartões | Passar a acção para o menu "…" em vez do botão principal, em `/convidados` e no detalhe do evento. | Pedido explícito; liberta largura para o nome do convidado em mobile. |
 | Gratitude — posição do QR | Três colunas iguais para data/hora/local e QR num grupo próprio entre essa linha e o dress code; local limitado a 3 linhas. | Evita sobreposição quando o endereço é longo e mantém a hierarquia pedida. O PDF usa o mesmo grupo, preservando o contrato comum. |
 | Nome do ficheiro descarregado | `conto-contigo-convite-<nome-do-convidado>.pdf` e textos "Descarregar convite". | O documento é um convite, não um bilhete; o nome identifica o convidado. |
+
+## Bloco 16 — Passo 1: sombras padrão (28/11/2026)
+
+| Dúvida / ponto ambíguo | Escolha | Motivo |
+|---|---|---|
+| Escala do Tailwind v4 | `@theme inline` repõe `--shadow-*: initial;` e define só `--shadow-card` e `--shadow-pop`; `tsconfig.spec.json` passa a incluir `node` para o teste de política poder ler `src/`. | Remove os utilitários por omissão sem nova dependência; o teste anti-regressão precisa de `fs`/`path`. |
+| Tokens claros/escuros | `--shadow-card`: claro `0 1px 2px rgb(15 61 62 / .05), 0 2px 8px rgb(15 61 62 / .05)`, escuro `0 1px 2px rgb(0 0 0 / .30)`. `--shadow-pop`: claro `0 2px 4px rgb(15 61 62 / .06), 0 8px 20px rgb(15 61 62 / .10)`, escuro `0 4px 16px rgb(0 0 0 / .40)`. | Respeita os limites do bloco (desfoque ≤8/20 px e opacidade ≤.06/.12 no claro); no escuro a borda faz o trabalho. |
+| Botões, chips, avatares e selos | `shadow-card` removido; apenas cor e borda. inputs elevados mantêm `shadow-card`. | Regra explícita do bloco: botões e chips sem sombra. |
+| Flutuantes | `modal`, `action-menu`, `toast`, `mobile-fab`, menus/popovers e barras inferiores passam a `shadow-pop`; cartões e painéis mantêm `shadow-card`. | Distingue o que flutua do que faz parte do conteúdo. |
+| Gratitude (digital) | `box-shadow:0 10px 30px rgba(0,0,0,.25)` → `var(--shadow-card)`; anel branco do QR passa a `outline`. | Elimina a sombra exagerada e o `box-shadow` arbitrário sem perder o fundo branco do selo. |
+| Hover | `hover:shadow-md/lg` removidos; `hover:-translate-y-*` e `hover:border-*` mantidos. | Hover não aumenta a sombra. |
+
+### Auditoria ficheiro → sombra antes → sombra depois
+
+| Ficheiro | Antes | Depois |
+|---|---|---|
+| `src/styles/brand-tokens.css` | `--cc-shadow-card: 0 1px 2px rgb(15 61 62 / .06), 0 8px 24px rgb(15 61 62 / .08)` | `--shadow-card` (limite ≤8 px/.05), novo `--shadow-pop`; `.dark` com valores suaves |
+| `src/styles.css` | escala Tailwind por omissão + `--ap-shadow-card: 0 4px 14px rgb(0 0 0 / .22)` | `--shadow-*: initial`, `shadow-card`/`shadow-pop`, dark via tokens |
+| `src/app/shared/components/auth-layout.component.ts` | `shadow-2xl` | `shadow-pop` |
+| `src/app/features/landing/landing-hero.component.ts` | `shadow-2xl` (painel), `shadow-card` (CTA) | `shadow-pop` (painel), sem sombra (CTA) |
+| `src/app/features/events/detail/event-teams-section.component.ts` | `shadow-card` + `hover:shadow-md`, `drop-shadow-sm` | `shadow-card`, sem aumento no hover, sem `drop-shadow` |
+| `src/app/shared/components/public-entity-card.component.ts`, `src/app/features/feed/feed-cards.component.ts` | `hover:shadow-lg` | sem sombra extra no hover |
+| `src/app/core/layout/shell.component.html` | `shadow-sm` (ícone), `shadow-card` (menu/popover/barra) | sem sombra (ícone), `shadow-pop` (flutuantes) |
+| `src/app/features/messages/messages-inbox.component.ts` | `shadow-sm` (input) | sem sombra |
+| `src/app/features/communities/community-detail.page.html`, `community-form-dialog.component.ts`, `institution-form-dialog.component.ts` | `shadow-inner` | sem sombra |
+| `src/app/shared/components/modal.component.ts`, `action-menu`, `toast-host`, `mobile-fab`, `search-suggestions`, `image-lightbox` | `shadow-card` | `shadow-pop` |
+| `src/app/features/feed/feed.page.html` | botões/chips `shadow-card`, barra inferior `shadow-card` | botões/chips sem sombra, barra `shadow-pop` |
+| `src/app/features/invitation/parts/gratitude-invitation.component.ts` | `box-shadow:0 10px 30px rgba(0,0,0,.25)`, `box-shadow:0 0 0 .35cqw #fff` | `var(--shadow-card)`, `outline:.35cqw solid #fff` |
+| Botões/chips em `public-header`, `landing-footer`, `guests`, `event-guests-section`, `invitation-video`, `avatar`, `event-card`, `public-entity-card`, `my-invitations`, `profile` | `shadow-card` | sem sombra |

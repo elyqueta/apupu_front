@@ -14,7 +14,7 @@ import { ICONS } from '../../core/ui/icons';
   imports: [RouterLink, FaIconComponent],
   template: `
     <article
-      class="flex h-full min-w-0 flex-col overflow-hidden rounded-4xl border border-line/40 bg-surface shadow-card transition duration-200 hover:-translate-y-0.5 hover:border-brand/40 hover:shadow-lg focus-within:border-brand/50"
+      class="flex h-full min-w-0 flex-col overflow-hidden rounded-4xl border border-line/40 bg-surface shadow-card transition duration-200 hover:-translate-y-0.5 hover:border-brand/40 focus-within:border-brand/50"
       [attr.data-testid]="testId()"
     >
       <div class="relative h-32 shrink-0 overflow-hidden bg-gradient-to-br from-brand/45 via-secondary/20 to-surface-raised">
@@ -24,7 +24,7 @@ import { ICONS } from '../../core/ui/icons';
           <span class="absolute -right-6 -top-8 size-32 rounded-full border border-white/20 bg-white/10" aria-hidden="true"></span>
           <span class="absolute -bottom-14 left-10 size-32 rounded-full border border-white/15 bg-white/5" aria-hidden="true"></span>
         }
-        <span class="absolute right-3 top-3 rounded-full border border-line bg-surface px-2.5 py-1 text-xs font-semibold text-ink shadow-card">
+        <span class="absolute right-3 top-3 rounded-full border border-line bg-surface px-2.5 py-1 text-xs font-semibold text-ink">
           {{ badgeLabel() }}
         </span>
         <span

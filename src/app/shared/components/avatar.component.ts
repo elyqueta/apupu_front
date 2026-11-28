@@ -13,7 +13,7 @@ const SIZES: Record<string, string> = {
   selector: 'app-avatar',
   template: `
     <span
-      class="inline-grid shrink-0 place-items-center overflow-hidden rounded-full font-semibold tracking-wide text-on-secondary shadow-card ring-2 ring-canvas/50"
+      class="inline-grid shrink-0 place-items-center overflow-hidden rounded-full font-semibold tracking-wide text-on-secondary ring-2 ring-canvas/50"
       [class]="classes()"
       [attr.title]="name()"
       [attr.aria-label]="name()"

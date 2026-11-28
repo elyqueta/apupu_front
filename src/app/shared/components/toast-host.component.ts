@@ -15,7 +15,7 @@ import { I18nService } from '../../core/i18n/i18n.service';
     >
       @for (toast of toasts.messages(); track toast.id) {
         <div
-          class="pointer-events-auto flex w-full items-start gap-3 rounded-2xl border p-3.5 shadow-card backdrop-blur-2xl animate-rise"
+          class="pointer-events-auto flex w-full items-start gap-3 rounded-2xl border p-3.5 shadow-pop backdrop-blur-2xl animate-rise"
           [class]="toneClasses(toast.tone)"
           role="status"
         >

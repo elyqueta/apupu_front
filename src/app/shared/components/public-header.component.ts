@@ -34,7 +34,7 @@ import { LogoComponent } from './logo.component';
           @if (backLink()) {
             <a
               [routerLink]="backLink()"
-              class="inline-flex min-h-11 items-center gap-2 rounded-full border border-line bg-surface px-3 text-xs font-semibold text-ink shadow-card transition hover:border-brand/40 hover:text-brand-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
+              class="inline-flex min-h-11 items-center gap-2 rounded-full border border-line bg-surface px-3 text-xs font-semibold text-ink transition hover:border-brand/40 hover:text-brand-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
               [attr.aria-label]="backLabel() || i18n.t('common.back')"
               data-testid="public-header-back-mobile"
             >
@@ -97,7 +97,7 @@ import { LogoComponent } from './logo.component';
         @if (backLink()) {
           <a
             [routerLink]="backLink()"
-            class="inline-flex min-h-11 items-center gap-2 rounded-full border border-line bg-surface px-3 text-xs font-semibold text-ink shadow-card transition hover:border-brand/40 hover:text-brand-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
+            class="inline-flex min-h-11 items-center gap-2 rounded-full border border-line bg-surface px-3 text-xs font-semibold text-ink transition hover:border-brand/40 hover:text-brand-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
             [attr.aria-label]="backLabel() || i18n.t('common.back')"
             data-testid="public-header-back"
           >

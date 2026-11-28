@@ -53,7 +53,7 @@ const TITLE_FONT_STACK = 'Anton, "Arial Narrow", Impact, sans-serif';
       background:radial-gradient(circle at 50% 45%,#fffdf8 0%,#fff6ea 55%,#fbe9cf 100%);
       position:relative; overflow:hidden;
       aspect-ratio:4/5; container-type:inline-size;
-      border-radius:14px; box-shadow:0 10px 30px rgba(0,0,0,.25);
+      border-radius:14px; box-shadow:var(--shadow-card);
       font-family:Montserrat,system-ui,sans-serif; box-sizing:border-box;
     }
     .deco{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
@@ -123,7 +123,7 @@ const TITLE_FONT_STACK = 'Anton, "Arial Narrow", Impact, sans-serif';
     .qrcard .qr-img{width:100%;height:100%;object-fit:contain;display:block}
     .qrcard .badge{
       position:absolute;width:28%;aspect-ratio:1;border-radius:50%;background:#fff;
-      display:grid;place-items:center;box-shadow:0 0 0 .35cqw #fff;
+      display:grid;place-items:center;outline:.35cqw solid #fff;
     }
     .qrcard .badge svg{width:82%;height:82%}
     .dress{

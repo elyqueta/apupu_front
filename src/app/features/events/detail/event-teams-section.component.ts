@@ -67,7 +67,7 @@ import { TeamMemberDetailDialogComponent } from '../../../shared/components/team
           @for (team of teams(); track team.id) {
             <li class="w-[min(20rem,calc(100vw-3.5rem))] shrink-0 snap-start sm:w-[21rem]">
               <article
-                class="group flex h-full min-w-0 flex-col overflow-hidden rounded-3xl border border-line bg-surface-raised/50 shadow-card transition hover:border-brand/30 hover:shadow-md"
+                class="group flex h-full min-w-0 flex-col overflow-hidden rounded-3xl border border-line bg-surface-raised/50 shadow-card transition hover:border-brand/30"
               >
                 <!-- Cover / team photo -->
                 <div class="relative h-32 shrink-0 overflow-hidden bg-gradient-to-br from-brand/30 via-aqua/15 to-secondary/25 sm:h-36">
@@ -97,7 +97,7 @@ import { TeamMemberDetailDialogComponent } from '../../../shared/components/team
                   </span>
 
                   <div class="absolute inset-x-0 bottom-0 p-3">
-                    <p class="truncate text-sm font-semibold text-white drop-shadow-sm">{{ team.name }}</p>
+                    <p class="truncate text-sm font-semibold text-white">{{ team.name }}</p>
                     <p class="truncate text-[11px] text-white/80">{{ categoryLabel(team) }}</p>
                   </div>
                 </div>

@@ -155,12 +155,12 @@ export class ModalComponent {
               ? 'max-w-none h-[calc(100dvh-2rem)]'
               : 'max-w-[32rem]';
     if (this.presentation() === 'sheet') {
-      return `relative flex max-h-[calc(100dvh-0.5rem)] w-full flex-col overflow-hidden rounded-t-4xl border border-line bg-surface-solid/95 shadow-card backdrop-blur-2xl motion-safe:animate-sheet ${size === 'full' ? 'sm:h-[min(92dvh,52rem)] sm:max-h-[min(92dvh,52rem)]' : 'sm:max-h-[min(92dvh,52rem)]'} sm:rounded-4xl sm:motion-safe:animate-rise ${desktopWidth}`;
+      return `relative flex max-h-[calc(100dvh-0.5rem)] w-full flex-col overflow-hidden rounded-t-4xl border border-line bg-surface-solid/95 shadow-pop backdrop-blur-2xl motion-safe:animate-sheet ${size === 'full' ? 'sm:h-[min(92dvh,52rem)] sm:max-h-[min(92dvh,52rem)]' : 'sm:max-h-[min(92dvh,52rem)]'} sm:rounded-4xl sm:motion-safe:animate-rise ${desktopWidth}`;
     }
     if (size === 'full') {
-      return `relative flex h-[calc(100dvh-2rem)] w-full max-w-none flex-col overflow-hidden rounded-4xl border border-line bg-surface-solid/95 shadow-card backdrop-blur-2xl motion-safe:animate-rise`;
+      return `relative flex h-[calc(100dvh-2rem)] w-full max-w-none flex-col overflow-hidden rounded-4xl border border-line bg-surface-solid/95 shadow-pop backdrop-blur-2xl motion-safe:animate-rise`;
     }
-    return `relative flex max-h-[calc(100dvh-2rem)] w-full flex-col overflow-y-auto overscroll-contain rounded-4xl border border-line bg-surface-solid/95 shadow-card backdrop-blur-2xl motion-safe:animate-rise ${width}`;
+    return `relative flex max-h-[calc(100dvh-2rem)] w-full flex-col overflow-y-auto overscroll-contain rounded-4xl border border-line bg-surface-solid/95 shadow-pop backdrop-blur-2xl motion-safe:animate-rise ${width}`;
   }
 
   protected bodyClass(): string {

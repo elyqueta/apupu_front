@@ -26,7 +26,7 @@ import { ModalComponent } from '../../../shared/components/modal.component';
               (click)="open.set(true)"
             >
               <img [src]="'https://i.ytimg.com/vi/' + id + '/hqdefault.jpg'" alt="" class="absolute inset-0 size-full object-cover opacity-90" loading="lazy" />
-              <span class="relative grid size-16 place-items-center rounded-full bg-white/90 text-2xl text-ink shadow-card transition group-hover:scale-105">
+              <span class="relative grid size-16 place-items-center rounded-full bg-white/90 text-2xl text-ink transition group-hover:scale-105">
                 <fa-icon [icon]="icons['play']" aria-hidden="true" />
               </span>
             </button>

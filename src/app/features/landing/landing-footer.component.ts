@@ -28,7 +28,7 @@ import { SupportDialogComponent } from './support-dialog.component';
         <a
           routerLink="/criar-conta"
           data-testid="landing-final-cta"
-          class="mt-7 inline-flex min-h-12 items-center justify-center rounded-2xl bg-brand px-6 text-sm font-semibold text-on-secondary shadow-card transition hover:bg-secondary-hover"
+          class="mt-7 inline-flex min-h-12 items-center justify-center rounded-2xl bg-brand px-6 text-sm font-semibold text-on-secondary transition hover:bg-secondary-hover"
         >
           {{ i18n.t('landing.cta.button') }}
         </a>

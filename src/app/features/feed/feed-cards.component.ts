@@ -24,7 +24,7 @@ export function eventPath(event: Pick<FeedEvent, 'slug'>): string {
   imports: [RouterLink, FaIconComponent, StatusBadgeComponent, TemplateArtworkComponent],
   template: `
     <article
-      class="group flex h-full min-w-0 flex-col overflow-hidden rounded-4xl border border-line bg-surface shadow-card transition duration-200 hover:-translate-y-0.5 hover:border-brand/40 hover:shadow-lg"
+      class="group flex h-full min-w-0 flex-col overflow-hidden rounded-4xl border border-line bg-surface shadow-card transition duration-200 hover:-translate-y-0.5 hover:border-brand/40"
       [attr.data-testid]="'feed-event-' + event().id"
     >
       <a [routerLink]="path()" class="relative block aspect-[4/3] overflow-hidden bg-surface-raised" [attr.aria-label]="event().title">

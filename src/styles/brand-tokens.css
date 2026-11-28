@@ -90,7 +90,10 @@
   --cc-radius-lg: 16px;
   --cc-radius-xl: 24px;
   --cc-font: 'Figtree', Arial, Helvetica, sans-serif;
-  --cc-shadow-card: 0 1px 2px rgb(15 61 62 / 0.06), 0 8px 24px rgb(15 61 62 / 0.08);
+  /* Bloco 16: dois únicos níveis de sombra. Cards/páneis usam `card`; só o que flutua usa `pop`. */
+  --shadow-card: 0 1px 2px rgb(15 61 62 / 0.05), 0 2px 8px rgb(15 61 62 / 0.05);
+  --shadow-pop: 0 2px 4px rgb(15 61 62 / 0.06), 0 8px 20px rgb(15 61 62 / 0.10);
+  --cc-shadow-card: var(--shadow-card);
 }
 
 /* Tema escuro controlado pela classe `.dark` da aplicação. */
@@ -113,4 +116,8 @@
   --cc-warning-bg: rgb(232 178 48 / 0.16);
   --cc-info: #8fb5b2;
   --cc-info-bg: rgb(143 181 178 / 0.16);
+
+  /* No escuro a borda faz o trabalho; as sombras são só separação suave. */
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.30);
+  --shadow-pop: 0 4px 16px rgb(0 0 0 / 0.40);
 }

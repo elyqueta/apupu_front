@@ -176,8 +176,8 @@
         <button
           type="button"
           [class]="category()
-            ? 'inline-flex min-h-11 shrink-0 items-center gap-2 rounded-full border border-brand bg-brand/15 px-3 text-xs font-semibold text-brand-strong shadow-card transition'
-            : 'inline-flex min-h-11 shrink-0 items-center gap-2 rounded-full border border-line bg-surface px-3 text-xs font-semibold text-ink shadow-card transition hover:border-brand/40 hover:text-brand-strong'"
+            ? 'inline-flex min-h-11 shrink-0 items-center gap-2 rounded-full border border-brand bg-brand/15 px-3 text-xs font-semibold text-brand-strong transition'
+            : 'inline-flex min-h-11 shrink-0 items-center gap-2 rounded-full border border-line bg-surface px-3 text-xs font-semibold text-ink transition hover:border-brand/40 hover:text-brand-strong'"
           [attr.aria-label]="i18n.t('block15.feed.categoriesHint')"
           [attr.data-testid]="'feed-categories-open'"
           (click)="categoriesOpen.set(true)"
@@ -189,12 +189,12 @@
       @if (type() === 'events') {
         <div class="no-scrollbar hidden gap-2 overflow-x-auto lg:flex" role="group" [attr.aria-label]="i18n.t('block15.feed.categories')">
           <button type="button" [class]="!category()
-            ? 'inline-flex min-h-11 shrink-0 items-center rounded-full border border-brand/50 bg-surface px-3 text-xs font-semibold text-brand-strong shadow-card transition'
-            : 'inline-flex min-h-11 shrink-0 items-center rounded-full border border-line bg-surface px-3 text-xs font-semibold text-muted shadow-card transition hover:text-ink'" (click)="category.set('')">{{ i18n.t('block12.feed.category.all') }}</button>
+            ? 'inline-flex min-h-11 shrink-0 items-center rounded-full border border-brand/50 bg-surface px-3 text-xs font-semibold text-brand-strong transition'
+            : 'inline-flex min-h-11 shrink-0 items-center rounded-full border border-line bg-surface px-3 text-xs font-semibold text-muted transition hover:text-ink'" (click)="category.set('')">{{ i18n.t('block12.feed.category.all') }}</button>
           @for (id of categories; track id) {
             <button type="button" [class]="category() === id
-              ? 'inline-flex min-h-11 shrink-0 items-center rounded-full border border-brand/50 bg-surface px-3 text-xs font-semibold text-brand-strong shadow-card transition'
-              : 'inline-flex min-h-11 shrink-0 items-center rounded-full border border-line bg-surface px-3 text-xs font-semibold text-muted shadow-card transition hover:text-ink'" (click)="category.set(id)">{{ categoryLabel(id) }}</button>
+              ? 'inline-flex min-h-11 shrink-0 items-center rounded-full border border-brand/50 bg-surface px-3 text-xs font-semibold text-brand-strong transition'
+              : 'inline-flex min-h-11 shrink-0 items-center rounded-full border border-line bg-surface px-3 text-xs font-semibold text-muted transition hover:text-ink'" (click)="category.set(id)">{{ categoryLabel(id) }}</button>
           }
         </div>
       }
@@ -360,7 +360,7 @@
 
   <!-- Navegação inferior flutuante: vidro escuro, cinco destinos com rótulo. -->
   <nav
-    class="fixed inset-x-0 z-40 mx-auto flex w-[min(28rem,calc(100%-1rem))] items-center justify-around gap-0.5 rounded-full border border-line/40 bg-surface/80 p-1.5 shadow-card backdrop-blur-xl lg:hidden"
+    class="fixed inset-x-0 z-40 mx-auto flex w-[min(28rem,calc(100%-1rem))] items-center justify-around gap-0.5 rounded-full border border-line/40 bg-surface/80 p-1.5 shadow-pop backdrop-blur-xl lg:hidden"
     style="bottom: max(0.75rem, env(safe-area-inset-bottom))"
     [attr.aria-label]="i18n.t('block12.feed.menu')"
     data-testid="feed-bottom-nav"
@@ -440,8 +440,8 @@
       <button
         type="button"
         [class]="!category()
-          ? 'inline-flex min-h-11 items-center rounded-full border border-brand/50 bg-surface px-4 text-sm font-semibold text-brand-strong shadow-card transition'
-          : 'inline-flex min-h-11 items-center rounded-full border border-line bg-surface px-4 text-sm font-semibold text-muted shadow-card transition'"
+          ? 'inline-flex min-h-11 items-center rounded-full border border-brand/50 bg-surface px-4 text-sm font-semibold text-brand-strong transition'
+          : 'inline-flex min-h-11 items-center rounded-full border border-line bg-surface px-4 text-sm font-semibold text-muted transition'"
         (click)="selectCategory('')"
       >
         {{ i18n.t('block12.feed.category.all') }}
@@ -450,8 +450,8 @@
         <button
           type="button"
           [class]="category() === id
-            ? 'inline-flex min-h-11 items-center rounded-full border border-brand/50 bg-surface px-4 text-sm font-semibold text-brand-strong shadow-card transition'
-            : 'inline-flex min-h-11 items-center rounded-full border border-line bg-surface px-4 text-sm font-semibold text-muted shadow-card transition'"
+            ? 'inline-flex min-h-11 items-center rounded-full border border-brand/50 bg-surface px-4 text-sm font-semibold text-brand-strong transition'
+            : 'inline-flex min-h-11 items-center rounded-full border border-line bg-surface px-4 text-sm font-semibold text-muted transition'"
           [attr.data-testid]="'feed-category-' + id"
           (click)="selectCategory(id)"
         >

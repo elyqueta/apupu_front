@@ -462,7 +462,7 @@
         @if (activeChartDay(); as day) {
           <div
             role="status"
-            class="pointer-events-none absolute top-0 z-10 -translate-x-1/2 whitespace-nowrap rounded-lg border border-line bg-surface-solid px-2 py-1 text-[11px] font-semibold text-ink shadow-card"
+            class="pointer-events-none absolute top-0 z-10 -translate-x-1/2 whitespace-nowrap rounded-lg border border-line bg-surface-solid px-2 py-1 text-[11px] font-semibold text-ink shadow-pop"
             [style.left.%]="Math.min(93, Math.max(7, (activeDay() ?? 0) * 14 + 7))"
           >
             {{ day.ariaLabel }}

@@ -52,7 +52,7 @@ import { TemplateArtworkComponent } from './template-artwork.component';
         </div>
 
         <div
-          class="absolute right-6 top-6 min-w-14 rounded-2xl border border-line bg-surface px-3 py-1.5 text-center text-ink shadow-card"
+          class="absolute right-6 top-6 min-w-14 rounded-2xl border border-line bg-surface px-3 py-1.5 text-center text-ink"
         >
           <span class="block font-display text-xl font-semibold leading-none">
             {{ i18n.dayNumber(event().startsAt, event().timezone) }}

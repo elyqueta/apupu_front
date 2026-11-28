@@ -58,7 +58,7 @@ type AnsweredFilter = NonNullable<MessagesQuery['answered']>;
           <input
             type="search"
             formControlName="q"
-            class="h-12 w-full rounded-2xl border border-line bg-surface-raised/80 pl-11 pr-4 text-sm text-ink shadow-sm outline-none backdrop-blur-xl transition placeholder:text-muted/80 focus:border-brand/50 focus:ring-2 focus:ring-brand/15"
+            class="h-12 w-full rounded-2xl border border-line bg-surface-raised/80 pl-11 pr-4 text-sm text-ink outline-none backdrop-blur-xl transition placeholder:text-muted/80 focus:border-brand/50 focus:ring-2 focus:ring-brand/15"
             [placeholder]="i18n.t('messages.searchPlaceholder')"
           />
         </label>

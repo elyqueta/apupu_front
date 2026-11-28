@@ -79,7 +79,7 @@ const activeMenu = signal<ActionMenuComponent | null>(null);
         role="menu"
         tabindex="-1"
         [attr.aria-label]="triggerLabel() || i18n.t('common.moreActions')"
-        class="fixed z-[90] max-h-[min(24rem,70dvh)] w-64 max-w-[calc(100vw-16px)] overflow-y-auto overscroll-contain rounded-2xl border border-line bg-surface-solid/95 p-1.5 shadow-card backdrop-blur-2xl animate-rise"
+        class="fixed z-[90] max-h-[min(24rem,70dvh)] w-64 max-w-[calc(100vw-16px)] overflow-y-auto overscroll-contain rounded-2xl border border-line bg-surface-solid/95 p-1.5 shadow-pop backdrop-blur-2xl animate-rise"
         (keydown)="onMenuKeydown($event)"
       >
         @for (item of items(); track item.id) {

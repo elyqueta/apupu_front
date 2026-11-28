@@ -81,7 +81,9 @@ describe('PublicEventPage (link aberto)', () => {
     await settle(context.fixture);
     const native = context.fixture.nativeElement as HTMLElement;
 
-    expect(native.querySelector('[data-testid="public-event-attendees"]')?.textContent).toContain('4');
+    // A contagem de confirmados é só do feed: nunca aparece no convite público.
+    expect(native.querySelector('[data-testid="public-event-attendees"]')).toBeNull();
+    expect(native.textContent).not.toContain('confirmados');
     expect(native.textContent).not.toMatch(/min_age|max_age|Idade mínima|Idade máxima/);
 
     type(context.fixture, 'public-rsvp-name', 'Rui Costa');

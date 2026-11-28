@@ -126,7 +126,6 @@ export class PublicEventPage {
     return event ? countdownDaysUntil(event.startsAt) : 0;
   });
   protected readonly restricted = computed(() => this.raw()?.has_age_restriction ?? false);
-  protected readonly attendeeCount = computed(() => this.raw()?.attendee_count ?? null);
   protected readonly cancelled = computed(() => this.event()?.status === 'cancelled');
   protected readonly closed = computed(() => {
     const raw = this.raw();

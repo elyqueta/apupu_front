@@ -46,16 +46,6 @@
                 <app-template-renderer [manifest]="view.manifest" [data]="data" mode="full" />
               }
 
-              @if (attendeeCount() !== null) {
-                <p
-                  class="inline-flex min-h-8 items-center gap-2 self-start rounded-full border inv-accent-border inv-accent-soft px-3 text-xs font-semibold inv-accent-text"
-                  data-testid="public-event-attendees"
-                >
-                  <fa-icon [icon]="icons['guests']" aria-hidden="true" />
-                  {{ i18n.t('block10.public.attendees', { count: attendeeCount() ?? 0 }) }}
-                </p>
-              }
-
               <div class="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)]">
                 <button
                   type="button"

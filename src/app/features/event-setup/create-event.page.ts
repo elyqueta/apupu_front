@@ -34,6 +34,7 @@ import {
 } from '../../shared/components/event-visibility-fields.component';
 import { EventVisibility } from '../../core/models/models';
 import { extractYoutubeId } from '../../core/utils/youtube';
+import { SUBTITLE_MAX_LENGTH, subtitleValue } from '../../core/utils/event-subtitle';
 import {
   canAddLocation,
   locationError,
@@ -141,6 +142,7 @@ export class CreateEventPage {
 
   protected readonly form = this.fb.group({
     title: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(120)]],
+    subtitle: ['', [Validators.maxLength(SUBTITLE_MAX_LENGTH)]],
     type: this.fb.control<EventType>('wedding', Validators.required),
     hostName: [this.store.profile().name, [Validators.required, Validators.maxLength(120)]],
     hostEmail: [
@@ -230,6 +232,8 @@ export class CreateEventPage {
   protected readonly previewTitle = computed(
     () => this.formValue().title.trim() || this.i18n.t('create.preview.notConfigured'),
   );
+
+  protected readonly previewSubtitle = computed(() => subtitleValue(this.formValue().subtitle) ?? '');
 
   protected readonly coverPreview = computed(() => {
     const objectUrl = this.coverObjectUrl();
@@ -442,6 +446,11 @@ export class CreateEventPage {
 
     const fieldMap: Record<string, { step: number; control: string; label: string }> = {
       'event.title': { step: 0, control: 'title', label: 'Título' },
+      'event.subtitle': {
+        step: 0,
+        control: 'subtitle',
+        label: this.i18n.t('block16.field.subtitle'),
+      },
       'event.type': { step: 0, control: 'type', label: 'Tipo de evento' },
       'event.host_name': { step: 0, control: 'hostName', label: 'Nome do anfitrião' },
       'event.host_email': { step: 0, control: 'hostEmail', label: 'Email do anfitrião' },
@@ -560,6 +569,7 @@ export class CreateEventPage {
     this.suggestionMessage.set('');
     this.form.reset({
       title: '',
+      subtitle: '',
       type: 'wedding',
       hostName: this.store.profile().name,
       hostEmail: this.store.profile().email,
@@ -636,6 +646,7 @@ export class CreateEventPage {
     }
     const controlLabels: Record<string, string> = {
       title: 'Título',
+      subtitle: this.i18n.t('block16.field.subtitle'),
       hostName: 'Nome do anfitrião',
       hostEmail: 'Email do anfitrião',
       date: 'Data',
@@ -656,7 +667,7 @@ export class CreateEventPage {
       coverUrl: 'Imagem de capa',
     };
     const controlsByStep: Record<number, string[]> = {
-      0: ['title', 'type', 'hostName', 'hostEmail', 'date', 'time', 'endsAt', 'timezone', 'venue', 'city', 'onlineLink', 'youtubeVideoUrl', 'coverUrl'],
+      0: ['title', 'subtitle', 'type', 'hostName', 'hostEmail', 'date', 'time', 'endsAt', 'timezone', 'venue', 'city', 'onlineLink', 'youtubeVideoUrl', 'coverUrl'],
       1: ['message', 'dressCode', 'rsvpDeadline', 'rules', 'bankName', 'accountName', 'iban'],
       2: [],
     };
@@ -940,7 +951,7 @@ export class CreateEventPage {
   private sanitizeDraftPayload(payload: Record<string, unknown>): Record<string, unknown> {
     // Only allow known keys; avoid injecting unexpected shapes.
     const allowed = new Set([
-      'title','type','hostName','hostEmail','date','time','endsAt','timezone','venue','city','onlineLink',
+      'title','subtitle','type','hostName','hostEmail','date','time','endsAt','timezone','venue','city','onlineLink',
       'youtubeVideoUrl','latitude','longitude','placeLabel','useTables','message','rules','dressCode',
       'rsvpDeadline','templateId','coverUrl','contributionEnabled','bankName','accountName','iban',
       'visibilitySettings','guests','locations',
@@ -986,6 +997,7 @@ export class CreateEventPage {
     const youtubeVideoId = this.resolvedYoutubeId();
     return {
       title: value.title.trim(),
+      subtitle: subtitleValue(value.subtitle),
       type: value.type,
       hostName: value.hostName.trim(),
       hostEmail: value.hostEmail.trim(),

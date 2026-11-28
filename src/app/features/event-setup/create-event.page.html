@@ -219,6 +219,28 @@
                   }
                 </label>
 
+                <label class="col-span-2 block">
+                  <span
+                    class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted"
+                  >
+                    {{ i18n.t('block16.field.subtitle') }}
+                    <span class="text-muted/60">({{ i18n.t('common.optional') }})</span>
+                  </span>
+                  <input
+                    type="text"
+                    formControlName="subtitle"
+                    autocomplete="off"
+                    maxlength="150"
+                    data-testid="create-subtitle"
+                    [placeholder]="i18n.t('block16.placeholder.subtitle')"
+                    class="h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink outline-none transition placeholder:text-muted/60 focus:border-brand/50"
+                  />
+                  <span class="mt-1 block text-[10px] text-muted">{{ i18n.t('block16.hint.subtitle') }}</span>
+                  @if (fieldError('subtitle')) {
+                    <span class="mt-1 block text-[10px] text-coral">{{ fieldError('subtitle') }}</span>
+                  }
+                </label>
+
                 <label class="block">
                   <span
                     class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted"
@@ -376,6 +398,7 @@
                         variant="cover"
                         [kicker]="i18n.t('block14.preview.kicker')"
                         [title]="previewTitle()"
+                        [subtitle]="previewSubtitle()"
                       />
                     }
                   </div>
@@ -1011,6 +1034,12 @@
                       <dt class="text-muted">{{ i18n.t('create.field.title') }}</dt>
                       <dd class="mt-0.5 font-semibold text-ink">{{ formValue().title || '—' }}</dd>
                     </div>
+                    @if (previewSubtitle()) {
+                      <div>
+                        <dt class="text-muted">{{ i18n.t('block16.field.subtitle') }}</dt>
+                        <dd class="mt-0.5 font-semibold text-ink">{{ previewSubtitle() }}</dd>
+                      </div>
+                    }
                     <div>
                       <dt class="text-muted">{{ i18n.t('create.field.type') }}</dt>
                       <dd class="mt-0.5 font-semibold text-ink">{{ typeLabel() }}</dd>

@@ -99,9 +99,9 @@ type Scope = 'mine' | 'discover';
           }
         </div>
       } @else {
-        <ul class="flex flex-col overflow-hidden rounded-3xl border border-line bg-surface-raised/20" data-testid="communities-list">
+        <ul class="flex flex-col gap-2" data-testid="communities-list">
           @for (community of items(); track community.id) {
-            <li class="min-w-0 border-b border-line last:border-b-0">
+            <li class="min-w-0 rounded-2xl border border-line bg-surface shadow-card transition hover:border-brand/35">
               <a
                 [routerLink]="['/comunidades', community.slug]"
                 class="group flex min-h-[5.5rem] w-full items-center gap-3 px-3 py-3 text-left transition hover:bg-surface-raised/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand/60 sm:px-4"
@@ -126,7 +126,7 @@ type Scope = 'mine' | 'discover';
                   @if (community.description) {
                     <p class="mt-0.5 truncate text-xs text-muted" [title]="community.description">{{ community.description }}</p>
                   }
-                  <p class="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-muted/80">
+                  <p class="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-muted">
                     <span class="inline-flex items-center gap-1.5">
                       <fa-icon [icon]="icons['user']" class="text-[10px] text-brand-strong" aria-hidden="true" />
                       {{ i18n.t('block11.list.members', { count: community.member_count }) }}

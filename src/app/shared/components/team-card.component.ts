@@ -15,7 +15,7 @@ import { StatusBadgeComponent } from './status-badge.component';
   template: `
     <button
       type="button"
-      class="flex w-full min-h-[4.5rem] items-center gap-3 px-3 py-3 text-left transition hover:bg-surface-raised/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand/60 sm:px-4"
+      class="group flex w-full min-h-[4.5rem] items-center gap-3 px-3 py-3 text-left transition hover:bg-surface-raised/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand/60 sm:px-4"
       [attr.data-testid]="testId()"
       (click)="selected.emit()"
     >
@@ -46,7 +46,7 @@ import { StatusBadgeComponent } from './status-badge.component';
         @if (roleLabel(); as role) {
           <span class="rounded-full border border-line bg-surface px-2 py-0.5 text-xs font-semibold text-muted">{{ role }}</span>
         }
-        <fa-icon [icon]="icons['chevronRight']" class="text-xs text-muted" aria-hidden="true" />
+        <fa-icon [icon]="icons['chevronRight']" class="text-xs text-brand-strong transition group-hover:translate-x-0.5" aria-hidden="true" />
       </span>
     </button>
   `,

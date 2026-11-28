@@ -181,6 +181,210 @@ export function invitationThemeVars(manifest: TemplateManifest): InvitationTheme
       app-invitation-shell .inv-modal-handle { background: var(--inv-line); }
       app-invitation-shell .inv-no-scrollbar { scrollbar-width: none; }
       app-invitation-shell .inv-no-scrollbar::-webkit-scrollbar { display: none; }
+
+      /* Gaveta de informações: sobrepõe o convite no telemóvel e comprime-o
+         no desktop, onde o cartaz continua a preencher a altura da viewport. */
+      app-invitation-shell { --inv-drawer-w: min(26rem, 92vw); }
+      app-invitation-shell .inv-drawer-backdrop {
+        position: fixed;
+        inset: 0;
+        z-index: 90;
+        border: 0;
+        background: color-mix(in srgb, var(--inv-ink) 45%, transparent);
+        cursor: pointer;
+      }
+      app-invitation-shell .inv-drawer {
+        position: fixed;
+        z-index: 100;
+        inset-block: 0;
+        right: 0;
+        display: flex;
+        flex-direction: column;
+        width: var(--inv-drawer-w);
+        height: 100vh;
+        height: 100dvh;
+        overflow: hidden;
+        border-left: 1px solid var(--inv-line);
+        background: var(--inv-surface);
+        color: var(--inv-ink);
+        box-shadow: var(--shadow-pop);
+        transform: translateX(102%);
+        transition: transform 200ms ease;
+      }
+      app-invitation-shell .inv-drawer.inv-drawer-open { transform: translateX(0); }
+      app-invitation-shell .inv-drawer-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        flex-shrink: 0;
+        padding: max(1rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right)) 1rem max(1rem, env(safe-area-inset-left));
+        border-bottom: 1px solid var(--inv-line);
+      }
+      app-invitation-shell .inv-drawer-body {
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
+        min-height: 0;
+        overflow-y: auto;
+        padding: 1rem max(1rem, env(safe-area-inset-right)) max(1.25rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
+      }
+      app-invitation-shell .inv-drawer-links {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+      app-invitation-shell .inv-drawer-link {
+        display: flex;
+        align-items: center;
+        gap: 0.85rem;
+        width: 100%;
+        min-height: 48px;
+        padding: 0.7rem 0.9rem;
+        border: 1px solid var(--inv-line);
+        border-radius: 1rem;
+        background: var(--inv-surface-raised);
+        color: var(--inv-ink);
+        font: inherit;
+        font-size: 0.875rem;
+        font-weight: 600;
+        text-align: left;
+        cursor: pointer;
+      }
+      app-invitation-shell .inv-drawer-link:hover { filter: brightness(1.03); }
+      app-invitation-shell .inv-drawer-link > fa-icon:first-child { color: var(--inv-accent); }
+      app-invitation-shell .inv-drawer-chevron { margin-left: auto; color: var(--inv-muted); }
+      app-invitation-shell .inv-drawer-link:focus-visible {
+        outline: 2px solid var(--inv-accent);
+        outline-offset: 2px;
+      }
+
+      /* Vídeo abaixo do convite (teleMÓVEL); no desktop o link da gaveta abre
+         a folha de informações, que já inclui o vídeo. */
+      app-invitation-shell .inv-video-frame {
+        position: relative;
+        aspect-ratio: 16 / 9;
+        overflow: hidden;
+        border: 1px solid var(--inv-line);
+        border-radius: 1rem;
+        background: color-mix(in srgb, var(--inv-ink) 80%, #000000);
+        box-shadow: var(--shadow-card);
+      }
+      app-invitation-shell .inv-video-cover {
+        position: absolute;
+        inset: 0;
+        display: block;
+        width: 100%;
+        height: 100%;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        cursor: pointer;
+      }
+      app-invitation-shell .inv-video-cover:focus-visible {
+        outline: 2px solid var(--inv-accent);
+        outline-offset: -4px;
+      }
+      app-invitation-shell .inv-video-thumb {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        opacity: 0.88;
+      }
+      app-invitation-shell .inv-play-badge {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        display: grid;
+        place-items: center;
+        width: clamp(3.25rem, 16%, 4.5rem);
+        aspect-ratio: 1;
+        transform: translate(-50%, -50%);
+        border-radius: 0.85rem;
+        background: #ff0000;
+        color: #ffffff;
+        font-size: clamp(1rem, 4cqw, 1.5rem);
+        box-shadow: var(--shadow-pop);
+        transition: transform 150ms ease, background 150ms ease;
+      }
+      app-invitation-shell .inv-video-cover:hover .inv-play-badge {
+        transform: translate(-50%, -50%) scale(1.06);
+        background: #cc0000;
+      }
+      app-invitation-shell .inv-video-label {
+        position: absolute;
+        bottom: 0.65rem;
+        left: 0.75rem;
+        border-radius: 999px;
+        padding: 0.35rem 0.7rem;
+        background: rgb(0 0 0 / 0.65);
+        color: #ffffff;
+        font-size: 0.7rem;
+        font-weight: 600;
+      }
+      app-invitation-shell .inv-video-embed {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        border: 0;
+      }
+
+      /* Desktop: palco horizontal — o cartaz preenche a altura da viewport,
+         a gaveta comprime-o sem criar overflow horizontal e sem scroll. */
+      @media (min-width: 1024px) {
+        app-invitation-shell .inv-stage {
+          height: 100vh;
+          height: 100dvh;
+          min-height: 0;
+          max-width: none;
+          margin: 0;
+          padding: 0;
+        }
+        app-invitation-shell .inv-stage-main {
+          display: flex;
+          align-items: stretch;
+          justify-content: center;
+          height: 100vh;
+          height: 100dvh;
+          min-height: 0;
+          padding: 0;
+          overflow: hidden;
+        }
+        app-invitation-shell .inv-stage-poster {
+          display: block;
+          width: min(80vh, 100%);
+          width: min(80dvh, 100%);
+          height: 100vh;
+          height: 100dvh;
+          min-width: 0;
+          overflow: hidden;
+        }
+        app-invitation-shell .inv-stage-poster > div,
+        app-invitation-shell .inv-stage-poster app-gratitude-invitation,
+        app-invitation-shell .inv-stage-poster app-gratitude-invitation > section {
+          display: block;
+          width: 100%;
+          height: 100%;
+        }
+        app-invitation-shell .inv-stage-poster .poster.full-bleed {
+          width: 100%;
+          height: 100%;
+          margin-left: 0;
+          aspect-ratio: auto;
+          border-radius: 0;
+        }
+        app-invitation-shell .inv-stage:has(.inv-drawer-open) .inv-stage-main {
+          padding-right: var(--inv-drawer-w);
+        }
+        app-invitation-shell .inv-stage:has(.inv-drawer-open) .inv-stage-poster {
+          width: min(calc(80dvh - var(--inv-drawer-w) / 3), 100%);
+        }
+        app-invitation-shell .inv-video-block { display: none; }
+        app-invitation-shell .inv-stage-footer { display: none; }
+      }
     `,
   ],
   template: `

@@ -2,6 +2,7 @@ import { Component, computed, effect, inject, input, signal } from '@angular/cor
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { ApiClient } from '../../core/api/api-client';
 import { toApiError } from '../../core/api/api-error';
 import {
@@ -62,6 +63,7 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export class PublicEventPage {
   private readonly api = inject(ApiClient);
   private readonly fb = inject(NonNullableFormBuilder);
+  private readonly sanitizer = inject(DomSanitizer);
   protected readonly i18n = inject(I18nService);
   protected readonly icons = ICONS;
 
@@ -79,6 +81,8 @@ export class PublicEventPage {
   protected readonly submitted = signal(false);
   protected readonly result = signal<{ name: string; status: Answer } | null>(null);
   protected readonly rsvpOpen = signal(false);
+  protected readonly menuOpen = signal(false);
+  protected readonly videoOpen = signal(false);
 
   protected readonly detailsOpen = signal(false);
   protected readonly hostOpen = signal(false);
@@ -98,6 +102,16 @@ export class PublicEventPage {
     return raw ? mapPublicEventView(raw) : null;
   });
   protected readonly shellManifest = computed(() => this.event()?.manifest ?? DEFAULT_MANIFEST);
+
+  protected readonly videoId = computed(() => this.event()?.youtubeVideoId ?? null);
+  protected readonly videoThumbnail = computed(
+    () => `https://i.ytimg.com/vi/${this.videoId()}/hqdefault.jpg`,
+  );
+  protected readonly videoEmbed = computed<SafeResourceUrl>(() =>
+    this.sanitizer.bypassSecurityTrustResourceUrl(
+      `https://www.youtube-nocookie.com/embed/${this.videoId()}?autoplay=1&rel=0`,
+    ),
+  );
 
   protected readonly renderData = computed<TemplateRenderData | null>(() => {
     const e = this.event();
@@ -285,6 +299,24 @@ export class PublicEventPage {
   protected openRsvp(): void {
     this.formError.set('');
     this.rsvpOpen.set(true);
+  }
+
+  protected closeMenu(): void {
+    this.menuOpen.set(false);
+  }
+
+  /** Fecha o menu antes de abrir o destino, para o modal ficar sempre visível. */
+  protected openFromMenu(target: 'rsvp' | 'locations' | 'host' | 'details'): void {
+    this.menuOpen.set(false);
+    if (target === 'rsvp') {
+      this.openRsvp();
+    } else if (target === 'locations') {
+      this.locationOpen.set(true);
+    } else if (target === 'host') {
+      this.hostOpen.set(true);
+    } else {
+      this.detailsOpen.set(true);
+    }
   }
 
   protected closeRsvp(): void {

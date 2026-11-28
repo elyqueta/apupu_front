@@ -69,7 +69,10 @@ function type(fixture: ComponentFixture<PublicEventPage>, testId: string, value:
 }
 
 function openRsvp(fixture: ComponentFixture<PublicEventPage>): void {
-  (fixture.nativeElement.querySelector('[data-testid="public-rsvp-open"]') as HTMLButtonElement).click();
+  const native = fixture.nativeElement as HTMLElement;
+  (native.querySelector('[data-testid="inv-fab"]') as HTMLButtonElement).click();
+  fixture.detectChanges();
+  (native.querySelector('[data-testid="public-rsvp-open"]') as HTMLButtonElement).click();
   fixture.detectChanges();
 }
 
@@ -224,6 +227,50 @@ describe('PublicEventPage (link aberto)', () => {
     openRsvp(context.fixture);
     expect((native.querySelector('[data-testid="public-rsvp-accept"]') as HTMLButtonElement).disabled).toBe(true);
     expect(native.textContent).toContain(TestBed.inject(I18nService).t('block10.public.ageProfileRequired'));
+  });
+
+  it('o botão flutuante abre o menu e cada link fecha o menu ao abrir o modal', async () => {
+    const context = setup();
+    http = context.http;
+    http.expectOne(`${BASE}/public/events/${SLUG}`).flush({ data: envelope() });
+    await settle(context.fixture);
+    const native = context.fixture.nativeElement as HTMLElement;
+
+    expect(native.querySelector('[data-testid="inv-fab"]')?.getAttribute('aria-expanded')).toBe('false');
+    (native.querySelector('[data-testid="inv-fab"]') as HTMLButtonElement).click();
+    context.fixture.detectChanges();
+
+    expect(native.querySelector('[data-testid="inv-menu-details"]')).not.toBeNull();
+    expect(native.querySelector('[data-testid="inv-drawer-backdrop"]')).not.toBeNull();
+    expect(native.querySelector('[data-testid="inv-fab"]')?.getAttribute('aria-expanded')).toBe('true');
+
+    (native.querySelector('[data-testid="inv-menu-locations"]') as HTMLButtonElement).click();
+    context.fixture.detectChanges();
+
+    expect(native.querySelector('[data-testid="inv-fab"]')?.getAttribute('aria-expanded')).toBe('false');
+    expect(native.querySelector('[data-testid="inv-drawer-backdrop"]')).toBeNull();
+    expect(native.querySelector('[data-testid="app-modal"]')).not.toBeNull();
+  });
+
+  it('a resposta abre pelo menu e o vídeo fica abaixo do cartaz', async () => {
+    const context = setup();
+    http = context.http;
+    http.expectOne(`${BASE}/public/events/${SLUG}`).flush({
+      data: envelope({ event: openEvent({ youtube_video_id: 'dQw4w9WgXcQ' }) }),
+    });
+    await settle(context.fixture);
+    const native = context.fixture.nativeElement as HTMLElement;
+
+    expect(native.querySelector('[data-testid="public-video"]')).not.toBeNull();
+    expect(native.querySelector('[data-testid="public-video-play"]')).not.toBeNull();
+    expect(native.querySelector('iframe')).toBeNull();
+    (native.querySelector('[data-testid="public-video-play"]') as HTMLButtonElement).click();
+    context.fixture.detectChanges();
+    expect(native.querySelector('iframe')).not.toBeNull();
+
+    openRsvp(context.fixture);
+    expect(native.querySelector('[data-testid="app-modal"]')).not.toBeNull();
+    expect(native.querySelector('[data-testid="inv-fab"]')?.getAttribute('aria-expanded')).toBe('false');
   });
 
   it('slug inexistente mostra o estado "não encontrado"', async () => {

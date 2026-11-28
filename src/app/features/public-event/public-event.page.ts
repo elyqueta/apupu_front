@@ -14,6 +14,7 @@ import { I18nService } from '../../core/i18n/i18n.service';
 import { TranslationKey } from '../../core/i18n/translations';
 import { ICONS } from '../../core/ui/icons';
 import { isValidPhone, phoneDigits } from '../../core/utils/phone.util';
+import { ModalComponent } from '../../shared/components/modal.component';
 import { SkeletonComponent } from '../../shared/components/skeleton.component';
 import { PhoneMaskDirective } from '../../shared/directives/phone-mask.directive';
 import { countdownDaysUntil, mapPublicEventView } from '../invitation/invitation.mapper';
@@ -54,6 +55,7 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     InvitationInfoSheetComponent,
     TemplateRendererComponent,
     InvitationShellComponent,
+    ModalComponent,
   ],
   templateUrl: './public-event.page.html',
 })
@@ -76,7 +78,7 @@ export class PublicEventPage {
   protected readonly blockedByAge = signal(false);
   protected readonly submitted = signal(false);
   protected readonly result = signal<{ name: string; status: Answer } | null>(null);
-  protected readonly editing = signal(true);
+  protected readonly rsvpOpen = signal(false);
 
   protected readonly detailsOpen = signal(false);
   protected readonly hostOpen = signal(false);
@@ -144,6 +146,16 @@ export class PublicEventPage {
     () => this.restricted() && !!this.viewer() && !this.viewer()!.has_birth_date,
   );
 
+  /** Estado curto da resposta, mostrado ao lado do botão único. */
+  protected readonly answerStatus = computed(() => {
+    const answer = this.result();
+    if (!answer) return this.i18n.t('block16.rsvp.pending');
+    const label = this.i18n.t(
+      answer.status === 'accepted' ? 'block10.public.answerAccepted' : 'block10.public.answerDeclined',
+    );
+    return `${this.i18n.t('block10.public.yourAnswer')}: ${label}`;
+  });
+
   constructor() {
     effect(() => {
       const slug = this.slug();
@@ -164,7 +176,6 @@ export class PublicEventPage {
       const existing = data.viewer?.rsvp_status;
       if (data.viewer && existing && existing !== 'pending') {
         this.result.set({ name: data.viewer.name, status: existing });
-        this.editing.set(false);
       }
       this.state.set('ready');
     } catch (error: unknown) {
@@ -232,7 +243,7 @@ export class PublicEventPage {
       this.raw.set(response.event);
       const status = response.rsvp.status === 'declined' ? 'declined' : 'accepted';
       this.result.set({ name: response.rsvp.name, status });
-      this.editing.set(false);
+      this.rsvpOpen.set(false);
       this.formError.set('');
     } catch (error: unknown) {
       this.formError.set(this.messageFor(error));
@@ -270,8 +281,14 @@ export class PublicEventPage {
     return this.i18n.t('block10.public.genericError');
   }
 
-  protected changeAnswer(): void {
-    this.editing.set(true);
+  protected openRsvp(): void {
     this.formError.set('');
+    this.rsvpOpen.set(true);
+  }
+
+  protected closeRsvp(): void {
+    if (!this.saving()) {
+      this.rsvpOpen.set(false);
+    }
   }
 }

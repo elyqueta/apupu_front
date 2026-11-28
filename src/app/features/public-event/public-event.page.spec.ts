@@ -59,6 +59,11 @@ function type(fixture: ComponentFixture<PublicEventPage>, testId: string, value:
   fixture.detectChanges();
 }
 
+function openRsvp(fixture: ComponentFixture<PublicEventPage>): void {
+  (fixture.nativeElement.querySelector('[data-testid="public-rsvp-open"]') as HTMLButtonElement).click();
+  fixture.detectChanges();
+}
+
 describe('PublicEventPage (link aberto)', () => {
   let http: HttpTestingController;
 
@@ -86,6 +91,10 @@ describe('PublicEventPage (link aberto)', () => {
     expect(native.textContent).not.toContain('confirmados');
     expect(native.textContent).not.toMatch(/min_age|max_age|Idade mínima|Idade máxima/);
 
+    openRsvp(context.fixture);
+    expect(native.querySelector('[data-testid="app-modal"]')).not.toBeNull();
+    expect(native.textContent).toContain(TestBed.inject(I18nService).t('block16.rsvp.pending'));
+
     type(context.fixture, 'public-rsvp-name', 'Rui Costa');
     type(context.fixture, 'public-rsvp-phone', '923456789');
     type(context.fixture, 'public-rsvp-age', '30');
@@ -102,7 +111,13 @@ describe('PublicEventPage (link aberto)', () => {
       data: { event: openEvent(), rsvp: { name: 'Rui Costa', status: 'accepted', responded_at: null } },
     });
     await settle(context.fixture);
-    expect(native.querySelector('[data-testid="public-rsvp-success"]')).not.toBeNull();
+    expect(native.querySelector('[data-testid="public-rsvp-success"]')?.textContent).toContain(
+      TestBed.inject(I18nService).t('block10.public.answerAccepted'),
+    );
+    expect(native.querySelector('[data-testid="public-rsvp-open"]')?.textContent).toContain(
+      TestBed.inject(I18nService).t('block10.public.change'),
+    );
+    expect(native.querySelector('[data-testid="app-modal"]')).toBeNull();
   });
 
   it('sem contacto não envia nada', async () => {
@@ -112,6 +127,7 @@ describe('PublicEventPage (link aberto)', () => {
     await settle(context.fixture);
     const native = context.fixture.nativeElement as HTMLElement;
 
+    openRsvp(context.fixture);
     type(context.fixture, 'public-rsvp-name', 'Rui Costa');
     (native.querySelector('[data-testid="public-rsvp-accept"]') as HTMLButtonElement).click();
     context.fixture.detectChanges();
@@ -131,6 +147,7 @@ describe('PublicEventPage (link aberto)', () => {
     await settle(context.fixture);
     const native = context.fixture.nativeElement as HTMLElement;
 
+    openRsvp(context.fixture);
     type(context.fixture, 'public-rsvp-name', 'Rui Costa');
     type(context.fixture, 'public-rsvp-email', 'rui@exemplo.ao');
     type(context.fixture, 'public-rsvp-age', '12');
@@ -164,6 +181,7 @@ describe('PublicEventPage (link aberto)', () => {
     });
     await settle(context.fixture);
     const native = context.fixture.nativeElement as HTMLElement;
+    openRsvp(context.fixture);
     expect((native.querySelector('[data-testid="public-rsvp-accept"]') as HTMLButtonElement).disabled).toBe(true);
     expect(native.textContent).toContain(TestBed.inject(I18nService).t('block10.public.ageProfileRequired'));
   });

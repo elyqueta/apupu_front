@@ -51,7 +51,7 @@ const TITLE_FONT_STACK = 'Anton, "Arial Narrow", Impact, sans-serif';
     }
     :host { display: block; }
     .poster{
-      width:100%; max-width:42rem; margin:0 auto;
+      width:100%; max-width:none; min-width:0; margin:0;
       background:radial-gradient(circle at 50% 45%,#fffdf8 0%,#fff6ea 55%,#fbe9cf 100%);
       position:relative; overflow:hidden;
       aspect-ratio:4/5; container-type:inline-size;
@@ -138,9 +138,23 @@ const TITLE_FONT_STACK = 'Anton, "Arial Narrow", Impact, sans-serif';
     .dress svg{width:8.5cqw;height:8.5cqw;flex:0 0 auto}
     .dress small{display:block;font-weight:800;font-size:2.8cqw;letter-spacing:.02em;line-height:1}
     .dress strong{display:block;font-family:Anton,'Arial Narrow',sans-serif;font-weight:400;font-size:4.9cqw;letter-spacing:.02em;line-height:1.05;text-transform:uppercase}
+    /* Em ecrãs pequenos a arte continua proporcional, mas o texto não desaparece. */
+    @container (max-width: 420px){
+      .org{font-size:max(9px,2.7cqw);letter-spacing:.2em;padding-left:.2em;overflow-wrap:anywhere}
+      .sub{font-size:max(13px,4.7cqw);padding:0 3cqw;box-sizing:border-box;overflow-wrap:anywhere}
+      .info{left:3.5cqw;right:3.5cqw;top:60.5%}
+      .info .c{gap:1cqw;padding:0 1.4cqw}
+      .info svg{width:4.8cqw;height:4.8cqw}
+      .info .v{font-size:max(11px,3.7cqw);letter-spacing:.06em}
+      .info .loc .t{font-size:max(8.5px,2.35cqw);line-height:1.08}
+      .info .loc .t b{font-size:max(8.5px,2.2cqw)}
+      .qrblock .lab{font-size:max(10px,2.9cqw)}
+      .dress{width:58%;gap:1.6cqw;padding:1.1cqw 2cqw}
+      .dress small{font-size:max(10px,2.8cqw)}
+    }
   `],
   template: `
-    <section class="mx-auto w-full max-w-[42rem]" data-testid="gratitude-invitation">
+    <section class="w-full min-w-0" data-testid="gratitude-invitation">
       <div class="poster" aria-label="Convite Gratitude">
         <svg class="deco" viewBox="0 0 1024 1280" preserveAspectRatio="none" aria-hidden="true">
           <defs>

@@ -4,14 +4,13 @@ import { I18nService } from '../../../core/i18n/i18n.service';
 import { ICONS } from '../../../core/ui/icons';
 import { ShareService } from '../../../core/services/share.service';
 import { ToastService } from '../../../core/services/toast.service';
-import { LocationMapComponent } from '../../../shared/components/location-map.component';
 import { ModalComponent } from '../../../shared/components/modal.component';
 import { InvitationEventView } from '../invitation.models';
 
 /** Localização do evento: copiar endereço e abrir Google Maps por link simples. */
 @Component({
   selector: 'app-invitation-location-dialog',
-  imports: [FaIconComponent, ModalComponent, LocationMapComponent],
+  imports: [FaIconComponent, ModalComponent],
   template: `
     <app-modal
       [open]="open()"
@@ -57,17 +56,6 @@ import { InvitationEventView } from '../invitation.models';
               </p>
             }
           </div>
-          @if (hasCoordinates()) {
-            <app-location-map
-              [latitude]="event().latitude"
-              [longitude]="event().longitude"
-              [placeName]="event().placeName || event().venue || fullAddress()"
-              [interactive]="false"
-              [tapToActivate]="true"
-              activateLabel="Toque para ver o mapa"
-              ariaLabel="Mapa da localização do evento"
-            />
-          }
           <div class="flex flex-col gap-2 sm:flex-row">
             <button
               type="button"

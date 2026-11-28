@@ -17,10 +17,28 @@ export interface InvitationBankDetails {
   accountReference: string;
 }
 
+/** Bloco 16: uma localização da lista do evento. */
+export interface InvitationLocation {
+  id: string | null;
+  isPrimary: boolean;
+  kind: 'venue' | 'online';
+  address: string | null;
+  venueName: string | null;
+  label: string | null;
+  startsAt: string | null;
+  city: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  onlineUrl: string | null;
+  mapsUrl: string | null;
+}
+
 /** Vista pública do evento, já sem campos sensíveis do perfil do anfitrião. */
 export interface InvitationEventView {
   id: string;
   title: string;
+  /** Bloco 16: subtítulo editável (quando ausente, o template usa o texto por omissão). */
+  subtitle: string | null;
   type: EventType | null;
   hostName: string;
   hostEmail: string;
@@ -50,6 +68,8 @@ export interface InvitationEventView {
   longitude: number | null;
   placeLabel: string | null;
   placeName: string | null;
+  /** Bloco 16: lista completa, principal primeiro. */
+  locations: InvitationLocation[];
   organizers: InvitationOrganizer[];
   community: { name: string; slug: string; avatarUrl: string | null; isPublic: boolean } | null;
 }

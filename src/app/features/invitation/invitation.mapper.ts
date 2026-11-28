@@ -1,7 +1,8 @@
 import { ApiRsvpStatus, PublicEvent, PublicInvitation } from '../../core/api/api.models';
 import { EventStatus, RsvpStatus } from '../../core/models/models';
 import { normalizeManifest } from '../../core/models/template-manifest';
-import { InvitationEventView, InvitationView } from './invitation.models';
+import { InvitationEventView, InvitationLocation, InvitationView } from './invitation.models';
+import { mapsUrl } from './invitation-locations.util';
 
 /** Converte o DTO público na vista usada pelas peças do convite. */
 export function mapPublicInvitation(invitation: PublicInvitation): InvitationView {
@@ -38,9 +39,43 @@ export function countdownDaysUntil(startsAt: string): number {
 export function mapPublicEventView(event: PublicEvent): InvitationEventView {
   const location = event.location;
   const contribution = event.contribution;
+  const locations: InvitationLocation[] = event.locations?.length
+    ? [...event.locations]
+        .sort((a, b) => Number(b.is_primary) - Number(a.is_primary))
+        .map((item) => ({
+          id: item.id ?? null,
+          isPrimary: Boolean(item.is_primary),
+          kind: item.kind === 'online' ? 'online' : 'venue',
+          address: item.address ?? null,
+          venueName: item.venue_name ?? null,
+          label: item.label ?? null,
+          startsAt: item.starts_at ?? null,
+          city: item.city ?? null,
+          latitude: item.latitude ?? null,
+          longitude: item.longitude ?? null,
+          onlineUrl: item.online_url ?? null,
+          mapsUrl: item.maps_url ?? mapsUrl({ kind: item.kind, address: item.address, city: item.city, latitude: item.latitude, longitude: item.longitude }),
+        }))
+    : [
+        {
+          id: null,
+          isPrimary: true,
+          kind: location.type === 'online' ? 'online' : 'venue',
+          address: location.address ?? location.name ?? null,
+          venueName: location.name ?? null,
+          label: location.place_label ?? null,
+          startsAt: null,
+          city: null,
+          latitude: location.latitude ?? null,
+          longitude: location.longitude ?? null,
+          onlineUrl: location.online_url ?? null,
+          mapsUrl: mapsUrl({ kind: location.type, address: location.address ?? location.name, city: null, latitude: location.latitude, longitude: location.longitude }),
+        },
+      ];
   return {
     id: event.id,
     title: event.title,
+    subtitle: event.subtitle ?? null,
     type: event.category ?? null,
     hostName: event.host_name,
     hostEmail: event.host_email ?? '',
@@ -79,6 +114,7 @@ export function mapPublicEventView(event: PublicEvent): InvitationEventView {
     longitude: location.longitude ?? null,
     placeLabel: location.place_label ?? null,
     placeName: location.place_name ?? null,
+    locations,
     organizers: (event.organizers ?? []).map((organizer) => ({
       name: organizer.display_name,
       avatarUrl: organizer.avatar_url,

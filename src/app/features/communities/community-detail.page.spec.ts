@@ -246,6 +246,50 @@ describe('CommunityDetailPage', () => {
     expect(native.querySelector('[data-testid="community-join"]')).toBeNull();
   });
 
+  it('edição da comunidade mostra os controlos de imagem com o estilo de botão primário', async () => {
+    const base = staff();
+    const context = setup();
+    http = context.http;
+    http.expectOne(`${BASE}/host/communities/${SLUG}`).flush({
+      data: staff({
+        community: {
+          ...base.community,
+          cover_url: 'https://example.com/cover.jpg',
+          avatar_url: 'https://example.com/avatar.jpg',
+        },
+      }),
+    });
+    await flushPending(http, ACTIVITY_URL, { data: [] });
+    await settle(context.fixture);
+    openTab(context.fixture, 'settings');
+    const native = context.fixture.nativeElement as HTMLElement;
+    (native.querySelector('[data-testid="community-edit"]') as HTMLButtonElement).click();
+    context.fixture.detectChanges();
+    const dialog = native.querySelector('app-community-form-dialog') as HTMLElement;
+    expect(dialog).not.toBeNull();
+    const uploads = Array.from(dialog.querySelectorAll<HTMLInputElement>('input[type="file"]')).map(
+      (input) => input.closest('label') as HTMLLabelElement,
+    );
+    expect(uploads.length).toBe(2);
+    const removes = Array.from(dialog.querySelectorAll<HTMLButtonElement>('button.size-9'));
+    expect(removes.length).toBe(2);
+    for (const label of uploads) {
+      expect(label.className).toContain('bg-brand');
+      expect(label.className).toContain('text-on-secondary');
+      expect(label.className).toContain('hover:bg-secondary-hover');
+      expect(label.className).toContain('focus-within:ring-brand/60');
+      expect(label.className).not.toContain('bg-[#0a2b2c]/40');
+      expect((label.querySelector('input') as HTMLInputElement).disabled).toBe(false);
+    }
+    for (const button of removes) {
+      expect(button.className).toContain('bg-surface');
+      expect(button.className).toContain('text-coral');
+      expect(button.className).toContain('hover:bg-coral/10');
+      expect(button.className).toContain('focus-visible:ring-coral/60');
+      expect(button.className).not.toContain('bg-[#0a2b2c]/40');
+    }
+  });
+
   it('todas as abas usam o mesmo estilo da aba Resumo, mesmo após navegar', async () => {
     const context = setup();
     http = context.http;

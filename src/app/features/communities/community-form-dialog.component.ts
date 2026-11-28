@@ -106,7 +106,7 @@ const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
               <span class="min-w-0 flex-1 truncate text-xs text-white/80" [attr.title]="i18n.t('block11.form.imageHint')">{{ i18n.t('block11.form.imageHint') }}</span>
               <div class="flex shrink-0 items-center gap-1.5">
                 <label
-                  class="inline-flex min-h-11 shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-xl border border-white/30 bg-[#0a2b2c]/40 px-2.5 text-xs font-semibold text-white backdrop-blur-md transition hover:border-brand/60 hover:bg-[#0a2b2c]/60"
+                  class="inline-flex min-h-11 shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-xl border border-brand/30 bg-brand px-2.5 text-xs font-semibold text-on-secondary transition hover:bg-secondary-hover focus-within:outline-none focus-within:ring-2 focus-within:ring-brand/60"
                   [class.pointer-events-none]="uploadingCover() || saving()"
                   [class.opacity-60]="uploadingCover() || saving()"
                 >
@@ -123,7 +123,7 @@ const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
                 @if (community() && (coverPreview() || form.controls.coverUrl.value)) {
                   <button
                     type="button"
-                    class="grid size-9 shrink-0 place-items-center rounded-xl border border-white/30 bg-[#0a2b2c]/40 text-white backdrop-blur-md transition hover:border-coral/60 hover:text-coral disabled:opacity-50"
+                    class="grid size-9 shrink-0 place-items-center rounded-xl border border-coral/30 bg-surface text-coral transition hover:bg-coral/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral/60 disabled:opacity-60"
                     [disabled]="uploadingCover() || saving()"
                     [attr.aria-label]="i18n.t('block11.form.coverRemove')"
                     (click)="removeCover()"
@@ -151,7 +151,7 @@ const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
               </div>
               <div class="flex shrink-0 items-center gap-1.5">
                 <label
-                  class="inline-flex min-h-11 shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-xl border border-brand/30 bg-brand px-3 text-xs font-semibold text-on-secondary transition hover:bg-secondary-hover"
+                  class="inline-flex min-h-11 shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-xl border border-brand/30 bg-brand px-3 text-xs font-semibold text-on-secondary transition hover:bg-secondary-hover focus-within:outline-none focus-within:ring-2 focus-within:ring-brand/60"
                   [class.pointer-events-none]="uploadingAvatar() || saving()"
                   [class.opacity-60]="uploadingAvatar() || saving()"
                 >
@@ -168,7 +168,7 @@ const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
                 @if (community() && (avatarPreview() || form.controls.avatarUrl.value)) {
                   <button
                     type="button"
-                    class="grid size-9 shrink-0 place-items-center rounded-xl border border-coral/30 bg-surface text-coral transition hover:bg-coral/10 disabled:opacity-50"
+                    class="grid size-9 shrink-0 place-items-center rounded-xl border border-coral/30 bg-surface text-coral transition hover:bg-coral/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral/60 disabled:opacity-60"
                     [disabled]="uploadingAvatar() || saving()"
                     [attr.aria-label]="i18n.t('block11.form.avatarRemove')"
                     (click)="removeAvatar()"

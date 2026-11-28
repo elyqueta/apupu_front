@@ -56,6 +56,9 @@ export function invitationThemeVars(manifest: TemplateManifest): InvitationTheme
         min-height: 100dvh;
         background: var(--inv-bg);
         color: var(--inv-ink);
+        /* O cartaz full-bleed usa 100vw; evitar que a diferença entre a viewport
+           e a área cliente (barra de scroll vertical) crie scroll horizontal. */
+        overflow-x: clip;
       }
       app-invitation-shell *,
       app-invitation-shell *::before,

@@ -58,6 +58,13 @@ const TITLE_FONT_STACK = 'Anton, "Arial Narrow", Impact, sans-serif';
       border-radius:14px; box-shadow:var(--shadow-card);
       font-family:Montserrat,system-ui,sans-serif; box-sizing:border-box;
     }
+    /* Convite público: a arte rompe a caixa central e ocupa a viewport inteira.
+       A casca faz o clip horizontal para não criar scroll. Editores e capas
+       mantêm o cartaz dentro do contentor. */
+    .poster.full-bleed{
+      width:100vw; margin-left:calc(50% - 50vw);
+      border-radius:0;
+    }
     .deco{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
     .logo{
       position:absolute;top:2.4%;left:50%;transform:translateX(-50%);
@@ -155,7 +162,7 @@ const TITLE_FONT_STACK = 'Anton, "Arial Narrow", Impact, sans-serif';
   `],
   template: `
     <section class="w-full min-w-0" data-testid="gratitude-invitation">
-      <div class="poster" aria-label="Convite Gratitude">
+      <div class="poster" [class.full-bleed]="!editorMode() && !coverOnly()" aria-label="Convite Gratitude">
         <svg class="deco" viewBox="0 0 1024 1280" preserveAspectRatio="none" aria-hidden="true">
           <defs>
             <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8c6a1f"/><stop offset=".35" stop-color="#f3d580"/><stop offset=".65" stop-color="#b8862b"/><stop offset="1" stop-color="#f7e3a0"/></linearGradient>

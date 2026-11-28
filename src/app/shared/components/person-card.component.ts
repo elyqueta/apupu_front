@@ -55,7 +55,7 @@ export interface PersonPrimaryAction {
           <div class="min-w-0 flex-1">
             <div class="flex min-w-0 items-center gap-2">
               <p
-                [class]="prominent() ? 'min-w-0 flex-1 truncate text-[15px] font-semibold leading-6 text-ink' : 'min-w-0 flex-1 truncate text-sm font-semibold leading-5 text-ink'"
+                [class]="prominent() ? 'min-w-0 flex-1 truncate text-base font-semibold leading-6 text-ink' : 'min-w-0 flex-1 truncate text-sm font-semibold leading-5 text-ink'"
                 [title]="name()"
               >{{ name() }}</p>
               @if (flag(); as alert) {
@@ -93,19 +93,19 @@ export interface PersonPrimaryAction {
         </div>
         @if (primaryAction() || secondaryAction() || actions().length > 0) {
           <div
-            [class]="prominent() ? 'flex shrink-0 items-center gap-1.5 border-l border-line/70 pl-2' : 'flex shrink-0 items-center gap-1 sm:border-l sm:border-line/70 sm:pl-1.5'"
+            [class]="prominent() ? 'flex w-full shrink-0 items-center gap-2 border-t border-line/70 pt-3' : 'flex shrink-0 items-center gap-1 sm:border-l sm:border-line/70 sm:pl-1.5'"
           >
             @if (primaryAction(); as primary) {
               <button
                 type="button"
-                [class]="prominent() ? 'inline-flex size-11 shrink-0 items-center justify-center gap-1.5 rounded-xl bg-brand text-xs font-semibold text-on-secondary transition hover:bg-secondary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto sm:px-3' : 'hidden h-9 shrink-0 items-center gap-1.5 rounded-xl bg-brand px-2.5 text-[11px] font-semibold text-on-secondary transition hover:bg-secondary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60 disabled:cursor-not-allowed disabled:opacity-50 sm:inline-flex'"
+                [class]="prominent() ? 'inline-flex h-11 w-auto shrink-0 items-center justify-center gap-2 rounded-xl bg-brand px-3 text-xs font-semibold text-on-secondary transition hover:bg-secondary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60 disabled:cursor-not-allowed disabled:opacity-50' : 'hidden h-9 shrink-0 items-center gap-1.5 rounded-xl bg-brand px-2.5 text-[11px] font-semibold text-on-secondary transition hover:bg-secondary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60 disabled:cursor-not-allowed disabled:opacity-50 sm:inline-flex'"
                 [disabled]="primary.disabled"
                 [attr.title]="primary.hint || null"
                 [attr.aria-label]="primary.hint || primary.label"
                 (click)="triggerPrimary($event, primary)"
               >
                 @if (primary.icon) { <fa-icon [icon]="primary.icon" class="text-xs" aria-hidden="true" /> }
-                <span [class]="prominent() ? 'sr-only truncate sm:not-sr-only' : 'truncate'">{{ primary.label }}</span>
+                <span class="truncate">{{ primary.label }}</span>
               </button>
             }
             @if (secondaryAction(); as secondary) {
@@ -123,6 +123,7 @@ export interface PersonPrimaryAction {
             }
             @if (actions().length > 0) {
               <app-action-menu
+                [class.ml-auto]="prominent()"
                 [items]="actions()"
                 [triggerLabel]="actionsLabel()"
                 (selected)="actionSelected.emit($event)"
@@ -272,8 +273,13 @@ export class PersonCardComponent {
 
   /** Cartão de linha: mesmo vocabulário visual, muito menos altura. */
   protected readonly linearClasses = (): string => {
-    const spacing = this.prominent() ? 'gap-3 p-3 sm:p-3.5' : 'gap-1 p-1.5';
-    const base = `relative flex min-w-0 items-center rounded-2xl border shadow-card transition ${spacing}`;
+    if (this.prominent()) {
+      const base = 'relative flex min-w-0 flex-col rounded-2xl border shadow-card transition gap-3 p-3 sm:p-3.5';
+      return this.highlight()
+        ? `${base} border-brand/50 bg-brand/10`
+        : `${base} border-brand/25 bg-brand/5 hover:border-brand/40`;
+    }
+    const base = 'relative flex min-w-0 items-center rounded-2xl border shadow-card transition gap-1 p-1.5';
     return this.highlight()
       ? `${base} border-brand/50 bg-brand/5`
       : `${base} border-line bg-surface hover:border-brand/40`;
@@ -282,7 +288,7 @@ export class PersonCardComponent {
   /** Área clicável; na versão proeminente ganha ar e mantém o foco visível. */
   protected readonly linearBodyClasses = (): string =>
     this.prominent()
-      ? 'flex min-w-0 flex-1 items-center gap-3 overflow-hidden rounded-xl px-2.5 py-2 outline-none transition focus-visible:ring-2 focus-visible:ring-brand/60'
+      ? 'flex w-full min-w-0 items-start gap-3 overflow-hidden rounded-xl px-1 py-0.5 outline-none transition focus-visible:ring-2 focus-visible:ring-brand/60'
       : 'flex min-w-0 flex-1 items-center gap-2 overflow-hidden rounded-xl px-2 py-1.5 outline-none transition focus-visible:ring-2 focus-visible:ring-brand/60';
 
   protected readonly classes = (): string => {

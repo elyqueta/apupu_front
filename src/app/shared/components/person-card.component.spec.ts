@@ -136,12 +136,15 @@ describe('PersonCardComponent — linha proeminente do painel', () => {
     expect((fixture.nativeElement.querySelector('article') as HTMLElement).className).toContain('p-1.5');
   });
 
-  it('mostra avatar maior, detalhes, selo e ação com alvo de 44 px', () => {
+  it('usa colunas com detalhes no topo e ações numa linha inferior', () => {
     host.prominent.set(true);
     fixture.detectChanges();
 
     const article = fixture.nativeElement.querySelector('article') as HTMLElement;
+    expect(article.className).toContain('flex-col');
+    expect(article.className).toContain('border-brand/25');
     expect(article.className).toContain('p-3');
+    expect((fixture.nativeElement.querySelector('[data-testid="person-card-open"]') as HTMLElement).className).toContain('items-start');
     expect(fixture.nativeElement.querySelector('app-avatar span')?.className).toContain('size-14');
     expect(fixture.nativeElement.querySelector('app-status-badge')?.className).not.toContain('hidden');
     expect(article.textContent).toContain('ana@exemplo.ao');
@@ -149,10 +152,12 @@ describe('PersonCardComponent — linha proeminente do painel', () => {
     expect(article.textContent).toContain('+1');
 
     const button = fixture.nativeElement.querySelector('button') as HTMLButtonElement;
-    expect(button.className).toContain('size-11');
-    expect(button.className).not.toContain('sm:size-auto');
+    expect(button.parentElement?.className).toContain('border-t');
+    expect(button.className).toContain('h-11');
     expect(button.className).not.toContain('hidden');
     expect(button.getAttribute('aria-label')).toBe('Reenviar email');
-    expect(button.querySelector('span')?.className).toContain('sr-only');
+    expect(button.textContent).toContain('Reenviar email');
+    expect(button.querySelector('span')?.className).not.toContain('sr-only');
+    expect((fixture.nativeElement.querySelector('app-action-menu') as HTMLElement).className).toContain('ml-auto');
   });
 });

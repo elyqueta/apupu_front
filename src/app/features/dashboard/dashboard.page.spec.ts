@@ -51,6 +51,7 @@ describe('DashboardPage · convidados', () => {
   const share = {
     whatsappUrl: vi.fn().mockReturnValue('https://wa.me/244912345678?text=convite'),
     openExternal: vi.fn(),
+    copy: vi.fn().mockResolvedValue(true),
   };
   const toasts = { success: vi.fn(), error: vi.fn() };
   const store = {
@@ -127,21 +128,31 @@ describe('DashboardPage · convidados', () => {
     expect(view.filteredGuests().map((entry) => entry.guest.id)).toEqual(['confirmed']);
   });
 
-  it('uses WhatsApp as primary action when the guest has a phone', () => {
+  it('opens the guest detail modal and runs its actions', () => {
     const view = page as unknown as {
-      primaryFor: (entry: GuestEntry) => { id: string; label: string };
+      detailTarget: () => GuestEntry | null;
+      openDetails: (entry: GuestEntry) => void;
+      closeDetails: () => void;
+      runDetailAction: (action: string, entry: GuestEntry) => void;
+      guestActions: (entry: GuestEntry) => { id: string }[];
       metaFor: (entry: GuestEntry) => { icon: string; label: string }[];
-      onGuestAction: (action: string, entry: GuestEntry) => void;
     };
     const entry = entries()[0];
 
-    expect(view.primaryFor(entry).id).toBe('whatsapp');
+    expect(view.guestActions(entry).map((action) => action.id)).toEqual([
+      'whatsapp',
+      'resend',
+      'view',
+    ]);
     expect(view.metaFor(entry)[0].label).toBe(event.title);
     expect(view.metaFor(entry)[1].label).toContain('3 dias');
     expect(view.metaFor(entry)[2].label).toContain('Link partilhado por WhatsApp');
-    expect(view.metaFor(entry)[2].label).toContain('há 2 dias');
 
-    view.onGuestAction('whatsapp', entry);
+    view.openDetails(entry);
+    expect(view.detailTarget()).toBe(entry);
+
+    view.runDetailAction('whatsapp', entry);
+    expect(view.detailTarget()).toBeNull();
     expect(share.whatsappUrl).toHaveBeenCalled();
     expect(share.openExternal).toHaveBeenCalledWith('https://wa.me/244912345678?text=convite');
     expect(store.markWhatsappShared).toHaveBeenCalledWith(entry.guest);

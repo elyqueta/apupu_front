@@ -19,8 +19,8 @@ import { EventCardComponent } from '../../shared/components/event-card.component
 import {
   PersonCardComponent,
   PersonMetaItem,
-  PersonPrimaryAction,
 } from '../../shared/components/person-card.component';
+import { ModalComponent } from '../../shared/components/modal.component';
 import { StatCardComponent } from '../../shared/components/stat-card.component';
 import { SkeletonComponent } from '../../shared/components/skeleton.component';
 import { StatGridComponent } from '../../shared/components/stat-grid.component';
@@ -56,6 +56,7 @@ interface ResponseEvent {
     FaIconComponent,
     AvatarComponent,
     EventCardComponent,
+    ModalComponent,
     PersonCardComponent,
     StatCardComponent,
     StatGridComponent,
@@ -94,6 +95,7 @@ export class DashboardPage {
   protected readonly activity = computed(() => this.store.activityFeed().slice(0, 5));
   protected readonly guestStatusFilter = signal<RsvpStatus>('pending');
   protected readonly activeDay = signal<number | null>(null);
+  protected readonly detailTarget = signal<GuestEntry | null>(null);
 
   protected readonly filters: { id: RsvpStatus; labelKey: TranslationKey }[] = [
     { id: 'confirmed', labelKey: 'dashboard.statusConfirmed' },
@@ -327,21 +329,32 @@ export class DashboardPage {
     return meta;
   }
 
-  protected primaryFor(entry: GuestEntry): PersonPrimaryAction {
-    const items = this.guestActions(entry);
-    const preferred = entry.guest.phone
-      ? items.find((item) => item.id === 'whatsapp')
-      : items.find((item) => item.id === 'resend');
-    const action = preferred ?? items[0];
-    return {
-      id: action.id,
-      label: action.label,
-      icon: action.icon,
-      disabled: action.disabled,
-    };
+  /** O cartão abre o modal de detalhe; as ações ficam legíveis nesse modal. */
+  protected openDetails(entry: GuestEntry): void {
+    this.detailTarget.set(entry);
   }
 
-  /** Ações do cartão: WhatsApp e reenvio visíveis, navegação sempre no menu. */
+  protected closeDetails(): void {
+    this.detailTarget.set(null);
+  }
+
+  protected runDetailAction(actionId: string, entry: GuestEntry): void {
+    this.closeDetails();
+    this.onGuestAction(actionId, entry);
+  }
+
+  protected async copyEmail(entry: GuestEntry): Promise<void> {
+    const copied = await this.share.copy(entry.guest.email);
+    this.toasts[copied ? 'success' : 'error'](
+      this.i18n.t(copied ? 'common.copied' : 'common.copyFailed'),
+    );
+  }
+
+  protected iconFor(key: string): IconDefinition {
+    return ICONS[key as keyof typeof ICONS] ?? ICONS['user'];
+  }
+
+  /** Ações do convidado, apresentadas no modal de detalhe. */
   protected guestActions(entry: GuestEntry): ActionMenuItem[] {
     const items: ActionMenuItem[] = [
       { id: 'view', label: this.i18n.t('guests.viewEvent'), icon: ICONS['arrowUpRight'] },

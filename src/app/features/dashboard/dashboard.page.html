@@ -699,15 +699,15 @@
               <app-person-card
                 layout="linear"
                 [prominent]="true"
+                [clickable]="true"
+                [clickLabel]="i18n.t('common.viewDetails') + ': ' + entry.guest.name"
                 [name]="entry.guest.name"
                 [subtitle]="subtitleFor(entry.guest)"
                 [status]="entry.guest.status"
                 [meta]="metaFor(entry)"
-                [actions]="guestActions(entry)"
-                [primaryAction]="primaryFor(entry)"
-                [actionsLabel]="i18n.t('guests.tableActions')"
-                (actionSelected)="onGuestAction($event, entry)"
-                (primaryTriggered)="onGuestAction($event, entry)"
+                [flag]="entry.guest.ageFlag ? i18n.t('block10.guest.ageFlag') : null"
+                [flagHint]="i18n.t('block10.guest.ageFlagHint')"
+                (open)="openDetails(entry)"
               />
             </li>
           }
@@ -716,3 +716,61 @@
     </section>
   </div>
 </section>
+
+<app-modal
+  [open]="detailTarget() !== null"
+  [title]="detailTarget()?.guest?.name ?? i18n.t('common.viewDetails')"
+  size="sm"
+  (closed)="closeDetails()"
+>
+  @if (detailTarget(); as entry) {
+    <div class="flex items-center gap-3 rounded-2xl border border-line bg-surface-raised/40 p-3">
+      <app-avatar [name]="entry.guest.name" size="md" />
+      <div class="min-w-0 flex-1">
+        <p class="truncate text-sm font-semibold text-ink">{{ entry.guest.name }}</p>
+        <p class="truncate text-xs text-muted">{{ subtitleFor(entry.guest) }}</p>
+      </div>
+      <app-status-badge [value]="entry.guest.status" />
+    </div>
+    <ul class="mt-3 space-y-2 text-sm leading-6 text-muted">
+      @for (item of metaFor(entry); track $index) {
+        <li class="flex min-w-0 items-start gap-2">
+          <fa-icon [icon]="iconFor(item.icon)" class="mt-1 shrink-0 text-xs text-brand-strong" aria-hidden="true" />
+          <span class="min-w-0">{{ item.label }}</span>
+        </li>
+      }
+      @if (entry.guest.message) {
+        <li class="flex min-w-0 items-start gap-2">
+          <fa-icon [icon]="icons['envelopeOpen']" class="mt-1 shrink-0 text-xs text-brand-strong" aria-hidden="true" />
+          <span class="min-w-0">{{ i18n.t('guests.guestMessage', { message: entry.guest.message }) }}</span>
+        </li>
+      }
+    </ul>
+  }
+  @if (detailTarget(); as entry) {
+    <div modal-footer class="flex flex-col gap-2">
+      @if (entry.guest.email) {
+        <button
+          type="button"
+          class="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-line bg-surface-raised px-3 text-sm font-semibold text-ink transition hover:border-brand/40"
+          (click)="copyEmail(entry)"
+        >
+          <fa-icon [icon]="icons['copy']" class="text-muted" aria-hidden="true" />
+          {{ i18n.t('guests.copyEmail') }}
+        </button>
+      }
+      @for (action of guestActions(entry); track action.id) {
+        <button
+          type="button"
+          class="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-line bg-surface-raised px-3 text-sm font-semibold text-ink transition hover:border-brand/40"
+          (click)="runDetailAction(action.id, entry)"
+        >
+          @if (action.icon) {
+            <fa-icon [icon]="action.icon" class="text-brand-strong" aria-hidden="true" />
+          }
+          {{ action.label }}
+        </button>
+      }
+    </div>
+  }
+</app-modal>

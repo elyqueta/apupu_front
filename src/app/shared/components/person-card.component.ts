@@ -81,9 +81,6 @@ export interface PersonPrimaryAction {
               >
                 <fa-icon [icon]="iconFor(meta()[0].icon)" class="shrink-0 text-[10px]" aria-hidden="true" />
                 <span class="min-w-0 truncate">{{ meta()[0].label }}</span>
-                @if (meta().length > 1) {
-                  <span class="shrink-0 rounded-full bg-surface px-1.5 py-0.5 text-[10px] font-semibold tabular-nums">+{{ meta().length - 1 }}</span>
-                }
               </p>
             }
           </div>

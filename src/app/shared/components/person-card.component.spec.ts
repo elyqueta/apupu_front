@@ -149,7 +149,7 @@ describe('PersonCardComponent — linha proeminente do painel', () => {
     expect(fixture.nativeElement.querySelector('app-status-badge')?.className).not.toContain('hidden');
     expect(article.textContent).toContain('ana@exemplo.ao');
     expect(article.textContent).toContain('Casamento da Rita');
-    expect(article.textContent).toContain('+1');
+    expect(article.textContent).not.toContain('+1');
 
     const button = fixture.nativeElement.querySelector('button') as HTMLButtonElement;
     expect(button.parentElement?.className).toContain('border-t');

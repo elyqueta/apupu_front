@@ -69,7 +69,7 @@ describe('DashboardPage · convidados', () => {
       responseRate: 50,
     }),
     taskProgress: signal({ done: 0, total: 0 }),
-    recentEvents: signal([]),
+    recentEvents: signal<HostEvent[]>([]),
     tasks: signal([]),
     activityFeed: signal([]),
     profile: signal({ name: 'Ana Costa', email: 'ana@example.com' }),
@@ -93,6 +93,8 @@ describe('DashboardPage · convidados', () => {
       { guest: guest('confirmed', 'confirmed', null), event },
       { guest: guest('declined', 'declined', null), event },
     ]);
+    store.recentEvents.set([]);
+    store.eventStats.mockReturnValue(null);
     TestBed.configureTestingModule({
       imports: [DashboardPage],
       providers: [
@@ -162,5 +164,30 @@ describe('DashboardPage · convidados', () => {
       ['p4'],
     ]);
     expect(view.carouselPages()).toBe(2);
+  });
+
+  it('builds a selectable response breakdown for recent events', () => {
+    const other = { ...event, id: 'evt-2', title: 'Outro evento' } as HostEvent;
+    store.recentEvents.set([event, other]);
+    store.eventStats.mockImplementation((eventId: string) =>
+      eventId === event.id
+        ? { total: 4, confirmed: 2, pending: 1, declined: 1, responseRate: 75 }
+        : { total: 0, confirmed: 0, pending: 0, declined: 0, responseRate: 0 },
+    );
+
+    const view = page as unknown as {
+      responseEvents: () => { id: string; confirmedPct: number; pendingPct: number }[];
+      selectedResponseEvent: () => { id: string } | null;
+      responseTotals: () => { total: number; confirmed: number };
+      selectResponseEvent: (eventId: string) => void;
+    };
+
+    expect(view.responseEvents()[0].confirmedPct).toBe(50);
+    expect(view.responseEvents()[0].pendingPct).toBe(25);
+    expect(view.responseTotals()).toEqual({ total: 4, confirmed: 2, pending: 1, declined: 1 });
+    expect(view.selectedResponseEvent()?.id).toBe(event.id);
+
+    view.selectResponseEvent(other.id);
+    expect(view.selectedResponseEvent()?.id).toBe(other.id);
   });
 });

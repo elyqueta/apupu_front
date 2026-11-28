@@ -6,7 +6,7 @@ import { guestPlural } from '../../core/i18n/block15-keys';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { toApiError } from '../../core/api/api-error';
 import { TranslationKey } from '../../core/i18n/translations';
-import { EventActivity, Guest, HostEvent, RsvpStatus } from '../../core/models/models';
+import { EventActivity, EventStats, Guest, HostEvent, RsvpStatus } from '../../core/models/models';
 import { ShareService } from '../../core/services/share.service';
 import { ToastService } from '../../core/services/toast.service';
 import { WorkspaceStore } from '../../core/services/workspace.store';
@@ -38,6 +38,15 @@ interface ChartDay {
 interface GuestEntry {
   guest: Guest;
   event: HostEvent;
+}
+
+interface ResponseEvent {
+  id: string;
+  title: string;
+  stats: EventStats;
+  confirmedPct: number;
+  pendingPct: number;
+  declinedPct: number;
 }
 
 @Component({
@@ -217,6 +226,52 @@ export class DashboardPage {
 
   protected setActiveDay(index: number | null): void {
     this.activeDay.set(index);
+  }
+
+  private readonly selectedResponseEventId = signal<string | null>(null);
+
+  /** Distribuição de respostas de cada evento recente, pronta para barras empilhadas. */
+  protected readonly responseEvents = computed<ResponseEvent[]>(() => {
+    const empty: EventStats = { total: 0, confirmed: 0, pending: 0, declined: 0, responseRate: 0 };
+    return this.recentEvents().map((event) => {
+      const stats = this.store.eventStats(event.id) ?? empty;
+      const total = Math.max(stats.total, 1);
+      return {
+        id: event.id,
+        title: event.title,
+        stats,
+        confirmedPct: Math.round((stats.confirmed / total) * 100),
+        pendingPct: Math.round((stats.pending / total) * 100),
+        declinedPct: Math.round((stats.declined / total) * 100),
+      };
+    });
+  });
+
+  protected readonly selectedResponseEvent = computed<ResponseEvent | null>(() => {
+    const events = this.responseEvents();
+    const selectedId = this.selectedResponseEventId();
+    return (
+      events.find((event) => event.id === selectedId) ??
+      events.find((event) => event.stats.total > 0) ??
+      events[0] ??
+      null
+    );
+  });
+
+  protected readonly responseTotals = computed(() =>
+    this.responseEvents().reduce(
+      (totals, event) => ({
+        total: totals.total + event.stats.total,
+        confirmed: totals.confirmed + event.stats.confirmed,
+        pending: totals.pending + event.stats.pending,
+        declined: totals.declined + event.stats.declined,
+      }),
+      { total: 0, confirmed: 0, pending: 0, declined: 0 },
+    ),
+  );
+
+  protected selectResponseEvent(eventId: string): void {
+    this.selectedResponseEventId.set(eventId);
   }
 
   protected readonly typeIcon = computed<IconDefinition>(() => {

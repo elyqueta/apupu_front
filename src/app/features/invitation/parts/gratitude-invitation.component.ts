@@ -1,5 +1,6 @@
 import { AfterViewInit, Component, computed, effect, inject, input, output, signal } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { I18nService } from '../../../core/i18n/i18n.service';
 import { TemplateManifest } from '../../../core/models/template-manifest';
 import { qrCodeSvg } from '../../../shared/utils/qr-svg.util';
 import { InvitationEventView } from '../invitation.models';
@@ -13,6 +14,7 @@ interface GratitudeFields {
   time: string;
   location: string;
   locationLines: string[];
+  locationMore: string;
   dressCode: string;
   logoUrl: string | null;
   logoShape: 'circle' | 'original';
@@ -20,7 +22,7 @@ interface GratitudeFields {
   qrLabel: string;
   qrTarget: string | null;
   qrImageUrl: string | null;
-  qrIcon: 'none' | 'whatsapp' | 'brand';
+  qrIcon: 'none' | 'platform';
   qrSize: 'md' | 'lg';
 }
 
@@ -49,13 +51,29 @@ const TITLE_FONT_STACK = 'Anton, "Arial Narrow", Impact, sans-serif';
     }
     :host { display: block; }
     .poster{
-      width:100%; max-width:42rem; margin:0 auto;
+      width:100%; max-width:none; min-width:0; margin:0;
       background:radial-gradient(circle at 50% 45%,#fffdf8 0%,#fff6ea 55%,#fbe9cf 100%);
       position:relative; overflow:hidden;
       aspect-ratio:4/5; container-type:inline-size;
-      border-radius:14px; box-shadow:0 10px 30px rgba(0,0,0,.25);
+      border-radius:14px; box-shadow:var(--shadow-card);
       font-family:Montserrat,system-ui,sans-serif; box-sizing:border-box;
     }
+    /* Convite público: a arte rompe a caixa central e ocupa a viewport inteira.
+       A casca faz o clip horizontal para não criar scroll. Editores e capas
+       mantêm o cartaz dentro do contentor. */
+    .poster.full-bleed{
+      width:100vw; margin-left:calc(50% - 50vw);
+      border-radius:0;
+    }
+    /* No convite público a saudação ganha destaque, sem deslocar o cartaz
+       usado no editor nem a capa PDF. */
+    .poster.full-bleed .sub{top:21.8%}
+    .poster.full-bleed .guest-name{
+      top:25.9%;
+      font-size:clamp(11px,3.6cqw,38px);
+    }
+    .poster.full-bleed .title{top:29.2%}
+    .poster.full-bleed .year{top:50.8%}
     .deco{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
     .logo{
       position:absolute;top:2.4%;left:50%;transform:translateX(-50%);
@@ -76,6 +94,12 @@ const TITLE_FONT_STACK = 'Anton, "Arial Narrow", Impact, sans-serif';
       position:absolute;top:22.4%;left:0;right:0;text-align:center;
       font-weight:800;font-size:4.7cqw;color:#111;line-height:1.1;
       text-transform:uppercase;letter-spacing:.01em;
+    }
+    .guest-name{
+      position:absolute;top:26.5%;left:5%;right:5%;margin:0;
+      text-align:center;font-weight:700;color:#111;line-height:1.05;
+      font-size:clamp(8px,2cqw,26px);letter-spacing:.02em;
+      white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-sizing:border-box;
     }
     .title{
       position:absolute;left:4.5%;top:28.6%;width:91%;height:20.7%;
@@ -123,7 +147,7 @@ const TITLE_FONT_STACK = 'Anton, "Arial Narrow", Impact, sans-serif';
     .qrcard .qr-img{width:100%;height:100%;object-fit:contain;display:block}
     .qrcard .badge{
       position:absolute;width:28%;aspect-ratio:1;border-radius:50%;background:#fff;
-      display:grid;place-items:center;box-shadow:0 0 0 .35cqw #fff;
+      display:grid;place-items:center;outline:.35cqw solid #fff;
     }
     .qrcard .badge svg{width:82%;height:82%}
     .dress{
@@ -136,10 +160,24 @@ const TITLE_FONT_STACK = 'Anton, "Arial Narrow", Impact, sans-serif';
     .dress svg{width:8.5cqw;height:8.5cqw;flex:0 0 auto}
     .dress small{display:block;font-weight:800;font-size:2.8cqw;letter-spacing:.02em;line-height:1}
     .dress strong{display:block;font-family:Anton,'Arial Narrow',sans-serif;font-weight:400;font-size:4.9cqw;letter-spacing:.02em;line-height:1.05;text-transform:uppercase}
+    /* Em ecrãs pequenos a arte continua proporcional, mas o texto não desaparece. */
+    @container (max-width: 420px){
+      .org{font-size:max(9px,2.7cqw);letter-spacing:.2em;padding-left:.2em;overflow-wrap:anywhere}
+      .sub{font-size:max(13px,4.7cqw);padding:0 3cqw;box-sizing:border-box;overflow-wrap:anywhere}
+      .info{left:3.5cqw;right:3.5cqw;top:60.5%}
+      .info .c{gap:1cqw;padding:0 1.4cqw}
+      .info svg{width:4.8cqw;height:4.8cqw}
+      .info .v{font-size:max(11px,3.7cqw);letter-spacing:.06em}
+      .info .loc .t{font-size:max(8.5px,2.35cqw);line-height:1.08}
+      .info .loc .t b{font-size:max(8.5px,2.2cqw)}
+      .qrblock .lab{font-size:max(10px,2.9cqw)}
+      .dress{width:58%;gap:1.6cqw;padding:1.1cqw 2cqw}
+      .dress small{font-size:max(10px,2.8cqw)}
+    }
   `],
   template: `
-    <section class="mx-auto w-full max-w-[42rem]" data-testid="gratitude-invitation">
-      <div class="poster" aria-label="Convite Gratitude">
+    <section class="w-full min-w-0" data-testid="gratitude-invitation">
+      <div class="poster" [class.full-bleed]="!editorMode() && !coverOnly()" aria-label="Convite Gratitude">
         <svg class="deco" viewBox="0 0 1024 1280" preserveAspectRatio="none" aria-hidden="true">
           <defs>
             <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8c6a1f"/><stop offset=".35" stop-color="#f3d580"/><stop offset=".65" stop-color="#b8862b"/><stop offset="1" stop-color="#f7e3a0"/></linearGradient>
@@ -161,7 +199,7 @@ const TITLE_FONT_STACK = 'Anton, "Arial Narrow", Impact, sans-serif';
           <path d="M580 1280C735 1222 915 1125 1024 1030" fill="none" stroke="#fff3c4" stroke-opacity=".85" stroke-width="4"/>
         </svg>
 
-        @if (f().logoUrl) {
+        @if (editorMode() && f().logoUrl) {
             <div class="logo" [class.original]="f().logoShape === 'original'" [class.sm]="f().logoSize === 'sm'" [class.lg]="f().logoSize === 'lg'" data-testid="gratitude-logo-wrap">
               <img [src]="f().logoUrl!" alt="Logótipo" data-testid="gratitude-logo" />
             </div>
@@ -174,11 +212,16 @@ const TITLE_FONT_STACK = 'Anton, "Arial Narrow", Impact, sans-serif';
           <div class="org" data-testid="gratitude-org">{{ f().organization }}</div>
           <div class="sub" data-testid="gratitude-subtitle">{{ f().subtitle }}</div>
 
+          @if (guestGreeting(); as greeting) {
+            <p class="guest-name" data-testid="gratitude-guest-name">{{ greeting }}</p>
+          }
+
           <svg class="title" [attr.viewBox]="titleViewBox()" preserveAspectRatio="xMidYMid meet" role="img" [attr.aria-label]="f().title" data-testid="gratitude-title">
             <text x="0" y="0" font-family="Anton,'Arial Narrow',Impact,sans-serif" [attr.font-size]="titleFontSize()" [attr.x]="titleX()" [attr.y]="titleY()" fill="url(#afro)" stroke="#161616" stroke-width="2.2" vector-effect="non-scaling-stroke" paint-order="stroke fill" stroke-linejoin="round">{{ f().title }}</text>
           </svg>
           <div class="year" data-testid="gratitude-highlight"><span>{{ f().year }}</span></div>
 
+          @if (!coverOnly()) {
           <div class="info" data-testid="gratitude-info">
             <div class="c">
               <svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16" rx="3"/><path d="M8 2.5v4M16 2.5v4M3 10h18"/><g fill="#111" stroke="none"><circle cx="8" cy="13.5" r="1.1"/><circle cx="12" cy="13.5" r="1.1"/><circle cx="16" cy="13.5" r="1.1"/><circle cx="8" cy="17" r="1.1"/><circle cx="12" cy="17" r="1.1"/><circle cx="16" cy="17" r="1.1"/></g></svg>
@@ -190,7 +233,7 @@ const TITLE_FONT_STACK = 'Anton, "Arial Narrow", Impact, sans-serif';
             </div>
             <div class="c loc">
               <svg viewBox="0 0 24 24" fill="#111" aria-hidden="true"><path d="M12 22s7-6.4 7-12a7 7 0 1 0-14 0c0 5.6 7 12 7 12Z"/><circle cx="12" cy="10" r="2.6" fill="#fff6ea"/></svg>
-              <div class="t"><b>LOCAL:</b><span>@for (line of f().locationLines; track line + '-' + $index) { {{ line }}@if (!$last) {<br />} }</span></div>
+              <div class="t"><b>LOCAL:</b><span>@for (line of f().locationLines; track line + '-' + $index) { {{ line }}@if (!$last) {<br />} }</span>@if (f().locationMore) {<br /><em class="inv-accent-text">{{ f().locationMore }}</em>}</div>
             </div>
           </div>
 
@@ -203,11 +246,7 @@ const TITLE_FONT_STACK = 'Anton, "Arial Narrow", Impact, sans-serif';
                 } @else if (qrSvg()) {
                   <div class="qr-svg" [innerHTML]="qrSvg()"></div>
                 }
-                @if (f().qrIcon === 'whatsapp') {
-                  <div class="badge" aria-hidden="true"><svg viewBox="0 0 24 24" fill="#1e8a3c"><path d="M12 2a10 10 0 0 0-8.6 15L2 22l5.2-1.4A10 10 0 1 0 12 2Zm5.2 13.6c-.2.6-1.3 1.1-1.8 1.2-.5 0-1 .3-3.3-.7-2.8-1.2-4.5-4-4.7-4.2-.1-.2-1.1-1.5-1.1-2.8s.7-2 1-2.3c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 2c.1.2.1.4 0 .5l-.4.6-.4.5c-.1.1-.3.3-.1.6.2.3.8 1.3 1.7 2.1 1.2 1 2.2 1.300 2.500 1.500.3.1.5.1.7-.1l.9-1.100c.2-.3.4-.2.7-.1l1.900.9c.3.1.5.2.6.3.1.2.1.8-.1 1.400Z"/></svg></div>
-                } @else if (f().qrIcon === 'brand') {
-                  <div class="badge" aria-hidden="true"><svg viewBox="0 0 24 24" fill="#c8922a"><circle cx="12" cy="12" r="10" fill="#fff"/><path d="M12 4l2.5 5 5.5.8-4 3.9.9 5.5-4.9-2.6-4.9 2.6.9-5.5-4-3.9 5.5-.8z"/></svg></div>
-                }
+                <!-- O símbolo da plataforma já vem embutido em qrCodeSvg(). -->
               </div>
             </div>
           }
@@ -216,6 +255,7 @@ const TITLE_FONT_STACK = 'Anton, "Arial Narrow", Impact, sans-serif';
             <svg viewBox="0 0 64 56" aria-hidden="true"><path d="M20 3 4 12l6 14 8-3v28h28V23l8 3 6-14L44 3c-2 5-6 8-12 8S22 8 20 3Z" fill="#d49a1a"/><path d="M20 3c2 5 6 8 12 8s10-3 12-8" fill="none" stroke="#b27a0e" stroke-width="2"/></svg>
             <div><small>DRESS-CODE:</small><strong>{{ f().dressCode }}</strong></div>
           </div>
+          }
       </div>
     </section>
   `,
@@ -224,8 +264,11 @@ export class GratitudeInvitationComponent implements AfterViewInit {
   readonly event = input.required<InvitationEventView>();
   readonly manifest = input<TemplateManifest | null>(null);
   readonly editorMode = input(false);
+  /** Bloco 16: na capa só aparecem ornamento, organização, subtítulo, título e destaque. */
+  readonly coverOnly = input(false);
   readonly logoEdit = output<void>();
 
+  private readonly i18n = inject(I18nService);
   private readonly sanitizer = inject(DomSanitizer);
   private readonly fontsTick = signal(0);
 
@@ -263,16 +306,26 @@ export class GratitudeInvitationComponent implements AfterViewInit {
       qrTarget = current || eventPublic || null;
     }
     const logoUrl = typeof pdf.logo_url === 'string' && pdf.logo_url.trim() ? pdf.logo_url.trim() : null;
-    const location = e.venue || e.city || e.onlineLink || 'Igreja Cristã Reino Church';
+    const primary = e.locations.find((l) => l.isPrimary) ?? e.locations[0];
+    const location =
+      primary?.address?.trim() ||
+      e.address?.trim() ||
+      primary?.venueName?.trim() ||
+      e.venue ||
+      e.city ||
+      e.onlineLink ||
+      'Igreja Cristã Reino Church';
+    const extra = Math.max(0, e.locations.length - 1);
     return {
       organization: (e.hostName || 'IGREJA CRISTÃ REINO-CHURCH').toUpperCase(),
-      subtitle: this.subtitleFor(e),
+      subtitle: (e.subtitle || '').trim() || this.subtitleFor(e),
       title: (e.title || 'GRATITUDE').toUpperCase(),
       year: parts.year,
       date: parts.date,
       time: parts.time,
       location,
       locationLines: this.locationLines(location),
+      locationMore: extra ? this.i18n.t('block16.locations.more', { count: extra }) : '',
       dressCode: (e.dressCode || '').trim().toUpperCase(),
       logoUrl,
       logoShape: pdf.logo_shape === 'original' ? 'original' : 'circle',
@@ -280,16 +333,22 @@ export class GratitudeInvitationComponent implements AfterViewInit {
       qrLabel: String(pdf.qr_label || 'Informação').trim() || 'Informação',
       qrTarget,
       qrImageUrl,
-      qrIcon: pdf.qr_icon === 'none' || pdf.qr_icon === 'whatsapp' || pdf.qr_icon === 'brand' ? pdf.qr_icon : 'brand',
+      qrIcon: pdf.qr_icon === 'none' ? 'none' : 'platform',
       qrSize: pdf.qr_size === 'lg' ? 'lg' : 'md',
     };
+  });
+
+  /** Só mostra a saudação quando existe um nome real (conta ou resposta RSVP). */
+  protected readonly guestGreeting = computed(() => {
+    const name = this.event().guestName?.trim();
+    return name ? this.i18n.t('invitation.guestGreeting', { name }) : null;
   });
 
   protected readonly qrSvg = computed<SafeHtml | null>(() => {
     const f = this.f();
     if (f.qrImageUrl || !f.qrTarget) return null;
     try {
-      const svg = qrCodeSvg(f.qrTarget, 'H');
+      const svg = qrCodeSvg(f.qrTarget, 'H', { logo: f.qrIcon === 'none' ? 'none' : 'platform' });
       return this.sanitizer.bypassSecurityTrustHtml(svg);
     } catch {
       return null;

@@ -79,7 +79,7 @@ const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
         </fieldset>
 
         <div class="grid gap-4 sm:grid-cols-2">
-          <div class="relative h-44 overflow-hidden rounded-3xl border border-line bg-brand shadow-inner sm:h-48">
+          <div class="relative h-44 overflow-hidden rounded-3xl border border-line bg-brand sm:h-48">
             @if (coverPreview()) {
               <img [src]="coverPreview()!" alt="" class="size-full object-cover" />
             } @else {

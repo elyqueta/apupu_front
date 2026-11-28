@@ -173,7 +173,7 @@ import { GUEST_FILTERS, GuestFilter } from './detail.models';
               >
                 <span
                   data-testid="event-guests-range"
-                  class="inline-flex items-center gap-2 rounded-full border border-line bg-surface-raised/60 px-3 py-1.5 text-[11px] font-medium text-muted shadow-card"
+                  class="inline-flex items-center gap-2 rounded-full border border-line bg-surface-raised/60 px-3 py-1.5 text-[11px] font-medium text-muted"
                 >
                   <fa-icon [icon]="icons['guests']" class="text-[10px] text-brand-strong" aria-hidden="true" />
                   {{ showingLabel() }}

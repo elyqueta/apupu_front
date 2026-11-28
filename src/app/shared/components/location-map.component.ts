@@ -13,6 +13,8 @@ import {
   viewChild,
 } from '@angular/core';
 import { environment } from '../../../environments/environment';
+import { I18nService } from '../../core/i18n/i18n.service';
+import type { TranslationKey } from '../../core/i18n/translations';
 
 export interface LocationPoint {
   latitude: number;
@@ -35,19 +37,23 @@ type MapLibre = typeof import('maplibre-gl');
     .overlay-btn { min-height:44px; padding:0 16px; border-radius:12px; border:1px solid var(--line,#d1d5db); background:var(--surface,#fff); color:var(--ink,#111827); font:600 14px/1.2 system-ui, sans-serif; cursor:pointer; }
     .overlay-btn:focus-visible { outline:2px solid var(--brand,#2563eb); outline-offset:2px; }
     .status { font:12px/1.4 system-ui, sans-serif; color:var(--muted,#6b7280); padding:8px 12px; }
+    .attribution { margin-top:4px; font:11px/1.4 system-ui, sans-serif; color:var(--muted,#6b7280); }
   `],
   template: `
     <div class="map-wrap">
-      <div #mapEl class="map" role="img" [attr.aria-label]="ariaLabel()"></div>
+      <div #mapEl class="map" role="img" [attr.aria-label]="mapAria()"></div>
       @if (!activated()) {
         <div class="overlay">
-          <button type="button" class="overlay-btn" (click)="activate()" [attr.aria-label]="activateLabel()">
-            {{ activateLabel() }}
+          <button type="button" class="overlay-btn" (click)="activate()" [attr.aria-label]="mapActivateLabel()">
+            {{ mapActivateLabel() }}
           </button>
         </div>
       }
     </div>
-    @if (status()) { <div class="status" aria-live="polite">{{ status() }}</div> }
+    <p class="attribution">{{ i18n.t('block16.map.attribution') }}</p>
+    @if (statusKey()) {
+      <div class="status" role="status" aria-live="polite">{{ i18n.t(statusKey()!) }}</div>
+    }
   `,
 })
 export class LocationMapComponent implements AfterViewInit, OnDestroy {
@@ -56,16 +62,20 @@ export class LocationMapComponent implements AfterViewInit, OnDestroy {
   readonly placeName = input<string | null>(null);
   readonly interactive = input(true);
   readonly tapToActivate = input(false);
-  readonly ariaLabel = input('Mapa da localização do evento');
-  readonly activateLabel = input('Ativar mapa');
+  readonly ariaLabel = input('');
+  readonly activateLabel = input('');
 
   readonly pointChange = output<LocationPoint>();
 
   private readonly zone = inject(NgZone);
+  private readonly i18n = inject(I18nService);
   private readonly mapEl = viewChild.required<ElementRef<HTMLDivElement>>('mapEl');
 
   protected readonly activated = signal(false);
-  protected readonly status = signal('');
+  protected readonly statusKey = signal<TranslationKey | null>(null);
+  protected readonly mapAria = () => this.ariaLabel() || this.i18n.t('block16.locations.mapAria');
+  protected readonly mapActivateLabel = () =>
+    this.activateLabel() || this.i18n.t('block16.locations.activateMap');
 
   private map: import('maplibre-gl').Map | null = null;
   private marker: import('maplibre-gl').Marker | null = null;
@@ -102,7 +112,7 @@ export class LocationMapComponent implements AfterViewInit, OnDestroy {
       return;
     }
     this.activated.set(true);
-    this.status.set('A carregar mapa...');
+    this.statusKey.set('block16.locations.mapLoading');
     try {
       const ml = (this.maplibre ??= await import('maplibre-gl'));
       await this.ensureCss();
@@ -116,13 +126,20 @@ export class LocationMapComponent implements AfterViewInit, OnDestroy {
         style: environment.mapStyleUrl,
         center: [lng, lat],
         zoom: hasPoint ? 15 : 12,
-        attributionControl: { compact: true },
+        attributionControl: { compact: false },
         interactive: this.interactive(),
       });
       this.map = map;
       map.addControl(new ml.NavigationControl({ showCompass: false }), 'top-right');
+      map.getCanvas().setAttribute('aria-label', this.mapAria());
+      for (const [selector, key] of [
+        ['.maplibregl-ctrl-zoom-in', 'block16.locations.zoomIn'],
+        ['.maplibregl-ctrl-zoom-out', 'block16.locations.zoomOut'],
+      ] as const) {
+        el.querySelector(selector)?.setAttribute('aria-label', this.i18n.t(key));
+      }
       map.on('load', () => {
-        this.zone.run(() => this.status.set(''));
+        this.zone.run(() => this.statusKey.set(null));
         if (hasPoint) this.setMarker(this.latitude()!, this.longitude()!, this.placeName());
         if (this.interactive()) {
           map.on('click', (e) => {
@@ -135,11 +152,11 @@ export class LocationMapComponent implements AfterViewInit, OnDestroy {
         }
         if (!reduced) map.resize();
       });
-      map.on('error', () => this.zone.run(() => this.status.set('Não foi possível carregar o mapa.')));
+      map.on('error', () => this.zone.run(() => this.statusKey.set('block16.locations.mapError')));
       this.resizeObserver = new ResizeObserver(() => map.resize());
       this.resizeObserver.observe(el);
     } catch {
-      this.status.set('Não foi possível carregar o mapa.');
+      this.statusKey.set('block16.locations.mapError');
     }
   }
 

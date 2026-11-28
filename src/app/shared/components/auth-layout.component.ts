@@ -105,7 +105,7 @@ import { LogoComponent } from './logo.component';
 
         <div class="absolute inset-x-0 bottom-0 z-[1] hidden px-8 pb-12 pt-8 min-[860px]:block">
           <div
-            class="max-w-md rounded-[26px] border border-white/20 bg-cc-primary-900/45 p-6 text-white shadow-2xl backdrop-blur-md"
+            class="max-w-md rounded-[26px] border border-white/20 bg-cc-primary-900/45 p-6 text-white shadow-pop backdrop-blur-md"
           >
             <p class="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/70">
               {{ i18n.t('app.name') }}

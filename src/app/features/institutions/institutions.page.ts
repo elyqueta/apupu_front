@@ -111,9 +111,9 @@ type Scope = 'mine' | 'discover';
           }
         </div>
       } @else {
-        <ul class="flex flex-col overflow-hidden rounded-3xl border border-line bg-surface-raised/20" data-testid="institutions-list">
+        <ul class="flex flex-col gap-2" data-testid="institutions-list">
           @for (institution of items(); track institution.id) {
-            <li class="min-w-0 border-b border-line last:border-b-0">
+            <li class="min-w-0 rounded-2xl border border-line bg-surface shadow-card transition hover:border-brand/35">
               <a
                 [routerLink]="['/instituicoes', institution.slug]"
                 class="group flex min-h-[5.5rem] w-full items-center gap-3 px-3 py-3 text-left transition hover:bg-surface-raised/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand/60 sm:px-4"
@@ -143,7 +143,7 @@ type Scope = 'mine' | 'discover';
                   @if (institution.description) {
                     <p class="mt-0.5 truncate text-xs text-muted" [title]="institution.description">{{ institution.description }}</p>
                   }
-                  <p class="mt-1 inline-flex items-center gap-1.5 text-[11px] text-muted/80">
+                  <p class="mt-1 inline-flex items-center gap-1.5 text-[11px] text-muted">
                     <fa-icon [icon]="icons['globe']" class="text-[10px] text-brand-strong" aria-hidden="true" />
                     {{ i18n.t('block13.list.communities', { count: institution.community_count }) }}
                   </p>

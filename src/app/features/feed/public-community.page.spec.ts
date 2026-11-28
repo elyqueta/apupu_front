@@ -104,4 +104,18 @@ describe('PublicCommunityPage', () => {
     expect(past?.querySelector('[data-testid="feed-event-past1"]')).not.toBeNull();
     expect(native.querySelector('[data-testid="public-community-upcoming"] [data-testid="feed-event-up1"]')).not.toBeNull();
   });
+
+  it('mantém o avatar grande fora do contentor da capa com overflow', async () => {
+    const { native } = await setup();
+
+    const profile = native.querySelector('[data-testid="public-community-profile"]') as HTMLElement;
+    const coverWrapper = profile.firstElementChild as HTMLElement;
+    const avatar = profile.querySelector('app-avatar') as HTMLElement;
+
+    expect(coverWrapper.className).toContain('overflow-hidden');
+    expect(avatar.closest('.overflow-hidden')).toBeNull();
+    expect(avatar.parentElement?.parentElement?.parentElement).toBe(profile);
+    expect(profile.className).toContain('relative');
+    expect(profile.className).not.toContain('overflow-hidden');
+  });
 });

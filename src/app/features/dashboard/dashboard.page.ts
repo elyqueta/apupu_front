@@ -1,4 +1,4 @@
-import { Component, computed, ElementRef, inject, signal, viewChild } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
@@ -6,7 +6,7 @@ import { guestPlural } from '../../core/i18n/block15-keys';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { toApiError } from '../../core/api/api-error';
 import { TranslationKey } from '../../core/i18n/translations';
-import { EventActivity, Guest, HostEvent, RsvpStatus } from '../../core/models/models';
+import { EventActivity, EventStats, Guest, HostEvent, RsvpStatus } from '../../core/models/models';
 import { ShareService } from '../../core/services/share.service';
 import { ToastService } from '../../core/services/toast.service';
 import { WorkspaceStore } from '../../core/services/workspace.store';
@@ -19,8 +19,8 @@ import { EventCardComponent } from '../../shared/components/event-card.component
 import {
   PersonCardComponent,
   PersonMetaItem,
-  PersonPrimaryAction,
 } from '../../shared/components/person-card.component';
+import { ModalComponent } from '../../shared/components/modal.component';
 import { StatCardComponent } from '../../shared/components/stat-card.component';
 import { SkeletonComponent } from '../../shared/components/skeleton.component';
 import { StatGridComponent } from '../../shared/components/stat-grid.component';
@@ -40,6 +40,15 @@ interface GuestEntry {
   event: HostEvent;
 }
 
+interface ResponseEvent {
+  id: string;
+  title: string;
+  stats: EventStats;
+  confirmedPct: number;
+  pendingPct: number;
+  declinedPct: number;
+}
+
 @Component({
   selector: 'app-dashboard-page',
   imports: [
@@ -47,6 +56,7 @@ interface GuestEntry {
     FaIconComponent,
     AvatarComponent,
     EventCardComponent,
+    ModalComponent,
     PersonCardComponent,
     StatCardComponent,
     StatGridComponent,
@@ -84,11 +94,8 @@ export class DashboardPage {
   protected readonly tasks = computed(() => this.store.tasks().slice(0, 4));
   protected readonly activity = computed(() => this.store.activityFeed().slice(0, 5));
   protected readonly guestStatusFilter = signal<RsvpStatus>('pending');
-  protected readonly carouselIndex = signal(1);
-  /** Cada painel agrupa até três convidados; a grelha adapta-se a 1/2/3 colunas. */
-  private readonly carouselPageSize = 3;
   protected readonly activeDay = signal<number | null>(null);
-  private readonly guestCarousel = viewChild<ElementRef<HTMLUListElement>>('guestCarousel');
+  protected readonly detailTarget = signal<GuestEntry | null>(null);
 
   protected readonly filters: { id: RsvpStatus; labelKey: TranslationKey }[] = [
     { id: 'confirmed', labelKey: 'dashboard.statusConfirmed' },
@@ -118,18 +125,6 @@ export class DashboardPage {
       .filter((entry) => entry.guest.status === this.guestStatusFilter())
       .slice(0, 6),
   );
-
-  /** Agrupa os convidados em painéis de até três cartões lineares. */
-  protected readonly guestPages = computed<GuestEntry[][]>(() => {
-    const entries = this.filteredGuests();
-    const pages: GuestEntry[][] = [];
-    for (let index = 0; index < entries.length; index += this.carouselPageSize) {
-      pages.push(entries.slice(index, index + this.carouselPageSize));
-    }
-    return pages;
-  });
-
-  protected readonly carouselPages = computed(() => Math.max(1, this.guestPages().length));
 
   protected readonly firstName = computed(() => this.store.profile().name.split(' ')[0]);
   protected readonly greeting = computed(() => {
@@ -215,8 +210,58 @@ export class DashboardPage {
     return index === null ? null : (this.week()[index] ?? null);
   });
 
+  protected readonly weeklyTotal = computed(() =>
+    this.week().reduce((total, day) => total + day.value, 0),
+  );
+
   protected setActiveDay(index: number | null): void {
     this.activeDay.set(index);
+  }
+
+  private readonly selectedResponseEventId = signal<string | null>(null);
+
+  /** Distribuição de respostas de cada evento recente, pronta para barras empilhadas. */
+  protected readonly responseEvents = computed<ResponseEvent[]>(() => {
+    const empty: EventStats = { total: 0, confirmed: 0, pending: 0, declined: 0, responseRate: 0 };
+    return this.recentEvents().map((event) => {
+      const stats = this.store.eventStats(event.id) ?? empty;
+      const total = Math.max(stats.total, 1);
+      return {
+        id: event.id,
+        title: event.title,
+        stats,
+        confirmedPct: Math.round((stats.confirmed / total) * 100),
+        pendingPct: Math.round((stats.pending / total) * 100),
+        declinedPct: Math.round((stats.declined / total) * 100),
+      };
+    });
+  });
+
+  protected readonly selectedResponseEvent = computed<ResponseEvent | null>(() => {
+    const events = this.responseEvents();
+    const selectedId = this.selectedResponseEventId();
+    return (
+      events.find((event) => event.id === selectedId) ??
+      events.find((event) => event.stats.total > 0) ??
+      events[0] ??
+      null
+    );
+  });
+
+  protected readonly responseTotals = computed(() =>
+    this.responseEvents().reduce(
+      (totals, event) => ({
+        total: totals.total + event.stats.total,
+        confirmed: totals.confirmed + event.stats.confirmed,
+        pending: totals.pending + event.stats.pending,
+        declined: totals.declined + event.stats.declined,
+      }),
+      { total: 0, confirmed: 0, pending: 0, declined: 0 },
+    ),
+  );
+
+  protected selectResponseEvent(eventId: string): void {
+    this.selectedResponseEventId.set(eventId);
   }
 
   protected readonly typeIcon = computed<IconDefinition>(() => {
@@ -247,41 +292,6 @@ export class DashboardPage {
 
   protected setFilter(status: RsvpStatus): void {
     this.guestStatusFilter.set(status);
-    this.carouselIndex.set(1);
-    this.guestCarousel()?.nativeElement.scrollTo({ left: 0, behavior: 'smooth' });
-  }
-
-  /** Mantém a contagem "1 de N" sincronizada com o scroll por toque/rato. */
-  protected onCarouselScroll(): void {
-    const element = this.guestCarousel()?.nativeElement;
-    if (!element) {
-      return;
-    }
-    // Cada <li> ocupa exatamente a largura visível: um painel = clientWidth.
-    const pageWidth = element.clientWidth;
-    if (pageWidth > 0) {
-      const page = Math.round(element.scrollLeft / pageWidth) + 1;
-      this.carouselIndex.set(Math.min(this.carouselPages(), Math.max(1, page)));
-    }
-  }
-
-  /** Setas do desktop e setas do teclado partilham o mesmo passo de scroll. */
-  protected moveCarousel(direction: -1 | 1): void {
-    const element = this.guestCarousel()?.nativeElement;
-    if (!element) {
-      return;
-    }
-    const target = Math.min(this.carouselPages(), Math.max(1, this.carouselIndex() + direction));
-    this.carouselIndex.set(target);
-    element.scrollTo({ left: (target - 1) * element.clientWidth, behavior: 'smooth' });
-  }
-
-  protected onCarouselKeydown(event: KeyboardEvent): void {
-    if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') {
-      return;
-    }
-    event.preventDefault();
-    this.moveCarousel(event.key === 'ArrowRight' ? 1 : -1);
   }
 
   protected filterClass(status: RsvpStatus): string {
@@ -319,21 +329,32 @@ export class DashboardPage {
     return meta;
   }
 
-  protected primaryFor(entry: GuestEntry): PersonPrimaryAction {
-    const items = this.guestActions(entry);
-    const preferred = entry.guest.phone
-      ? items.find((item) => item.id === 'whatsapp')
-      : items.find((item) => item.id === 'resend');
-    const action = preferred ?? items[0];
-    return {
-      id: action.id,
-      label: action.label,
-      icon: action.icon,
-      disabled: action.disabled,
-    };
+  /** O cartão abre o modal de detalhe; as ações ficam legíveis nesse modal. */
+  protected openDetails(entry: GuestEntry): void {
+    this.detailTarget.set(entry);
   }
 
-  /** Ações do cartão: WhatsApp e reenvio visíveis, navegação sempre no menu. */
+  protected closeDetails(): void {
+    this.detailTarget.set(null);
+  }
+
+  protected runDetailAction(actionId: string, entry: GuestEntry): void {
+    this.closeDetails();
+    this.onGuestAction(actionId, entry);
+  }
+
+  protected async copyEmail(entry: GuestEntry): Promise<void> {
+    const copied = await this.share.copy(entry.guest.email);
+    this.toasts[copied ? 'success' : 'error'](
+      this.i18n.t(copied ? 'common.copied' : 'common.copyFailed'),
+    );
+  }
+
+  protected iconFor(key: string): IconDefinition {
+    return ICONS[key as keyof typeof ICONS] ?? ICONS['user'];
+  }
+
+  /** Ações do convidado, apresentadas no modal de detalhe. */
   protected guestActions(entry: GuestEntry): ActionMenuItem[] {
     const items: ActionMenuItem[] = [
       { id: 'view', label: this.i18n.t('guests.viewEvent'), icon: ICONS['arrowUpRight'] },

@@ -1,8 +1,20 @@
 import { isPlatformBrowser } from '@angular/common';
-import { Component, PLATFORM_ID, computed, effect, inject, signal, untracked } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  PLATFORM_ID,
+  computed,
+  effect,
+  inject,
+  signal,
+  untracked,
+  viewChild,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Meta, Title } from '@angular/platform-browser';
 import { Router, RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { debounceTime, distinctUntilChanged, Subject } from 'rxjs';
 import { toApiError } from '../../core/api/api-error';
 import { AuthService } from '../../core/api/auth.service';
 import { ApiCommunity, CommunitiesRepository } from '../../core/data/communities.repository';
@@ -20,6 +32,7 @@ import {
 } from '../../core/data/social.repository';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { TranslationKey } from '../../core/i18n/translations';
+import { SearchGroup, SearchService, SearchSuggestion } from '../../core/services/search.service';
 import { ToastService } from '../../core/services/toast.service';
 import { NotificationsRepository } from '../../core/data/notifications.repository';
 import { ICONS } from '../../core/ui/icons';
@@ -31,6 +44,7 @@ import { PreferenceControlsComponent } from '../../shared/components/preference-
 import { PublicEntityCardComponent } from '../../shared/components/public-entity-card.component';
 import { PublicEventCardComponent } from '../../shared/components/public-event-card.component';
 import { PublicHeaderComponent } from '../../shared/components/public-header.component';
+import { SearchSuggestionsComponent } from '../../shared/components/search-suggestions.component';
 import { SkeletonComponent } from '../../shared/components/skeleton.component';
 import { FeedPersonCardComponent, eventPath } from './feed-cards.component';
 
@@ -59,6 +73,7 @@ const CATEGORIES = ['wedding', 'birthday', 'corporate', 'baby', 'other'] as cons
     PreferenceControlsComponent,
     SkeletonComponent,
     PublicHeaderComponent,
+    SearchSuggestionsComponent,
     PublicEventCardComponent,
     PublicEntityCardComponent,
     InfoBlockComponent,
@@ -74,6 +89,7 @@ export class FeedPage {
   private readonly communitiesRepo = inject(CommunitiesRepository);
   private readonly eventsRepo = inject(EventsRepository);
   private readonly notificationsRepo = inject(NotificationsRepository);
+  private readonly searchService = inject(SearchService);
   private readonly toasts = inject(ToastService);
   private readonly router = inject(Router);
   private readonly title = inject(Title);
@@ -108,11 +124,16 @@ export class FeedPage {
   protected readonly menuOpen = signal(false);
   protected readonly categoriesOpen = signal(false);
   protected readonly searchOpen = signal(false);
-  protected readonly query = signal('');
-  protected readonly results = signal<SearchResults | null>(null);
-  protected readonly searching = signal(false);
-  private searchSeq = 0;
-  private searchTimer: ReturnType<typeof setTimeout> | null = null;
+  protected readonly searchTerm = signal('');
+  protected readonly activeSuggestionId = signal<string | null>(null);
+
+  /** Termo já debounceado; o campo mostra `searchTerm` sem esperar. */
+  private readonly debouncedTerm = signal('');
+  private readonly remoteGroups = signal<SearchGroup[]>([]);
+  private readonly remotePeople = signal<FeedPerson[]>([]);
+  private readonly searchInput$ = new Subject<string>();
+  private searchSequence = 0;
+  private readonly searchInput = viewChild<ElementRef<HTMLInputElement>>('feedSearchInput');
 
   protected readonly gatePerson = signal<FeedPerson | null>(null);
   protected readonly unreadCount = signal(0);
@@ -146,6 +167,27 @@ export class FeedPage {
     this.signedIn() ? this.i18n.t('block12.feed.profile') : this.i18n.t('block12.feed.login'),
   );
 
+  /** Mesmo padrão da shell: grupos locais primeiro, remotos (debounce) depois. */
+  protected readonly searchGroups = computed<SearchGroup[]>(() => {
+    // Reage a "Limpar"/guardar pesquisas recentes sem novos pedidos.
+    void this.searchService.recentRevision();
+    const term = this.debouncedTerm().trim();
+    const known = this.publicGroups(term);
+    if (!term) {
+      return [...this.recentGroups(), ...known];
+    }
+    const remote = this.remoteGroups();
+    if (!remote.length) {
+      return known;
+    }
+    return [...remote, ...known.filter((group) => !remote.some((item) => item.key === group.key))];
+  });
+
+  /** Lista achatada, para navegação por teclado com as setas. */
+  private readonly flatSuggestions = computed<SearchSuggestion[]>(() =>
+    this.searchGroups().flatMap((group) => group.items),
+  );
+
   constructor() {
     this.title.setTitle(this.i18n.t('route.feed'));
     this.meta.updateTag({ name: 'description', content: this.i18n.t('block12.seo.description') });
@@ -166,6 +208,36 @@ export class FeedPage {
       this.category();
       untracked(() => void this.load());
     });
+
+    // Debounce e sequência iguais aos da pesquisa global da shell: só a
+    // resposta mais recente atualiza os grupos e navegações antigas são
+    // descartadas quando o termo muda.
+    this.searchInput$
+      .pipe(debounceTime(250), distinctUntilChanged(), takeUntilDestroyed())
+      .subscribe((value) => {
+        this.debouncedTerm.set(value);
+        const term = value.trim();
+        if (term.length < 2) {
+          this.remoteGroups.set([]);
+          this.remotePeople.set([]);
+          return;
+        }
+        const sequence = ++this.searchSequence;
+        void this.social
+          .search(term)
+          .then((results) => {
+            if (sequence === this.searchSequence) {
+              this.remoteGroups.set(this.remoteSearchGroups(results));
+              this.remotePeople.set(results.people);
+            }
+          })
+          .catch(() => {
+            if (sequence === this.searchSequence) {
+              this.remoteGroups.set([]);
+              this.remotePeople.set([]);
+            }
+          });
+      });
   }
 
   protected async load(): Promise<void> {
@@ -331,48 +403,240 @@ export class FeedPage {
 
   /* ─────────────────────────────── Pesquisa ─────────────────────────────── */
 
+  /** Abre a pesquisa no mesmo gesto em que o campo recebe o foco. */
   protected openSearch(): void {
     this.menuOpen.set(false);
     this.searchOpen.set(true);
-    queueMicrotask(() => document.getElementById('feed-search-input')?.focus());
+    // O modal foca o botão de fechar ao abrir; o campo ganha o foco logo a
+    // seguir, assim o teclado aparece também no mobile.
+    setTimeout(() => this.searchInput()?.nativeElement.focus());
   }
 
   protected closeSearch(): void {
     this.searchOpen.set(false);
-    this.query.set('');
-    this.results.set(null);
+    this.searchTerm.set('');
+    this.debouncedTerm.set('');
+    this.activeSuggestionId.set(null);
+    this.remoteGroups.set([]);
+    this.remotePeople.set([]);
+    this.searchSequence += 1;
   }
 
   protected onQuery(value: string): void {
-    this.query.set(value);
-    if (this.searchTimer) clearTimeout(this.searchTimer);
-    const term = value.trim();
-    if (term.length < 2) {
-      this.results.set(null);
+    this.searchTerm.set(value);
+    this.activeSuggestionId.set(null);
+    this.searchInput$.next(value);
+    if (value.trim().length < 2) {
+      this.searchSequence += 1;
+      this.remoteGroups.set([]);
+      this.remotePeople.set([]);
+    }
+  }
+
+  protected activeDescendant(prefix: string): string | null {
+    const id = this.activeSuggestionId();
+    return id ? `${prefix}${id}` : null;
+  }
+
+  protected clearRecents(): void {
+    this.searchService.clearRecentSearches();
+  }
+
+  /** Setas para navegar, Enter para escolher, Escape para fechar. */
+  protected onSearchKeydown(event: KeyboardEvent): void {
+    const items = this.flatSuggestions();
+    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+      if (!items.length) {
+        return;
+      }
+      event.preventDefault();
+      const current = this.activeSuggestionId();
+      const index = current ? items.findIndex((item) => item.id === current) : -1;
+      const next =
+        event.key === 'ArrowDown'
+          ? (index + 1) % items.length
+          : index <= 0
+            ? items.length - 1
+            : index - 1;
+      this.activeSuggestionId.set(items[next].id);
       return;
     }
-    // Debounce de 250 ms e sequência: só a resposta mais recente é usada.
-    this.searchTimer = setTimeout(async () => {
-      const seq = ++this.searchSeq;
-      this.searching.set(true);
-      try {
-        const results = await this.social.search(term);
-        if (seq === this.searchSeq) this.results.set(results);
-      } catch {
-        if (seq === this.searchSeq) this.results.set({ events: [], communities: [], people: [] });
-      } finally {
-        if (seq === this.searchSeq) this.searching.set(false);
+    if (event.key === 'Enter') {
+      const active = items.find((item) => item.id === this.activeSuggestionId());
+      if (active) {
+        event.preventDefault();
+        void this.pickSuggestion(active);
       }
-    }, 250);
+      return;
+    }
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      // O modal também fecha com Escape; não deixar o evento chegar ao documento.
+      event.stopPropagation();
+      this.closeSearch();
+    }
   }
 
-  protected clearQuery(): void {
-    this.query.set('');
-    this.results.set(null);
+  protected hoverSuggestion(id: string): void {
+    this.activeSuggestionId.set(id);
   }
 
-  protected hasResults(results: SearchResults): boolean {
-    return results.events.length + results.communities.length + results.people.length > 0;
+  /** Enter sem opção ativa guarda o termo, como nas outras barras de pesquisa. */
+  protected submitSearch(event: Event): void {
+    event.preventDefault();
+    const term = this.searchTerm().trim();
+    if (term.length >= 2) {
+      this.rememberCurrentTerm(term);
+    }
+  }
+
+  /** Escolha de um resultado: guarda o termo, fecha e navega (ou abre o perfil). */
+  protected async pickSuggestion(suggestion: SearchSuggestion): Promise<void> {
+    if (suggestion.id.startsWith('recent:')) {
+      // Um recente volta a correr a pesquisa dentro da mesma folha.
+      this.onQuery(suggestion.label);
+      return;
+    }
+    this.rememberCurrentTerm(suggestion.label);
+    const person = suggestion.id.startsWith('person:')
+      ? [...this.remotePeople(), ...this.people(), ...this.suggestions()].find(
+          (item) => `person:${item.id}` === suggestion.id,
+        )
+      : undefined;
+    this.closeSearch();
+    if (person) {
+      this.openPerson(person);
+      return;
+    }
+    await this.router.navigate(suggestion.route, { queryParams: suggestion.queryParams });
+  }
+
+  private rememberCurrentTerm(fallback: string): void {
+    this.searchService.rememberSearch(this.searchTerm().trim() || fallback);
+  }
+
+  /** Recentes partilhados com a pesquisa da shell, com a ação "Limpar". */
+  private recentGroups(): SearchGroup[] {
+    // A sessão pode ser restaurada depois da abertura do feed; a chave dos
+    // recentes depende do anfitrião e tem de ser recalculada nesse momento.
+    void this.auth.host();
+    const items = this.searchService.recentSearches().map((term) => ({
+      id: `recent:${term}`,
+      label: term,
+      meta: '',
+      icon: ICONS['history'],
+      route: ['/'],
+      queryParams: { q: term },
+    }));
+    return items.length ? [{ key: 'recents', labelKey: 'search.groupRecent', items }] : [];
+  }
+
+  /** Sugestões locais (já no feed) enquanto a resposta remota não chega. */
+  private publicGroups(term: string): SearchGroup[] {
+    const query = this.normalize(term);
+    const limit = query ? 4 : 3;
+    const groups: SearchGroup[] = [];
+
+    const events = [...this.events(), ...this.upcoming()]
+      .filter((event, index, all) => all.findIndex((item) => item.id === event.id) === index)
+      .filter((event) => event.status !== 'completed' && event.status !== 'cancelled')
+      .filter(
+        (event) =>
+          !query ||
+          this.normalize([event.title, event.location, event.community?.name ?? ''].join(' ')).includes(query),
+      )
+      .sort((a, b) => a.starts_at.localeCompare(b.starts_at))
+      .slice(0, limit)
+      .map((event) => ({
+        id: `event:${event.id}`,
+        label: event.title,
+        meta: this.i18n.shortDate(event.starts_at, event.timezone),
+        icon: ICONS['calendar'],
+        route: ['/e', event.slug],
+      }));
+    if (events.length) {
+      groups.push({ key: 'events', labelKey: 'block12.search.events', items: events });
+    }
+
+    const entities = [
+      ...this.communities().map((item) => ({ id: item.id, name: item.name, slug: item.slug, icon: ICONS['globe'] })),
+      ...this.institutions().map((item) => ({ id: item.id, name: item.name, slug: item.slug, icon: ICONS['bank'] })),
+      ...this.strip().map((item) => ({ id: item.id, name: item.name, slug: item.slug, icon: ICONS['globe'] })),
+    ]
+      .filter((item, index, all) => all.findIndex((entry) => entry.id === item.id) === index)
+      .filter((item) => !query || this.normalize(item.name).includes(query))
+      .slice(0, limit)
+      .map((item) => ({
+        id: `community:${item.id}`,
+        label: item.name,
+        meta: '',
+        icon: item.icon,
+        route: ['/comunidade', item.slug],
+      }));
+    if (entities.length) {
+      groups.push({ key: 'communities', labelKey: 'block12.search.communities', items: entities });
+    }
+
+    const people = [...this.people(), ...this.suggestions()]
+      .filter((item, index, all) => all.findIndex((entry) => entry.id === item.id) === index)
+      .filter((item) => item.id !== this.me()?.id)
+      .filter((item) => !query || this.normalize(item.display_name ?? '').includes(query))
+      .slice(0, limit)
+      .map((item) => ({
+        id: `person:${item.id}`,
+        label: item.display_name || '',
+        meta: '',
+        icon: ICONS['user'],
+        route: ['/pessoas', item.id],
+      }));
+    if (people.length) {
+      groups.push({ key: 'people', labelKey: 'block12.search.people', items: people });
+    }
+    return groups;
+  }
+
+  /** Resultados do `/public/search`, com os mesmos grupos da pesquisa global. */
+  private remoteSearchGroups(results: SearchResults): SearchGroup[] {
+    const groups: SearchGroup[] = [];
+    const events = results.events.map((event) => ({
+      id: `event:${event.id}`,
+      label: event.title,
+      meta: this.i18n.shortDate(event.starts_at, event.timezone),
+      icon: ICONS['calendar'],
+      route: ['/e', event.slug],
+    }));
+    if (events.length) {
+      groups.push({ key: 'events', labelKey: 'block12.search.events', items: events });
+    }
+    const entities = results.communities.map((item) => ({
+      id: `community:${item.id}`,
+      label: item.name,
+      meta: '',
+      icon: ICONS['globe'],
+      route: ['/comunidade', item.slug],
+    }));
+    if (entities.length) {
+      groups.push({ key: 'communities', labelKey: 'block12.search.communities', items: entities });
+    }
+    const people = results.people.map((item) => ({
+      id: `person:${item.id}`,
+      label: item.display_name || '',
+      meta: '',
+      icon: ICONS['user'],
+      route: ['/pessoas', item.id],
+    }));
+    if (people.length) {
+      groups.push({ key: 'people', labelKey: 'block12.search.people', items: people });
+    }
+    return groups;
+  }
+
+  /** Minúsculas e sem acentos, para "joao" encontrar "João". */
+  private normalize(value: string): string {
+    return value
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase();
   }
 
   protected eventLink(event: FeedEvent): string {

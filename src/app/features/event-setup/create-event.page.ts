@@ -15,6 +15,7 @@ import { TranslationKey } from '../../core/i18n/translations';
 import {
   BankDetails,
   CreateEventInput,
+  EventLocationEntry,
   EventType,
   GuestInput,
   HostEvent,
@@ -33,11 +34,20 @@ import {
 } from '../../shared/components/event-visibility-fields.component';
 import { EventVisibility } from '../../core/models/models';
 import { extractYoutubeId } from '../../core/utils/youtube';
-import { readPreferredLocation, writePreferredLocation, type PreferredLocation } from '../../core/utils/preferred-location';
-import { LocationPickerDialogComponent, LocationPickResult } from '../../shared/components/location-picker-dialog.component';
-import { ModalComponent } from '../../shared/components/modal.component';
+import { SUBTITLE_MAX_LENGTH, subtitleValue } from '../../core/utils/event-subtitle';
+import {
+  canAddLocation,
+  locationError,
+  moveLocation,
+  normalizeLocations,
+  removeLocation as removeFromList,
+} from '../../core/utils/event-locations';
+import { EventLocationsFieldComponent } from '../../shared/components/event-locations-field.component';
+import { LocationEditDialogComponent } from '../../shared/components/location-edit-dialog.component';
 import { EventDraftsRepository } from '../../core/data/event-drafts.repository';
 import { buildEventCreateRequest } from '../../core/data/events.repository';
+import { entriesFromApi } from '../../core/api/event-locations';
+import type { EventLocation } from '../../core/api/api.models';
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const COVER_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
@@ -58,8 +68,8 @@ interface WizardStep {
     TemplatePreviewComponent,
     PhoneMaskDirective,
     EventVisibilityFieldsComponent,
-    LocationPickerDialogComponent,
-    ModalComponent,
+    EventLocationsFieldComponent,
+    LocationEditDialogComponent,
   ],
   templateUrl: './create-event.page.html',
 })
@@ -88,9 +98,23 @@ export class CreateEventPage {
   protected readonly coverFile = signal<File | null>(null);
   private readonly coverObjectUrl = signal<string | null>(null);
 
-  // Bloco 14 — localização exata e rascunhos
-  protected readonly mapPickerOpen = signal(false);
-  protected readonly pendingSaveLocation = signal<PreferredLocation | null>(null);
+  // Bloco 16 — várias localizações e rascunhos
+  protected readonly locations = signal<EventLocationEntry[]>([]);
+  protected readonly editIndex = signal<number | null>(null);
+  protected readonly editOpen = computed(() => this.editIndex() !== null);
+  protected readonly editingLocation = computed(() => {
+    const index = this.editIndex();
+    return index !== null && index >= 0 ? this.locations()[index] ?? null : null;
+  });
+  protected readonly editingPrimary = computed(() => {
+    const index = this.editIndex();
+    if (index === null || index < 0) return this.locations().length === 0;
+    return this.locations()[index]?.isPrimary ?? false;
+  });
+  protected readonly primaryLocation = computed(
+    () => this.locations().find((item) => item.isPrimary) ?? this.locations()[0] ?? null,
+  );
+  private readonly locationErrorKey = signal<TranslationKey | ''>('');
   protected readonly draftId = signal<string | null>(null);
   protected readonly draftSaving = signal(false);
   protected readonly draftSavedAt = signal<string | null>(null);
@@ -118,6 +142,7 @@ export class CreateEventPage {
 
   protected readonly form = this.fb.group({
     title: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(120)]],
+    subtitle: ['', [Validators.maxLength(SUBTITLE_MAX_LENGTH)]],
     type: this.fb.control<EventType>('wedding', Validators.required),
     hostName: [this.store.profile().name, [Validators.required, Validators.maxLength(120)]],
     hostEmail: [
@@ -128,8 +153,8 @@ export class CreateEventPage {
     time: ['18:00', Validators.required],
     endsAt: [''],
     timezone: ['Africa/Luanda', Validators.required],
-    venue: ['', [Validators.maxLength(120)]],
-    city: ['Luanda', [Validators.maxLength(80)]],
+    venue: [''],
+    city: ['Luanda'],
     onlineLink: [''],
     youtubeVideoUrl: [''],
     latitude: this.fb.control<number | null>(null),
@@ -158,9 +183,12 @@ export class CreateEventPage {
   private readonly formChanges = toSignal(this.form.valueChanges, {
     initialValue: this.form.getRawValue(),
   });
+  /** A lista de locais atualiza os controlos legados sem emitir `valueChanges`. */
+  private readonly formVersion = signal(0);
 
   protected readonly formValue = computed(() => {
     this.formChanges();
+    this.formVersion();
     return this.form.getRawValue();
   });
 
@@ -205,6 +233,8 @@ export class CreateEventPage {
     () => this.formValue().title.trim() || this.i18n.t('create.preview.notConfigured'),
   );
 
+  protected readonly previewSubtitle = computed(() => subtitleValue(this.formValue().subtitle) ?? '');
+
   protected readonly coverPreview = computed(() => {
     const objectUrl = this.coverObjectUrl();
     if (objectUrl) {
@@ -228,7 +258,6 @@ export class CreateEventPage {
   protected readonly canSubmit = computed(() => this.contributionReady() && this.guestCount() >= 0);
 
   constructor() {
-    this.syncLocationValidators();
     void this.loadCommunities();
     this.store.load({ templates: true, profile: true });
     // Se os modelos chegarem depois de o formulário ser criado, aplica o
@@ -417,6 +446,11 @@ export class CreateEventPage {
 
     const fieldMap: Record<string, { step: number; control: string; label: string }> = {
       'event.title': { step: 0, control: 'title', label: 'Título' },
+      'event.subtitle': {
+        step: 0,
+        control: 'subtitle',
+        label: this.i18n.t('block16.field.subtitle'),
+      },
       'event.type': { step: 0, control: 'type', label: 'Tipo de evento' },
       'event.host_name': { step: 0, control: 'hostName', label: 'Nome do anfitrião' },
       'event.host_email': { step: 0, control: 'hostEmail', label: 'Email do anfitrião' },
@@ -527,12 +561,15 @@ export class CreateEventPage {
 
   protected createAnother(): void {
     this.created.set(null);
+    this.locations.set([]);
+    this.editIndex.set(null);
     this.setCoverFile(null);
     this.step.set(0);
     this.formError.set('');
     this.suggestionMessage.set('');
     this.form.reset({
       title: '',
+      subtitle: '',
       type: 'wedding',
       hostName: this.store.profile().name,
       hostEmail: this.store.profile().email,
@@ -599,8 +636,17 @@ export class CreateEventPage {
 
   private reportStepError(step: number): void {
     this.step.set(step);
+    const locationKey = this.locationErrorKey();
+    if (locationKey) {
+      const message = this.i18n.t(locationKey);
+      this.formError.set(message);
+      this.toasts.error(message);
+      this.locationErrorKey.set('');
+      return;
+    }
     const controlLabels: Record<string, string> = {
       title: 'Título',
+      subtitle: this.i18n.t('block16.field.subtitle'),
       hostName: 'Nome do anfitrião',
       hostEmail: 'Email do anfitrião',
       date: 'Data',
@@ -621,7 +667,7 @@ export class CreateEventPage {
       coverUrl: 'Imagem de capa',
     };
     const controlsByStep: Record<number, string[]> = {
-      0: ['title', 'type', 'hostName', 'hostEmail', 'date', 'time', 'endsAt', 'timezone', 'venue', 'city', 'onlineLink', 'youtubeVideoUrl', 'coverUrl'],
+      0: ['title', 'subtitle', 'type', 'hostName', 'hostEmail', 'date', 'time', 'endsAt', 'timezone', 'venue', 'city', 'onlineLink', 'youtubeVideoUrl', 'coverUrl'],
       1: ['message', 'dressCode', 'rsvpDeadline', 'rules', 'bankName', 'accountName', 'iban'],
       2: [],
     };
@@ -662,8 +708,6 @@ export class CreateEventPage {
         this.form.controls.hostEmail,
         this.form.controls.date,
         this.form.controls.time,
-        this.form.controls.venue,
-        this.form.controls.city,
         this.form.controls.coverUrl,
       ];
       controls.forEach((control) => control.markAsTouched());
@@ -686,10 +730,18 @@ export class CreateEventPage {
         return false;
       }
       this.form.controls.endsAt.updateValueAndValidity({ onlySelf: true });
-      const link = this.form.controls.onlineLink.value.trim();
-      if (link && !link.startsWith('https://')) {
-        this.form.controls.onlineLink.setErrors({ invalidLink: true });
+      this.locationErrorKey.set('');
+      const locations = this.locations();
+      if (!locations.length) {
+        this.locationErrorKey.set('block16.locations.empty');
         return false;
+      }
+      for (const item of locations) {
+        const error = locationError(item);
+        if (error) {
+          this.locationErrorKey.set(error);
+          return false;
+        }
       }
       return true;
     }
@@ -756,91 +808,87 @@ export class CreateEventPage {
     return extractYoutubeId(this.form.controls.youtubeVideoUrl.value);
   }
 
-  protected hasExactLocation(): boolean {
-    const v = this.form.getRawValue();
-    return typeof v.latitude === 'number' && typeof v.longitude === 'number';
+  private legacyFromForm(): EventLocation {
+    const value = this.form.getRawValue();
+    return value.onlineLink.trim()
+      ? { type: 'online', online_url: value.onlineLink.trim() }
+      : {
+          type: 'venue',
+          name: value.venue.trim(),
+          address: value.city.trim() || null,
+          latitude: value.latitude,
+          longitude: value.longitude,
+          place_label: value.placeLabel.trim() || null,
+          place_name: value.placeLabel.trim() || null,
+        };
   }
 
-  private syncLocationValidators(): void {
-    const hasExact = this.hasExactLocation();
-    const venue = this.form.controls.venue;
-    const city = this.form.controls.city;
-    const venueValidators = [Validators.maxLength(120), ...(hasExact ? [] : [Validators.required])];
-    const cityValidators = [Validators.maxLength(80), ...(hasExact ? [] : [Validators.required])];
-    venue.setValidators(venueValidators);
-    city.setValidators(cityValidators);
-    venue.updateValueAndValidity({ emitEvent: false });
-    city.updateValueAndValidity({ emitEvent: false });
+  /** Mantém os campos legados alinhados com a principal (compatibilidade). */
+  private syncLegacyLocation(): void {
+    const primary = this.primaryLocation();
+    const patch = !primary
+      ? { venue: '', city: '', onlineLink: '', latitude: null, longitude: null, placeLabel: '' }
+      : primary.kind === 'online'
+        ? { venue: '', city: '', onlineLink: primary.onlineUrl ?? '', latitude: null, longitude: null, placeLabel: '' }
+        : {
+            venue: primary.venueName || primary.address || '',
+            city: primary.city ?? '',
+            onlineLink: '',
+            latitude: primary.latitude ?? null,
+            longitude: primary.longitude ?? null,
+            placeLabel: primary.label ?? '',
+          };
+    this.form.patchValue(patch, { emitEvent: false });
+    this.formVersion.update((version) => version + 1);
   }
 
-  private promptSaveLocation(lat: number, lng: number, city?: string, venue?: string): void {
-    const saved = readPreferredLocation();
-    if (saved && saved.latitude === lat && saved.longitude === lng) return;
-    this.pendingSaveLocation.set({
-      latitude: lat,
-      longitude: lng,
-      city: city ?? (this.form.controls.city.value.trim() || undefined),
-      venue: venue ?? (this.form.controls.venue.value.trim() || undefined),
-      placeLabel: this.form.controls.placeLabel.value.trim() || undefined,
-    });
-  }
-
-  protected savePreferredLocation(): void {
-    const pending = this.pendingSaveLocation();
-    if (pending) writePreferredLocation(pending);
-    this.pendingSaveLocation.set(null);
-  }
-
-  protected dismissPreferredLocation(): void {
-    this.pendingSaveLocation.set(null);
-  }
-
-  protected openMapPicker(): void {
-    this.mapPickerOpen.set(true);
-  }
-
-  protected closeMapPicker(): void {
-    this.mapPickerOpen.set(false);
-  }
-
-  protected onMapPicked(point: LocationPickResult): void {
-    this.form.controls.latitude.setValue(point.latitude);
-    this.form.controls.longitude.setValue(point.longitude);
-    this.form.controls.placeLabel.setValue(point.placeName ?? '');
-    this.form.controls.latitude.markAsDirty();
-    this.form.controls.longitude.markAsDirty();
-    this.syncLocationValidators();
-    this.closeMapPicker();
-    this.scheduleDraftSave();
-    this.promptSaveLocation(point.latitude, point.longitude);
-  }
-
-  protected removeExactLocation(): void {
-    this.form.controls.latitude.setValue(null);
-    this.form.controls.longitude.setValue(null);
-    this.form.controls.placeLabel.setValue('');
-    this.syncLocationValidators();
-    this.scheduleDraftSave();
-  }
-
-  protected useMyLocation(): void {
-    if (typeof navigator === 'undefined' || !navigator.geolocation) {
-      this.toasts.error(this.i18n.t('block14.location.error'));
+  protected addLocation(): void {
+    if (!canAddLocation(this.locations())) {
+      this.toasts.error(this.i18n.t('block16.locations.maxReached'));
       return;
     }
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const lat = Math.round(pos.coords.latitude * 1e6) / 1e6;
-        const lng = Math.round(pos.coords.longitude * 1e6) / 1e6;
-        this.form.controls.latitude.setValue(lat);
-        this.form.controls.longitude.setValue(lng);
-        this.syncLocationValidators();
-        this.scheduleDraftSave();
-        this.promptSaveLocation(lat, lng);
-      },
-      () => this.toasts.error(this.i18n.t('block14.location.error')),
-      { enableHighAccuracy: true, timeout: 10_000 },
+    this.editIndex.set(-1);
+  }
+
+  protected editLocation(index: number): void {
+    this.editIndex.set(index);
+  }
+
+  protected closeLocationEdit(): void {
+    this.editIndex.set(null);
+  }
+
+  protected saveLocation(entry: EventLocationEntry): void {
+    const index = this.editIndex();
+    if (index === null) return;
+    const list = this.locations().map((item) =>
+      entry.isPrimary ? { ...item, isPrimary: false } : { ...item },
     );
+    const saved: EventLocationEntry = { ...entry, id: index >= 0 ? list[index]?.id ?? null : null };
+    if (index === -1) list.push(saved);
+    else list[index] = saved;
+    this.locations.set(normalizeLocations(list));
+    this.syncLegacyLocation();
+    this.scheduleDraftSave();
+    this.editIndex.set(null);
+  }
+
+  protected moveLocation(event: { index: number; direction: -1 | 1 }): void {
+    this.locations.set(moveLocation(this.locations(), event.index, event.direction));
+    this.syncLegacyLocation();
+    this.scheduleDraftSave();
+  }
+
+  protected promoteLocation(index: number): void {
+    this.locations.set(this.locations().map((item, current) => ({ ...item, isPrimary: current === index })));
+    this.syncLegacyLocation();
+    this.scheduleDraftSave();
+  }
+
+  protected removeLocation(index: number): void {
+    this.locations.set(removeFromList(this.locations(), index));
+    this.syncLegacyLocation();
+    this.scheduleDraftSave();
   }
 
   private scheduleDraftSave(): void {
@@ -872,19 +920,27 @@ export class CreateEventPage {
   }
 
   private buildDraftPayload(): Record<string, unknown> {
+    this.syncLegacyLocation();
     const raw = this.form.getRawValue();
     // Não guardar ficheiro de capa local no rascunho (só URL).
-    return { ...raw, coverFile: null };
+    return { ...raw, locations: this.locations(), coverFile: null };
   }
 
   private async loadDraft(id: string): Promise<void> {
     try {
       const draft = await this.drafts.get(id);
       const payload = (draft.payload ?? {}) as Record<string, unknown>;
-      this.form.patchValue(this.sanitizeDraftPayload(payload), { emitEvent: false });
+      const sanitized = this.sanitizeDraftPayload(payload);
+      this.form.patchValue(sanitized, { emitEvent: false });
+      const stored = sanitized['locations'];
+      this.locations.set(
+        Array.isArray(stored) && stored.length
+          ? normalizeLocations(stored as EventLocationEntry[])
+          : entriesFromApi(undefined, this.legacyFromForm()),
+      );
       const step = typeof draft.step === 'number' ? Math.max(0, Math.min(3, draft.step)) : 0;
       this.step.set(step);
-      this.syncLocationValidators();
+      this.formVersion.update((version) => version + 1);
       this.draftId.set(draft.id);
       this.draftSavedAt.set(draft.updatedAt);
     } catch {
@@ -895,19 +951,31 @@ export class CreateEventPage {
   private sanitizeDraftPayload(payload: Record<string, unknown>): Record<string, unknown> {
     // Only allow known keys; avoid injecting unexpected shapes.
     const allowed = new Set([
-      'title','type','hostName','hostEmail','date','time','endsAt','timezone','venue','city','onlineLink',
+      'title','subtitle','type','hostName','hostEmail','date','time','endsAt','timezone','venue','city','onlineLink',
       'youtubeVideoUrl','latitude','longitude','placeLabel','useTables','message','rules','dressCode',
       'rsvpDeadline','templateId','coverUrl','contributionEnabled','bankName','accountName','iban',
-      'visibilitySettings','guests',
+      'visibilitySettings','guests','locations',
     ]);
     const out: Record<string, unknown> = {};
     for (const [k, v] of Object.entries(payload)) {
       if (allowed.has(k)) out[k] = v;
     }
+    if (Array.isArray(out['locations'])) {
+      out['locations'] = (out['locations'] as unknown[])
+        .filter(
+          (item): item is EventLocationEntry =>
+            !!item &&
+            typeof item === 'object' &&
+            ((item as EventLocationEntry).kind === 'venue' ||
+              (item as EventLocationEntry).kind === 'online'),
+        )
+        .slice(0, 5);
+    }
     return out;
   }
 
   private buildInput(): CreateEventInput {
+    this.syncLegacyLocation();
     const value = this.form.getRawValue();
     const guests: GuestInput[] = value.guests
       .filter((guest) => guest.name.trim() || guest.email.trim() || guest.phone.trim())
@@ -929,6 +997,7 @@ export class CreateEventPage {
     const youtubeVideoId = this.resolvedYoutubeId();
     return {
       title: value.title.trim(),
+      subtitle: subtitleValue(value.subtitle),
       type: value.type,
       hostName: value.hostName.trim(),
       hostEmail: value.hostEmail.trim(),
@@ -962,6 +1031,7 @@ export class CreateEventPage {
       placeLabel: online ? null : (value.placeLabel.trim() || null),
       placeName: online ? null : (value.placeLabel.trim() || null),
       useTables: value.useTables,
+      locations: this.locations(),
     };
   }
 

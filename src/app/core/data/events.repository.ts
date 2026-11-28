@@ -6,7 +6,10 @@ import {
   ApiEventManager,
   ApiManagerInviteResult,
   CreateEventRequest,
+  EventLocation,
 } from '../api/api.models';
+import { entriesToApi, legacyFromEntries } from '../api/event-locations';
+import { subtitleValue } from '../utils/event-subtitle';
 import {
   contributionFromInput,
   locationFromInput,
@@ -35,6 +38,7 @@ export type EventUpdatePatch = Partial<
   Pick<
     HostEvent,
     | 'title'
+    | 'subtitle'
     | 'venue'
     | 'city'
     | 'message'
@@ -51,6 +55,7 @@ export type EventUpdatePatch = Partial<
     | 'placeLabel'
     | 'placeName'
     | 'useTables'
+    | 'locations'
   >
 >;
 
@@ -64,16 +69,20 @@ export type EventUpdatePatch = Partial<
  * `/host/communities/:id/event-suggestions`.
  */
 export function buildEventCreateRequest(input: CreateEventInput): CreateEventRequest {
+  const legacy = locationFromInput(input);
+  const locations = entriesToApi(input.locations ?? []);
   return {
     event: {
       title: input.title,
+      subtitle: subtitleValue(input.subtitle),
       host_name: input.hostName,
       host_email: input.hostEmail,
       category: input.type,
       starts_at: input.startsAt,
       ends_at: input.endsAt ?? undefined,
       timezone: input.timezone,
-      location: locationFromInput(input),
+      location: locations.length ? legacyFromEntries(input.locations ?? [], legacy) : legacy,
+      ...(locations.length ? { locations } : {}),
       message: input.message,
       rules: input.rules || undefined,
       dress_code: input.dressCode || undefined,
@@ -164,6 +173,7 @@ export class EventsRepository extends CachedRepository<HostEvent[]> {
     }
     const body: Record<string, unknown> = {};
     if (patch.title !== undefined) body['title'] = patch.title;
+    if (patch.subtitle !== undefined) body['subtitle'] = subtitleValue(patch.subtitle);
     if (patch.message !== undefined) body['message'] = patch.message;
     if (patch.rules !== undefined) body['rules'] = patch.rules;
     if (patch.dressCode !== undefined) body['dress_code'] = patch.dressCode;
@@ -176,14 +186,28 @@ export class EventsRepository extends CachedRepository<HostEvent[]> {
     if (patch.maxAge !== undefined) body['max_age'] = patch.maxAge;
     if (patch.youtubeVideoId !== undefined) body['youtube_url'] = patch.youtubeVideoId;
     if (patch.useTables !== undefined) body['use_tables'] = patch.useTables;
-    if (
+    const hasLegacyPatch =
       patch.venue !== undefined ||
       patch.city !== undefined ||
       patch.latitude !== undefined ||
       patch.longitude !== undefined ||
       patch.placeLabel !== undefined ||
-      patch.placeName !== undefined
-    ) {
+      patch.placeName !== undefined;
+    if (patch.locations !== undefined && patch.locations.length > 0) {
+      const currentLegacy: EventLocation = current.onlineLink
+        ? { type: 'online', online_url: current.onlineLink }
+        : {
+            type: 'venue',
+            name: current.venue,
+            address: current.city,
+            latitude: current.latitude,
+            longitude: current.longitude,
+            place_label: current.placeLabel,
+            place_name: current.placeName,
+          };
+      body['locations'] = entriesToApi(patch.locations);
+      body['location'] = legacyFromEntries(patch.locations, currentLegacy);
+    } else if (hasLegacyPatch) {
       body['location'] = locationFromView(current, {
         venue: patch.venue,
         city: patch.city,

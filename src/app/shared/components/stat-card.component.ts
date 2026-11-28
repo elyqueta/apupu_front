@@ -59,17 +59,19 @@ const TONES: Record<IconTone, { tile: string; line: string }> = {
         </span>
       </div>
 
-      <div class="mt-3 flex items-end justify-between gap-3 sm:mt-4">
-        <p class="text-[11px] leading-5 text-muted sm:text-xs">{{ hint() }}</p>
-        @if (trend()) {
-          <span
-            class="inline-flex shrink-0 items-center gap-1 rounded-full border border-mint/25 bg-mint/10 px-2 py-0.5 text-[10px] font-semibold text-mint"
-          >
-            <fa-icon [icon]="icons['trendUp']" class="text-[9px]" aria-hidden="true" />
-            {{ trend() }}
-          </span>
-        }
-      </div>
+      @if (hint() || trend()) {
+        <div class="mt-3 flex items-end justify-between gap-3 sm:mt-4">
+          <p class="text-[11px] leading-5 text-muted sm:text-xs">{{ hint() }}</p>
+          @if (trend()) {
+            <span
+              class="inline-flex shrink-0 items-center gap-1 rounded-full border border-mint/25 bg-mint/10 px-2 py-0.5 text-[10px] font-semibold text-mint"
+            >
+              <fa-icon [icon]="icons['trendUp']" class="text-[9px]" aria-hidden="true" />
+              {{ trend() }}
+            </span>
+          }
+        </div>
+      }
 
       @if (sparkline().length > 1) {
         <svg

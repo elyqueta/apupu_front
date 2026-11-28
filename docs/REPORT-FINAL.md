@@ -40,3 +40,14 @@
 - Verificação: front `build/lint(0 erros)/test(57/241)/tsc` verdes; back `build/typecheck/lint(0 erros)/test(43 passed,6 skipped;404/89)` verdes; `bloco14.pdf.test.ts` inclui 3 fontes embutidas.
 - Pendências: validação visual manual Gratitude/PDF, migração up/down em DB de teste dedicada, relatório detalhado em `docs/REPORT-BLOCO-15.md`.
 - Sem push, merge, rebase ou eliminação de branches.
+
+## Bloco 16 — Convite do template (concluído)
+
+**Branch:** `feat/bloco-16-convite-template` (front e back). **Data:** 2026-11-28. **Estado:** 10 passos implementados; ver `docs/REPORT-BLOCO-16.md`.
+
+- Convite tematizado pelo manifesto (`--inv-*`, contraste ≥ 4,5:1), sem logótipo nem alternador de tema; capa com a arte do template; FAB com folha de informações em `invitation.page` e no link público.
+- QR digital e PDF com o símbolo da plataforma (área ≈ 3,2%, ECC H); estrela antiga removida e causa registada.
+- Várias localizações por evento (uma principal, máx. 5) com migração reversível, espelho da principal nas colunas legadas, `maps_url`, PDF/e-mails/feed coerentes e seletor MapLibre/OpenFreeMap lazy.
+- Subtítulo do Gratitude passou a campo editável e persistido, com fallback da derivação antiga.
+- Verificação: front `build` (sem aviso CommonJS), `lint` 0 erros, `tsc`, `e2e:typecheck`, 304/304 testes em lotes; back `build`, `typecheck`, `lint` 0 erros, 485 passed/89 skipped, migrações `up → down → up` verdes.
+- Sem push, merge ou rebase. Bloqueios restantes em `docs/BLOCKERS.md`.

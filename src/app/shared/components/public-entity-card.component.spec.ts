@@ -75,4 +75,17 @@ describe('PublicEntityCardComponent', () => {
     expect(card.textContent).toContain('Instituição');
     expect(card.querySelector('a')?.textContent?.trim()).toBe('Ver');
   });
+
+  it('mantém as iniciais fora da capa com overflow', () => {
+    const card = native().querySelector('[data-testid="feed-community-comunidade-teste-bloco-11"]') as HTMLElement;
+    const cover = card.querySelector('div.h-32') as HTMLElement;
+    const avatar = card.querySelector('span.size-14') as HTMLElement;
+
+    expect(avatar.parentElement).toBe(card);
+    expect(cover.parentElement).toBe(card);
+    expect(cover.className).toContain('overflow-hidden');
+    expect(card.className).toContain('relative');
+    expect(card.className).not.toContain('overflow-hidden');
+    expect(card.textContent).toContain('CT');
+  });
 });

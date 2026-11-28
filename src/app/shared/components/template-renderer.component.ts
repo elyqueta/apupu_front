@@ -9,11 +9,15 @@ import { TemplatePreviewComponent } from './template-preview.component';
 
 export interface TemplateRenderData {
   title: string;
+  /** Subtítulo editável do evento; quando ausente, cada template usa o seu texto por omissão. */
+  subtitle?: string | null;
   hostName: string;
   startsAt?: string | null;
   endsAt?: string | null;
   timezone?: string | null;
   city?: string | null;
+  /** Endereço da localização principal (Bloco 16). */
+  address?: string | null;
   venue?: string | null;
   onlineLink?: string | null;
   message?: string | null;
@@ -22,6 +26,10 @@ export interface TemplateRenderData {
   coverUrl?: string | null;
   type?: string | null;
   templateSlug?: string | null;
+  /** Bloco 16: lista de localizações para a linha "+N locais". */
+  locations?: InvitationEventView['locations'];
+  /** Nome do convidado, quando o link foi aberto por alguém identificado. */
+  guestName?: string | null;
 }
 
 @Component({
@@ -30,7 +38,12 @@ export interface TemplateRenderData {
   template: `
     @if (isGratitude()) {
       <div class="relative">
-        <app-gratitude-invitation [event]="gratitudeEvent()" [manifest]="manifest()" [editorMode]="editable()" />
+        <app-gratitude-invitation
+          [event]="gratitudeEvent()"
+          [manifest]="manifest()"
+          [editorMode]="editable()"
+          [coverOnly]="isCover()"
+        />
         @if (editable()) {
           <button
             type="button"
@@ -62,6 +75,17 @@ export interface TemplateRenderData {
         [style.color]="'var(--tpl-ink)'"
       >
         <div class="relative flex flex-1 flex-col gap-4 p-6 sm:p-8" [class.items-center]="centered()" [class.text-center]="centered()">
+          @if (mode() === 'full') {
+            @if (data().guestName; as guestName) {
+              <p
+                class="text-sm font-semibold sm:text-base"
+                data-testid="template-guest-name"
+                [style.color]="'var(--tpl-accent)'"
+              >
+                {{ i18n.t('invitation.guestGreeting', { name: guestName }) }}
+              </p>
+            }
+          }
           @for (block of blocks(); track block.id) {
             <div
               class="relative w-full rounded-xl transition"
@@ -193,7 +217,7 @@ export class TemplateRendererComponent {
 
   readonly manifest = input.required<TemplateManifest>();
   readonly data = input.required<TemplateRenderData>();
-  readonly mode = input<'preview' | 'invite'>('invite');
+  readonly mode = input<'preview' | 'invite' | 'full' | 'cover'>('invite');
   readonly previewVariant = input<'thumb' | 'cover' | 'hero'>('hero');
   readonly animate = input(false);
   readonly kicker = input('');
@@ -208,6 +232,7 @@ export class TemplateRendererComponent {
   });
 
   protected readonly usePreview = computed(() => this.mode() === 'preview' && !this.isGratitude());
+  protected readonly isCover = computed(() => this.mode() === 'cover');
   protected readonly centered = computed(() => this.manifest().layout.align === 'center');
   protected readonly style = computed(() => manifestStyle(this.manifest()));
   protected readonly displayFont = computed(() => fontFamily(this.manifest().fonts.display));
@@ -221,9 +246,20 @@ export class TemplateRendererComponent {
 
   protected readonly blocks = computed<TemplateBlock[]>(() => {
     const doc = this.manifest().document;
-    if (doc?.version === 2 && Array.isArray(doc.blocks)) return doc.blocks.filter((b) => b.visible !== false || this.editable());
-    return this.manifest().layout.blocks.map((b, i) => this.v1Block(b, i));
+    const blocks: TemplateBlock[] =
+      doc?.version === 2 && Array.isArray(doc.blocks)
+        ? doc.blocks.filter((b) => b.visible !== false || this.editable())
+        : this.manifest().layout.blocks.map((b, i) => this.v1Block(b, i));
+    if (!this.isCover()) return blocks;
+    return blocks.filter((block) => this.showsInCover(block));
   });
+
+  /** Bloco 16: por omissão, a capa mostra só identidade e título. */
+  private showsInCover(block: TemplateBlock): boolean {
+    if (typeof block.showInCover === 'boolean') return block.showInCover;
+    if (block.type === 'ornament' || block.type === 'title') return true;
+    return /org|subtitle|highlight|host/i.test(block.id);
+  }
 
   protected readonly gratitudeTitleId = computed(() => {
     const b = this.blocks().find((x) => x.type === 'title');
@@ -235,6 +271,7 @@ export class TemplateRendererComponent {
     return {
       id: '',
       title: d.title,
+      subtitle: d.subtitle ?? null,
       type: (d.type as InvitationEventView['type']) ?? 'other',
       hostName: d.hostName,
       hostEmail: '',
@@ -245,7 +282,7 @@ export class TemplateRendererComponent {
       rsvpDeadline: d.rsvpDeadline ?? null,
       timezone: d.timezone ?? 'Africa/Luanda',
       venue: d.venue ?? '',
-      address: '',
+      address: d.address ?? '',
       city: d.city ?? '',
       onlineLink: d.onlineLink ?? null,
       message: d.message ?? '',
@@ -263,6 +300,8 @@ export class TemplateRendererComponent {
       longitude: null,
       placeLabel: null,
       placeName: null,
+      locations: d.locations ?? [],
+      guestName: d.guestName ?? null,
       organizers: [],
       community: null,
     };

@@ -79,7 +79,7 @@ const activeMenu = signal<ActionMenuComponent | null>(null);
         role="menu"
         tabindex="-1"
         [attr.aria-label]="triggerLabel() || i18n.t('common.moreActions')"
-        class="fixed z-[90] max-h-[min(24rem,70dvh)] w-64 max-w-[calc(100vw-16px)] overflow-y-auto overscroll-contain rounded-2xl border border-line bg-surface-solid/95 p-1.5 shadow-card backdrop-blur-2xl animate-rise"
+        class="fixed z-[90] max-h-[min(24rem,70dvh)] w-72 max-w-[calc(100vw-16px)] overflow-y-auto overscroll-contain rounded-2xl border border-line bg-surface-solid/95 p-1.5 shadow-pop backdrop-blur-2xl animate-rise"
         (keydown)="onMenuKeydown($event)"
       >
         @for (item of items(); track item.id) {
@@ -92,8 +92,8 @@ const activeMenu = signal<ActionMenuComponent | null>(null);
             [class]="itemClass(item)"
             (click)="select(item)"
           >
-            @if (item.icon) { <fa-icon [icon]="item.icon" class="w-4 shrink-0 text-xs" aria-hidden="true" /> }
-            <span class="min-w-0 flex-1 truncate text-left">{{ item.label }}</span>
+            @if (item.icon) { <fa-icon [icon]="item.icon" class="w-4 shrink-0 text-sm" aria-hidden="true" /> }
+            <span class="min-w-0 flex-1 break-words text-left leading-snug">{{ item.label }}</span>
           </button>
         }
       </div>
@@ -174,7 +174,7 @@ export class ActionMenuComponent {
   }
 
   protected itemClass(item: ActionMenuItem): string {
-    const base = 'flex min-h-11 w-full items-center gap-2.5 rounded-xl px-2.5 text-xs font-medium transition';
+    const base = 'flex min-h-12 w-full items-center gap-2.5 rounded-xl px-3 text-sm font-medium transition';
     if (item.disabled) {
       return `${base} cursor-not-allowed text-muted/50`;
     }

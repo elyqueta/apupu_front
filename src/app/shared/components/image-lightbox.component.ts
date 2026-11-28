@@ -58,7 +58,7 @@ import { ICONS } from '../../core/ui/icons';
             <img
               [src]="image"
               [alt]="alt()"
-              class="max-h-full max-w-full rounded-2xl object-contain shadow-card"
+              class="max-h-full max-w-full rounded-2xl object-contain shadow-pop"
             />
           </div>
         </div>

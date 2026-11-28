@@ -38,36 +38,26 @@
     <app-stat-card
       [label]="i18n.t('dashboard.stats.events')"
       [value]="stats().events"
-      [hint]="i18n.t('dashboard.stats.eventsHint')"
       [icon]="icons['events']"
       tone="brand"
-      [sparkline]="[2, 3, 3, 4, 4, 5, stats().events]"
     />
     <app-stat-card
       [label]="i18n.t('dashboard.stats.guests')"
       [value]="i18n.number(stats().total)"
-      [hint]="i18n.t('dashboard.stats.guestsHint')"
       [icon]="icons['guests']"
       tone="iris"
-      [sparkline]="[18, 22, 28, 31, 36, 39, stats().total]"
     />
     <app-stat-card
       [label]="i18n.t('dashboard.stats.confirmed')"
       [value]="i18n.number(stats().confirmed)"
-      [hint]="i18n.t('dashboard.stats.confirmedHint')"
       [icon]="icons['userCheck']"
       tone="mint"
-      [trend]="'+12%'"
-      [sparkline]="[8, 11, 13, 16, 17, 19, stats().confirmed]"
     />
     <app-stat-card
       [label]="i18n.t('dashboard.stats.response')"
       [value]="stats().responseRate + '%'"
-      [hint]="i18n.t('dashboard.stats.responseHint')"
       [icon]="icons['chartLine']"
       tone="aqua"
-      [trend]="'+6%'"
-      [sparkline]="[38, 42, 48, 52, 58, 61, stats().responseRate]"
     />
   </app-stat-grid>
 
@@ -387,6 +377,7 @@
       </div>
     </section>
 
+    <div class="flex min-w-0 flex-col gap-4">
     <section class="flex h-96 flex-col rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl">
       <div class="flex shrink-0 items-start justify-between gap-3">
         <div>
@@ -437,10 +428,96 @@
         </ol>
       }
     </section>
+
+    <section class="flex min-h-72 flex-1 flex-col rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl">
+      <div class="flex shrink-0 flex-wrap items-start justify-between gap-3">
+        <div>
+          <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-brand-strong">
+            {{ i18n.t('dashboard.responseByEvent') }}
+          </p>
+          <p class="mt-1 text-sm text-muted">{{ i18n.t('dashboard.responseByEventHint') }}</p>
+        </div>
+        <span class="rounded-full border border-line bg-surface-raised px-2.5 py-1 text-[10px] font-semibold tabular-nums text-muted">
+          {{ i18n.t('dashboard.responseByEventTotal', { count: i18n.number(responseTotals().total) }) }}
+        </span>
+      </div>
+
+      @if (responseEvents().length === 0 || responseTotals().total === 0) {
+        <div class="mt-4 flex flex-1 flex-col items-center justify-center rounded-2xl border border-dashed border-line bg-surface-raised/30 p-6 text-center">
+          <span class="grid size-12 place-items-center rounded-2xl border border-brand/25 bg-brand/10 text-brand-strong">
+            <fa-icon [icon]="icons['chartLine']" class="text-lg" aria-hidden="true" />
+          </span>
+          <p class="mt-4 text-sm font-semibold text-ink">{{ i18n.t('dashboard.responseByEventEmpty') }}</p>
+        </div>
+      } @else {
+        <div class="mt-4 flex flex-col gap-1">
+          @for (event of responseEvents(); track event.id) {
+            <button
+              type="button"
+              [class]="
+                selectedResponseEvent()?.id === event.id
+                  ? 'flex w-full items-center gap-3 rounded-2xl bg-brand/5 p-2 text-left transition hover:bg-brand/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60'
+                  : 'flex w-full items-center gap-3 rounded-2xl p-2 text-left transition hover:bg-surface-raised/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60'
+              "
+              [attr.aria-pressed]="selectedResponseEvent()?.id === event.id"
+              [attr.aria-label]="
+                i18n.t('dashboard.responseByEventRow', {
+                  event: event.title,
+                  count: event.stats.total,
+                })
+              "
+              (click)="selectResponseEvent(event.id)"
+            >
+              <span class="min-w-0 flex-1 truncate text-xs font-semibold text-ink" [title]="event.title">{{ event.title }}</span>
+              <span class="flex h-2 w-20 shrink-0 overflow-hidden rounded-full bg-line" aria-hidden="true">
+                <span class="bg-mint" [style.width.%]="event.confirmedPct"></span>
+                <span class="bg-amber" [style.width.%]="event.pendingPct"></span>
+                <span class="bg-coral" [style.width.%]="event.declinedPct"></span>
+              </span>
+              <span class="w-6 shrink-0 text-right text-[11px] font-semibold tabular-nums text-muted">{{ event.stats.total }}</span>
+            </button>
+          }
+        </div>
+
+        @if (selectedResponseEvent(); as selected) {
+          <div class="mt-4 rounded-2xl border border-line bg-surface-raised/40 p-3">
+            <div class="flex items-center justify-between gap-2">
+              <p class="min-w-0 truncate text-xs font-semibold text-ink" [title]="selected.title">{{ selected.title }}</p>
+              <a
+                [routerLink]="['/eventos', selected.id]"
+                class="inline-flex shrink-0 items-center gap-1 text-[10px] font-semibold text-brand-strong hover:underline"
+              >
+                {{ i18n.t('dashboard.manage') }}
+                <fa-icon [icon]="icons['chevronRight']" class="text-[9px]" aria-hidden="true" />
+              </a>
+            </div>
+            <div class="mt-3 grid grid-cols-3 gap-2">
+              @for (
+                part of [
+                  { key: 'dashboard.confirmed', value: selected.stats.confirmed, dot: 'bg-mint' },
+                  { key: 'dashboard.pending', value: selected.stats.pending, dot: 'bg-amber' },
+                  { key: 'dashboard.declined', value: selected.stats.declined, dot: 'bg-coral' },
+                ];
+                track part.key
+              ) {
+                <div class="rounded-xl border border-line bg-surface px-2 py-2 text-center">
+                  <span class="inline-flex items-center gap-1 text-[10px] text-muted">
+                    <span class="size-1.5 rounded-full" [class]="part.dot" aria-hidden="true"></span>
+                    {{ i18n.t($any(part.key)) }}
+                  </span>
+                  <p class="mt-1 font-display text-lg font-semibold leading-none tabular-nums text-ink">{{ part.value }}</p>
+                </div>
+              }
+            </div>
+          </div>
+        }
+      }
+    </section>
+    </div>
   </div>
 
   <div
-    class="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-4 xl:grid-cols-[minmax(0,1.75fr)_minmax(0,1fr)]"
+    class="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]"
   >
     <section class="flex min-h-0 flex-col rounded-4xl border border-line bg-surface p-5 shadow-card backdrop-blur-2xl">
       <div class="flex flex-wrap items-start justify-between gap-3">
@@ -450,11 +527,10 @@
           </p>
           <p class="mt-1 text-sm text-muted">{{ i18n.t('dashboard.chartHint') }}</p>
         </div>
-        <div class="flex items-center gap-3 text-[10px] text-muted">
-          <span class="inline-flex items-center gap-1.5">
-            <span class="size-2 rounded-full bg-aqua"></span>
-            {{ i18n.t('dashboard.chartSeries') }}
-          </span>
+        <div class="inline-flex items-center gap-2 rounded-full border border-brand/25 bg-brand/10 px-3 py-1.5 text-[10px] font-semibold text-brand-strong">
+          <fa-icon [icon]="icons['chartLine']" class="text-[10px]" aria-hidden="true" />
+          {{ i18n.t('dashboard.chartSeries') }}
+          <span class="font-display text-sm tabular-nums text-ink" aria-live="polite">{{ weeklyTotal() }}</span>
         </div>
       </div>
 
@@ -462,7 +538,7 @@
         @if (activeChartDay(); as day) {
           <div
             role="status"
-            class="pointer-events-none absolute top-0 z-10 -translate-x-1/2 whitespace-nowrap rounded-lg border border-line bg-surface-solid px-2 py-1 text-[11px] font-semibold text-ink shadow-card"
+            class="pointer-events-none absolute top-0 z-10 -translate-x-1/2 whitespace-nowrap rounded-lg border border-line bg-surface-solid px-2 py-1 text-[11px] font-semibold text-ink shadow-pop"
             [style.left.%]="Math.min(93, Math.max(7, (activeDay() ?? 0) * 14 + 7))"
           >
             {{ day.ariaLabel }}
@@ -490,6 +566,14 @@
                 (click)="setActiveDay($index)"
               >
                 <rect [attr.x]="$index * 14" y="0" width="14" height="36" fill="transparent" />
+                <rect
+                  [attr.x]="$index * 14 + 3"
+                  y="4"
+                  width="8"
+                  height="31"
+                  rx="2"
+                  class="fill-line/40"
+                />
                 @if (day.value === 0) {
                   <rect
                     [attr.x]="$index * 14 + 3"
@@ -506,7 +590,14 @@
                     width="8"
                     [attr.height]="day.height"
                     rx="2"
-                    [attr.class]="activeDay() === $index ? 'fill-brand' : 'fill-brand/70'"
+                    class="transition-all duration-200"
+                    [class]="activeDay() === $index ? 'fill-brand' : 'fill-brand/70'"
+                  />
+                  <circle
+                    [attr.cx]="$index * 14 + 7"
+                    [attr.cy]="35 - day.height"
+                    r="1.2"
+                    [class]="activeDay() === $index ? 'fill-brand' : 'fill-brand/60'"
                   />
                 }
               </g>
@@ -515,9 +606,13 @@
         </div>
         <div class="mt-1 grid shrink-0 grid-cols-7 gap-1 text-center">
           @for (day of week(); track $index) {
-            <div>
+            <div
+              class="rounded-lg py-1 transition"
+              [class]="activeDay() === $index ? 'bg-brand/10' : ''"
+            >
               <p
                 class="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted"
+                [class.text-brand-strong]="activeDay() === $index"
                 [attr.title]="day.label"
               >
                 {{ day.label.slice(0, 3) }}
@@ -566,7 +661,7 @@
       </div>
 
       @if (store.loading()) {
-        <div class="mt-4 grid min-w-0 gap-3 sm:grid-cols-2" aria-busy="true">
+        <div class="mt-4 grid min-w-0 gap-3" aria-busy="true">
           <app-skeleton variant="cards" class="sm:col-span-2" />
         </div>
       } @else if (store.error(); as error) {
@@ -598,68 +693,84 @@
           </a>
         </div>
       } @else {
-        <div class="mt-4 min-w-0">
-          <div class="flex items-center justify-between gap-3">
-            <p class="text-[11px] font-semibold tabular-nums text-muted" aria-live="polite">
-              {{
-                i18n.t('block9.dashboard.carouselPosition', {
-                  current: Math.min(carouselIndex(), carouselPages()),
-                  total: carouselPages(),
-                })
-              }}
-            </p>
-            <div class="hidden items-center gap-2 md:flex">
-              <button
-                type="button"
-                class="ui-icon-button"
-                [attr.aria-label]="i18n.t('block9.dashboard.carouselPrevious')"
-                (click)="moveCarousel(-1)"
-              >
-                <fa-icon [icon]="icons['chevronLeft']" aria-hidden="true" />
-              </button>
-              <button
-                type="button"
-                class="ui-icon-button"
-                [attr.aria-label]="i18n.t('block9.dashboard.carouselNext')"
-                (click)="moveCarousel(1)"
-              >
-                <fa-icon [icon]="icons['chevronRight']" aria-hidden="true" />
-              </button>
-            </div>
-          </div>
-          <ul
-            #guestCarousel
-            class="no-scrollbar mt-3 flex snap-x snap-mandatory overflow-x-auto"
-            tabindex="0"
-            [attr.aria-label]="i18n.t('dashboard.pendingTitle')"
-            (scroll)="onCarouselScroll()"
-            (keydown)="onCarouselKeydown($event)"
-          >
-            @for (page of guestPages(); track $index) {
-              <li
-                class="grid w-full shrink-0 snap-start grid-cols-1 items-stretch gap-3 px-0.5 py-1 sm:grid-cols-2 lg:grid-cols-3"
-              >
-                @for (entry of page; track entry.guest.id) {
-                  <div class="h-full min-w-0">
-                    <app-person-card
-                      layout="linear"
-                      [name]="entry.guest.name"
-                      [subtitle]="subtitleFor(entry.guest)"
-                      [status]="entry.guest.status"
-                      [meta]="metaFor(entry)"
-                      [actions]="guestActions(entry)"
-                      [primaryAction]="primaryFor(entry)"
-                      [actionsLabel]="i18n.t('guests.tableActions')"
-                      (actionSelected)="onGuestAction($event, entry)"
-                      (primaryTriggered)="onGuestAction($event, entry)"
-                    />
-                  </div>
-                }
-              </li>
-            }
-          </ul>
-        </div>
+        <ul class="mt-4 grid min-w-0 gap-3" [attr.aria-label]="i18n.t('dashboard.pendingTitle')">
+          @for (entry of filteredGuests(); track entry.guest.id) {
+            <li class="min-w-0">
+              <app-person-card
+                layout="linear"
+                [prominent]="true"
+                [clickable]="true"
+                [clickLabel]="i18n.t('common.viewDetails') + ': ' + entry.guest.name"
+                [name]="entry.guest.name"
+                [subtitle]="subtitleFor(entry.guest)"
+                [status]="entry.guest.status"
+                [meta]="metaFor(entry)"
+                [flag]="entry.guest.ageFlag ? i18n.t('block10.guest.ageFlag') : null"
+                [flagHint]="i18n.t('block10.guest.ageFlagHint')"
+                (open)="openDetails(entry)"
+              />
+            </li>
+          }
+        </ul>
       }
     </section>
   </div>
 </section>
+
+<app-modal
+  [open]="detailTarget() !== null"
+  [title]="detailTarget()?.guest?.name ?? i18n.t('common.viewDetails')"
+  size="lg"
+  (closed)="closeDetails()"
+>
+  @if (detailTarget(); as entry) {
+    <div class="flex items-center gap-3 rounded-2xl border border-line bg-surface-raised/40 p-3">
+      <app-avatar [name]="entry.guest.name" size="md" />
+      <div class="min-w-0 flex-1">
+        <p class="truncate text-sm font-semibold text-ink">{{ entry.guest.name }}</p>
+        <p class="truncate text-xs text-muted">{{ subtitleFor(entry.guest) }}</p>
+      </div>
+      <app-status-badge [value]="entry.guest.status" />
+    </div>
+    <ul class="mt-3 space-y-2 text-sm leading-6 text-muted">
+      @for (item of metaFor(entry); track $index) {
+        <li class="flex min-w-0 items-start gap-2">
+          <fa-icon [icon]="iconFor(item.icon)" class="mt-1 shrink-0 text-xs text-brand-strong" aria-hidden="true" />
+          <span class="min-w-0">{{ item.label }}</span>
+        </li>
+      }
+      @if (entry.guest.message) {
+        <li class="flex min-w-0 items-start gap-2">
+          <fa-icon [icon]="icons['envelopeOpen']" class="mt-1 shrink-0 text-xs text-brand-strong" aria-hidden="true" />
+          <span class="min-w-0">{{ i18n.t('guests.guestMessage', { message: entry.guest.message }) }}</span>
+        </li>
+      }
+    </ul>
+  }
+  @if (detailTarget(); as entry) {
+    <div modal-footer class="flex w-full flex-col gap-2">
+      @if (entry.guest.email) {
+        <button
+          type="button"
+          class="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-line bg-surface-raised px-3 text-sm font-semibold text-ink transition hover:border-brand/40"
+          (click)="copyEmail(entry)"
+        >
+          <fa-icon [icon]="icons['copy']" class="text-muted" aria-hidden="true" />
+          {{ i18n.t('guests.copyEmail') }}
+        </button>
+      }
+      @for (action of guestActions(entry); track action.id) {
+        <button
+          type="button"
+          class="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-line bg-surface-raised px-3 text-sm font-semibold text-ink transition hover:border-brand/40"
+          (click)="runDetailAction(action.id, entry)"
+        >
+          @if (action.icon) {
+            <fa-icon [icon]="action.icon" class="text-brand-strong" aria-hidden="true" />
+          }
+          {{ action.label }}
+        </button>
+      }
+    </div>
+  }
+</app-modal>

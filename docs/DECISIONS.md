@@ -367,3 +367,52 @@ Mapeamento feito antes de alterar código. O frontend parte de `feat/bloco-3-det
 | WhatsApp nos cartões | Passar a acção para o menu "…" em vez do botão principal, em `/convidados` e no detalhe do evento. | Pedido explícito; liberta largura para o nome do convidado em mobile. |
 | Gratitude — posição do QR | Três colunas iguais para data/hora/local e QR num grupo próprio entre essa linha e o dress code; local limitado a 3 linhas. | Evita sobreposição quando o endereço é longo e mantém a hierarquia pedida. O PDF usa o mesmo grupo, preservando o contrato comum. |
 | Nome do ficheiro descarregado | `conto-contigo-convite-<nome-do-convidado>.pdf` e textos "Descarregar convite". | O documento é um convite, não um bilhete; o nome identifica o convidado. |
+
+## Bloco 16 — Passo 1: sombras padrão (28/11/2026)
+
+| Dúvida / ponto ambíguo | Escolha | Motivo |
+|---|---|---|
+| Escala do Tailwind v4 | `@theme inline` repõe `--shadow-*: initial;` e define só `--shadow-card` e `--shadow-pop`; `tsconfig.spec.json` passa a incluir `node` para o teste de política poder ler `src/`. | Remove os utilitários por omissão sem nova dependência; o teste anti-regressão precisa de `fs`/`path`. |
+| Tokens claros/escuros | `--shadow-card`: claro `0 1px 2px rgb(15 61 62 / .05), 0 2px 8px rgb(15 61 62 / .05)`, escuro `0 1px 2px rgb(0 0 0 / .30)`. `--shadow-pop`: claro `0 2px 4px rgb(15 61 62 / .06), 0 8px 20px rgb(15 61 62 / .10)`, escuro `0 4px 16px rgb(0 0 0 / .40)`. | Respeita os limites do bloco (desfoque ≤8/20 px e opacidade ≤.06/.12 no claro); no escuro a borda faz o trabalho. |
+| Botões, chips, avatares e selos | `shadow-card` removido; apenas cor e borda. inputs elevados mantêm `shadow-card`. | Regra explícita do bloco: botões e chips sem sombra. |
+| Flutuantes | `modal`, `action-menu`, `toast`, `mobile-fab`, menus/popovers e barras inferiores passam a `shadow-pop`; cartões e painéis mantêm `shadow-card`. | Distingue o que flutua do que faz parte do conteúdo. |
+| Gratitude (digital) | `box-shadow:0 10px 30px rgba(0,0,0,.25)` → `var(--shadow-card)`; anel branco do QR passa a `outline`. | Elimina a sombra exagerada e o `box-shadow` arbitrário sem perder o fundo branco do selo. |
+| Hover | `hover:shadow-md/lg` removidos; `hover:-translate-y-*` e `hover:border-*` mantidos. | Hover não aumenta a sombra. |
+
+### Auditoria ficheiro → sombra antes → sombra depois
+
+| Ficheiro | Antes | Depois |
+|---|---|---|
+| `src/styles/brand-tokens.css` | `--cc-shadow-card: 0 1px 2px rgb(15 61 62 / .06), 0 8px 24px rgb(15 61 62 / .08)` | `--shadow-card` (limite ≤8 px/.05), novo `--shadow-pop`; `.dark` com valores suaves |
+| `src/styles.css` | escala Tailwind por omissão + `--ap-shadow-card: 0 4px 14px rgb(0 0 0 / .22)` | `--shadow-*: initial`, `shadow-card`/`shadow-pop`, dark via tokens |
+| `src/app/shared/components/auth-layout.component.ts` | `shadow-2xl` | `shadow-pop` |
+| `src/app/features/landing/landing-hero.component.ts` | `shadow-2xl` (painel), `shadow-card` (CTA) | `shadow-pop` (painel), sem sombra (CTA) |
+| `src/app/features/events/detail/event-teams-section.component.ts` | `shadow-card` + `hover:shadow-md`, `drop-shadow-sm` | `shadow-card`, sem aumento no hover, sem `drop-shadow` |
+| `src/app/shared/components/public-entity-card.component.ts`, `src/app/features/feed/feed-cards.component.ts` | `hover:shadow-lg` | sem sombra extra no hover |
+| `src/app/core/layout/shell.component.html` | `shadow-sm` (ícone), `shadow-card` (menu/popover/barra) | sem sombra (ícone), `shadow-pop` (flutuantes) |
+| `src/app/features/messages/messages-inbox.component.ts` | `shadow-sm` (input) | sem sombra |
+| `src/app/features/communities/community-detail.page.html`, `community-form-dialog.component.ts`, `institution-form-dialog.component.ts` | `shadow-inner` | sem sombra |
+| `src/app/shared/components/modal.component.ts`, `action-menu`, `toast-host`, `mobile-fab`, `search-suggestions`, `image-lightbox` | `shadow-card` | `shadow-pop` |
+| `src/app/features/feed/feed.page.html` | botões/chips `shadow-card`, barra inferior `shadow-card` | botões/chips sem sombra, barra `shadow-pop` |
+| `src/app/features/invitation/parts/gratitude-invitation.component.ts` | `box-shadow:0 10px 30px rgba(0,0,0,.25)`, `box-shadow:0 0 0 .35cqw #fff` | `var(--shadow-card)`, `outline:.35cqw solid #fff` |
+| Botões/chips em `public-header`, `landing-footer`, `guests`, `event-guests-section`, `invitation-video`, `avatar`, `event-card`, `public-entity-card`, `my-invitations`, `profile` | `shadow-card` | sem sombra |
+
+## Bloco 16 — Passos 2 a 10 (28/11/2026)
+
+| Dúvida / ponto ambíguo | Escolha | Motivo |
+|---|---|---|
+| Tema do convite | `app-invitation-shell` aplica `--inv-*` derivados do manifesto (com contraste forçado a ≥ 4,5:1); os utilitários `inv-*` são globais mas escopados à casca. | O `app-modal` não usa portal, pelo que os modais herdam as variáveis; não é preciso duplicar temas nem tocar no tema da plataforma. |
+| Branco vs. preto no acento | `readableInk()` escolhe a tinta com maior contraste e o teste usa `#000000` quando o branco daria 4,35:1. | Cumpre o critério ≥ 4,5:1 sem alterar a paleta do template. |
+| Logótipo e idioma | O logótipo do template só aparece no editor; no convite público a única marca é o símbolo no centro do QR. O botão de idioma permanece; o alternador de tema foi removido. | Regra explícita do bloco: “o QR é o único sítio da área do convite onde aparece a marca”. |
+| Capa sem fotografia | `TemplateRenderer` ganhou `mode="cover"`; por omissão só ornamentos, organização, subtítulo, título e destaque aparecem (`showInCover` por bloco). | A arte do template substitui o cartão genérico; informação, QR e botões ficam para o convite principal. |
+| Ecrã de boas-vindas | Saudação e botão “Ver convite” usam `inv-btn`; a animação continua a vir de `open_style` e respeita `prefers-reduced-motion`. | Mantém a experiência anterior com a identidade do template. |
+| Causa da estrela no QR | Havia um `<div class="badge">` com um path de estrela dentro de `gratitude-invitation.component.ts`; o PDF já desenhava o pin com sorriso via `symbolSvg()`. | Removido o overlay; digital e PDF passam a usar o mesmo SVG com `data-qr-logo="platform"`, ECC `H` e razão de área 0,032 (≤ 0,2). |
+| Subtítulo do Gratitude | Antes era **derivado e não editável**: no PDF back, `title` com `GRATITUDE` ⇒ `FESTIVAL DE ADOLESCENTES`; senão `wedding` ⇒ `CELEBRAÇÃO DE CASAMENTO`, `birthday` ⇒ `CELEBRAÇÃO DE ANIVERSÁRIO`, `corporate` ⇒ `EVENTO CORPORATIVO`, `baby` ⇒ `CELEBRAÇÃO FAMILIAR`, resto ⇒ `CELEBRAÇÃO ESPECIAL`. O front tinha o mesmo `subtitleFor(e)`. Agora existe coluna `events.subtitle`, campo no formulário, `subtitle` nos DTOs e `gratitudeSubtitle()` no PDF; a derivação antiga só serve de fallback. | O texto do cartaz devia ser escolhido pelo anfitrião, não inferido do tipo de evento; manter o fallback preserva eventos antigos sem migração de dados. |
+| Botão flutuante | `inv-fab` é uma pílula com `shadow-pop`, alvo ≥ 48 px, acima da barra RSVP (`--inv-rsvp-bar`), e abre `app-modal presentation="sheet"`. | Uma única entrada para tudo o que não cabe no cartaz; “Partilhar” garante que aparece sempre. |
+| Folha de detalhes | `invitation-details-menu` e `invitation-details-dialog` foram removidos; a folha reúne locais, vídeo, organização, mensagem, regras/presentes, partilha e privacidade, com chips de atalho no topo. | Nenhuma informação se perde e a página principal cabe num ecrã em 360×640. |
+| Vídeo na folha | O iframe `youtube-nocookie.com` só é criado depois de tocar em “Reproduzir”. | Evita carregar conteúdo de terceiros e mantém a folha leve. |
+| Origem do mapa | Já estava em uso `maplibre-gl ^4.7.1` em `location-map.component.ts` e `location-picker-dialog.component.ts`, com `environment.mapStyleUrl = https://tiles.openfreemap.org/styles/liberty`. Não havia Leaflet nem `tile.openstreetmap.org`. | Não houve mudança de biblioteca nem nova dependência/dependência de chave; só se confirmou e unificou o estilo e o carregamento lazy. |
+| Atribuição do mapa | Controlo compacto do MapLibre visível; o seletor abre com `remove()` ao fechar e degrada para escrita do endereço se o mapa ou o geocoding falharem. | O endereço escrito continua a ser a forma principal de indicar o local. |
+| Várias localizações | `event_locations` com uma principal; as colunas legadas de `events` passam a ser espelho da principal, atualizado na mesma transação. `locations[]` principal primeiro, com `maps_url`. | Feed, pesquisa, relatórios e e-mails antigos continuam a ler `location` sem alteração; coordenadas e lista completa só para quem pode ver o convite. |
+| Link do Google Maps | `maps_url` usa coordenadas com 6 casas quando existem; caso contrário `encodeURIComponent([address, city])`; vazio ou online ⇒ sem botão de mapas. | Mesma função no front e no back, com os mesmos casos de teste. |
+| Verificação visual | Rota auto-contida `/__test/invitation` com o componente real, três locais e FAB; spec Playwright nos 4 viewports (360×640 e 1440×900, claro/escuro). | Não depende de credenciais nem de backend; cobre cartaz, FAB, folha, locais e foco. |

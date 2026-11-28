@@ -39,7 +39,7 @@ import { LogoComponent } from '../../shared/components/logo.component';
             <a
               routerLink="/criar-conta"
               data-testid="landing-cta-signup"
-              class="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-brand px-6 text-sm font-semibold text-on-secondary shadow-card transition hover:bg-secondary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+              class="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-brand px-6 text-sm font-semibold text-on-secondary transition hover:bg-secondary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
             >
               {{ i18n.t('landing.hero.primary') }}
               <fa-icon [icon]="icons['arrowRight']" class="text-xs" aria-hidden="true" />
@@ -65,7 +65,7 @@ import { LogoComponent } from '../../shared/components/logo.component';
             class="absolute -inset-6 rounded-[3rem] bg-brand/10 blur-2xl"
           ></div>
           <div
-            class="relative rounded-[2.5rem] border-[10px] border-ink/90 bg-surface-solid p-4 shadow-2xl"
+            class="relative rounded-[2.5rem] border-[10px] border-ink/90 bg-surface-solid p-4 shadow-pop"
           >
             <div class="mx-auto mb-3 h-1 w-12 rounded-full bg-line" aria-hidden="true"></div>
             <div

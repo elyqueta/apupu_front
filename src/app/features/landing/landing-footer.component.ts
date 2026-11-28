@@ -28,7 +28,7 @@ import { SupportDialogComponent } from './support-dialog.component';
         <a
           routerLink="/criar-conta"
           data-testid="landing-final-cta"
-          class="mt-7 inline-flex min-h-12 items-center justify-center rounded-2xl bg-brand px-6 text-sm font-semibold text-on-secondary shadow-card transition hover:bg-secondary-hover"
+          class="mt-7 inline-flex min-h-12 items-center justify-center rounded-2xl bg-brand px-6 text-sm font-semibold text-on-secondary transition hover:bg-secondary-hover"
         >
           {{ i18n.t('landing.cta.button') }}
         </a>
@@ -118,6 +118,16 @@ import { SupportDialogComponent } from './support-dialog.component';
           <div class="text-sm text-muted md:text-right">
             <p class="font-semibold text-ink">{{ i18n.t('landing.footer.product') }}</p>
             <p class="mt-2">{{ i18n.t('footer.rights', { year: year }) }}</p>
+            <p class="mt-1 text-xs">
+              <a
+                href="https://www.svgrepo.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="underline transition hover:text-ink"
+                >Icons from SVG Repo</a
+              >
+              · Solar Icons (CC Attribution)
+            </p>
           </div>
         </div>
       </div>

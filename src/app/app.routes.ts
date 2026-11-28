@@ -151,6 +151,12 @@ export const routes: Routes = [
           import('./features/templates/testing/templates-test.page').then((m) => m.TemplatesTestPage),
       },
       {
+        // Bloco 16: convite real com três localizações, sem backend nem sessão.
+        path: '__test/invitation',
+        loadComponent: () =>
+          import('./features/invitation/testing/invitation-test.page').then((m) => m.InvitationTestPage),
+      },
+      {
         path: 'i/:token',
         title: pageTitle('route.invitation'),
         loadComponent: () =>

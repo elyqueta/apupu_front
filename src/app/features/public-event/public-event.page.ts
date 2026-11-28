@@ -1,9 +1,9 @@
-import { InvitationOrganizersComponent } from '../invitation/parts/invitation-organizers.component';
-import { InvitationVideoComponent } from '../invitation/parts/invitation-video.component';
-import { Component, computed, effect, inject, input, signal } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+import { Component, computed, effect, inject, input, PLATFORM_ID, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { ApiClient } from '../../core/api/api-client';
 import { toApiError } from '../../core/api/api-error';
 import {
@@ -16,19 +16,18 @@ import { I18nService } from '../../core/i18n/i18n.service';
 import { TranslationKey } from '../../core/i18n/translations';
 import { ICONS } from '../../core/ui/icons';
 import { isValidPhone, phoneDigits } from '../../core/utils/phone.util';
-import { BrandComponent } from '../../shared/components/brand.component';
-import { PreferenceControlsComponent } from '../../shared/components/preference-controls.component';
+import { ModalComponent } from '../../shared/components/modal.component';
 import { SkeletonComponent } from '../../shared/components/skeleton.component';
 import { PhoneMaskDirective } from '../../shared/directives/phone-mask.directive';
 import { countdownDaysUntil, mapPublicEventView } from '../invitation/invitation.mapper';
+import { DEFAULT_MANIFEST } from '../../core/models/template-manifest';
 import { InvitationEventView } from '../invitation/invitation.models';
+import { InvitationShellComponent } from '../invitation/invitation-shell.component';
 import { InvitationCancelledComponent } from '../invitation/parts/invitation-cancelled.component';
-import { InvitationDetailsDialogComponent } from '../invitation/parts/invitation-details-dialog.component';
-import { InvitationDetailsMenuComponent } from '../invitation/parts/invitation-details-menu.component';
-import { InvitationHeroComponent } from '../invitation/parts/invitation-hero.component';
 import { InvitationHostDialogComponent } from '../invitation/parts/invitation-host-dialog.component';
-import { InvitationKeyInfoComponent } from '../invitation/parts/invitation-key-info.component';
+import { InvitationInfoSheetComponent } from '../invitation/parts/invitation-info-sheet.component';
 import { InvitationLocationDialogComponent } from '../invitation/parts/invitation-location-dialog.component';
+import { TemplateRendererComponent, TemplateRenderData } from '../../shared/components/template-renderer.component';
 
 type LoadState = 'loading' | 'ready' | 'not_found' | 'error';
 type Answer = 'accepted' | 'declined';
@@ -47,28 +46,26 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 @Component({
   selector: 'app-public-event-page',
   imports: [
-    InvitationVideoComponent,
-    InvitationOrganizersComponent,
     ReactiveFormsModule,
     RouterLink,
     FaIconComponent,
-    BrandComponent,
-    PreferenceControlsComponent,
     SkeletonComponent,
     PhoneMaskDirective,
     InvitationCancelledComponent,
-    InvitationHeroComponent,
-    InvitationKeyInfoComponent,
-    InvitationDetailsMenuComponent,
-    InvitationDetailsDialogComponent,
     InvitationHostDialogComponent,
     InvitationLocationDialogComponent,
+    InvitationInfoSheetComponent,
+    TemplateRendererComponent,
+    InvitationShellComponent,
+    ModalComponent,
   ],
   templateUrl: './public-event.page.html',
 })
 export class PublicEventPage {
   private readonly api = inject(ApiClient);
   private readonly fb = inject(NonNullableFormBuilder);
+  private readonly sanitizer = inject(DomSanitizer);
+  private readonly platformId = inject(PLATFORM_ID);
   protected readonly i18n = inject(I18nService);
   protected readonly icons = ICONS;
 
@@ -85,7 +82,10 @@ export class PublicEventPage {
   protected readonly blockedByAge = signal(false);
   protected readonly submitted = signal(false);
   protected readonly result = signal<{ name: string; status: Answer } | null>(null);
-  protected readonly editing = signal(true);
+  protected readonly rsvpOpen = signal(false);
+  protected readonly menuOpen = signal(false);
+  protected readonly videoOpen = signal(false);
+  protected readonly videoPlaying = signal(false);
 
   protected readonly detailsOpen = signal(false);
   protected readonly hostOpen = signal(false);
@@ -104,12 +104,48 @@ export class PublicEventPage {
     const raw = this.raw();
     return raw ? mapPublicEventView(raw) : null;
   });
+  protected readonly shellManifest = computed(() => this.event()?.manifest ?? DEFAULT_MANIFEST);
+
+  protected readonly videoId = computed(() => this.event()?.youtubeVideoId ?? null);
+  protected readonly videoThumbnail = computed(
+    () => `https://i.ytimg.com/vi/${this.videoId()}/hqdefault.jpg`,
+  );
+  protected readonly videoEmbed = computed<SafeResourceUrl>(() =>
+    this.sanitizer.bypassSecurityTrustResourceUrl(
+      `https://www.youtube-nocookie.com/embed/${this.videoId()}?autoplay=1&rel=0`,
+    ),
+  );
+
+  protected readonly renderData = computed<TemplateRenderData | null>(() => {
+    const e = this.event();
+    if (!e) return null;
+    return {
+      title: e.title,
+      subtitle: e.subtitle,
+      hostName: e.hostName,
+      startsAt: e.startsAt,
+      endsAt: e.endsAt,
+      timezone: e.timezone,
+      city: e.city,
+      address: e.address,
+      venue: e.venue,
+      onlineLink: e.onlineLink,
+      message: e.message,
+      dressCode: e.dressCode,
+      rsvpDeadline: e.rsvpDeadline,
+      coverUrl: e.coverUrl,
+      type: e.type,
+      templateSlug: e.templateSlug,
+      locations: e.locations,
+      guestName: this.viewer()?.name ?? this.result()?.name ?? null,
+    };
+  });
+
   protected readonly countdownDays = computed(() => {
     const event = this.event();
     return event ? countdownDaysUntil(event.startsAt) : 0;
   });
   protected readonly restricted = computed(() => this.raw()?.has_age_restriction ?? false);
-  protected readonly attendeeCount = computed(() => this.raw()?.attendee_count ?? null);
   protected readonly cancelled = computed(() => this.event()?.status === 'cancelled');
   protected readonly closed = computed(() => {
     const raw = this.raw();
@@ -128,6 +164,16 @@ export class PublicEventPage {
     () => this.restricted() && !!this.viewer() && !this.viewer()!.has_birth_date,
   );
 
+  /** Estado curto da resposta, mostrado ao lado do botão único. */
+  protected readonly answerStatus = computed(() => {
+    const answer = this.result();
+    if (!answer) return this.i18n.t('block16.rsvp.pending');
+    const label = this.i18n.t(
+      answer.status === 'accepted' ? 'block10.public.answerAccepted' : 'block10.public.answerDeclined',
+    );
+    return `${this.i18n.t('block10.public.yourAnswer')}: ${label}`;
+  });
+
   constructor() {
     effect(() => {
       const slug = this.slug();
@@ -135,6 +181,10 @@ export class PublicEventPage {
         void this.load(slug);
       }
     });
+    // No PC o painel lateral arranca aberto; no telemóvel o botão sobrepõe o convite.
+    if (isPlatformBrowser(this.platformId) && window.innerWidth >= 1024) {
+      this.menuOpen.set(true);
+    }
   }
 
   protected async load(slug = this.slug()): Promise<void> {
@@ -148,7 +198,6 @@ export class PublicEventPage {
       const existing = data.viewer?.rsvp_status;
       if (data.viewer && existing && existing !== 'pending') {
         this.result.set({ name: data.viewer.name, status: existing });
-        this.editing.set(false);
       }
       this.state.set('ready');
     } catch (error: unknown) {
@@ -216,7 +265,7 @@ export class PublicEventPage {
       this.raw.set(response.event);
       const status = response.rsvp.status === 'declined' ? 'declined' : 'accepted';
       this.result.set({ name: response.rsvp.name, status });
-      this.editing.set(false);
+      this.rsvpOpen.set(false);
       this.formError.set('');
     } catch (error: unknown) {
       this.formError.set(this.messageFor(error));
@@ -254,8 +303,40 @@ export class PublicEventPage {
     return this.i18n.t('block10.public.genericError');
   }
 
-  protected changeAnswer(): void {
-    this.editing.set(true);
+  protected openRsvp(): void {
     this.formError.set('');
+    this.rsvpOpen.set(true);
+  }
+
+  protected closeMenu(): void {
+    this.menuOpen.set(false);
+  }
+
+  /** Fecha o menu antes de abrir o destino, para o modal ficar sempre visível. */
+  protected openFromMenu(target: 'rsvp' | 'locations' | 'host' | 'details' | 'video'): void {
+    this.menuOpen.set(false);
+    if (target === 'rsvp') {
+      this.openRsvp();
+    } else if (target === 'locations') {
+      this.locationOpen.set(true);
+    } else if (target === 'host') {
+      this.hostOpen.set(true);
+    } else if (target === 'video') {
+      this.videoPlaying.set(false);
+      this.videoOpen.set(true);
+    } else {
+      this.detailsOpen.set(true);
+    }
+  }
+
+  protected closeVideo(): void {
+    this.videoOpen.set(false);
+    this.videoPlaying.set(false);
+  }
+
+  protected closeRsvp(): void {
+    if (!this.saving()) {
+      this.rsvpOpen.set(false);
+    }
   }
 }

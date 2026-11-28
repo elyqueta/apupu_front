@@ -17,9 +17,28 @@ function factory(): any {
   return _factory;
 }
 
-export function qrCodeSvg(text: string, ecc: Ecc = 'H'): string {
+/** Proporção linear do selo central; área = 0.18² ≈ 3,2% do QR (limite: 20%). */
+const LOGO_SIDE = 0.18;
+
+/**
+ * QR digital com o símbolo da plataforma ao centro. A máscara branca protege
+ * os módulos por baixo; a correção H (passada por `ecc`)recupera a leitura.
+ */
+export function qrCodeSvg(
+  text: string,
+  ecc: Ecc = 'H',
+  options: { logo?: 'platform' | 'none' } = {},
+): string {
   const qr: any = factory()(0, ecc);
   qr.addData(text || ' ');
   qr.make();
-  return qr.createSvgTag({ cellSize: 1, margin: 0, scalable: true });
+  const svg = qr.createSvgTag({ cellSize: 1, margin: 0, scalable: true });
+  if (options.logo === 'none') return svg;
+  const viewBox = /viewBox="0 0 ([\d.]+) [\d.]+"/.exec(svg);
+  if (!viewBox) return svg;
+  const size = Number(viewBox[1]);
+  const side = size * LOGO_SIDE;
+  const offset = (size - side) / 2;
+  const logo = `<g data-qr-logo="platform" data-logo-ratio="${(LOGO_SIDE * LOGO_SIDE).toFixed(3)}" aria-hidden="true"><rect x="${offset - side * 0.08}" y="${offset - side * 0.08}" width="${side * 1.16}" height="${side * 1.16}" rx="${side * 0.28}" fill="#FFFFFF"/><svg x="${offset}" y="${offset}" width="${side}" height="${side}" viewBox="34 4 188 260" fill="none" stroke="#0F3D3E" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"><path d="M 194 102 A 66 66 0 1 0 70.8 129 L 128 228 L 193.2 115.1"/><path d="M 92 94 Q 128 132 164 94"/></svg></g>`;
+  return svg.replace('</svg>', `${logo}</svg>`);
 }

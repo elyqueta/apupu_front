@@ -18,56 +18,56 @@ import { InvitationEventView, InvitationOrganizer } from '../invitation.models';
   imports: [RouterLink, FaIconComponent, AvatarComponent, ModalComponent],
   template: `
     @if (organizers().length) {
-      <section class="flex items-center gap-3 rounded-4xl border border-line bg-surface p-4 shadow-card" data-testid="invitation-organizers">
+      <section class="flex items-center gap-3 rounded-4xl border inv-line inv-surface p-4 inv-shadow" data-testid="invitation-organizers">
         <div class="flex -space-x-2">
           @for (organizer of organizers().slice(0, 4); track $index) {
             <app-avatar [name]="organizer.name" [imageUrl]="organizer.avatarUrl" size="sm" />
           }
         </div>
         <div class="min-w-0 flex-1">
-          <p class="text-sm font-semibold text-ink">{{ i18n.t('block14.organizers.title') }}</p>
-          <p class="truncate text-xs text-muted">{{ event().community?.name || organizers()[0]?.name }}</p>
+          <p class="text-sm font-semibold inv-ink">{{ i18n.t('block14.organizers.title') }}</p>
+          <p class="truncate text-xs inv-muted">{{ event().community?.name || organizers()[0]?.name }}</p>
         </div>
-        <button type="button" class="ui-btn-secondary" data-testid="invitation-organizers-open" (click)="open.set(true)">
+        <button type="button" class="inv-btn-secondary" data-testid="invitation-organizers-open" (click)="open.set(true)">
           {{ i18n.t('block14.organizers.open') }}
         </button>
       </section>
 
-      <app-modal [open]="open()" presentation="sheet" [title]="i18n.t('block14.organizers.title')" (closed)="open.set(false)">
+      <app-modal [open]="open()" presentation="sheet" [title]="i18n.t('block14.organizers.title')" (closed)="open.set(false)" [invitation]="true">
         <div class="flex flex-col gap-3">
           @if (event().community; as community) {
-            <div class="flex items-center gap-3 rounded-2xl border border-line bg-surface-raised p-3">
+            <div class="flex items-center gap-3 rounded-2xl border inv-line inv-surface-raised p-3">
               <app-avatar [name]="community.name" [imageUrl]="community.avatarUrl" size="sm" />
               <div class="min-w-0 flex-1">
-                <p class="text-xs text-muted">{{ i18n.t('block14.organizers.community') }}</p>
-                <p class="truncate text-sm font-semibold text-ink">{{ community.name }}</p>
+                <p class="text-xs inv-muted">{{ i18n.t('block14.organizers.community') }}</p>
+                <p class="truncate text-sm font-semibold inv-ink">{{ community.name }}</p>
               </div>
               @if (community.isPublic) {
-                <a [routerLink]="['/comunidade', community.slug]" class="ui-btn-secondary">{{ i18n.t('block14.organizers.join') }}</a>
+                <a [routerLink]="['/comunidade', community.slug]" class="inv-btn-secondary">{{ i18n.t('block14.organizers.join') }}</a>
               }
             </div>
           }
           <ul class="flex flex-col gap-2">
             @for (organizer of organizers(); track $index) {
-              <li class="flex flex-col gap-3 rounded-2xl border p-3 sm:flex-row sm:items-center" [class]="organizer.role === 'owner' ? 'border-brand/40 bg-brand/5' : 'border-line'">
+              <li class="flex flex-col gap-3 rounded-2xl border p-3 sm:flex-row sm:items-center" [class]="organizer.role === 'owner' ? 'inv-accent-border inv-accent-soft' : 'inv-line'">
                 <div class="flex min-w-0 flex-1 items-center gap-3">
                   <app-avatar [name]="organizer.name" [imageUrl]="organizer.avatarUrl" size="md" />
                   <div class="min-w-0">
-                    <p class="truncate text-sm font-semibold text-ink">{{ organizer.name }}</p>
-                    <p class="text-xs font-semibold" [class]="organizer.role === 'owner' ? 'text-brand-strong' : 'text-muted'">
+                    <p class="truncate text-sm font-semibold inv-ink">{{ organizer.name }}</p>
+                    <p class="text-xs font-semibold" [class]="organizer.role === 'owner' ? 'inv-accent-text' : 'inv-muted'">
                       {{ i18n.t(organizer.role === 'owner' ? 'block14.organizers.owner' : 'block14.organizers.manager') }}
                     </p>
                   </div>
                 </div>
                 <div class="flex gap-2">
                   @if (organizer.email) {
-                    <a class="ui-btn-secondary flex-1" [href]="'mailto:' + organizer.email">
+                    <a class="inv-btn-secondary flex-1" [href]="'mailto:' + organizer.email">
                       <fa-icon [icon]="icons['envelope']" aria-hidden="true" />
                       {{ i18n.t('block14.organizers.email') }}
                     </a>
                   }
                   @if (whatsapp(organizer); as link) {
-                    <a class="ui-btn-secondary flex-1" [href]="link" target="_blank" rel="noopener noreferrer">
+                    <a class="inv-btn-secondary flex-1" [href]="link" target="_blank" rel="noopener noreferrer">
                       <fa-icon [icon]="icons['whatsapp']" aria-hidden="true" />
                       {{ i18n.t('block14.organizers.whatsapp') }}
                     </a>

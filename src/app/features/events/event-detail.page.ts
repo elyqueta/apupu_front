@@ -80,11 +80,18 @@ import {
   ageRangeError,
   parseAge,
 } from '../../shared/components/event-visibility-fields.component';
-import { LocationPickerDialogComponent, LocationPickResult } from '../../shared/components/location-picker-dialog.component';
 import { extractYoutubeId } from '../../core/utils/youtube';
-import { readPreferredLocation, writePreferredLocation, type PreferredLocation } from '../../core/utils/preferred-location';
+import { SUBTITLE_MAX_LENGTH, subtitleValue } from '../../core/utils/event-subtitle';
+import {
+  locationError,
+  moveLocation,
+  normalizeLocations,
+  removeLocation as removeFromList,
+} from '../../core/utils/event-locations';
+import { EventLocationsFieldComponent } from '../../shared/components/event-locations-field.component';
+import { LocationEditDialogComponent } from '../../shared/components/location-edit-dialog.component';
 import { PublicLinkCardComponent } from '../../shared/components/public-link-card.component';
-import { EventVisibility } from '../../core/models/models';
+import { EventLocationEntry, EventVisibility } from '../../core/models/models';
 
 function toIsoDate(date: Date): string {
   return date.toISOString().slice(0, 10);
@@ -133,7 +140,8 @@ function isoDaysAgo(days: number): string {
     EventVisibilityFieldsComponent,
     PublicLinkCardComponent,
     DeleteEventDialogComponent,
-    LocationPickerDialogComponent,
+    EventLocationsFieldComponent,
+    LocationEditDialogComponent,
   ],
   templateUrl: './event-detail.page.html',
 })
@@ -193,8 +201,20 @@ export class EventDetailPage {
   protected readonly credentials = signal<ManagerCreationResult | null>(null);
   protected readonly credentialsOpen = signal(false);
   protected readonly editModalOpen = signal(false);
-  protected readonly mapPickerOpen = signal(false);
-  protected readonly pendingSaveLocation = signal<PreferredLocation | null>(null);
+  protected readonly locations = signal<EventLocationEntry[]>([]);
+  protected readonly editIndex = signal<number | null>(null);
+  protected readonly editOpen = computed(() => this.editIndex() !== null);
+  protected readonly editingLocation = computed(() => {
+    const index = this.editIndex();
+    return index !== null && index >= 0 ? this.locations()[index] ?? null : null;
+  });
+  protected readonly editingPrimary = computed(() => {
+    const index = this.editIndex();
+    if (index === null || index < 0) return this.locations().length === 0;
+    return this.locations()[index]?.isPrimary ?? false;
+  });
+  protected readonly timezone = computed(() => this.event()?.timezone ?? 'Africa/Luanda');
+  protected readonly eventDate = computed(() => this.event()?.startsAt?.slice(0, 10) ?? '');
   protected readonly deleteOpen = signal(false);
   protected readonly deleteBusy = signal(false);
   protected readonly deleteError = signal('');
@@ -468,8 +488,9 @@ export class EventDetailPage {
 
   protected readonly settingsForm = this.fb.group({
     title: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(120)]],
-    venue: ['', [Validators.maxLength(120)]],
-    city: ['', [Validators.maxLength(80)]],
+    subtitle: ['', [Validators.maxLength(SUBTITLE_MAX_LENGTH)]],
+    venue: [''],
+    city: [''],
     youtubeVideoUrl: [''],
     latitude: this.fb.control<number | null>(null),
     longitude: this.fb.control<number | null>(null),
@@ -518,6 +539,7 @@ export class EventDetailPage {
       }
       this.settingsForm.reset({
         title: event.title,
+        subtitle: event.subtitle ?? '',
         venue: event.venue,
         city: event.city,
         youtubeVideoUrl: event.youtubeVideoId ? `https://www.youtube.com/watch?v=${event.youtubeVideoId}` : '',
@@ -535,7 +557,8 @@ export class EventDetailPage {
           maxAge: event.maxAge === null ? '' : String(event.maxAge),
         },
       });
-      this.syncLocationValidators();
+      this.locations.set(event.locations ?? []);
+      this.editIndex.set(null);
     });
     effect(() => {
       const event = this.event();
@@ -1389,77 +1412,66 @@ export class EventDetailPage {
     return extractYoutubeId(raw) ? '' : this.i18n.t('block14.video.invalid');
   }
 
-  protected hasExactLocation(): boolean {
-    const v = this.settingsForm.getRawValue();
-    return typeof v.latitude === 'number' && typeof v.longitude === 'number';
+  /** Espelho legado da principal, preservado para feed e PDF antigo. */
+  private syncLegacyLocation(): void {
+    const primary = this.locations().find((item) => item.isPrimary) ?? this.locations()[0];
+    const patch = !primary
+      ? { venue: '', city: '', latitude: null, longitude: null, placeLabel: '' }
+      : primary.kind === 'online'
+        ? { venue: '', city: '', latitude: null, longitude: null, placeLabel: '' }
+        : {
+            venue: primary.venueName || primary.address || '',
+            city: primary.city ?? '',
+            latitude: primary.latitude ?? null,
+            longitude: primary.longitude ?? null,
+            placeLabel: primary.label ?? '',
+          };
+    this.settingsForm.patchValue(patch, { emitEvent: false });
   }
 
-  private syncLocationValidators(): void {
-    const hasExact = this.hasExactLocation();
-    const venue = this.settingsForm.controls.venue;
-    const city = this.settingsForm.controls.city;
-    venue.setValidators([Validators.maxLength(120), ...(hasExact ? [] : [Validators.required])]);
-    city.setValidators([Validators.maxLength(80), ...(hasExact ? [] : [Validators.required])]);
-    venue.updateValueAndValidity({ emitEvent: false });
-    city.updateValueAndValidity({ emitEvent: false });
+  protected addLocation(): void {
+    this.editIndex.set(-1);
   }
 
-  private promptSaveLocation(lat: number, lng: number, city?: string, venue?: string): void {
-    const saved = readPreferredLocation();
-    if (saved && saved.latitude === lat && saved.longitude === lng) return;
-    this.pendingSaveLocation.set({
-      latitude: lat,
-      longitude: lng,
-      city: city ?? (this.settingsForm.controls.city.value.trim() || undefined),
-      venue: venue ?? (this.settingsForm.controls.venue.value.trim() || undefined),
-      placeLabel: this.settingsForm.controls.placeLabel.value.trim() || undefined,
-    });
+  protected editLocation(index: number): void {
+    this.editIndex.set(index);
   }
 
-  protected savePreferredLocation(): void {
-    const pending = this.pendingSaveLocation();
-    if (pending) writePreferredLocation(pending);
-    this.pendingSaveLocation.set(null);
+  protected closeLocationEdit(): void {
+    this.editIndex.set(null);
   }
 
-  protected dismissPreferredLocation(): void {
-    this.pendingSaveLocation.set(null);
-  }
-
-  protected openMapPicker(): void { this.mapPickerOpen.set(true); }
-  protected closeMapPicker(): void { this.mapPickerOpen.set(false); }
-  protected onMapPicked(point: LocationPickResult): void {
-    this.settingsForm.controls.latitude.setValue(point.latitude);
-    this.settingsForm.controls.longitude.setValue(point.longitude);
-    this.settingsForm.controls.placeLabel.setValue(point.placeName ?? '');
-    this.syncLocationValidators();
-    this.closeMapPicker();
-    this.promptSaveLocation(point.latitude, point.longitude);
-  }
-  protected removeExactLocation(): void {
-    this.settingsForm.controls.latitude.setValue(null);
-    this.settingsForm.controls.longitude.setValue(null);
-    this.settingsForm.controls.placeLabel.setValue('');
-    this.syncLocationValidators();
-  }
-  protected useMyLocation(): void {
-    if (typeof navigator === 'undefined' || !navigator.geolocation) {
-      this.toasts.error(this.i18n.t('block14.location.error'));
-      return;
-    }
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const lat = Math.round(pos.coords.latitude * 1e6) / 1e6;
-        const lng = Math.round(pos.coords.longitude * 1e6) / 1e6;
-        this.settingsForm.controls.latitude.setValue(lat);
-        this.settingsForm.controls.longitude.setValue(lng);
-        this.syncLocationValidators();
-        this.promptSaveLocation(lat, lng);
-        this.settingsForm.markAsDirty();
-      },
-      () => this.toasts.error(this.i18n.t('block14.location.error')),
-      { enableHighAccuracy: true, timeout: 10_000 },
+  protected saveLocation(entry: EventLocationEntry): void {
+    const index = this.editIndex();
+    if (index === null) return;
+    const list = this.locations().map((item) =>
+      entry.isPrimary ? { ...item, isPrimary: false } : { ...item },
     );
+    const saved: EventLocationEntry = { ...entry, id: index >= 0 ? list[index]?.id ?? null : null };
+    if (index === -1) list.push(saved);
+    else list[index] = saved;
+    this.locations.set(normalizeLocations(list));
+    this.syncLegacyLocation();
+    this.settingsForm.markAsDirty();
+    this.editIndex.set(null);
+  }
+
+  protected moveLocation(event: { index: number; direction: -1 | 1 }): void {
+    this.locations.set(moveLocation(this.locations(), event.index, event.direction));
+    this.syncLegacyLocation();
+    this.settingsForm.markAsDirty();
+  }
+
+  protected promoteLocation(index: number): void {
+    this.locations.set(this.locations().map((item, current) => ({ ...item, isPrimary: current === index })));
+    this.syncLegacyLocation();
+    this.settingsForm.markAsDirty();
+  }
+
+  protected removeLocation(index: number): void {
+    this.locations.set(removeFromList(this.locations(), index));
+    this.syncLegacyLocation();
+    this.settingsForm.markAsDirty();
   }
 
   protected async saveSettings(): Promise<void> {
@@ -1467,7 +1479,8 @@ export class EventDetailPage {
       this.settingsForm.markAllAsTouched();
       return;
     }
-    const { visibilitySettings, youtubeVideoUrl, ...fields } = this.settingsForm.getRawValue();
+    const { visibilitySettings, youtubeVideoUrl, subtitle, ...fields } =
+      this.settingsForm.getRawValue();
     const ytError = this.youtubeUrlError();
     if (ytError) {
       this.settingsForm.controls.youtubeVideoUrl.markAsTouched();
@@ -1477,10 +1490,23 @@ export class EventDetailPage {
     if (ageRangeError(visibilitySettings.minAge, visibilitySettings.maxAge)) {
       return;
     }
+    const locations = this.locations();
+    if (!locations.length) {
+      this.toasts.error(this.i18n.t('block16.locations.empty'));
+      return;
+    }
+    for (const item of locations) {
+      const error = locationError(item);
+      if (error) {
+        this.toasts.error(this.i18n.t(error));
+        return;
+      }
+    }
     try {
       await this.store.updateEvent(this.eventId(), {
         ...fields,
-        placeName: fields.placeLabel.trim() || null,
+        subtitle: subtitleValue(subtitle),
+        locations: normalizeLocations(locations),
         youtubeVideoId: extractYoutubeId(youtubeVideoUrl) ?? null,
         visibility: visibilitySettings.visibility,
         showAttendeeCount:

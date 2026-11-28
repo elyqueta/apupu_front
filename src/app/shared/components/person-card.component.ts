@@ -36,7 +36,7 @@ export interface PersonPrimaryAction {
     @if (layout() === 'linear') {
       <article [class]="linearClasses()">
         <div
-          class="flex min-w-0 flex-1 items-center gap-2 overflow-hidden rounded-xl px-2 py-1.5 outline-none transition focus-visible:ring-2 focus-visible:ring-brand/60"
+          [class]="linearBodyClasses()"
           [class.cursor-pointer]="clickable()"
           [attr.role]="clickable() ? 'button' : null"
           [attr.tabindex]="clickable() ? 0 : null"
@@ -46,10 +46,18 @@ export interface PersonPrimaryAction {
           (keydown.enter)="onKeydown($event)"
           (keydown.space)="onKeydown($event)"
         >
-          <app-avatar class="shrink-0" [name]="name()" [imageUrl]="avatarUrl()" size="md" />
+          <app-avatar
+            class="shrink-0"
+            [name]="name()"
+            [imageUrl]="avatarUrl()"
+            [size]="prominent() ? 'lg' : 'md'"
+          />
           <div class="min-w-0 flex-1">
             <div class="flex min-w-0 items-center gap-2">
-              <p class="min-w-0 flex-1 truncate text-sm font-semibold leading-5 text-ink" [title]="name()">{{ name() }}</p>
+              <p
+                [class]="prominent() ? 'min-w-0 flex-1 truncate text-base font-semibold leading-6 text-ink' : 'min-w-0 flex-1 truncate text-sm font-semibold leading-5 text-ink'"
+                [title]="name()"
+              >{{ name() }}</p>
               @if (flag(); as alert) {
                 <span
                   class="hidden shrink-0 items-center gap-1 rounded-full border border-coral/30 bg-coral/10 px-2 py-0.5 text-[10px] font-semibold text-coral sm:inline-flex"
@@ -62,40 +70,49 @@ export interface PersonPrimaryAction {
               }
             </div>
             @if (subtitle()) {
-              <p class="hidden truncate text-xs text-muted sm:block" [title]="subtitle()">{{ subtitle() }}</p>
+              <p
+                [class]="prominent() ? 'mt-0.5 truncate text-xs text-muted' : 'hidden truncate text-xs text-muted sm:block'"
+                [title]="subtitle()"
+              >{{ subtitle() }}</p>
             }
             @if (meta().length > 0) {
-              <p class="hidden min-w-0 items-center gap-1.5 truncate text-[11px] text-muted sm:flex">
-                <fa-icon [icon]="iconFor(meta()[0].icon)" class="shrink-0 text-[10px]" aria-hidden="true" />
+              <p
+                [class]="prominent() ? 'mt-2 inline-flex max-w-full items-center gap-1.5 rounded-lg bg-surface-raised px-2 py-1 text-[11px] text-muted' : 'hidden min-w-0 items-center gap-1.5 truncate text-[11px] text-muted sm:flex'"
+              >
+                <fa-icon
+                  [icon]="iconFor(meta()[0].icon)"
+                  [class]="prominent() ? 'shrink-0 text-[10px] text-brand-strong' : 'shrink-0 text-[10px]'"
+                  aria-hidden="true"
+                />
                 <span class="min-w-0 truncate">{{ meta()[0].label }}</span>
-                @if (meta().length > 1) {
-                  <span class="shrink-0">+{{ meta().length - 1 }}</span>
-                }
               </p>
             }
           </div>
           @if (status(); as value) {
-            <app-status-badge class="hidden shrink-0 sm:inline-flex" [value]="value" />
+            <app-status-badge [class]="prominent() ? 'shrink-0' : 'hidden shrink-0 sm:inline-flex'" [value]="value" />
           }
         </div>
         @if (primaryAction() || secondaryAction() || actions().length > 0) {
-          <div class="flex shrink-0 items-center gap-1 sm:border-l sm:border-line/70 sm:pl-1.5">
+          <div
+            [class]="prominent() ? 'flex w-full shrink-0 items-center gap-2 border-t border-line/70 pt-3' : 'flex shrink-0 items-center gap-1 sm:border-l sm:border-line/70 sm:pl-1.5'"
+          >
             @if (primaryAction(); as primary) {
               <button
                 type="button"
-                class="hidden h-9 shrink-0 items-center gap-1.5 rounded-xl bg-brand px-2.5 text-[11px] font-semibold text-on-secondary transition hover:bg-secondary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60 disabled:cursor-not-allowed disabled:opacity-50 sm:inline-flex"
+                [class]="prominent() ? 'inline-flex h-11 min-w-0 flex-1 items-center justify-center gap-2 rounded-xl bg-brand px-3 text-xs font-semibold text-on-secondary transition hover:bg-secondary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60 disabled:cursor-not-allowed disabled:opacity-50' : 'hidden h-9 shrink-0 items-center gap-1.5 rounded-xl bg-brand px-2.5 text-[11px] font-semibold text-on-secondary transition hover:bg-secondary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60 disabled:cursor-not-allowed disabled:opacity-50 sm:inline-flex'"
                 [disabled]="primary.disabled"
                 [attr.title]="primary.hint || null"
+                [attr.aria-label]="primary.hint || primary.label"
                 (click)="triggerPrimary($event, primary)"
               >
-                @if (primary.icon) { <fa-icon [icon]="primary.icon" class="text-[11px]" aria-hidden="true" /> }
+                @if (primary.icon) { <fa-icon [icon]="primary.icon" class="text-xs" aria-hidden="true" /> }
                 <span class="truncate">{{ primary.label }}</span>
               </button>
             }
             @if (secondaryAction(); as secondary) {
               <button
                 type="button"
-                class="hidden size-9 shrink-0 place-items-center rounded-xl border border-line text-muted transition hover:border-brand/40 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60 disabled:cursor-not-allowed disabled:opacity-50 sm:grid"
+                [class]="prominent() ? 'grid size-11 shrink-0 place-items-center rounded-xl border border-line text-muted transition hover:border-brand/40 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60 disabled:cursor-not-allowed disabled:opacity-50' : 'hidden size-9 shrink-0 place-items-center rounded-xl border border-line text-muted transition hover:border-brand/40 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60 disabled:cursor-not-allowed disabled:opacity-50 sm:grid'"
                 [attr.aria-label]="secondary.hint || secondary.label"
                 [attr.title]="secondary.hint || secondary.label"
                 [attr.data-testid]="'person-card-' + secondary.id"
@@ -107,6 +124,7 @@ export interface PersonPrimaryAction {
             }
             @if (actions().length > 0) {
               <app-action-menu
+                [class.ml-auto]="prominent()"
                 [items]="actions()"
                 [triggerLabel]="actionsLabel()"
                 (selected)="actionSelected.emit($event)"
@@ -243,6 +261,8 @@ export class PersonCardComponent {
   readonly variant = input<'default' | 'rich'>('default');
   /** `linear` é a linha compacta usada em listas; `card` mantém o cartão em grelha. */
   readonly layout = input<'card' | 'linear'>('card');
+  /** Versão mais legível da linha: mostra detalhes e ações também em ecrãs pequenos. */
+  readonly prominent = input(false);
 
   readonly actionSelected = output<string>();
   readonly primaryTriggered = output<string>();
@@ -254,11 +274,21 @@ export class PersonCardComponent {
 
   /** Cartão de linha: mesmo vocabulário visual, muito menos altura. */
   protected readonly linearClasses = (): string => {
-    const base = 'relative flex min-w-0 items-center gap-1 rounded-2xl border p-1.5 shadow-card transition';
+    if (this.prominent()) {
+      const base = 'relative flex min-w-0 flex-col gap-4 rounded-2xl border bg-surface p-4 shadow-card transition hover:border-brand/40';
+      return this.highlight() ? `${base} border-brand/50` : `${base} border-line`;
+    }
+    const base = 'relative flex min-w-0 items-center rounded-2xl border shadow-card transition gap-1 p-1.5';
     return this.highlight()
       ? `${base} border-brand/50 bg-brand/5`
       : `${base} border-line bg-surface hover:border-brand/40`;
   };
+
+  /** Área clicável; na versão proeminente ganha ar e mantém o foco visível. */
+  protected readonly linearBodyClasses = (): string =>
+    this.prominent()
+      ? 'flex w-full min-w-0 items-start gap-3 overflow-hidden rounded-xl px-0.5 outline-none transition focus-visible:ring-2 focus-visible:ring-brand/60'
+      : 'flex min-w-0 flex-1 items-center gap-2 overflow-hidden rounded-xl px-2 py-1.5 outline-none transition focus-visible:ring-2 focus-visible:ring-brand/60';
 
   protected readonly classes = (): string => {
     // Todos os cartões de pessoa ocupam a altura da célula da grelha

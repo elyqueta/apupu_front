@@ -14,14 +14,26 @@ import { InvitationResponseStatus } from '../invitation.models';
   template: `
     @if (variant() === 'bar') {
       <div
-        class="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-surface-solid/95 px-4 pt-3 backdrop-blur-xl lg:hidden"
+        class="fixed inset-x-0 bottom-0 z-40 border-t inv-line inv-surface px-4 pt-3 backdrop-blur-xl lg:hidden"
         style="padding-bottom: max(0.75rem, env(safe-area-inset-bottom))"
       >
+        @if (status() !== 'pending') {
+          <p
+            class="mx-auto mb-2 w-full max-w-5xl rounded-xl border px-3 py-1.5 text-center text-xs font-semibold"
+            [class]="statusTone() === 'success'
+              ? 'border-mint/30 bg-mint/10 text-mint'
+              : 'border-coral/30 bg-coral/10 text-coral'"
+            data-testid="invitation-rsvp-status"
+            aria-live="polite"
+          >
+            {{ statusLabel() }}
+          </p>
+        }
         <div class="mx-auto flex w-full max-w-5xl gap-3">
           <button
             type="button"
             data-testid="invitation-bar-accept"
-            class="inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-brand px-3 text-sm font-semibold text-on-secondary transition hover:bg-secondary-hover disabled:cursor-not-allowed disabled:opacity-60"
+            class="inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-xl inv-accent-bg px-3 text-sm font-semibold text-on-secondary transition hover:bg-secondary-hover disabled:cursor-not-allowed disabled:opacity-60"
             [disabled]="blocked()"
             (click)="respond.emit('accepted')"
           >
@@ -31,7 +43,7 @@ import { InvitationResponseStatus } from '../invitation.models';
           <button
             type="button"
             data-testid="invitation-bar-decline"
-            class="inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-xl border border-line bg-surface px-3 text-sm font-semibold text-ink transition hover:border-brand/40 disabled:cursor-not-allowed disabled:opacity-60"
+            class="inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-xl border inv-line inv-surface px-3 text-sm font-semibold inv-ink transition  disabled:cursor-not-allowed disabled:opacity-60"
             [disabled]="blocked()"
             (click)="respond.emit('declined')"
           >
@@ -41,43 +53,43 @@ import { InvitationResponseStatus } from '../invitation.models';
         </div>
       </div>
     } @else {
-      <article class="rounded-4xl border border-line bg-surface p-5 shadow-card sm:p-6">
-        <p class="text-xs font-semibold uppercase tracking-[0.18em] text-brand-strong">
+      <article class="rounded-4xl border inv-line inv-surface p-5 inv-shadow sm:p-6">
+        <p class="text-xs font-semibold uppercase tracking-[0.18em] inv-accent-text">
           {{ i18n.t('invitation.rsvpTitle') }}
         </p>
-        <p class="mt-1 text-xs leading-5 text-muted">{{ i18n.t('invitation.rsvpHint') }}</p>
+        <p class="mt-1 text-xs leading-5 inv-muted">{{ i18n.t('invitation.rsvpHint') }}</p>
 
         @if (!emailHasAccount() && !accountDismissed()) {
-          <div class="mt-4 rounded-2xl border border-brand/25 bg-brand/10 p-4">
-            <p class="text-sm font-semibold text-brand-strong">{{ i18n.t('account.title') }}</p>
-            <p class="mt-1 text-xs leading-5 text-muted">
+          <div class="mt-4 rounded-2xl border inv-accent-border inv-accent-soft p-4">
+            <p class="text-sm font-semibold inv-accent-text">{{ i18n.t('account.title') }}</p>
+            <p class="mt-1 text-xs leading-5 inv-muted">
               {{ i18n.t('account.text', { email: email() }) }}
             </p>
             <div class="mt-3 flex flex-wrap gap-2">
               <button
                 type="button"
-                class="inline-flex h-11 items-center gap-2 rounded-xl bg-brand px-3 text-xs font-semibold text-on-secondary transition hover:bg-secondary-hover"
+                class="inline-flex h-11 items-center gap-2 rounded-xl inv-accent-bg px-3 text-xs font-semibold text-on-secondary transition hover:bg-secondary-hover"
                 (click)="createAccount.emit(true)"
               >
                 {{ i18n.t('account.useEmail', { email: email() }) }}
               </button>
               <button
                 type="button"
-                class="inline-flex h-11 items-center rounded-xl border border-line bg-surface px-3 text-xs font-semibold text-ink transition hover:border-brand/40"
+                class="inline-flex h-11 items-center rounded-xl border inv-line inv-surface px-3 text-xs font-semibold inv-ink transition "
                 (click)="createAccount.emit(false)"
               >
                 {{ i18n.t('account.otherEmail') }}
               </button>
               <button
                 type="button"
-                class="inline-flex h-11 items-center rounded-xl border border-line bg-surface px-3 text-xs font-semibold text-ink transition hover:border-brand/40"
+                class="inline-flex h-11 items-center rounded-xl border inv-line inv-surface px-3 text-xs font-semibold inv-ink transition "
                 (click)="login.emit()"
               >
                 {{ i18n.t('account.login') }}
               </button>
               <button
                 type="button"
-                class="inline-flex h-11 items-center rounded-xl px-2 text-xs font-semibold text-muted transition hover:text-ink"
+                class="inline-flex h-11 items-center rounded-xl px-2 text-xs font-semibold inv-muted transition "
                 (click)="dismissAccount.emit()"
               >
                 {{ i18n.t('account.later') }}
@@ -109,7 +121,7 @@ import { InvitationResponseStatus } from '../invitation.models';
             <fa-icon [icon]="statusIcon()" aria-hidden="true" />
             {{ statusLabel() }}
           </p>
-          <p class="mt-1 text-xs leading-5 text-muted">{{ statusDetail() }}</p>
+          <p class="mt-1 text-xs leading-5 inv-muted">{{ statusDetail() }}</p>
         </div>
 
         @if (eventStatus() === 'cancelled') {
@@ -117,11 +129,11 @@ import { InvitationResponseStatus } from '../invitation.models';
             {{ i18n.t('invitation.cancelledText') }}
           </p>
         } @else if (eventStatus() === 'completed') {
-          <p class="mt-4 rounded-2xl border border-line bg-surface-raised p-4 text-xs leading-5 text-muted">
+          <p class="mt-4 rounded-2xl border inv-line inv-surface-raised p-4 text-xs leading-5 inv-muted">
             {{ i18n.t('block15.invitation.completedText') }}
           </p>
         } @else if (blocked()) {
-          <p class="mt-4 rounded-2xl border border-line bg-surface-raised p-4 text-xs leading-5 text-muted">
+          <p class="mt-4 rounded-2xl border inv-line inv-surface-raised p-4 text-xs leading-5 inv-muted">
             {{ i18n.t('invitation.deadlinePassedText') }}
           </p>
         } @else {
@@ -129,7 +141,7 @@ import { InvitationResponseStatus } from '../invitation.models';
             <button
               type="button"
               data-testid="invitation-accept"
-              class="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-brand px-4 text-sm font-semibold text-on-secondary transition hover:bg-secondary-hover disabled:cursor-wait disabled:opacity-70"
+              class="inline-flex h-12 items-center justify-center gap-2 rounded-xl inv-accent-bg px-4 text-sm font-semibold text-on-secondary transition hover:bg-secondary-hover disabled:cursor-wait disabled:opacity-70"
               [disabled]="saving()"
               (click)="respond.emit('accepted')"
             >
@@ -144,7 +156,7 @@ import { InvitationResponseStatus } from '../invitation.models';
             <button
               type="button"
               data-testid="invitation-decline"
-              class="inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-line bg-surface px-4 text-sm font-semibold text-ink transition hover:border-coral/40 disabled:cursor-wait disabled:opacity-70"
+              class="inline-flex h-12 items-center justify-center gap-2 rounded-xl border inv-line inv-surface px-4 text-sm font-semibold inv-ink transition hover:border-coral/40 disabled:cursor-wait disabled:opacity-70"
               [disabled]="saving()"
               (click)="respond.emit('declined')"
             >
@@ -154,7 +166,7 @@ import { InvitationResponseStatus } from '../invitation.models';
           </div>
         }
 
-        <p class="mt-4 text-xs leading-5 text-muted">{{ i18n.t('invitation.demoNotice') }}</p>
+        <p class="mt-4 text-xs leading-5 inv-muted">{{ i18n.t('invitation.demoNotice') }}</p>
       </article>
     }
   `,

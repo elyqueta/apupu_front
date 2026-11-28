@@ -1,4 +1,13 @@
-import { Component, computed, ElementRef, HostListener, inject, signal, viewChild } from '@angular/core';
+import {
+  afterNextRender,
+  Component,
+  computed,
+  ElementRef,
+  HostListener,
+  inject,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { debounceTime, distinctUntilChanged, filter, Subject } from 'rxjs';
@@ -156,14 +165,20 @@ export class ShellComponent {
   );
 
   constructor() {
-    try {
-      this.sidebarCollapsed.set(
-        typeof localStorage !== 'undefined' &&
-          localStorage.getItem('apupu.sidebar.collapsed') === 'true',
-      );
-    } catch {
-      this.sidebarCollapsed.set(false);
-    }
+    // O HTML vindo do SSR é sempre renderizado expandido (não há `localStorage`
+    // no servidor). Lê a preferência só depois da primeira renderização para
+    // que a hidratação corresponda e as classes do rail expandido sejam
+    // removidas em vez de ficarem somadas às do rail colapsado.
+    afterNextRender(() => {
+      try {
+        this.sidebarCollapsed.set(
+          typeof localStorage !== 'undefined' &&
+            localStorage.getItem('apupu.sidebar.collapsed') === 'true',
+        );
+      } catch {
+        this.sidebarCollapsed.set(false);
+      }
+    });
 
     // Carrega o "chrome" (perfil, atividade e eventos) depois de qualquer
     // `resetAll()` da autenticação. Cada página pede depois os domínios que

@@ -12,7 +12,7 @@ import { InvitationEventView } from '../invitation.models';
   selector: 'app-invitation-hero',
   imports: [FaIconComponent, TemplatePreviewComponent],
   template: `
-    <article class="overflow-hidden rounded-4xl border border-line bg-surface shadow-card">
+    <article class="overflow-hidden rounded-4xl border inv-line inv-surface inv-shadow">
       @if (event().coverUrl; as cover) {
         <button
           type="button"
@@ -40,27 +40,27 @@ import { InvitationEventView } from '../invitation.models';
 
       <div class="flex flex-wrap items-end justify-between gap-4 p-5 sm:p-6">
         <div class="min-w-0">
-          <p class="text-xs font-semibold uppercase tracking-[0.18em] text-brand-strong">
+          <p class="text-xs font-semibold uppercase tracking-[0.18em] inv-accent-text">
             {{ i18n.t('invitation.youAreInvited') }}
           </p>
           @if (guestName()) {
-            <h1 class="mt-1 font-display text-2xl font-semibold tracking-tight text-ink sm:text-3xl">
+            <h1 class="mt-1 font-display text-2xl font-semibold tracking-tight inv-ink sm:text-3xl">
               {{ i18n.t('invitation.guestGreeting', { name: guestName() }) }}
             </h1>
           } @else {
             <!-- Link aberto: sem convidado conhecido, o título do evento é o cabeçalho. -->
-            <h1 class="mt-1 font-display text-2xl font-semibold tracking-tight text-ink sm:text-3xl">
+            <h1 class="mt-1 font-display text-2xl font-semibold tracking-tight inv-ink sm:text-3xl">
               {{ event().title }}
             </h1>
           }
           @if (event().coverUrl) {
-            <h2 class="mt-2 font-display text-xl font-semibold text-ink">{{ event().title }}</h2>
-            <p class="mt-1 text-sm text-muted">
+            <h2 class="mt-2 font-display text-xl font-semibold inv-ink">{{ event().title }}</h2>
+            <p class="mt-1 text-sm inv-muted">
               {{ i18n.t('invitation.hostInline', { name: event().hostName }) }}
             </p>
           }
           @if (typeLabel()) {
-            <p class="mt-2 inline-flex items-center gap-2 text-sm text-muted">
+            <p class="mt-2 inline-flex items-center gap-2 text-sm inv-muted">
               <fa-icon [icon]="typeIcon()" aria-hidden="true" />
               {{ typeLabel() }}
             </p>
@@ -69,16 +69,16 @@ import { InvitationEventView } from '../invitation.models';
 
         <div class="flex flex-wrap items-center gap-3">
           @if (countdownDays() > 0) {
-            <div class="rounded-2xl border border-line bg-surface-raised px-4 py-2 text-center">
-              <p class="text-xs font-semibold text-muted">{{ i18n.t('invitation.countdown') }}</p>
-              <p class="font-display text-2xl font-semibold leading-tight text-ink">
+            <div class="rounded-2xl border inv-line inv-surface-raised px-4 py-2 text-center">
+              <p class="text-xs font-semibold inv-muted">{{ i18n.t('invitation.countdown') }}</p>
+              <p class="font-display text-2xl font-semibold leading-tight inv-ink">
                 {{ countdownDays() }}
-                <span class="text-xs font-medium text-muted">{{ i18n.t('common.days') }}</span>
+                <span class="text-xs font-medium inv-muted">{{ i18n.t('common.days') }}</span>
               </p>
             </div>
           }
           <span
-            class="inline-flex items-center rounded-full border border-line bg-surface-raised px-3 py-2 text-xs font-semibold text-ink"
+            class="inline-flex items-center rounded-full border inv-line inv-surface-raised px-3 py-2 text-xs font-semibold inv-ink"
           >
             {{ i18n.t(statusKey()) }}
           </span>

@@ -83,6 +83,8 @@ export interface EventStats {
 export interface ApiEvent {
   id: string;
   title: string;
+  /** Bloco 16: subtítulo editável do convite. */
+  subtitle?: string | null;
   host_name: string;
   host_email: string;
   category: EventCategory | null;
@@ -90,6 +92,8 @@ export interface ApiEvent {
   ends_at: string | null;
   timezone: string;
   location: EventLocation;
+  /** Bloco 16: principal primeiro; ausente em respostas antigas. */
+  locations?: PublicLocation[];
   message: string | null;
   rules: string | null;
   dress_code: string | null;
@@ -197,9 +201,50 @@ export interface ApiHostEventManager extends ApiEventManager {
   };
 }
 
+/** Bloco 16: corpo enviado ao back em `locations[]` (principal primeiro). */
+export type EventLocationInput =
+  | {
+      id?: string | null;
+      kind: 'venue';
+      is_primary: boolean;
+      address: string;
+      venue_name?: string | null;
+      label?: string | null;
+      starts_at?: string | null;
+      city?: string | null;
+      latitude?: number | null;
+      longitude?: number | null;
+    }
+  | {
+      id?: string | null;
+      kind: 'online';
+      is_primary: boolean;
+      online_url: string;
+      label?: string | null;
+      starts_at?: string | null;
+    };
+
+/** Bloco 16: localização pública; coordenadas só para quem pode ver o convite. */
+export interface PublicLocation {
+  id: string | null;
+  is_primary: boolean;
+  kind: 'venue' | 'online';
+  address: string | null;
+  venue_name?: string | null;
+  label?: string | null;
+  starts_at?: string | null;
+  city?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  online_url?: string | null;
+  maps_url?: string | null;
+}
+
 export interface PublicEvent {
   id: string;
   title: string;
+  /** Bloco 16: subtítulo editável do convite. */
+  subtitle?: string | null;
   host_name: string;
   /** Contacto mínimo do anfitrião; telefone/avatar podem ser nulos. */
   host_email?: string;
@@ -210,6 +255,8 @@ export interface PublicEvent {
   ends_at: string | null;
   timezone: string;
   location: EventLocation;
+  /** Bloco 16: principal primeiro; ausente em respostas antigas. */
+  locations?: PublicLocation[];
   message: string | null;
   rules: string | null;
   dress_code: string | null;
@@ -507,6 +554,8 @@ export interface ReportSummary {
 export interface CreateEventRequest {
   event: {
     title: string;
+    /** Bloco 16: `null` limpa o subtítulo. */
+    subtitle?: string | null;
     host_name: string;
     host_email: string;
     category: EventCategory;
@@ -514,6 +563,8 @@ export interface CreateEventRequest {
     ends_at?: string;
     timezone: string;
     location: EventLocation;
+    /** Bloco 16: quando presente, substitui o espelho legado. */
+    locations?: EventLocationInput[];
     message: string;
     rules?: string;
     dress_code?: string;

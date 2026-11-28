@@ -4,14 +4,13 @@ import { I18nService } from '../../../core/i18n/i18n.service';
 import { ICONS } from '../../../core/ui/icons';
 import { ShareService } from '../../../core/services/share.service';
 import { ToastService } from '../../../core/services/toast.service';
-import { LocationMapComponent } from '../../../shared/components/location-map.component';
 import { ModalComponent } from '../../../shared/components/modal.component';
 import { InvitationEventView } from '../invitation.models';
 
 /** Localização do evento: copiar endereço e abrir Google Maps por link simples. */
 @Component({
   selector: 'app-invitation-location-dialog',
-  imports: [FaIconComponent, ModalComponent, LocationMapComponent],
+  imports: [FaIconComponent, ModalComponent],
   template: `
     <app-modal
       [open]="open()"
@@ -19,10 +18,10 @@ import { InvitationEventView } from '../invitation.models';
       presentation="sheet"
       size="md"
       (closed)="closed.emit()"
-    >
+     [invitation]="true">
       @if (event().onlineLink; as online) {
         <div class="flex flex-col gap-4">
-          <p class="flex items-center gap-2 text-sm font-semibold text-ink">
+          <p class="flex items-center gap-2 text-sm font-semibold inv-ink">
             <fa-icon [icon]="icons['display']" class="text-aqua" aria-hidden="true" />
             {{ i18n.t('invitation.onlineEvent') }}
           </p>
@@ -30,7 +29,7 @@ import { InvitationEventView } from '../invitation.models';
             [href]="online"
             target="_blank"
             rel="noopener noreferrer"
-            class="ui-btn"
+            class="inv-btn"
           >
             <fa-icon [icon]="icons['arrowUpRight']" aria-hidden="true" />
             {{ i18n.t('invitation.openOnlineLink') }}
@@ -40,15 +39,15 @@ import { InvitationEventView } from '../invitation.models';
         <div class="flex flex-col gap-4">
           @if (event().venue) {
             <div>
-              <p class="text-xs font-semibold text-muted">{{ i18n.t('invitation.where') }}</p>
-              <p class="mt-1 text-base font-semibold text-ink">{{ event().venue }}</p>
+              <p class="text-xs font-semibold inv-muted">{{ i18n.t('invitation.where') }}</p>
+              <p class="mt-1 text-base font-semibold inv-ink">{{ event().venue }}</p>
             </div>
           }
-          <div class="rounded-2xl border border-line bg-surface-raised p-4">
-            <p class="text-xs font-semibold text-muted">{{ i18n.t('invitation.address') }}</p>
-            <p class="mt-1 text-sm leading-6 text-ink">{{ fullAddress() }}</p>
+          <div class="rounded-2xl border inv-line inv-surface-raised p-4">
+            <p class="text-xs font-semibold inv-muted">{{ i18n.t('invitation.address') }}</p>
+            <p class="mt-1 text-sm leading-6 inv-ink">{{ fullAddress() }}</p>
             @if (event().placeName) {
-              <p class="mt-2 text-xs text-muted">{{ event().placeName }}</p>
+              <p class="mt-2 text-xs inv-muted">{{ event().placeName }}</p>
             }
             @if (hasCoordinates()) {
               <p class="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-mint" data-testid="invitation-exact-location">
@@ -57,22 +56,11 @@ import { InvitationEventView } from '../invitation.models';
               </p>
             }
           </div>
-          @if (hasCoordinates()) {
-            <app-location-map
-              [latitude]="event().latitude"
-              [longitude]="event().longitude"
-              [placeName]="event().placeName || event().venue || fullAddress()"
-              [interactive]="false"
-              [tapToActivate]="true"
-              activateLabel="Toque para ver o mapa"
-              ariaLabel="Mapa da localização do evento"
-            />
-          }
           <div class="flex flex-col gap-2 sm:flex-row">
             <button
               type="button"
               data-testid="invitation-copy-address"
-              class="ui-btn-secondary flex-1"
+              class="inv-btn-secondary flex-1"
               (click)="copyAddress()"
             >
               <fa-icon [icon]="icons['copy']" aria-hidden="true" />
@@ -83,7 +71,7 @@ import { InvitationEventView } from '../invitation.models';
               target="_blank"
               rel="noopener noreferrer"
               data-testid="invitation-open-maps"
-              class="ui-btn flex-1"
+              class="inv-btn flex-1"
             >
               <fa-icon [icon]="icons['location']" aria-hidden="true" />
               {{ i18n.t('invitation.openMaps') }}
@@ -91,7 +79,7 @@ import { InvitationEventView } from '../invitation.models';
           </div>
         </div>
       } @else {
-        <p class="text-sm leading-6 text-muted">{{ i18n.t('invitation.noAddress') }}</p>
+        <p class="text-sm leading-6 inv-muted">{{ i18n.t('invitation.noAddress') }}</p>
       }
     </app-modal>
   `,

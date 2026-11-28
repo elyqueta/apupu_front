@@ -130,3 +130,16 @@
 | Contraste das paletas (resolvido) | Seis templates tinham `ink`/`muted` abaixo de 4.5:1 sobre o fundo (T10 chegava a 1.00:1). | ✔ Paletas ajustadas no catálogo front e no espelho back; teste puro em `system-templates.spec.ts` valida os 19. |
 | `zbarimg` no pipeline | A leitura automática do QR renderizado com `zbarimg` não faz parte dos testes executados. | Cobertura atual: QR gerado e desenhado, PDFs gerados e validados por `pdftotext`/`pdftoppm`; leitura por scanner externo pendente. |
 | Artefacto de título longo | `docs/assets/gratitude-long-title.pdf` / `.png` usam um título sintético extenso; não substituem a validação visual com dados reais do anfitrião. | ✔ Complementado pelo caso `e` real-component em `e2e/gratitude-real.spec.ts` e pelos testes puros de `fitGratitudeTitle()`. |
+
+## Bloco 16 — convite do template (28/11/2026)
+
+**Bloqueios:** nenhum bloqueio funcional. As branches locais foram limpas e as branches `feat/bloco-16-convite-template` criadas a partir de `feat/bloco-15-templates` em front e back; **não houve push, merge nem rebase**.
+
+| Área | Observação | Estado |
+|---|---|---|
+| Branches remotas antigas | `git push origin --delete <branch>` falhou nos dois repositórios com `fatal: could not read Username for 'https://github.com'`. Não há `gh` instalado nem credenciais/token disponíveis neste ambiente. | Pendente de autenticação do autor; a limpeza local está concluída. |
+| Playwright | `E2E_BASE_URL`, `E2E_EMAIL` e `E2E_PASSWORD` não estão definidos e os binários do Chromium não estão instalados. | A spec `e2e/bloco16-invitation.spec.ts` compila (`npm run e2e:typecheck`) mas é ignorada até o autor definir o ambiente. |
+| Leitura do QR com `zbarimg` | A ferramenta não faz parte do pipeline; a verificação automatizada cobre o SVG (`data-qr-logo`, ECC H, área ≤ 20%). | Confirmação manual recomendada num PDF e no ecrã. |
+| Mapa em tempo real | O seletor usa o serviço público OpenFreeMap “as-is”, sem chave; pode mudar ou estar indisponível. O URL está em `environment.mapStyleUrl` e o seletor degrada para endereço escrito se o carregamento falhar. | Registado; sem dependência nova. |
+| Teste de migração | A migração `up → down → up` corre com o Postgres de teste local (`localhost:5433`) conforme o padrão dos blocos anteriores. | Ver evidência em `docs/REPORT-BLOCO-16.md`. |
+| Suite Vitest completa | Com `load average ≈ 42` (Gradle daemon, Chrome, `ng serve` e OpenCode em simultâneo), alguns testes excedem o `testTimeout` de 5 s da configuração Angular. Em lotes (`app/features/**`, `app/core/**` + `app/shared/**`, `app/app*.spec.ts`) passam 304/304; isoladamente os ficheiros afetados passam 15/15. O baseline em `3b039c8` falha da mesma forma. | Flakiness ambiental pré-existente, não funcional; sem alteração de config para esconder o problema. |

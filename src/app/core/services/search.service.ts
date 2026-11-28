@@ -284,7 +284,8 @@ export class SearchService implements Resettable {
     }
   }
 
-  private recentSearches(): string[] {
+  /** Termos guardados para a pesquisa global (também usados no feed público). */
+  recentSearches(): string[] {
     const key = this.hostStorageKey();
     if (!key) {
       return [];

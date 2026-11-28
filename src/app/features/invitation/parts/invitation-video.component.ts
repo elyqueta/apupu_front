@@ -14,8 +14,8 @@ import { ModalComponent } from '../../../shared/components/modal.component';
   imports: [FaIconComponent, ModalComponent],
   template: `
     @if (safeId(); as id) {
-      <section class="overflow-hidden rounded-4xl border border-line bg-surface shadow-card" data-testid="invitation-video">
-        <h2 class="px-5 pt-4 text-sm font-semibold text-ink">{{ i18n.t('block14.video.title') }}</h2>
+      <section class="overflow-hidden rounded-4xl border inv-line inv-surface inv-shadow" data-testid="invitation-video">
+        <h2 class="px-5 pt-4 text-sm font-semibold inv-ink">{{ i18n.t('block14.video.title') }}</h2>
         <div class="p-3 sm:p-4">
           <div class="relative aspect-video overflow-hidden rounded-3xl bg-ink/90">
             <button
@@ -26,7 +26,7 @@ import { ModalComponent } from '../../../shared/components/modal.component';
               (click)="open.set(true)"
             >
               <img [src]="'https://i.ytimg.com/vi/' + id + '/hqdefault.jpg'" alt="" class="absolute inset-0 size-full object-cover opacity-90" loading="lazy" />
-              <span class="relative grid size-16 place-items-center rounded-full bg-white/90 text-2xl text-ink shadow-card transition group-hover:scale-105">
+              <span class="relative grid size-16 place-items-center rounded-full bg-white/90 text-2xl inv-ink transition group-hover:scale-105">
                 <fa-icon [icon]="icons['play']" aria-hidden="true" />
               </span>
             </button>
@@ -34,7 +34,7 @@ import { ModalComponent } from '../../../shared/components/modal.component';
         </div>
       </section>
 
-      <app-modal [open]="open()" [title]="i18n.t('block14.video.title')" size="lg" (closed)="close()">
+      <app-modal [open]="open()" [title]="i18n.t('block14.video.title')" size="lg" (closed)="close()" [invitation]="true">
         <div #videoShell class="overflow-hidden rounded-2xl bg-black">
           <div class="relative aspect-video w-full">
             @if (open()) {
@@ -51,11 +51,11 @@ import { ModalComponent } from '../../../shared/components/modal.component';
           </div>
         </div>
         <div modal-footer class="flex flex-wrap justify-end gap-2">
-          <button type="button" class="ui-btn-secondary" data-testid="invitation-video-fullscreen" (click)="toggleFullscreen()">
+          <button type="button" class="inv-btn-secondary" data-testid="invitation-video-fullscreen" (click)="toggleFullscreen()">
             <fa-icon [icon]="icons['expand']" aria-hidden="true" />
             {{ i18n.t('block15.video.fullscreen') }}
           </button>
-          <button type="button" class="ui-btn" (click)="close()">{{ i18n.t('common.close') }}</button>
+          <button type="button" class="inv-btn" (click)="close()">{{ i18n.t('common.close') }}</button>
         </div>
       </app-modal>
     }

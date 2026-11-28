@@ -51,6 +51,7 @@ describe('DashboardPage · convidados', () => {
   const share = {
     whatsappUrl: vi.fn().mockReturnValue('https://wa.me/244912345678?text=convite'),
     openExternal: vi.fn(),
+    copy: vi.fn().mockResolvedValue(true),
   };
   const toasts = { success: vi.fn(), error: vi.fn() };
   const store = {
@@ -69,7 +70,7 @@ describe('DashboardPage · convidados', () => {
       responseRate: 50,
     }),
     taskProgress: signal({ done: 0, total: 0 }),
-    recentEvents: signal([]),
+    recentEvents: signal<HostEvent[]>([]),
     tasks: signal([]),
     activityFeed: signal([]),
     profile: signal({ name: 'Ana Costa', email: 'ana@example.com' }),
@@ -93,6 +94,8 @@ describe('DashboardPage · convidados', () => {
       { guest: guest('confirmed', 'confirmed', null), event },
       { guest: guest('declined', 'declined', null), event },
     ]);
+    store.recentEvents.set([]);
+    store.eventStats.mockReturnValue(null);
     TestBed.configureTestingModule({
       imports: [DashboardPage],
       providers: [
@@ -125,42 +128,58 @@ describe('DashboardPage · convidados', () => {
     expect(view.filteredGuests().map((entry) => entry.guest.id)).toEqual(['confirmed']);
   });
 
-  it('uses WhatsApp as primary action when the guest has a phone', () => {
+  it('opens the guest detail modal and runs its actions', () => {
     const view = page as unknown as {
-      primaryFor: (entry: GuestEntry) => { id: string; label: string };
+      detailTarget: () => GuestEntry | null;
+      openDetails: (entry: GuestEntry) => void;
+      closeDetails: () => void;
+      runDetailAction: (action: string, entry: GuestEntry) => void;
+      guestActions: (entry: GuestEntry) => { id: string }[];
       metaFor: (entry: GuestEntry) => { icon: string; label: string }[];
-      onGuestAction: (action: string, entry: GuestEntry) => void;
     };
     const entry = entries()[0];
 
-    expect(view.primaryFor(entry).id).toBe('whatsapp');
+    expect(view.guestActions(entry).map((action) => action.id)).toEqual([
+      'whatsapp',
+      'resend',
+      'view',
+    ]);
     expect(view.metaFor(entry)[0].label).toBe(event.title);
     expect(view.metaFor(entry)[1].label).toContain('3 dias');
     expect(view.metaFor(entry)[2].label).toContain('Link partilhado por WhatsApp');
-    expect(view.metaFor(entry)[2].label).toContain('há 2 dias');
 
-    view.onGuestAction('whatsapp', entry);
+    view.openDetails(entry);
+    expect(view.detailTarget()).toBe(entry);
+
+    view.runDetailAction('whatsapp', entry);
+    expect(view.detailTarget()).toBeNull();
     expect(share.whatsappUrl).toHaveBeenCalled();
     expect(share.openExternal).toHaveBeenCalledWith('https://wa.me/244912345678?text=convite');
     expect(store.markWhatsappShared).toHaveBeenCalledWith(entry.guest);
   });
 
-  it('groups guests into carousel panels of three', () => {
-    entries.set([
-      { guest: guest('p1', 'pending', null), event },
-      { guest: guest('p2', 'pending', null), event },
-      { guest: guest('p3', 'pending', null), event },
-      { guest: guest('p4', 'pending', null), event },
-    ]);
+  it('builds a selectable response breakdown for recent events', () => {
+    const other = { ...event, id: 'evt-2', title: 'Outro evento' } as HostEvent;
+    store.recentEvents.set([event, other]);
+    store.eventStats.mockImplementation((eventId: string) =>
+      eventId === event.id
+        ? { total: 4, confirmed: 2, pending: 1, declined: 1, responseRate: 75 }
+        : { total: 0, confirmed: 0, pending: 0, declined: 0, responseRate: 0 },
+    );
+
     const view = page as unknown as {
-      guestPages: () => GuestEntry[][];
-      carouselPages: () => number;
+      responseEvents: () => { id: string; confirmedPct: number; pendingPct: number }[];
+      selectedResponseEvent: () => { id: string } | null;
+      responseTotals: () => { total: number; confirmed: number };
+      selectResponseEvent: (eventId: string) => void;
     };
 
-    expect(view.guestPages().map((panel) => panel.map((entry) => entry.guest.id))).toEqual([
-      ['p1', 'p2', 'p3'],
-      ['p4'],
-    ]);
-    expect(view.carouselPages()).toBe(2);
+    expect(view.responseEvents()[0].confirmedPct).toBe(50);
+    expect(view.responseEvents()[0].pendingPct).toBe(25);
+    expect(view.responseTotals()).toEqual({ total: 4, confirmed: 2, pending: 1, declined: 1 });
+    expect(view.selectedResponseEvent()?.id).toBe(event.id);
+
+    view.selectResponseEvent(other.id);
+    expect(view.selectedResponseEvent()?.id).toBe(other.id);
   });
 });

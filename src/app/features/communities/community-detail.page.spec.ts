@@ -246,6 +246,86 @@ describe('CommunityDetailPage', () => {
     expect(native.querySelector('[data-testid="community-join"]')).toBeNull();
   });
 
+  it('edição da comunidade mostra os controlos de imagem com o estilo de botão primário', async () => {
+    const base = staff();
+    const context = setup();
+    http = context.http;
+    http.expectOne(`${BASE}/host/communities/${SLUG}`).flush({
+      data: staff({
+        community: {
+          ...base.community,
+          cover_url: 'https://example.com/cover.jpg',
+          avatar_url: 'https://example.com/avatar.jpg',
+        },
+      }),
+    });
+    await flushPending(http, ACTIVITY_URL, { data: [] });
+    await settle(context.fixture);
+    openTab(context.fixture, 'settings');
+    const native = context.fixture.nativeElement as HTMLElement;
+    (native.querySelector('[data-testid="community-edit"]') as HTMLButtonElement).click();
+    context.fixture.detectChanges();
+    const dialog = native.querySelector('app-community-form-dialog') as HTMLElement;
+    expect(dialog).not.toBeNull();
+    const uploads = Array.from(dialog.querySelectorAll<HTMLInputElement>('input[type="file"]')).map(
+      (input) => input.closest('label') as HTMLLabelElement,
+    );
+    expect(uploads.length).toBe(2);
+    const removes = Array.from(dialog.querySelectorAll<HTMLButtonElement>('button.size-9'));
+    expect(removes.length).toBe(2);
+    for (const label of uploads) {
+      expect(label.className).toContain('bg-brand');
+      expect(label.className).toContain('text-on-secondary');
+      expect(label.className).toContain('hover:bg-secondary-hover');
+      expect(label.className).toContain('focus-within:ring-brand/60');
+      expect(label.className).not.toContain('bg-[#0a2b2c]/40');
+      expect((label.querySelector('input') as HTMLInputElement).disabled).toBe(false);
+    }
+    for (const button of removes) {
+      expect(button.className).toContain('bg-surface');
+      expect(button.className).toContain('text-coral');
+      expect(button.className).toContain('hover:bg-coral/10');
+      expect(button.className).toContain('focus-visible:ring-coral/60');
+      expect(button.className).not.toContain('bg-[#0a2b2c]/40');
+    }
+  });
+
+  it('todas as abas usam a mesma família visual com destaque só na selecionada', async () => {
+    const context = setup();
+    http = context.http;
+    http.expectOne(`${BASE}/host/communities/${SLUG}`).flush({ data: staff() });
+    await flushPending(http, ACTIVITY_URL, { data: [] });
+    await settle(context.fixture);
+    const native = context.fixture.nativeElement as HTMLElement;
+    const tabs = () => Array.from(native.querySelectorAll<HTMLButtonElement>('[role="tab"]'));
+    const assertStyles = (): void => {
+      for (const button of tabs()) {
+        const classes = button.className;
+        expect(classes).toContain('text-ink');
+        expect(classes).not.toContain('text-muted');
+        expect(classes).not.toContain('opacity-');
+        expect(button.querySelector('span')?.className ?? '').not.toContain('text-muted');
+        if (button.getAttribute('aria-selected') === 'true') {
+          expect(classes).toContain('border-brand/30');
+          expect(classes).toContain('bg-brand/15');
+          expect(classes).not.toContain('bg-surface');
+        } else {
+          expect(classes).toContain('border-line');
+          expect(classes).toContain('bg-surface');
+          expect(classes).toContain('hover:border-brand/30');
+          expect(classes).toContain('hover:bg-brand/10');
+          expect(classes).not.toContain('bg-brand/15');
+        }
+      }
+    };
+    expect(tabs().length).toBeGreaterThan(1);
+    assertStyles();
+    expect(tabs()[0].getAttribute('aria-selected')).toBe('true');
+    openTab(context.fixture, 'settings');
+    assertStyles();
+    expect(tabs().find((button) => button.getAttribute('aria-selected') === 'true')?.getAttribute('data-testid')).toBe('community-tab-settings');
+  });
+
   it('comunidade privada sem acesso mostra "não encontrada"', async () => {
     const context = setup();
     http = context.http;
@@ -313,6 +393,76 @@ describe('CommunityDetailPage', () => {
     const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
     team.click();
     expect(navigate).toHaveBeenCalledWith(['/equipas', 't1']);
+  });
+
+  it('lista de equipas da comunidade usa o mesmo cartão destacado da página de equipas', async () => {
+    const context = setup();
+    http = context.http;
+    http.expectOne(`${BASE}/host/communities/${SLUG}`).flush({
+      data: activeMember({ teams: [communityTeam()] }),
+    });
+    await flushPending(http, ACTIVITY_URL, { data: [] });
+    await settle(context.fixture);
+    openTab(context.fixture, 'teams');
+
+    const native = context.fixture.nativeElement as HTMLElement;
+    const list = native.querySelector('[data-testid="community-teams-list"]') as HTMLElement;
+    expect(list).not.toBeNull();
+    expect(list.className).toContain('flex');
+    expect(list.className).toContain('flex-col');
+    expect(list.className).toContain('gap-2');
+    expect(list.classList.contains('overflow-hidden')).toBe(false);
+    expect(list.classList.contains('rounded-3xl')).toBe(false);
+
+    const item = list.querySelector('li') as HTMLElement;
+    expect(item).not.toBeNull();
+    expect(item.className).toContain('min-w-0');
+    expect(item.className).toContain('rounded-2xl');
+    expect(item.className).toContain('border-line');
+    expect(item.className).toContain('bg-surface');
+    expect(item.className).toContain('shadow-card');
+    expect(item.className).toContain('transition');
+    expect(item.className).toContain('hover:border-brand/35');
+    expect(item.classList.contains('border-b')).toBe(false);
+  });
+
+  it('staff vê o empty state padrão quando não há sugestões de eventos', async () => {
+    const context = setup();
+    http = context.http;
+    http.expectOne(`${BASE}/host/communities/${SLUG}`).flush({ data: staff() });
+    await flushPending(http, ACTIVITY_URL, { data: [] });
+    await settle(context.fixture);
+    openTab(context.fixture, 'events');
+    await flushPending(http, SUGGESTIONS_URL, { data: [] });
+    await settle(context.fixture);
+
+    const native = context.fixture.nativeElement as HTMLElement;
+    const empty = native.querySelector('[data-testid="community-suggestions-empty"]') as HTMLElement;
+    expect(empty).not.toBeNull();
+    expect(empty.tagName).toBe('DIV');
+    expect(empty.className).toContain('rounded-4xl');
+    expect(empty.className).toContain('border-dashed');
+    expect(empty.className).toContain('bg-surface/60');
+    expect(empty.className).toContain('px-5');
+    expect(empty.className).toContain('py-10');
+
+    const iconBox = empty.querySelector('span') as HTMLElement;
+    expect(iconBox.className).toContain('size-14');
+    expect(iconBox.className).toContain('border-brand/25');
+    expect(iconBox.className).toContain('bg-brand/15');
+    expect(iconBox.className).toContain('text-brand-strong');
+    expect(iconBox.querySelector('fa-icon')).not.toBeNull();
+
+    const title = empty.querySelector('h3') as HTMLElement;
+    expect(title.className).toContain('font-display');
+    expect(title.className).toContain('text-lg');
+    expect(title.textContent).toContain('Nenhuma sugestão por agora');
+
+    const hint = empty.querySelector('p') as HTMLElement;
+    expect(hint.className).toContain('text-sm');
+    expect(hint.className).toContain('leading-6');
+    expect(hint.className).toContain('text-muted');
+    expect(hint.textContent).toContain('Sem sugestões pendentes.');
   });
 
   it('staff revê sugestões pendentes e aprova, recarregando detalhe e eventos', async () => {

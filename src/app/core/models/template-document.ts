@@ -32,6 +32,8 @@ export interface TemplateBlockBase {
   id: string;
   type: TemplateBlockType;
   visible?: boolean;
+  /** Bloco 16: no modo capa só aparecem ornamento, organização, subtítulo, título e destaque. */
+  showInCover?: boolean;
   style?: BlockStyle;
 }
 

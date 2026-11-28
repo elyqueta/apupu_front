@@ -2,9 +2,10 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { PLATFORM_ID } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
 import { API_BASE_URL } from '../../core/api/api-config';
 import { FeedCommunity, FeedEvent, FeedInstitution, FeedPerson } from '../../core/data/social.repository';
+import { SearchService } from '../../core/services/search.service';
 import { FeedPage } from './feed.page';
 
 const BASE = 'http://localhost:3000/api/v1';
@@ -90,8 +91,28 @@ function flushFeed(
     .flush({ data: { items, next_cursor: nextCursor } });
 }
 
+/** Abre a folha de pesquisa já com o feed carregado. */
+async function openSearch(fixture: ComponentFixture<FeedPage>): Promise<HTMLInputElement> {
+  (fixture.nativeElement.querySelector('[data-testid="feed-search-open"]') as HTMLButtonElement).click();
+  fixture.detectChanges();
+  await new Promise<void>((resolve) => setTimeout(resolve, 0));
+  return fixture.nativeElement.querySelector('[data-testid="feed-search-input"]') as HTMLInputElement;
+}
+
+function type(input: HTMLInputElement, value: string, fixture: ComponentFixture<FeedPage>): void {
+  input.value = value;
+  input.dispatchEvent(new Event('input', { bubbles: true }));
+  fixture.detectChanges();
+}
+
+/** O debounce da pesquisa global é de 250 ms. */
+async function waitDebounce(): Promise<void> {
+  await new Promise<void>((resolve) => setTimeout(resolve, 300));
+}
+
 describe('FeedPage', () => {
   let http: HttpTestingController;
+  beforeEach(() => localStorage.clear());
   afterEach(() => {
     try {
       http?.verify();
@@ -245,5 +266,147 @@ describe('FeedPage', () => {
     (native.querySelector('[data-testid="feed-person-p1"] button') as HTMLButtonElement).click();
     await settle(context.fixture);
     expect(document.body.querySelector('[data-testid="feed-gate"]')).not.toBeNull();
+  });
+
+  it('abre a pesquisa com combobox, lista de sugestões e foco no campo', async () => {
+    const context = setup();
+    http = context.http;
+    flushFeed(http, 'events', [event]);
+    flushFeed(http, 'communities');
+    flushFeed(http, 'people');
+    await settle(context.fixture);
+
+    const input = await openSearch(context.fixture);
+    expect(input.getAttribute('role')).toBe('combobox');
+    expect(input.getAttribute('aria-autocomplete')).toBe('list');
+    expect(input.getAttribute('aria-controls')).toBe('feed-search-suggestions');
+    expect(input.getAttribute('aria-expanded')).toBe('true');
+    expect(document.activeElement).toBe(input);
+
+    const list = context.fixture.nativeElement.querySelector('#feed-search-suggestions');
+    expect(list?.getAttribute('role')).toBe('listbox');
+    expect(list?.textContent).toContain('Eventos');
+    expect(list?.textContent).toContain('Retiro de jovens');
+  });
+
+  it('agrupa os resultados em tempo real depois do debounce', async () => {
+    const context = setup();
+    http = context.http;
+    flushFeed(http, 'events');
+    flushFeed(http, 'communities');
+    flushFeed(http, 'people');
+    await settle(context.fixture);
+
+    const input = await openSearch(context.fixture);
+    type(input, 'rui', context.fixture);
+    http.expectNone((req) => req.url === `${BASE}/public/search`);
+
+    await waitDebounce();
+    http
+      .expectOne((req) => req.url === `${BASE}/public/search` && req.params.get('q') === 'rui')
+      .flush({ data: { events: [], communities: [], people: [person] } });
+    await settle(context.fixture);
+
+    const list = context.fixture.nativeElement.querySelector('#feed-search-suggestions') as HTMLElement;
+    expect(list.textContent).toContain('Pessoas');
+    expect(list.textContent).toContain('Rui');
+    expect(list.querySelector('[role="option"]')?.id).toContain('feed-person:p1');
+  });
+
+  it('mostra o estado de letras mínimas sem pedir resultados', async () => {
+    const context = setup();
+    http = context.http;
+    flushFeed(http, 'events');
+    flushFeed(http, 'communities');
+    flushFeed(http, 'people');
+    await settle(context.fixture);
+
+    const input = await openSearch(context.fixture);
+    type(input, 'r', context.fixture);
+    expect(context.fixture.nativeElement.textContent).toContain('Escreva pelo menos 2 letras.');
+    await waitDebounce();
+    http.expectNone((req) => req.url === `${BASE}/public/search`);
+  });
+
+  it('navega por setas, escolhe com Enter e fecha com Escape', async () => {
+    const context = setup();
+    http = context.http;
+    flushFeed(http, 'events');
+    flushFeed(http, 'communities');
+    flushFeed(http, 'people');
+    await settle(context.fixture);
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+
+    const input = await openSearch(context.fixture);
+    type(input, 'retiro', context.fixture);
+    await waitDebounce();
+    http
+      .expectOne((req) => req.url === `${BASE}/public/search`)
+      .flush({ data: { events: [event], communities: [], people: [] } });
+    await settle(context.fixture);
+
+    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+    context.fixture.detectChanges();
+    const activeId = input.getAttribute('aria-activedescendant');
+    expect(activeId).toBe('feed-event:ev1');
+    expect(document.getElementById(activeId as string)?.getAttribute('aria-selected')).toBe('true');
+
+    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    context.fixture.detectChanges();
+    expect(navigate).toHaveBeenCalledWith(['/e', 'abcDEF123456'], { queryParams: undefined });
+    expect(context.fixture.nativeElement.querySelector('[data-testid="feed-search-input"]')).toBeNull();
+
+    const again = await openSearch(context.fixture);
+    type(again, 'a', context.fixture);
+    again.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    context.fixture.detectChanges();
+    expect(context.fixture.nativeElement.querySelector('[data-testid="feed-search-input"]')).toBeNull();
+  });
+
+  it('mostra pesquisas recentes partilhadas com a shell e permite limpar', async () => {
+    const context = setup();
+    http = context.http;
+    flushFeed(http, 'events');
+    flushFeed(http, 'communities');
+    flushFeed(http, 'people');
+    await settle(context.fixture);
+    TestBed.inject(SearchService).rememberSearch('retiro');
+
+    await openSearch(context.fixture);
+    const list = context.fixture.nativeElement.querySelector('#feed-search-suggestions') as HTMLElement;
+    expect(list.textContent).toContain('Pesquisas recentes');
+    expect(list.textContent).toContain('retiro');
+
+    const clear = [...list.querySelectorAll('button')].find(
+      (button) => button.textContent?.trim() === 'Limpar',
+    ) as HTMLButtonElement;
+    expect(clear).toBeTruthy();
+    clear.click();
+    context.fixture.detectChanges();
+    expect(context.fixture.nativeElement.querySelector('#feed-search-suggestions')?.textContent).not.toContain(
+      'Pesquisas recentes',
+    );
+  });
+
+  it('ao escolher uma pessoa sem sessão mantém o convite a criar conta', async () => {
+    const context = setup();
+    http = context.http;
+    flushFeed(http, 'events');
+    flushFeed(http, 'communities');
+    flushFeed(http, 'people');
+    await settle(context.fixture);
+
+    const input = await openSearch(context.fixture);
+    type(input, 'rui', context.fixture);
+    await waitDebounce();
+    http
+      .expectOne((req) => req.url === `${BASE}/public/search`)
+      .flush({ data: { events: [], communities: [], people: [person] } });
+    await settle(context.fixture);
+
+    (context.fixture.nativeElement.querySelector('#feed-search-suggestions [role="option"]') as HTMLButtonElement).click();
+    context.fixture.detectChanges();
+    expect(document.body.querySelector('[data-testid="feed-gate"]')).not.toBeNull();
+    expect(context.fixture.nativeElement.querySelector('[data-testid="feed-search-input"]')).toBeNull();
   });
 });

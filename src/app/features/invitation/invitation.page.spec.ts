@@ -68,7 +68,7 @@ describe('InvitationPage', () => {
     await settle(context.fixture);
 
     const native = context.fixture.nativeElement as HTMLElement;
-    (native.querySelector('[data-testid="invitation-bar-accept"]') as HTMLButtonElement).click();
+    (native.querySelector('[data-testid="invitation-accept"]') as HTMLButtonElement).click();
     await settle(context.fixture);
 
     typeRsvpMessage(context.fixture, 'Mal vou esperar!');
@@ -89,32 +89,43 @@ describe('InvitationPage', () => {
     ).toContain(TestBed.inject(I18nService).t('invitation.alreadyConfirmed'));
   });
 
-  it('mostra as boas-vindas quando há capa e abre o convite ao clicar em Ver convite', async () => {
+  it('mantém as boas-vindas com capa e abre o cartaz com o nome do convidado ao continuar', async () => {
     const context = setup();
     http = context.http;
     const path = `${BASE}/public/invitations/${TOKEN}`;
+    const fixture = publicInvitationFixture({ coverUrl: 'https://exemplo.ao/capa.jpg' });
+    fixture.event.template = {
+      slug: 'gratitude',
+      name: 'Gratitude',
+      manifest: {
+        version: 1,
+        palette: { bg: '#FFFDF8', surface: '#FFFFFF', ink: '#111111', accent: '#B8913A', muted: '#8A7A5C' },
+        fonts: { display: 'serif', body: 'sans' },
+        ornaments: { frame: 'gratitude', corners: 'floral', divider: 'flourish' },
+        layout: { align: 'center', blocks: ['title'] },
+        cover: 'framed',
+        open_style: 'envelope',
+        pdf: { frame: 'double', qr_position: 'bottom-center', show_ornaments: true },
+      },
+    };
 
-    http.expectOne(path).flush({
-      data: publicInvitationFixture({ coverUrl: 'https://exemplo.ao/capa.jpg' }),
-    });
+    http.expectOne(path).flush({ data: fixture });
     await settle(context.fixture);
 
     const native = context.fixture.nativeElement as HTMLElement;
-    const welcomeCover = native.querySelector(
-      '[data-testid="invitation-welcome-cover"]',
-    ) as HTMLImageElement | null;
-    expect(welcomeCover).not.toBeNull();
-    expect(welcomeCover?.getAttribute('src')).toBe('https://exemplo.ao/capa.jpg');
-    expect(welcomeCover?.textContent ?? '').toBe('');
-    expect(native.querySelector('[data-testid="invitation-accept"]')).toBeNull();
+    const welcome = native.querySelector('[data-testid="invitation-welcome"]');
+    expect(welcome?.getAttribute('data-open-style')).toBe('envelope');
+    expect(welcome?.textContent).toContain('João');
+    expect(native.querySelector('.inv-stage-poster')).toBeNull();
 
     (native.querySelector('[data-testid="invitation-welcome-continue"]') as HTMLButtonElement).click();
     await settle(context.fixture);
 
     expect(native.querySelector('[data-testid="invitation-welcome-cover"]')).toBeNull();
-    expect(native.querySelector('[data-testid="invitation-main"]')).not.toBeNull();
+    expect(native.querySelector('.inv-stage-poster')).not.toBeNull();
+    expect(native.querySelector('[data-testid="gratitude-guest-name"]')?.textContent).toContain('João');
     expect(native.querySelector('[data-testid="inv-fab"]')).not.toBeNull();
-    expect(native.querySelector('[data-testid="invitation-bar-accept"]')).not.toBeNull();
+    expect(native.querySelector('[data-testid="invitation-accept"]')).not.toBeNull();
   });
 
   it('abre diretamente o convite quando não há capa', async () => {
@@ -127,11 +138,13 @@ describe('InvitationPage', () => {
 
     const native = context.fixture.nativeElement as HTMLElement;
     expect(native.querySelector('[data-testid="invitation-welcome-cover"]')).toBeNull();
-    expect(native.querySelector('[data-testid="invitation-main"]')).not.toBeNull();
-    expect(native.querySelector('[data-testid="invitation-bar-accept"]')).not.toBeNull();
+    expect(native.querySelector('.inv-stage-poster')).not.toBeNull();
+    expect(native.querySelector('[data-testid="template-guest-name"]')?.textContent).toContain('João');
+    expect(native.querySelector('[data-testid="inv-fab"]')).not.toBeNull();
+    expect(native.querySelector('[data-testid="invitation-accept"]')).not.toBeNull();
   });
 
-  it('Bloco 14: sem capa abre no estilo do template; vídeo só carrega ao clicar; organizadores', async () => {
+  it('abre o vídeo num modal próprio e mantém organizadores na folha de informações', async () => {
     const context = setup();
     http = context.http;
     const fixture = publicInvitationFixture();
@@ -157,21 +170,32 @@ describe('InvitationPage', () => {
     await settle(context.fixture);
 
     const native = context.fixture.nativeElement as HTMLElement;
-    const welcome = native.querySelector('[data-testid="invitation-welcome"]');
-    expect(welcome?.getAttribute('data-open-style')).toBe('envelope');
+    expect(native.querySelector('[data-testid="invitation-welcome"]')).not.toBeNull();
     (native.querySelector('[data-testid="invitation-welcome-continue"]') as HTMLButtonElement).click();
     await settle(context.fixture);
+    expect(native.querySelector('.inv-stage-poster')).not.toBeNull();
 
-    // O vídeo e a organização passaram para a folha do botão flutuante.
-    expect(native.querySelector('[data-testid="inv-fab"]')).not.toBeNull();
     (native.querySelector('[data-testid="inv-fab"]') as HTMLButtonElement).click();
     await settle(context.fixture);
-    expect(native.querySelector('[data-testid="inv-section-video"]')).not.toBeNull();
-    expect(native.querySelector('app-invitation-info-sheet iframe')).toBeNull();
+    expect(native.querySelector('.inv-drawer-open')).not.toBeNull();
+    (native.querySelector('[data-testid="inv-menu-video"]') as HTMLButtonElement).click();
+    await settle(context.fixture);
+
+    expect(native.querySelector('[data-testid="inv-video-modal"]')).not.toBeNull();
+    expect(native.querySelector('iframe')).toBeNull();
     (native.querySelector('[data-testid="inv-video-play"]') as HTMLButtonElement).click();
     await settle(context.fixture);
-    const iframe = native.querySelector('app-invitation-info-sheet iframe');
+    const iframe = native.querySelector('[data-testid="inv-video-modal"] iframe');
     expect(iframe?.getAttribute('src')).toContain('https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ');
+
+    const close = native.querySelector(
+      `[data-testid="app-modal"] button[aria-label="${TestBed.inject(I18nService).t('common.close')}"]`,
+    ) as HTMLButtonElement | null;
+    close?.click();
+    await settle(context.fixture);
+    (native.querySelector('[data-testid="inv-fab"]') as HTMLButtonElement).click();
+    (native.querySelector('[data-testid="inv-menu-details"]') as HTMLButtonElement).click();
+    await settle(context.fixture);
     expect(native.querySelector('[data-testid="inv-section-organizers"]')?.textContent).toContain('Ana');
   });
 

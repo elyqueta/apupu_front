@@ -75,6 +75,17 @@ export interface TemplateRenderData {
         [style.color]="'var(--tpl-ink)'"
       >
         <div class="relative flex flex-1 flex-col gap-4 p-6 sm:p-8" [class.items-center]="centered()" [class.text-center]="centered()">
+          @if (mode() === 'full') {
+            @if (data().guestName; as guestName) {
+              <p
+                class="text-sm font-semibold sm:text-base"
+                data-testid="template-guest-name"
+                [style.color]="'var(--tpl-accent)'"
+              >
+                {{ i18n.t('invitation.guestGreeting', { name: guestName }) }}
+              </p>
+            }
+          }
           @for (block of blocks(); track block.id) {
             <div
               class="relative w-full rounded-xl transition"

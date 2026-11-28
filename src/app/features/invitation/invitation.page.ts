@@ -1,4 +1,6 @@
-import { Component, computed, effect, inject, input, signal } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+import { Component, computed, effect, inject, input, PLATFORM_ID, signal } from '@angular/core';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Router } from '@angular/router';
 import { ApiClient } from '../../core/api/api-client';
@@ -9,6 +11,7 @@ import { RsvpStatus } from '../../core/models/models';
 import { ToastService } from '../../core/services/toast.service';
 import { ICONS } from '../../core/ui/icons';
 import { ImageLightboxComponent } from '../../shared/components/image-lightbox.component';
+import { ModalComponent } from '../../shared/components/modal.component';
 import { SkeletonComponent } from '../../shared/components/skeleton.component';
 import { DEFAULT_MANIFEST } from '../../core/models/template-manifest';
 import { InvitationShellComponent } from './invitation-shell.component';
@@ -33,6 +36,7 @@ import { TemplateRendererComponent, TemplateRenderData } from '../../shared/comp
   imports: [
     FaIconComponent,
     ImageLightboxComponent,
+    ModalComponent,
     SkeletonComponent,
     InvitationCancelledComponent,
     InvitationReplyComponent,
@@ -51,6 +55,8 @@ export class InvitationPage {
   private readonly api = inject(ApiClient);
   private readonly toasts = inject(ToastService);
   private readonly router = inject(Router);
+  private readonly sanitizer = inject(DomSanitizer);
+  private readonly platformId = inject(PLATFORM_ID);
   private loadVersion = 0;
 
   protected readonly i18n = inject(I18nService);
@@ -75,6 +81,16 @@ export class InvitationPage {
     return event?.templateSlug === 'gratitude' || event?.manifest?.ornaments?.frame === 'gratitude';
   });
 
+  protected readonly videoId = computed(() => this.invitation()?.event.youtubeVideoId ?? null);
+  protected readonly videoThumbnail = computed(
+    () => `https://i.ytimg.com/vi/${this.videoId()}/hqdefault.jpg`,
+  );
+  protected readonly videoEmbed = computed<SafeResourceUrl>(() =>
+    this.sanitizer.bypassSecurityTrustResourceUrl(
+      `https://www.youtube-nocookie.com/embed/${this.videoId()}?autoplay=1&rel=0`,
+    ),
+  );
+
   protected readonly renderData = computed<TemplateRenderData | null>(() => {
     const view = this.invitation();
     if (!view) return null;
@@ -97,24 +113,32 @@ export class InvitationPage {
       type: e.type,
       templateSlug: e.templateSlug,
       locations: e.locations,
+      guestName: view.guest.name,
     };
   });
-  protected readonly showWelcome = signal(false);
 
+  protected readonly showWelcome = signal(false);
   protected readonly shellManifest = computed(() => this.invitation()?.event.manifest ?? DEFAULT_MANIFEST);
 
   protected readonly saving = signal(false);
   protected readonly accountDismissed = signal(false);
   protected readonly lightbox = signal<{ src: string; alt: string } | null>(null);
+  protected readonly menuOpen = signal(false);
   protected readonly locationOpen = signal(false);
   protected readonly hostOpen = signal(false);
   protected readonly detailsOpen = signal(false);
+  protected readonly videoOpen = signal(false);
+  protected readonly videoPlaying = signal(false);
   protected readonly rsvpDialog = signal<InvitationResponseStatus | null>(null);
 
   constructor() {
     effect(() => {
       void this.load(this.token());
     });
+    // No PC o painel lateral arranca aberto, tal como no convite público.
+    if (isPlatformBrowser(this.platformId) && window.innerWidth >= 1024) {
+      this.menuOpen.set(true);
+    }
   }
 
   protected requestRsvp(status: InvitationResponseStatus): void {
@@ -134,6 +158,37 @@ export class InvitationPage {
     if (!this.saving()) {
       this.rsvpDialog.set(null);
     }
+  }
+
+  protected closeMenu(): void {
+    this.menuOpen.set(false);
+  }
+
+  /** Fecha a gaveta antes de abrir o destino, para o modal ficar visível. */
+  protected openFromMenu(target: 'rsvp' | 'locations' | 'host' | 'details' | 'video'): void {
+    this.menuOpen.set(false);
+    if (target === 'rsvp') {
+      this.requestRsvp('accepted');
+    } else if (target === 'locations') {
+      this.locationOpen.set(true);
+    } else if (target === 'host') {
+      this.hostOpen.set(true);
+    } else if (target === 'video') {
+      this.videoPlaying.set(false);
+      this.videoOpen.set(true);
+    } else {
+      this.detailsOpen.set(true);
+    }
+  }
+
+  protected respondFromDrawer(status: InvitationResponseStatus): void {
+    this.menuOpen.set(false);
+    this.requestRsvp(status);
+  }
+
+  protected closeVideo(): void {
+    this.videoOpen.set(false);
+    this.videoPlaying.set(false);
   }
 
   protected retry(): void {
@@ -230,7 +285,8 @@ export class InvitationPage {
       if (version === this.loadVersion) {
         const view = mapPublicInvitation(result);
         this.invitation.set(view);
-        // Bloco 14: sem capa, abre no estilo do template (salvo `open_style: none`).
+        // A capa continua a abrir primeiro; ao entrar no convite, a vista
+        // adota o mesmo palco e gaveta do convite público.
         this.showWelcome.set(
           (Boolean(view.event.coverUrl) ||
             (view.event.templateSlug !== null && view.event.manifest.open_style !== 'none')) &&

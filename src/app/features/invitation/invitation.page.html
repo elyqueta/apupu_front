@@ -1,7 +1,7 @@
-<app-invitation-shell [manifest]="shellManifest()">
-  <div class="mx-auto flex min-h-dvh w-full max-w-5xl flex-col px-4 pb-32 pt-5 sm:px-6 lg:pb-8 lg:py-8">
+<app-invitation-shell [manifest]="shellManifest()" style="--inv-rsvp-bar: 1rem">
+  <div class="mx-auto flex min-h-dvh w-full flex-col" [class.inv-stage]="!showWelcome()">
     @if (loading()) {
-      <main class="flex flex-1 flex-col gap-5 py-6">
+      <main class="flex flex-1 flex-col gap-5 py-6" aria-busy="true">
         <p class="py-6 text-center text-sm font-medium inv-muted">{{ i18n.t('common.loading') }}…</p>
         <app-skeleton variant="invitation" />
       </main>
@@ -23,75 +23,190 @@
           (continue)="continueToInvitation()"
         />
       } @else {
-      <main class="flex flex-1 flex-col gap-4 py-5" data-testid="invitation-main">
-        @if (renderData(); as data) {
-          <app-template-renderer [manifest]="view.event.manifest" [data]="data" mode="full" />
+        <main class="inv-stage-main flex flex-1 flex-col">
+          @if (renderData(); as data) {
+            <app-template-renderer class="inv-stage-poster" [manifest]="view.event.manifest" [data]="data" mode="full" />
+          }
+        </main>
+
+        <button
+          type="button"
+          class="inv-fab"
+          data-testid="inv-fab"
+          aria-haspopup="dialog"
+          [attr.aria-expanded]="menuOpen()"
+          [attr.aria-label]="i18n.t('common.openMenu')"
+          (click)="menuOpen.set(true)"
+        >
+          <fa-icon [icon]="icons['menu']" aria-hidden="true" />
+          <span class="max-sm:hidden">{{ i18n.t('block16.moreInfo') }}</span>
+        </button>
+
+        @if (menuOpen()) {
+          <button
+            type="button"
+            class="inv-drawer-backdrop"
+            data-testid="inv-drawer-backdrop"
+            [attr.aria-label]="i18n.t('common.closeMenu')"
+            (click)="closeMenu()"
+          ></button>
         }
-        <app-invitation-reply
-          [answer]="view.guest.answer"
-          [answeredAt]="view.guest.answeredAt"
+
+        <aside
+          class="inv-stage-side inv-drawer"
+          [class.inv-drawer-open]="menuOpen()"
+          role="dialog"
+          [attr.aria-label]="i18n.t('block16.moreInfo')"
+          [attr.aria-hidden]="!menuOpen()"
+          [attr.inert]="!menuOpen() || null"
+        >
+          <div class="inv-drawer-head">
+            <div>
+              <p class="text-[0.65rem] font-semibold uppercase tracking-[0.18em] inv-accent-text">
+                {{ i18n.t('block16.rsvp.eyebrow') }}
+              </p>
+              <h2 class="mt-1 font-display text-lg font-semibold inv-ink">{{ i18n.t('block16.moreInfo') }}</h2>
+            </div>
+            <button
+              type="button"
+              class="inv-icon-btn"
+              [attr.aria-label]="i18n.t('common.closeMenu')"
+              (click)="closeMenu()"
+            >
+              <fa-icon [icon]="icons['close']" aria-hidden="true" />
+            </button>
+          </div>
+
+          <div class="inv-drawer-body">
+            <app-invitation-rsvp
+              variant="card"
+              data-testid="inv-drawer-rsvp"
+              [status]="status() ?? 'pending'"
+              [saving]="saving()"
+              [deadlinePassed]="deadlinePassed()"
+              [eventStatus]="view.event.status"
+              [actionError]="actionError()"
+              [email]="view.guest.email"
+              [emailHasAccount]="view.guest.emailHasAccount"
+              [accountDismissed]="accountDismissed()"
+              [guestKind]="view.guest.guestKind"
+              (respond)="respondFromDrawer($event)"
+              (createAccount)="createAccount($event)"
+              (login)="loginInstead()"
+              (dismissAccount)="dismissAccount()"
+            />
+
+            <app-invitation-reply
+              [answer]="view.guest.answer"
+              [answeredAt]="view.guest.answeredAt"
+            />
+
+            <nav class="inv-drawer-links" [attr.aria-label]="i18n.t('block16.moreInfo')">
+              <button type="button" class="inv-drawer-link" data-testid="inv-menu-details" (click)="openFromMenu('details')">
+                <fa-icon [icon]="icons['info']" aria-hidden="true" />
+                <span>{{ i18n.t('block16.sheet.title') }}</span>
+                <fa-icon [icon]="icons['chevronRight']" class="inv-drawer-chevron" aria-hidden="true" />
+              </button>
+              <button type="button" class="inv-drawer-link" data-testid="inv-menu-locations" (click)="openFromMenu('locations')">
+                <fa-icon [icon]="icons['location']" aria-hidden="true" />
+                <span>{{ i18n.t('block16.sheet.locations') }}</span>
+                <fa-icon [icon]="icons['chevronRight']" class="inv-drawer-chevron" aria-hidden="true" />
+              </button>
+              <button type="button" class="inv-drawer-link" data-testid="inv-menu-host" (click)="openFromMenu('host')">
+                <fa-icon [icon]="icons['user']" aria-hidden="true" />
+                <span>{{ i18n.t('block16.sheet.organizers') }}</span>
+                <fa-icon [icon]="icons['chevronRight']" class="inv-drawer-chevron" aria-hidden="true" />
+              </button>
+              <button type="button" class="inv-drawer-link" data-testid="inv-menu-message" (click)="openFromMenu('details')">
+                <fa-icon [icon]="icons['envelopeOpen']" aria-hidden="true" />
+                <span>{{ i18n.t('block16.sheet.message') }}</span>
+                <fa-icon [icon]="icons['chevronRight']" class="inv-drawer-chevron" aria-hidden="true" />
+              </button>
+              @if (videoId()) {
+                <button type="button" class="inv-drawer-link" data-testid="inv-menu-video" (click)="openFromMenu('video')">
+                  <fa-icon [icon]="icons['play']" aria-hidden="true" />
+                  <span>{{ i18n.t('block16.sheet.video') }}</span>
+                  <fa-icon [icon]="icons['chevronRight']" class="inv-drawer-chevron" aria-hidden="true" />
+                </button>
+              }
+            </nav>
+          </div>
+        </aside>
+
+        <app-invitation-location-dialog
+          [open]="locationOpen()"
+          [event]="view.event"
+          (closed)="locationOpen.set(false)"
         />
-      </main>
-
-      <footer
-        class="flex flex-col gap-2 border-t inv-line py-4 text-xs inv-muted sm:flex-row sm:items-center sm:justify-between"
-      >
-        <p>{{ i18n.t('footer.rights', { year: 2026 }) }}</p>
-      </footer>
-
-      <button
-        type="button"
-        class="inv-fab"
-        data-testid="inv-fab"
-        aria-haspopup="dialog"
-        [attr.aria-expanded]="detailsOpen()"
-        [attr.aria-label]="i18n.t('block16.moreInfo')"
-        (click)="detailsOpen.set(true)"
-      >
-        <fa-icon [icon]="icons['info']" aria-hidden="true" />
-        <span class="max-sm:hidden">{{ i18n.t('block16.moreInfo') }}</span>
-      </button>
-
-      <app-invitation-rsvp
-        variant="bar"
-        [status]="status() ?? 'pending'"
-        [saving]="saving()"
-        [deadlinePassed]="deadlinePassed()"
-        [eventStatus]="view.event.status"
-        [actionError]="actionError()"
-        [guestKind]="view.guest.guestKind"
-        (respond)="requestRsvp($event)"
-      />
-
-      <app-invitation-location-dialog
-        [open]="locationOpen()"
-        [event]="view.event"
-        (closed)="locationOpen.set(false)"
-      />
-      <app-invitation-host-dialog
-        [open]="hostOpen()"
-        [event]="view.event"
-        (closed)="hostOpen.set(false)"
-      />
-      <app-invitation-info-sheet
-        [open]="detailsOpen()"
-        [event]="view.event"
-        [token]="token()"
-        [guestKind]="view.guest.guestKind"
-        (closed)="detailsOpen.set(false)"
-        (openHost)="hostOpen.set(true)"
-        (openLocations)="locationOpen.set(true)"
-      />
-      @if (rsvpDialog(); as responseStatus) {
-        <app-invitation-rsvp-dialog
-          [open]="true"
-          [response]="responseStatus"
-          [saving]="saving()"
-          [error]="actionError()"
-          (confirmed)="confirmRsvp($event)"
-          (cancelled)="closeRsvpDialog()"
+        <app-invitation-host-dialog
+          [open]="hostOpen()"
+          [event]="view.event"
+          (closed)="hostOpen.set(false)"
         />
-      }
+        <app-invitation-info-sheet
+          [open]="detailsOpen()"
+          [event]="view.event"
+          [token]="token()"
+          [guestKind]="view.guest.guestKind"
+          (closed)="detailsOpen.set(false)"
+          (openHost)="hostOpen.set(true)"
+          (openLocations)="locationOpen.set(true)"
+        />
+        @if (rsvpDialog(); as responseStatus) {
+          <app-invitation-rsvp-dialog
+            [open]="true"
+            [response]="responseStatus"
+            [saving]="saving()"
+            [error]="actionError()"
+            (confirmed)="confirmRsvp($event)"
+            (cancelled)="closeRsvpDialog()"
+          />
+        }
+        @if (videoId()) {
+          <app-modal
+            [open]="videoOpen()"
+            [title]="i18n.t('block16.sheet.video')"
+            presentation="sheet"
+            size="lg"
+            [invitation]="true"
+            (closed)="closeVideo()"
+          >
+            <div class="flex flex-col gap-3" data-testid="inv-video-modal">
+              <p class="text-sm inv-muted">{{ i18n.t('block16.sheet.videoHint') }}</p>
+              <div class="inv-video-frame">
+                @if (videoPlaying()) {
+                  <iframe
+                    class="inv-video-embed"
+                    [src]="videoEmbed()"
+                    [title]="i18n.t('block16.sheet.play')"
+                    loading="lazy"
+                    referrerpolicy="strict-origin-when-cross-origin"
+                    allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+                    allowfullscreen
+                  ></iframe>
+                } @else {
+                  <button
+                    type="button"
+                    class="inv-video-cover"
+                    data-testid="inv-video-play"
+                    [attr.aria-label]="i18n.t('block16.sheet.play')"
+                    (click)="videoPlaying.set(true)"
+                  >
+                    <img
+                      class="inv-video-thumb"
+                      [src]="videoThumbnail()"
+                      alt=""
+                      loading="lazy"
+                      referrerpolicy="strict-origin-when-cross-origin"
+                    />
+                    <span class="inv-play-badge" aria-hidden="true"><fa-icon [icon]="icons['play']" /></span>
+                    <span class="inv-video-label">{{ i18n.t('block16.sheet.play') }}</span>
+                  </button>
+                }
+              </div>
+            </div>
+          </app-modal>
+        }
       }
     } @else {
       <main class="flex flex-1 items-center justify-center py-10">
@@ -121,10 +236,6 @@
           </button>
         </article>
       </main>
-
-      <footer class="mt-2 flex flex-wrap items-center justify-between gap-4 py-4 text-xs inv-muted">
-        <p>{{ i18n.t('footer.rights', { year: 2026 }) }}</p>
-      </footer>
     }
 
     <app-image-lightbox

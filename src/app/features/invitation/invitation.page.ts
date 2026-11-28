@@ -1,5 +1,3 @@
-import { InvitationOrganizersComponent } from './parts/invitation-organizers.component';
-import { InvitationVideoComponent } from './parts/invitation-video.component';
 import { Component, computed, effect, inject, input, signal } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Router } from '@angular/router';
@@ -10,11 +8,10 @@ import { I18nService } from '../../core/i18n/i18n.service';
 import { RsvpStatus } from '../../core/models/models';
 import { ToastService } from '../../core/services/toast.service';
 import { ICONS } from '../../core/ui/icons';
-import { BrandComponent } from '../../shared/components/brand.component';
 import { ImageLightboxComponent } from '../../shared/components/image-lightbox.component';
-import { LogoComponent } from '../../shared/components/logo.component';
-import { PreferenceControlsComponent } from '../../shared/components/preference-controls.component';
 import { SkeletonComponent } from '../../shared/components/skeleton.component';
+import { DEFAULT_MANIFEST } from '../../core/models/template-manifest';
+import { InvitationShellComponent } from './invitation-shell.component';
 import { mapPublicInvitation } from './invitation.mapper';
 import {
   InvitationResponseInput,
@@ -22,16 +19,12 @@ import {
   InvitationView,
 } from './invitation.models';
 import { InvitationCancelledComponent } from './parts/invitation-cancelled.component';
-import { InvitationDetailsDialogComponent } from './parts/invitation-details-dialog.component';
-import { InvitationDetailsMenuComponent } from './parts/invitation-details-menu.component';
-import { InvitationHeroComponent } from './parts/invitation-hero.component';
 import { InvitationHostDialogComponent } from './parts/invitation-host-dialog.component';
-import { InvitationKeyInfoComponent } from './parts/invitation-key-info.component';
+import { InvitationInfoSheetComponent } from './parts/invitation-info-sheet.component';
 import { InvitationLocationDialogComponent } from './parts/invitation-location-dialog.component';
 import { InvitationReplyComponent } from './parts/invitation-reply.component';
 import { InvitationRsvpComponent } from './parts/invitation-rsvp.component';
 import { InvitationRsvpDialogComponent } from './parts/invitation-rsvp-dialog.component';
-import { InvitationShareComponent } from './parts/invitation-share.component';
 import { InvitationWelcomeComponent } from './parts/invitation-welcome.component';
 import { TemplateRendererComponent, TemplateRenderData } from '../../shared/components/template-renderer.component';
 
@@ -39,23 +32,15 @@ import { TemplateRendererComponent, TemplateRenderData } from '../../shared/comp
   selector: 'app-invitation-page',
   imports: [
     FaIconComponent,
-    InvitationVideoComponent,
-    InvitationOrganizersComponent,
-    BrandComponent,
     ImageLightboxComponent,
-    LogoComponent,
-    PreferenceControlsComponent,
     SkeletonComponent,
     InvitationCancelledComponent,
-    InvitationHeroComponent,
-    InvitationKeyInfoComponent,
     InvitationReplyComponent,
     InvitationRsvpComponent,
-    InvitationShareComponent,
     InvitationWelcomeComponent,
-    InvitationDetailsMenuComponent,
-    InvitationDetailsDialogComponent,
+    InvitationShellComponent,
     InvitationHostDialogComponent,
+    InvitationInfoSheetComponent,
     InvitationLocationDialogComponent,
     InvitationRsvpDialogComponent,
     TemplateRendererComponent,
@@ -96,11 +81,13 @@ export class InvitationPage {
     const e = view.event;
     return {
       title: e.title,
+      subtitle: e.subtitle,
       hostName: e.hostName,
       startsAt: e.startsAt,
       endsAt: e.endsAt,
       timezone: e.timezone,
       city: e.city,
+      address: e.address,
       venue: e.venue,
       onlineLink: e.onlineLink,
       message: e.message,
@@ -109,9 +96,12 @@ export class InvitationPage {
       coverUrl: e.coverUrl,
       type: e.type,
       templateSlug: e.templateSlug,
+      locations: e.locations,
     };
   });
   protected readonly showWelcome = signal(false);
+
+  protected readonly shellManifest = computed(() => this.invitation()?.event.manifest ?? DEFAULT_MANIFEST);
 
   protected readonly saving = signal(false);
   protected readonly accountDismissed = signal(false);

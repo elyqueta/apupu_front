@@ -1,5 +1,3 @@
-import { InvitationOrganizersComponent } from '../invitation/parts/invitation-organizers.component';
-import { InvitationVideoComponent } from '../invitation/parts/invitation-video.component';
 import { Component, computed, effect, inject, input, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -16,19 +14,17 @@ import { I18nService } from '../../core/i18n/i18n.service';
 import { TranslationKey } from '../../core/i18n/translations';
 import { ICONS } from '../../core/ui/icons';
 import { isValidPhone, phoneDigits } from '../../core/utils/phone.util';
-import { BrandComponent } from '../../shared/components/brand.component';
-import { PreferenceControlsComponent } from '../../shared/components/preference-controls.component';
 import { SkeletonComponent } from '../../shared/components/skeleton.component';
 import { PhoneMaskDirective } from '../../shared/directives/phone-mask.directive';
 import { countdownDaysUntil, mapPublicEventView } from '../invitation/invitation.mapper';
+import { DEFAULT_MANIFEST } from '../../core/models/template-manifest';
 import { InvitationEventView } from '../invitation/invitation.models';
+import { InvitationShellComponent } from '../invitation/invitation-shell.component';
 import { InvitationCancelledComponent } from '../invitation/parts/invitation-cancelled.component';
-import { InvitationDetailsDialogComponent } from '../invitation/parts/invitation-details-dialog.component';
-import { InvitationDetailsMenuComponent } from '../invitation/parts/invitation-details-menu.component';
-import { InvitationHeroComponent } from '../invitation/parts/invitation-hero.component';
 import { InvitationHostDialogComponent } from '../invitation/parts/invitation-host-dialog.component';
-import { InvitationKeyInfoComponent } from '../invitation/parts/invitation-key-info.component';
+import { InvitationInfoSheetComponent } from '../invitation/parts/invitation-info-sheet.component';
 import { InvitationLocationDialogComponent } from '../invitation/parts/invitation-location-dialog.component';
+import { TemplateRendererComponent, TemplateRenderData } from '../../shared/components/template-renderer.component';
 
 type LoadState = 'loading' | 'ready' | 'not_found' | 'error';
 type Answer = 'accepted' | 'declined';
@@ -47,22 +43,17 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 @Component({
   selector: 'app-public-event-page',
   imports: [
-    InvitationVideoComponent,
-    InvitationOrganizersComponent,
     ReactiveFormsModule,
     RouterLink,
     FaIconComponent,
-    BrandComponent,
-    PreferenceControlsComponent,
     SkeletonComponent,
     PhoneMaskDirective,
     InvitationCancelledComponent,
-    InvitationHeroComponent,
-    InvitationKeyInfoComponent,
-    InvitationDetailsMenuComponent,
-    InvitationDetailsDialogComponent,
     InvitationHostDialogComponent,
     InvitationLocationDialogComponent,
+    InvitationInfoSheetComponent,
+    TemplateRendererComponent,
+    InvitationShellComponent,
   ],
   templateUrl: './public-event.page.html',
 })
@@ -104,6 +95,32 @@ export class PublicEventPage {
     const raw = this.raw();
     return raw ? mapPublicEventView(raw) : null;
   });
+  protected readonly shellManifest = computed(() => this.event()?.manifest ?? DEFAULT_MANIFEST);
+
+  protected readonly renderData = computed<TemplateRenderData | null>(() => {
+    const e = this.event();
+    if (!e) return null;
+    return {
+      title: e.title,
+      subtitle: e.subtitle,
+      hostName: e.hostName,
+      startsAt: e.startsAt,
+      endsAt: e.endsAt,
+      timezone: e.timezone,
+      city: e.city,
+      address: e.address,
+      venue: e.venue,
+      onlineLink: e.onlineLink,
+      message: e.message,
+      dressCode: e.dressCode,
+      rsvpDeadline: e.rsvpDeadline,
+      coverUrl: e.coverUrl,
+      type: e.type,
+      templateSlug: e.templateSlug,
+      locations: e.locations,
+    };
+  });
+
   protected readonly countdownDays = computed(() => {
     const event = this.event();
     return event ? countdownDaysUntil(event.startsAt) : 0;

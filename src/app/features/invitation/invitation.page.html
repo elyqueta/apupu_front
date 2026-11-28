@@ -1,22 +1,8 @@
-<div class="relative min-h-dvh overflow-hidden">
+<app-invitation-shell [manifest]="shellManifest()">
   <div class="mx-auto flex min-h-dvh w-full max-w-5xl flex-col px-4 pb-32 pt-5 sm:px-6 lg:pb-8 lg:py-8">
-    <header class="flex flex-wrap items-center justify-between gap-3">
-      <app-brand />
-      <app-preference-controls class="hidden sm:flex" />
-    </header>
-
     @if (loading()) {
       <main class="flex flex-1 flex-col gap-5 py-6">
-        <div class="flex flex-col items-center gap-3 py-6">
-          <app-logo variant="stacked" [height]="80" class="dark:hidden motion-safe:animate-pulse" />
-          <app-logo
-            variant="stacked"
-            theme="white"
-            [height]="80"
-            class="hidden dark:block motion-safe:animate-pulse"
-          />
-          <p class="text-sm font-medium text-muted">{{ i18n.t('common.loading') }}…</p>
-        </div>
+        <p class="py-6 text-center text-sm font-medium inv-muted">{{ i18n.t('common.loading') }}…</p>
         <app-skeleton variant="invitation" />
       </main>
     } @else if (invitation(); as view) {
@@ -33,73 +19,38 @@
           [guestName]="view.guest.name"
           [guestKind]="view.guest.guestKind"
           [eventTitle]="view.event.title"
+          [templateData]="renderData()"
           (continue)="continueToInvitation()"
         />
       } @else {
-      <main class="flex flex-1 flex-col gap-4 py-5">
-        @if (isGratitude()) {
-          <app-template-renderer [manifest]="view.event.manifest" [data]="renderData()!" mode="invite" />
-          <app-invitation-share [token]="token()" [guestKind]="view.guest.guestKind" />
-        } @else {
-          <app-invitation-hero
-            [event]="view.event"
-            [guestName]="view.guest.name"
-            [countdownDays]="countdownDays()"
-            (coverOpen)="openCover()"
-          />
-
-          <app-invitation-share [token]="token()" [guestKind]="view.guest.guestKind" />
-
-          <app-invitation-key-info
-            [event]="view.event"
-            [deadlinePassed]="deadlinePassed()"
-            (openHost)="hostOpen.set(true)"
-            (openLocation)="locationOpen.set(true)"
-          />
-
-          <app-invitation-video [videoId]="view.event.youtubeVideoId" [eventTitle]="view.event.title" />
-
-          <app-invitation-organizers [event]="view.event" />
+      <main class="flex flex-1 flex-col gap-4 py-5" data-testid="invitation-main">
+        @if (renderData(); as data) {
+          <app-template-renderer [manifest]="view.event.manifest" [data]="data" mode="full" />
         }
-
         <app-invitation-reply
           [answer]="view.guest.answer"
           [answeredAt]="view.guest.answeredAt"
         />
-
-        <div class="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,20rem)]">
-          <app-invitation-details-menu (open)="detailsOpen.set(true)" />
-
-          <aside class="lg:sticky lg:top-6">
-            <app-invitation-rsvp
-              variant="card"
-              [status]="status() ?? 'pending'"
-              [saving]="saving()"
-              [deadlinePassed]="deadlinePassed()"
-              [eventStatus]="view.event.status"
-              [actionError]="actionError()"
-              [email]="view.guest.email"
-              [emailHasAccount]="view.guest.emailHasAccount"
-              [accountDismissed]="accountDismissed()"
-              [guestKind]="view.guest.guestKind"
-              (respond)="requestRsvp($event)"
-              (createAccount)="createAccount($event)"
-              (login)="loginInstead()"
-              (dismissAccount)="dismissAccount()"
-            />
-          </aside>
-        </div>
       </main>
 
       <footer
-        class="flex flex-col gap-2 border-t border-line/60 py-4 text-xs text-muted sm:flex-row sm:items-center sm:justify-between"
+        class="flex flex-col gap-2 border-t inv-line py-4 text-xs inv-muted sm:flex-row sm:items-center sm:justify-between"
       >
-        <p class="inline-flex items-center gap-2">
-          <fa-icon [icon]="icons['logo']" class="text-brand-strong" aria-hidden="true" />
-          {{ i18n.t('invitation.footer') }}
-        </p>
         <p>{{ i18n.t('footer.rights', { year: 2026 }) }}</p>
       </footer>
+
+      <button
+        type="button"
+        class="inv-fab"
+        data-testid="inv-fab"
+        aria-haspopup="dialog"
+        [attr.aria-expanded]="detailsOpen()"
+        [attr.aria-label]="i18n.t('block16.moreInfo')"
+        (click)="detailsOpen.set(true)"
+      >
+        <fa-icon [icon]="icons['info']" aria-hidden="true" />
+        <span class="max-sm:hidden">{{ i18n.t('block16.moreInfo') }}</span>
+      </button>
 
       <app-invitation-rsvp
         variant="bar"
@@ -122,10 +73,14 @@
         [event]="view.event"
         (closed)="hostOpen.set(false)"
       />
-      <app-invitation-details-dialog
+      <app-invitation-info-sheet
         [open]="detailsOpen()"
         [event]="view.event"
+        [token]="token()"
+        [guestKind]="view.guest.guestKind"
         (closed)="detailsOpen.set(false)"
+        (openHost)="hostOpen.set(true)"
+        (openLocations)="locationOpen.set(true)"
       />
       @if (rsvpDialog(); as responseStatus) {
         <app-invitation-rsvp-dialog
@@ -141,24 +96,24 @@
     } @else {
       <main class="flex flex-1 items-center justify-center py-10">
         <article
-          class="w-full max-w-lg rounded-4xl border border-line bg-surface p-6 text-center shadow-card animate-rise sm:p-8"
+          class="w-full max-w-lg rounded-4xl border inv-line inv-surface p-6 text-center inv-shadow animate-rise sm:p-8"
         >
           <span
             class="mx-auto grid size-16 place-items-center rounded-3xl border border-amber/30 bg-amber/15 text-2xl text-amber"
           >
             <fa-icon [icon]="icons['lock']" aria-hidden="true" />
           </span>
-          <p class="mt-5 text-xs font-semibold uppercase tracking-[0.2em] text-muted">
+          <p class="mt-5 text-xs font-semibold uppercase tracking-[0.2em] inv-muted">
             {{ i18n.t('invitation.eyebrow') }}
           </p>
-          <h1 class="mt-2 font-display text-2xl font-semibold tracking-tight text-ink">
+          <h1 class="mt-2 font-display text-2xl font-semibold tracking-tight inv-ink">
             {{ i18n.t('invitation.unavailableTitle') }}
           </h1>
-          <p class="mt-3 text-sm leading-6 text-muted">{{ loadError() }}</p>
-          <p class="mt-2 text-xs leading-5 text-muted">{{ i18n.t('invitation.unavailableHint') }}</p>
+          <p class="mt-3 text-sm leading-6 inv-muted">{{ loadError() }}</p>
+          <p class="mt-2 text-xs leading-5 inv-muted">{{ i18n.t('invitation.unavailableHint') }}</p>
           <button
             type="button"
-            class="mt-5 inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-line bg-surface-raised px-4 text-sm font-semibold text-ink transition hover:border-brand/40"
+            class="mt-5 inline-flex h-11 items-center justify-center gap-2 rounded-xl border inv-line inv-surface-raised px-4 text-sm font-semibold inv-ink transition "
             (click)="retry()"
           >
             <fa-icon [icon]="icons['refresh']" aria-hidden="true" />
@@ -167,8 +122,7 @@
         </article>
       </main>
 
-      <footer class="mt-2 flex flex-wrap items-center justify-between gap-4 py-4 text-xs text-muted">
-        <app-logo variant="horizontal" [height]="32" />
+      <footer class="mt-2 flex flex-wrap items-center justify-between gap-4 py-4 text-xs inv-muted">
         <p>{{ i18n.t('footer.rights', { year: 2026 }) }}</p>
       </footer>
     }
@@ -180,4 +134,4 @@
       (closed)="closeCover()"
     />
   </div>
-</div>
+</app-invitation-shell>

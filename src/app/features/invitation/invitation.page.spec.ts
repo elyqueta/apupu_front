@@ -68,7 +68,7 @@ describe('InvitationPage', () => {
     await settle(context.fixture);
 
     const native = context.fixture.nativeElement as HTMLElement;
-    (native.querySelector('[data-testid="invitation-accept"]') as HTMLButtonElement).click();
+    (native.querySelector('[data-testid="invitation-bar-accept"]') as HTMLButtonElement).click();
     await settle(context.fixture);
 
     typeRsvpMessage(context.fixture, 'Mal vou esperar!');
@@ -85,7 +85,7 @@ describe('InvitationPage', () => {
 
     expect(native.querySelector('[data-testid="invitation-rsvp-confirm"]')).toBeNull();
     expect(
-      native.querySelector('[data-testid="invitation-rsvp-status"]')?.textContent,
+      native.querySelector('[data-testid="invitation-rsvp-status"]')?.textContent ?? '',
     ).toContain(TestBed.inject(I18nService).t('invitation.alreadyConfirmed'));
   });
 
@@ -112,13 +112,9 @@ describe('InvitationPage', () => {
     await settle(context.fixture);
 
     expect(native.querySelector('[data-testid="invitation-welcome-cover"]')).toBeNull();
-    expect(native.querySelector('[data-testid="invitation-cover-image"]')).not.toBeNull();
-    expect(native.querySelector('[data-testid="invitation-accept"]')).not.toBeNull();
-    const coverText = native
-      .querySelector('[data-testid="invitation-cover-image"]')
-      ?.parentElement?.textContent ?? '';
-    expect(coverText).not.toContain('Organizado por');
-    expect(coverText).not.toContain('Casamento da Ana');
+    expect(native.querySelector('[data-testid="invitation-main"]')).not.toBeNull();
+    expect(native.querySelector('[data-testid="inv-fab"]')).not.toBeNull();
+    expect(native.querySelector('[data-testid="invitation-bar-accept"]')).not.toBeNull();
   });
 
   it('abre diretamente o convite quando não há capa', async () => {
@@ -131,7 +127,8 @@ describe('InvitationPage', () => {
 
     const native = context.fixture.nativeElement as HTMLElement;
     expect(native.querySelector('[data-testid="invitation-welcome-cover"]')).toBeNull();
-    expect(native.querySelector('[data-testid="invitation-accept"]')).not.toBeNull();
+    expect(native.querySelector('[data-testid="invitation-main"]')).not.toBeNull();
+    expect(native.querySelector('[data-testid="invitation-bar-accept"]')).not.toBeNull();
   });
 
   it('Bloco 14: sem capa abre no estilo do template; vídeo só carrega ao clicar; organizadores', async () => {
@@ -165,15 +162,17 @@ describe('InvitationPage', () => {
     (native.querySelector('[data-testid="invitation-welcome-continue"]') as HTMLButtonElement).click();
     await settle(context.fixture);
 
-    // O iframe vive no modal do componente de vídeo, não dentro da secção
-    // com data-testid="invitation-video" (que só contém a miniatura/play).
-    expect(native.querySelector('[data-testid="invitation-video"]')).not.toBeNull();
-    expect(native.querySelector('app-invitation-video iframe')).toBeNull();
-    (native.querySelector('[data-testid="invitation-video-play"]') as HTMLButtonElement).click();
+    // O vídeo e a organização passaram para a folha do botão flutuante.
+    expect(native.querySelector('[data-testid="inv-fab"]')).not.toBeNull();
+    (native.querySelector('[data-testid="inv-fab"]') as HTMLButtonElement).click();
     await settle(context.fixture);
-    const iframe = native.querySelector('app-invitation-video iframe');
+    expect(native.querySelector('[data-testid="inv-section-video"]')).not.toBeNull();
+    expect(native.querySelector('app-invitation-info-sheet iframe')).toBeNull();
+    (native.querySelector('[data-testid="inv-video-play"]') as HTMLButtonElement).click();
+    await settle(context.fixture);
+    const iframe = native.querySelector('app-invitation-info-sheet iframe');
     expect(iframe?.getAttribute('src')).toContain('https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ');
-    expect(native.querySelector('[data-testid="invitation-organizers"]')?.textContent).toContain('Ana');
+    expect(native.querySelector('[data-testid="inv-section-organizers"]')?.textContent).toContain('Ana');
   });
 
   it('mostra apenas o estado de cancelado num evento cancelado', async () => {

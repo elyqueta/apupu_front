@@ -62,13 +62,16 @@ type PublicCommunityWithInstitution = PublicCommunity & {
         }
         @case ('ready') {
           @if (community(); as c) {
-            <article class="overflow-hidden rounded-4xl border border-line bg-surface shadow-card" data-testid="public-community-profile">
-              <div class="relative h-36 bg-gradient-to-br from-brand/35 via-surface to-surface sm:h-48">
-                @if (c.cover_url) {
-                  <img [src]="c.cover_url" alt="" class="size-full object-cover" />
-                }
+            <article class="relative rounded-4xl border border-line bg-surface shadow-card" data-testid="public-community-profile">
+              <!-- Só a capa é cortada; o avatar vive fora deste contentor. -->
+              <div class="overflow-hidden rounded-t-4xl">
+                <div class="relative h-36 bg-gradient-to-br from-brand/35 via-surface to-surface sm:h-48">
+                  @if (c.cover_url) {
+                    <img [src]="c.cover_url" alt="" class="size-full object-cover" />
+                  }
+                </div>
               </div>
-              <div class="flex flex-col gap-4 p-4 pt-0 sm:flex-row sm:items-end sm:justify-between sm:p-6 sm:pt-0">
+              <div class="relative z-10 flex flex-col gap-4 p-4 pt-0 sm:flex-row sm:items-end sm:justify-between sm:p-6 sm:pt-0">
                 <div class="flex min-w-0 items-end gap-3">
                   <app-avatar
                     class="-mt-10 shrink-0 rounded-full border-4 border-line bg-surface shadow-card"

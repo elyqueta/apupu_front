@@ -14,10 +14,10 @@ import { ICONS } from '../../core/ui/icons';
   imports: [RouterLink, FaIconComponent],
   template: `
     <article
-      class="flex h-full min-w-0 flex-col overflow-hidden rounded-4xl border border-line/40 bg-surface shadow-card transition duration-200 hover:-translate-y-0.5 hover:border-brand/40 focus-within:border-brand/50"
+      class="relative flex h-full min-w-0 flex-col rounded-4xl border border-line/40 bg-surface shadow-card transition duration-200 hover:-translate-y-0.5 hover:border-brand/40 focus-within:border-brand/50"
       [attr.data-testid]="testId()"
     >
-      <div class="relative h-32 shrink-0 overflow-hidden bg-gradient-to-br from-brand/45 via-secondary/20 to-surface-raised">
+      <div class="relative h-32 shrink-0 overflow-hidden rounded-t-4xl bg-gradient-to-br from-brand/45 via-secondary/20 to-surface-raised">
         @if (coverUrl()) {
           <img [src]="coverUrl()" alt="" class="size-full object-cover" loading="lazy" />
         } @else {
@@ -27,20 +27,21 @@ import { ICONS } from '../../core/ui/icons';
         <span class="absolute right-3 top-3 rounded-full border border-line bg-surface px-2.5 py-1 text-xs font-semibold text-ink">
           {{ badgeLabel() }}
         </span>
-        <span
-          class="absolute -bottom-7 left-4 grid size-14 place-items-center overflow-hidden rounded-2xl border-4 border-surface bg-surface-raised text-lg font-semibold text-brand-strong shadow-card"
-        >
-          @if (avatarUrl()) {
-            <img [src]="avatarUrl()" alt="" class="size-full object-cover" />
-          } @else if (kind() === 'community') {
-            {{ initials() }}
-          } @else {
-            <fa-icon [icon]="icons['bank']" aria-hidden="true" />
-          }
-        </span>
       </div>
+      <!-- Irmão da capa: o overflow da capa não pode cortar as iniciais. -->
+      <span
+        class="relative z-10 -mt-7 ml-4 grid size-14 place-items-center overflow-hidden rounded-2xl border-4 border-surface bg-surface-raised text-lg font-semibold text-brand-strong shadow-card"
+      >
+        @if (avatarUrl()) {
+          <img [src]="avatarUrl()" alt="" class="size-full object-cover" />
+        } @else if (kind() === 'community') {
+          {{ initials() }}
+        } @else {
+          <fa-icon [icon]="icons['bank']" aria-hidden="true" />
+        }
+      </span>
 
-      <div class="flex flex-1 flex-col gap-2 p-4 pt-9">
+      <div class="flex flex-1 flex-col gap-2 px-4 pb-4 pt-2">
         <h3 class="line-clamp-2 min-h-11 break-words font-display text-base font-semibold leading-snug text-ink">
           {{ name() }}
         </h3>

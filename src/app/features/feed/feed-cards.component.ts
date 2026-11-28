@@ -92,20 +92,20 @@ export class FeedEventCardComponent {
   selector: 'app-feed-community-card',
   imports: [RouterLink, FaIconComponent],
   template: `
-    <article class="flex h-full min-w-0 flex-col overflow-hidden rounded-4xl border border-line bg-surface shadow-card transition hover:border-brand/40" [attr.data-testid]="'feed-community-' + community().slug">
-      <div class="relative h-24 shrink-0 bg-gradient-to-br from-brand/35 via-surface-raised to-surface">
+    <article class="relative flex h-full min-w-0 flex-col rounded-4xl border border-line bg-surface shadow-card transition hover:border-brand/40" [attr.data-testid]="'feed-community-' + community().slug">
+      <div class="relative h-24 shrink-0 overflow-hidden rounded-t-4xl bg-gradient-to-br from-brand/35 via-surface-raised to-surface">
         @if (community().cover_url) {
           <img [src]="community().cover_url" alt="" class="size-full object-cover" loading="lazy" />
         }
-        <span class="absolute -bottom-6 left-4 grid size-12 place-items-center overflow-hidden rounded-2xl border-2 border-surface bg-surface-raised text-lg font-semibold text-brand-strong shadow-card">
-          @if (community().avatar_url) {
-            <img [src]="community().avatar_url" alt="" class="size-full object-cover" />
-          } @else {
-            {{ community().name.charAt(0).toUpperCase() }}
-          }
-        </span>
       </div>
-      <div class="flex flex-1 flex-col gap-2 p-4 pt-8">
+      <span class="relative z-10 -mt-6 ml-4 grid size-12 place-items-center overflow-hidden rounded-2xl border-2 border-surface bg-surface-raised text-lg font-semibold text-brand-strong shadow-card">
+        @if (community().avatar_url) {
+          <img [src]="community().avatar_url" alt="" class="size-full object-cover" />
+        } @else {
+          {{ community().name.charAt(0).toUpperCase() }}
+        }
+      </span>
+      <div class="flex flex-1 flex-col gap-2 px-4 pb-4 pt-2">
         <h3 class="line-clamp-2 font-display text-base font-semibold text-ink">{{ community().name }}</h3>
         <p class="line-clamp-2 min-h-10 text-xs leading-5 text-muted">{{ community().description || '' }}</p>
         <p class="flex items-center gap-2 text-xs text-muted">
@@ -128,20 +128,20 @@ export class FeedCommunityCardComponent {
   selector: 'app-feed-institution-card',
   imports: [RouterLink, FaIconComponent],
   template: `
-    <article class="flex h-full min-w-0 flex-col overflow-hidden rounded-4xl border border-line bg-surface shadow-card transition hover:border-brand/40" [attr.data-testid]="'feed-institution-' + institution().slug">
-      <div class="relative h-24 shrink-0 bg-gradient-to-br from-amber/35 via-surface-raised to-surface">
+    <article class="relative flex h-full min-w-0 flex-col rounded-4xl border border-line bg-surface shadow-card transition hover:border-brand/40" [attr.data-testid]="'feed-institution-' + institution().slug">
+      <div class="relative h-24 shrink-0 overflow-hidden rounded-t-4xl bg-gradient-to-br from-amber/35 via-surface-raised to-surface">
         @if (institution().cover_url) {
           <img [src]="institution().cover_url" alt="" class="size-full object-cover" loading="lazy" />
         }
-        <span class="absolute -bottom-6 left-4 grid size-12 place-items-center overflow-hidden rounded-2xl border-2 border-surface bg-surface-raised text-lg font-semibold text-brand-strong shadow-card">
-          @if (institution().avatar_url) {
-            <img [src]="institution().avatar_url" alt="" class="size-full object-cover" />
-          } @else {
-            <fa-icon [icon]="icons['bank']" aria-hidden="true" />
-          }
-        </span>
       </div>
-      <div class="flex flex-1 flex-col gap-2 p-4 pt-8">
+      <span class="relative z-10 -mt-6 ml-4 grid size-12 place-items-center overflow-hidden rounded-2xl border-2 border-surface bg-surface-raised text-lg font-semibold text-brand-strong shadow-card">
+        @if (institution().avatar_url) {
+          <img [src]="institution().avatar_url" alt="" class="size-full object-cover" />
+        } @else {
+          <fa-icon [icon]="icons['bank']" aria-hidden="true" />
+        }
+      </span>
+      <div class="flex flex-1 flex-col gap-2 px-4 pb-4 pt-2">
         <h3 class="line-clamp-2 font-display text-base font-semibold text-ink">{{ institution().name }}</h3>
         <p class="line-clamp-2 min-h-10 text-xs leading-5 text-muted">{{ institution().description || '' }}</p>
         <p class="flex items-center gap-2 text-xs text-muted">

@@ -1,6 +1,9 @@
 /** Bloco 16 — textos do convite do template, folha de informações e localizações. */
 
 export const BLOCK16_KEYS_PT = {
+  'block16.field.subtitle': 'Subtítulo',
+  'block16.placeholder.subtitle': 'Ex.: uma noite inesquecível',
+  'block16.hint.subtitle': 'Opcional — até 150 caracteres.',
   'block16.lang': 'Idioma',
   'block16.lang.switch': 'Mudar para inglês',
   'block16.lang.switch.en': 'Mudar para português',
@@ -76,6 +79,9 @@ export const BLOCK16_KEYS_PT = {
 } as const;
 
 export const BLOCK16_KEYS_EN = {
+  'block16.field.subtitle': 'Subtitle',
+  'block16.placeholder.subtitle': 'E.g.: an unforgettable night',
+  'block16.hint.subtitle': 'Optional — up to 150 characters.',
   'block16.lang': 'Language',
   'block16.lang.switch': 'Switch to English',
   'block16.lang.switch.en': 'Switch to Portuguese',

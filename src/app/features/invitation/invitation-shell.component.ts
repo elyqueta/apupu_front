@@ -259,122 +259,59 @@ export function invitationThemeVars(manifest: TemplateManifest): InvitationTheme
         outline-offset: 2px;
       }
 
-      /* Vídeo abaixo do convite (teleMÓVEL); no desktop o link da gaveta abre
-         a folha de informações, que já inclui o vídeo. */
-      app-invitation-shell .inv-video-frame {
-        position: relative;
-        aspect-ratio: 16 / 9;
+      /* A página de entrada cabe sempre na viewport: sem rolagem no telemóvel
+         nem no desktop. O vídeo continua disponível na folha de informações. */
+      app-invitation-shell .inv-stage {
+        height: 100vh;
+        height: 100dvh;
+        min-height: 0;
+        max-width: none;
+        margin: 0;
+        padding: 0;
         overflow: hidden;
-        border: 1px solid var(--inv-line);
-        border-radius: 1rem;
-        background: color-mix(in srgb, var(--inv-ink) 80%, #000000);
-        box-shadow: var(--shadow-card);
       }
-      app-invitation-shell .inv-video-cover {
-        position: absolute;
-        inset: 0;
+      app-invitation-shell .inv-stage-main {
+        height: 100vh;
+        height: 100dvh;
+        min-height: 0;
+        padding: 0;
+        overflow: hidden;
+      }
+      app-invitation-shell .inv-stage-poster {
+        display: block;
+        width: 100%;
+        height: 100vh;
+        height: 100dvh;
+        min-width: 0;
+        overflow: hidden;
+      }
+      app-invitation-shell .inv-stage-poster > div,
+      app-invitation-shell .inv-stage-poster app-gratitude-invitation,
+      app-invitation-shell .inv-stage-poster app-gratitude-invitation > section {
         display: block;
         width: 100%;
         height: 100%;
-        padding: 0;
-        border: 0;
-        background: transparent;
-        cursor: pointer;
       }
-      app-invitation-shell .inv-video-cover:focus-visible {
-        outline: 2px solid var(--inv-accent);
-        outline-offset: -4px;
-      }
-      app-invitation-shell .inv-video-thumb {
-        position: absolute;
-        inset: 0;
+      app-invitation-shell .inv-stage-poster .poster.full-bleed {
         width: 100%;
         height: 100%;
-        object-fit: cover;
-        opacity: 0.88;
+        margin-left: 0;
+        aspect-ratio: auto;
+        border-radius: 0;
       }
-      app-invitation-shell .inv-play-badge {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        display: grid;
-        place-items: center;
-        width: clamp(3.25rem, 16%, 4.5rem);
-        aspect-ratio: 1;
-        transform: translate(-50%, -50%);
-        border-radius: 0.85rem;
-        background: #ff0000;
-        color: #ffffff;
-        font-size: clamp(1rem, 4cqw, 1.5rem);
-        box-shadow: var(--shadow-pop);
-        transition: transform 150ms ease, background 150ms ease;
-      }
-      app-invitation-shell .inv-video-cover:hover .inv-play-badge {
-        transform: translate(-50%, -50%) scale(1.06);
-        background: #cc0000;
-      }
-      app-invitation-shell .inv-video-label {
-        position: absolute;
-        bottom: 0.65rem;
-        left: 0.75rem;
-        border-radius: 999px;
-        padding: 0.35rem 0.7rem;
-        background: rgb(0 0 0 / 0.65);
-        color: #ffffff;
-        font-size: 0.7rem;
-        font-weight: 600;
-      }
-      app-invitation-shell .inv-video-embed {
-        position: absolute;
-        inset: 0;
-        width: 100%;
-        height: 100%;
-        border: 0;
-      }
+      app-invitation-shell .inv-stage-footer { display: none; }
 
-      /* Desktop: palco horizontal — o cartaz preenche a altura da viewport,
-         a gaveta comprime-o sem criar overflow horizontal e sem scroll. */
+      /* No desktop o cartaz mantém a proporção 4:5 e a gaveta comprime-o
+         sem criar overflow horizontal. */
       @media (min-width: 1024px) {
-        app-invitation-shell .inv-stage {
-          height: 100vh;
-          height: 100dvh;
-          min-height: 0;
-          max-width: none;
-          margin: 0;
-          padding: 0;
-        }
         app-invitation-shell .inv-stage-main {
           display: flex;
           align-items: stretch;
           justify-content: center;
-          height: 100vh;
-          height: 100dvh;
-          min-height: 0;
-          padding: 0;
-          overflow: hidden;
         }
         app-invitation-shell .inv-stage-poster {
-          display: block;
           width: min(80vh, 100%);
           width: min(80dvh, 100%);
-          height: 100vh;
-          height: 100dvh;
-          min-width: 0;
-          overflow: hidden;
-        }
-        app-invitation-shell .inv-stage-poster > div,
-        app-invitation-shell .inv-stage-poster app-gratitude-invitation,
-        app-invitation-shell .inv-stage-poster app-gratitude-invitation > section {
-          display: block;
-          width: 100%;
-          height: 100%;
-        }
-        app-invitation-shell .inv-stage-poster .poster.full-bleed {
-          width: 100%;
-          height: 100%;
-          margin-left: 0;
-          aspect-ratio: auto;
-          border-radius: 0;
         }
         app-invitation-shell .inv-stage:has(.inv-drawer-open) .inv-stage-main {
           padding-right: var(--inv-drawer-w);
@@ -382,8 +319,6 @@ export function invitationThemeVars(manifest: TemplateManifest): InvitationTheme
         app-invitation-shell .inv-stage:has(.inv-drawer-open) .inv-stage-poster {
           width: min(calc(80dvh - var(--inv-drawer-w) / 3), 100%);
         }
-        app-invitation-shell .inv-video-block { display: none; }
-        app-invitation-shell .inv-stage-footer { display: none; }
       }
     `,
   ],

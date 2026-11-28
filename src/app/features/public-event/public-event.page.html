@@ -46,42 +46,6 @@
                 <app-template-renderer class="inv-stage-poster" [manifest]="view.manifest" [data]="data" mode="full" />
               }
 
-              @if (videoId()) {
-                <section class="inv-video-block mx-auto w-full max-w-3xl px-4 pb-10" data-testid="public-video">
-                  <h2 class="font-display text-lg font-semibold inv-ink">{{ i18n.t('block16.sheet.video') }}</h2>
-                  <div class="inv-video-frame mt-3">
-                    @if (videoOpen()) {
-                      <iframe
-                        class="inv-video-embed"
-                        [src]="videoEmbed()"
-                        [title]="i18n.t('block16.sheet.play')"
-                        loading="lazy"
-                        referrerpolicy="strict-origin-when-cross-origin"
-                        allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; fullscreen"
-                        allowfullscreen
-                      ></iframe>
-                    } @else {
-                      <button
-                        type="button"
-                        class="inv-video-cover"
-                        data-testid="public-video-play"
-                        [attr.aria-label]="i18n.t('block16.sheet.play')"
-                        (click)="videoOpen.set(true)"
-                      >
-                        <img
-                          class="inv-video-thumb"
-                          [src]="videoThumbnail()"
-                          alt=""
-                          loading="lazy"
-                          referrerpolicy="strict-origin-when-cross-origin"
-                        />
-                        <span class="inv-play-badge" aria-hidden="true"><fa-icon [icon]="icons['play']" /></span>
-                        <span class="inv-video-label">{{ i18n.t('block16.sheet.play') }}</span>
-                      </button>
-                    }
-                  </div>
-                </section>
-              }
             </main>
 
             <button

@@ -252,7 +252,7 @@ describe('PublicEventPage (link aberto)', () => {
     expect(native.querySelector('[data-testid="app-modal"]')).not.toBeNull();
   });
 
-  it('a resposta abre pelo menu e o vídeo fica abaixo do cartaz', async () => {
+  it('a resposta abre pelo menu e o vídeo só aparece na folha de informações', async () => {
     const context = setup();
     http = context.http;
     http.expectOne(`${BASE}/public/events/${SLUG}`).flush({
@@ -261,16 +261,17 @@ describe('PublicEventPage (link aberto)', () => {
     await settle(context.fixture);
     const native = context.fixture.nativeElement as HTMLElement;
 
-    expect(native.querySelector('[data-testid="public-video"]')).not.toBeNull();
-    expect(native.querySelector('[data-testid="public-video-play"]')).not.toBeNull();
     expect(native.querySelector('iframe')).toBeNull();
-    (native.querySelector('[data-testid="public-video-play"]') as HTMLButtonElement).click();
+    (native.querySelector('[data-testid="inv-fab"]') as HTMLButtonElement).click();
     context.fixture.detectChanges();
-    expect(native.querySelector('iframe')).not.toBeNull();
+    (native.querySelector('[data-testid="inv-menu-video"]') as HTMLButtonElement).click();
+    context.fixture.detectChanges();
+
+    expect(native.querySelector('[data-testid="app-modal"]')).not.toBeNull();
+    expect(native.querySelector('[data-testid="inv-fab"]')?.getAttribute('aria-expanded')).toBe('false');
 
     openRsvp(context.fixture);
     expect(native.querySelector('[data-testid="app-modal"]')).not.toBeNull();
-    expect(native.querySelector('[data-testid="inv-fab"]')?.getAttribute('aria-expanded')).toBe('false');
   });
 
   it('slug inexistente mostra o estado "não encontrado"', async () => {

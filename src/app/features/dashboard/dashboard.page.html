@@ -38,36 +38,26 @@
     <app-stat-card
       [label]="i18n.t('dashboard.stats.events')"
       [value]="stats().events"
-      [hint]="i18n.t('dashboard.stats.eventsHint')"
       [icon]="icons['events']"
       tone="brand"
-      [sparkline]="[2, 3, 3, 4, 4, 5, stats().events]"
     />
     <app-stat-card
       [label]="i18n.t('dashboard.stats.guests')"
       [value]="i18n.number(stats().total)"
-      [hint]="i18n.t('dashboard.stats.guestsHint')"
       [icon]="icons['guests']"
       tone="iris"
-      [sparkline]="[18, 22, 28, 31, 36, 39, stats().total]"
     />
     <app-stat-card
       [label]="i18n.t('dashboard.stats.confirmed')"
       [value]="i18n.number(stats().confirmed)"
-      [hint]="i18n.t('dashboard.stats.confirmedHint')"
       [icon]="icons['userCheck']"
       tone="mint"
-      [trend]="'+12%'"
-      [sparkline]="[8, 11, 13, 16, 17, 19, stats().confirmed]"
     />
     <app-stat-card
       [label]="i18n.t('dashboard.stats.response')"
       [value]="stats().responseRate + '%'"
-      [hint]="i18n.t('dashboard.stats.responseHint')"
       [icon]="icons['chartLine']"
       tone="aqua"
-      [trend]="'+6%'"
-      [sparkline]="[38, 42, 48, 52, 58, 61, stats().responseRate]"
     />
   </app-stat-grid>
 

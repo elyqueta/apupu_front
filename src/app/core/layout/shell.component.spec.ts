@@ -141,6 +141,10 @@ describe('ShellComponent · global search', () => {
     return fixture.nativeElement.querySelector(selector) as T;
   }
 
+  function queryAll<T extends HTMLElement>(selector: string): T[] {
+    return Array.from(fixture.nativeElement.querySelectorAll(selector)) as T[];
+  }
+
   function flushWarm(): void {
     http.expectOne((request) => request.url.endsWith('/host/guests')).flush(page());
     http.expectOne((request) => request.url.endsWith('/host/tasks')).flush(page());
@@ -230,7 +234,7 @@ describe('ShellComponent · global search', () => {
     const logout = query<HTMLButtonElement>('aside button[aria-label="Terminar sessão"]');
 
     expect(active?.getAttribute('aria-label')).toBe('Painel');
-    expect(active?.getAttribute('data-tooltip')).toBe('Painel');
+    expect(active?.getAttribute('title')).toBe('Painel');
     expect(active?.classList.contains('size-11')).toBe(true);
     expect(active?.classList.contains('rounded-xl')).toBe(true);
     expect(active?.classList.contains('bg-brand/15')).toBe(true);
@@ -246,6 +250,42 @@ describe('ShellComponent · global search', () => {
     expect(settings?.classList.contains('size-11')).toBe(true);
     expect(logout?.getAttribute('aria-label')).toBe('Terminar sessão');
     expect(logout?.classList.contains('size-11')).toBe(true);
+  });
+
+  it('alinha o rail colapsado com o logótipo sem scroll horizontal', () => {
+    const toggle = query<HTMLButtonElement>('[data-testid="sidebar-toggle"]');
+    const nav = query<HTMLElement>('aside nav');
+    const panel = query<HTMLElement>('aside > div');
+    expect(nav.classList.contains('items-center')).toBe(false);
+
+    toggle.click();
+    fixture.detectChanges();
+
+    // A caixa de 44 px do logótipo e a dos links partilham o mesmo centro.
+    const logoLink = query<HTMLAnchorElement>('aside > div > div > a');
+    expect(logoLink?.classList.contains('size-11')).toBe(true);
+    expect(logoLink?.classList.contains('place-items-center')).toBe(true);
+    expect(logoLink?.getAttribute('aria-label')).toBe('Conto Contigo');
+    expect(nav.classList.contains('items-center')).toBe(true);
+    expect(nav.classList.contains('overflow-x-hidden')).toBe(true);
+    expect(panel.classList.contains('overflow-x-clip')).toBe(true);
+    expect(query('aside [data-tooltip]')).toBeNull();
+    expect(
+      queryAll<HTMLAnchorElement>('aside nav a').every((link) =>
+        link.classList.contains('size-11'),
+      ),
+    ).toBe(true);
+
+    toggle.click();
+    fixture.detectChanges();
+
+    expect(nav.classList.contains('items-center')).toBe(false);
+    expect(query('aside app-brand')).not.toBeNull();
+    expect(
+      queryAll<HTMLAnchorElement>('aside nav a').every((link) =>
+        link.classList.contains('px-3.5'),
+      ),
+    ).toBe(true);
   });
 
   it('fecha as sugestões ao clicar fora sem reabrir pelo foco', async () => {

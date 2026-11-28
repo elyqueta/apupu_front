@@ -104,7 +104,7 @@ describe('InstitutionDetailPage', () => {
     expect(document.querySelector('[data-testid="institution-otp"]')).not.toBeNull();
   });
 
-  it('apagar instituição usa linha compacta e mantém a confirmação antes de apagar', async () => {
+  it('apagar instituição usa cartão de ação discreto e mantém a confirmação antes de apagar', async () => {
     const context = setup();
     http = context.http;
     http.expectOne(`${BASE}/host/institutions/${SLUG}`).flush({ data: detail({ is_creator: true }) });
@@ -114,9 +114,12 @@ describe('InstitutionDetailPage', () => {
     expect(trigger).not.toBeNull();
     expect(trigger.className).not.toContain('ui-btn-danger');
     const section = trigger.closest('section') as HTMLElement;
-    expect(section.className).not.toContain('bg-coral/5');
-    expect(section.className).not.toContain('rounded-4xl');
-    expect(section.querySelector('span.size-10')).not.toBeNull();
+    expect(section.classList.contains('bg-surface')).toBe(true);
+    expect(section.classList.contains('border-line')).toBe(true);
+    expect(section.classList.contains('shadow-card')).toBe(true);
+    expect(section.querySelector('span.size-10')?.classList.contains('text-coral')).toBe(true);
+    expect(section.querySelector('span.font-semibold')?.classList.contains('text-ink')).toBe(true);
+    expect(section.querySelector('fa-icon.text-xs')?.classList.contains('text-muted')).toBe(true);
     trigger.click();
     context.fixture.detectChanges();
     expect(native.querySelector('input[name="confirmName"]')).not.toBeNull();

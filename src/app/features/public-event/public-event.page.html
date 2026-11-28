@@ -1,13 +1,13 @@
 <app-invitation-shell [manifest]="shellManifest()" style="--inv-rsvp-bar: 1rem">
-  <div class="mx-auto flex min-h-dvh w-full max-w-5xl flex-col px-4 pb-10 pt-5 sm:px-6 lg:py-8">
+  <div class="mx-auto flex min-h-dvh w-full max-w-5xl flex-col px-4 pb-10 sm:px-6">
     @switch (state()) {
       @case ('loading') {
-        <main class="flex flex-1 flex-col gap-5 py-6" aria-busy="true">
+        <main class="flex flex-1 flex-col gap-5 py-6 lg:pt-8" aria-busy="true">
           <app-skeleton variant="invitation" />
         </main>
       }
       @case ('not_found') {
-        <main class="flex flex-1 items-center justify-center py-10">
+        <main class="flex flex-1 items-center justify-center py-10 lg:pt-8">
           <article class="w-full max-w-lg rounded-4xl border inv-line inv-surface p-6 text-center inv-shadow sm:p-8">
             <span class="mx-auto grid size-16 place-items-center rounded-3xl border border-amber/30 bg-amber/15 text-2xl text-amber">
               <fa-icon [icon]="icons['lock']" aria-hidden="true" />
@@ -19,7 +19,7 @@
         </main>
       }
       @case ('error') {
-        <main class="flex flex-1 items-center justify-center py-10">
+        <main class="flex flex-1 items-center justify-center py-10 lg:pt-8">
           <article class="w-full max-w-lg rounded-4xl border inv-line inv-surface p-6 text-center inv-shadow sm:p-8">
             <span class="mx-auto grid size-16 place-items-center rounded-3xl border border-coral/30 bg-coral/10 text-2xl text-coral">
               <fa-icon [icon]="icons['warning']" aria-hidden="true" />
@@ -41,7 +41,7 @@
               [hostPhone]="view.hostPhone"
             />
           } @else {
-            <main class="flex flex-1 flex-col gap-4 py-5">
+            <main class="flex flex-1 flex-col gap-4 pb-5">
               @if (renderData(); as data) {
                 <app-template-renderer [manifest]="view.manifest" [data]="data" mode="full" />
               }

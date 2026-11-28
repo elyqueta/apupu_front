@@ -13,17 +13,17 @@ import { ICONS } from '../../../core/ui/icons';
   template: `
     <section
       data-testid="invitation-share"
-      class="flex flex-col gap-3 rounded-2xl border border-line bg-surface-raised/60 p-4 sm:flex-row sm:items-center sm:justify-between"
+      class="flex flex-col gap-3 rounded-2xl border inv-line inv-surface-raised p-4 sm:flex-row sm:items-center sm:justify-between"
     >
       <div class="min-w-0">
-        <p class="text-sm font-semibold text-ink">{{ i18n.t('invitation.shareTitle') }}</p>
-        <p class="mt-1 text-xs leading-5 text-muted">{{ i18n.t('invitation.shareText') }}</p>
+        <p class="text-sm font-semibold inv-ink">{{ i18n.t('invitation.shareTitle') }}</p>
+        <p class="mt-1 text-xs leading-5 inv-muted">{{ i18n.t('invitation.shareText') }}</p>
       </div>
       <div class="flex shrink-0 flex-col gap-2 sm:flex-row">
         <button
           type="button"
           data-testid="invitation-copy-link"
-          class="ui-btn-secondary justify-center"
+          class="inv-btn-secondary justify-center"
           (click)="copyLink()"
         >
           <fa-icon [icon]="icons['copy']" aria-hidden="true" />
@@ -32,7 +32,7 @@ import { ICONS } from '../../../core/ui/icons';
         <button
           type="button"
           data-testid="invitation-whatsapp"
-          class="ui-btn-secondary justify-center"
+          class="inv-btn-secondary justify-center"
           (click)="shareWhatsapp()"
         >
           <fa-icon [icon]="icons['whatsapp']" aria-hidden="true" />

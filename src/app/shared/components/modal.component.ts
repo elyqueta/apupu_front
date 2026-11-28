@@ -35,7 +35,11 @@ let titleCounter = 0;
       >
         <button
           type="button"
-          class="absolute inset-0 cursor-default bg-canvas/70 backdrop-blur-md"
+          [class]="
+            invitation()
+              ? 'absolute inset-0 cursor-default inv-modal-backdrop'
+              : 'absolute inset-0 cursor-default bg-canvas/70 backdrop-blur-md'
+          "
           [attr.aria-label]="i18n.t('common.close')"
           (click)="requestClose()"
         ></button>
@@ -52,17 +56,35 @@ let titleCounter = 0;
           (focusin)="onFocusIn($event)"
         >
           @if (presentation() === 'sheet') {
-            <div aria-hidden="true" class="mx-auto mt-2 h-1 w-10 shrink-0 rounded-full bg-line sm:hidden"></div>
+            <div
+              aria-hidden="true"
+              [class]="
+                invitation()
+                  ? 'mx-auto mt-2 h-1 w-10 shrink-0 rounded-full inv-modal-handle sm:hidden'
+                  : 'mx-auto mt-2 h-1 w-10 shrink-0 rounded-full bg-line sm:hidden'
+              "
+            ></div>
           }
 
           @if (title()) {
             <header class="flex shrink-0 items-center justify-between gap-4 px-5 pt-3 pb-2 sm:px-6 sm:pt-5">
-              <h2 [id]="titleId" class="font-display text-lg font-semibold text-ink sm:text-xl">
+              <h2
+                [id]="titleId"
+                [class]="
+                  invitation()
+                    ? 'font-display text-lg font-semibold inv-ink sm:text-xl'
+                    : 'font-display text-lg font-semibold text-ink sm:text-xl'
+                "
+              >
                 {{ title() }}
               </h2>
               <button
                 type="button"
-                class="grid size-11 shrink-0 place-items-center rounded-xl text-muted transition hover:bg-surface-raised hover:text-ink"
+                [class]="
+                  invitation()
+                    ? 'grid size-11 shrink-0 place-items-center rounded-xl inv-muted transition hover:brightness-110'
+                    : 'grid size-11 shrink-0 place-items-center rounded-xl text-muted transition hover:bg-surface-raised hover:text-ink'
+                "
                 [attr.aria-label]="i18n.t('common.close')"
                 (click)="requestClose()"
               >
@@ -100,6 +122,8 @@ export class ModalComponent {
   /** `dialog` centra o painel e faz scroll do painel inteiro; `sheet` mantém o bottom sheet de leitura. */
   readonly presentation = input<'dialog' | 'sheet'>('dialog');
   readonly dismissible = input(true);
+  /** No convite, o painel usa as variáveis `--inv-*` em vez da paleta da plataforma. */
+  readonly invitation = input(false);
 
   readonly closed = output<void>();
 
@@ -154,11 +178,14 @@ export class ModalComponent {
             : size === 'full'
               ? 'max-w-none h-[calc(100dvh-2rem)]'
               : 'max-w-[32rem]';
+    const skin = this.invitation()
+      ? 'inv-line inv-modal-panel'
+      : 'border-line bg-surface-solid/95 backdrop-blur-2xl';
     if (this.presentation() === 'sheet') {
-      return `relative flex max-h-[calc(100dvh-0.5rem)] w-full flex-col overflow-hidden rounded-t-4xl border border-line bg-surface-solid/95 shadow-pop backdrop-blur-2xl motion-safe:animate-sheet ${size === 'full' ? 'sm:h-[min(92dvh,52rem)] sm:max-h-[min(92dvh,52rem)]' : 'sm:max-h-[min(92dvh,52rem)]'} sm:rounded-4xl sm:motion-safe:animate-rise ${desktopWidth}`;
+      return `relative flex max-h-[calc(100dvh-0.5rem)] w-full flex-col overflow-hidden rounded-t-4xl border shadow-pop ${skin} motion-safe:animate-sheet ${size === 'full' ? 'sm:h-[min(92dvh,52rem)] sm:max-h-[min(92dvh,52rem)]' : 'sm:max-h-[min(92dvh,52rem)]'} sm:rounded-4xl sm:motion-safe:animate-rise ${desktopWidth}`;
     }
     if (size === 'full') {
-      return `relative flex h-[calc(100dvh-2rem)] w-full max-w-none flex-col overflow-hidden rounded-4xl border border-line bg-surface-solid/95 shadow-pop backdrop-blur-2xl motion-safe:animate-rise`;
+      return `relative flex h-[calc(100dvh-2rem)] w-full max-w-none flex-col overflow-hidden rounded-4xl border shadow-pop ${skin} motion-safe:animate-rise`;
     }
     return `relative flex max-h-[calc(100dvh-2rem)] w-full flex-col overflow-y-auto overscroll-contain rounded-4xl border border-line bg-surface-solid/95 shadow-pop backdrop-blur-2xl motion-safe:animate-rise ${width}`;
   }
@@ -178,7 +205,7 @@ export class ModalComponent {
    */
   protected footerClass(): string {
     return this.presentation() === 'sheet'
-      ? 'flex shrink-0 flex-col-reverse gap-2 border-t border-line px-5 py-4 empty:hidden sm:flex-row sm:justify-end sm:px-6'
+      ? `flex shrink-0 flex-col-reverse gap-2 border-t ${this.invitation() ? 'inv-line' : 'border-line'} px-5 py-4 empty:hidden sm:flex-row sm:justify-end sm:px-6`
       : 'flex shrink-0 flex-col-reverse gap-2 px-5 pt-2 pb-4 empty:hidden sm:flex-row sm:justify-end sm:px-6';
   }
 

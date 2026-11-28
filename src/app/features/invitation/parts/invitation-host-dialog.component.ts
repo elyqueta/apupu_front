@@ -18,7 +18,7 @@ import { InvitationEventView } from '../invitation.models';
       presentation="sheet"
       size="sm"
       (closed)="closed.emit()"
-    >
+     [invitation]="true">
       <div class="flex flex-col items-center gap-3 text-center">
         <app-avatar
           [name]="event().hostName"
@@ -26,8 +26,8 @@ import { InvitationEventView } from '../invitation.models';
           size="xl"
         />
         <div>
-          <p class="text-lg font-semibold text-ink">{{ event().hostName }}</p>
-          <p class="mt-1 text-xs text-muted">{{ i18n.t('invitation.hostNote') }}</p>
+          <p class="text-lg font-semibold inv-ink">{{ event().hostName }}</p>
+          <p class="mt-1 text-xs inv-muted">{{ i18n.t('invitation.hostNote') }}</p>
         </div>
       </div>
 
@@ -38,7 +38,7 @@ import { InvitationEventView } from '../invitation.models';
             target="_blank"
             rel="noopener noreferrer"
             data-testid="invitation-host-whatsapp"
-            class="ui-btn"
+            class="inv-btn"
           >
             <fa-icon [icon]="icons['whatsapp']" aria-hidden="true" />
             {{ i18n.t('invitation.whatsapp') }}
@@ -47,7 +47,7 @@ import { InvitationEventView } from '../invitation.models';
         <a
           [href]="mailto()"
           data-testid="invitation-host-email"
-          class="ui-btn-secondary"
+          class="inv-btn-secondary"
         >
           <fa-icon [icon]="icons['envelope']" aria-hidden="true" />
           {{ i18n.t('invitation.emailHost') }}

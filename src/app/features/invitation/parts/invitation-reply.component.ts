@@ -24,9 +24,9 @@ import { ICONS } from '../../../core/ui/icons';
             <p class="text-[10px] font-semibold uppercase tracking-[0.18em] text-mint">
               {{ i18n.t('invitation.hostReplyTitle') }}
             </p>
-            <p class="mt-2 whitespace-pre-wrap break-words text-sm leading-6 text-ink">{{ text }}</p>
+            <p class="mt-2 whitespace-pre-wrap break-words text-sm leading-6 inv-ink">{{ text }}</p>
             @if (answeredAt(); as date) {
-              <p class="mt-2 text-[11px] text-muted">
+              <p class="mt-2 text-[11px] inv-muted">
                 {{ i18n.t('invitation.hostReplyDate') }} {{ formatDate(date) }}
               </p>
             }

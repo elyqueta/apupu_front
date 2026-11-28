@@ -10,6 +10,7 @@ import { BLOCK12_KEYS_EN, BLOCK12_KEYS_PT } from './block12-keys';
 import { BLOCK13_KEYS_EN, BLOCK13_KEYS_PT } from './block13-keys';
 import { BLOCK14_KEYS_EN, BLOCK14_KEYS_PT } from './block14-keys';
 import { BLOCK15_KEYS_EN, BLOCK15_KEYS_PT } from './block15-keys';
+import { BLOCK16_KEYS_EN, BLOCK16_KEYS_PT } from './block16-keys';
 
 const PT_AO = {
   ...BLOCK5_KEYS_PT,
@@ -23,6 +24,7 @@ const PT_AO = {
   ...BLOCK13_KEYS_PT,
   ...BLOCK14_KEYS_PT,
   ...BLOCK15_KEYS_PT,
+  ...BLOCK16_KEYS_PT,
 
   'app.name': 'Conto Contigo',
   'app.tagline': 'Eventos & convites',
@@ -1571,6 +1573,7 @@ const EN: Record<TranslationKey, string> = {
   ...BLOCK13_KEYS_EN,
   ...BLOCK14_KEYS_EN,
   ...BLOCK15_KEYS_EN,
+  ...BLOCK16_KEYS_EN,
 
   'app.name': 'Conto Contigo',
   'app.tagline': 'Events & invitations',

@@ -18,20 +18,20 @@ const MAX_MESSAGE_LENGTH = 500;
       size="md"
       [dismissible]="!saving()"
       (closed)="cancelled.emit()"
-    >
-      <p class="text-sm leading-6 text-muted">{{ description() }}</p>
+     [invitation]="true">
+      <p class="text-sm leading-6 inv-muted">{{ description() }}</p>
 
       <label class="mt-4 block">
-        <span class="text-xs font-semibold text-ink">{{ i18n.t('invitation.rsvpMessageLabel') }}</span>
+        <span class="text-xs font-semibold inv-ink">{{ i18n.t('invitation.rsvpMessageLabel') }}</span>
         <textarea
           data-testid="invitation-rsvp-message"
-          class="mt-2 min-h-28 w-full resize-y rounded-xl border border-line bg-surface-raised p-3 text-sm text-ink outline-none transition focus:border-brand/50"
+          class="mt-2 min-h-28 w-full resize-y rounded-xl border inv-line inv-surface-raised p-3 text-sm inv-ink outline-none transition focus:inv-accent-border"
           [attr.maxlength]="maxLength"
           [placeholder]="i18n.t('invitation.yourMessage')"
           [value]="message()"
           (input)="onMessage($event)"
         ></textarea>
-        <span class="mt-1 block text-xs text-muted">
+        <span class="mt-1 block text-xs inv-muted">
           {{ i18n.t('invitation.rsvpMessageHint') }} ·
           {{ i18n.t('invitation.messageCounter', { count: message().length }) }}
         </span>
@@ -47,7 +47,7 @@ const MAX_MESSAGE_LENGTH = 500;
         <button
           type="button"
           data-testid="invitation-rsvp-cancel"
-          class="ui-btn-secondary"
+          class="inv-btn-secondary"
           [disabled]="saving()"
           (click)="cancelled.emit()"
         >
@@ -56,7 +56,7 @@ const MAX_MESSAGE_LENGTH = 500;
         <button
           type="button"
           data-testid="invitation-rsvp-confirm"
-          class="ui-btn"
+          class="inv-btn"
           [disabled]="saving()"
           (click)="confirm()"
         >

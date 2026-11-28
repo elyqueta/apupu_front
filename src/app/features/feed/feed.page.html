@@ -461,69 +461,45 @@
     </div>
   </app-modal>
 
-  <!-- Pesquisa agrupada, aberta pela barra de ações do feed. -->
+  <!-- Pesquisa com o mesmo padrão da shell: combobox + grupos de sugestões. -->
   <app-modal [open]="searchOpen()" [title]="i18n.t('block12.feed.search')" presentation="sheet" (closed)="closeSearch()">
-    <div class="flex flex-col gap-4">
+    <form class="flex flex-col gap-3" role="search" (submit)="submitSearch($event)">
       <label class="relative block">
         <span class="sr-only">{{ i18n.t('block12.feed.search') }}</span>
         <fa-icon [icon]="icons['search']" class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted" aria-hidden="true" />
         <input
+          #feedSearchInput
           id="feed-search-input"
           type="search"
+          role="combobox"
+          aria-autocomplete="list"
+          aria-controls="feed-search-suggestions"
+          [attr.aria-expanded]="searchOpen()"
+          [attr.aria-activedescendant]="activeDescendant('feed-')"
           autocomplete="off"
-          class="h-11 w-full rounded-xl border border-line bg-surface-raised pl-9 pr-3 text-sm text-ink outline-none focus:border-brand/50"
+          class="h-11 w-full rounded-xl border border-line bg-surface-raised pl-9 pr-3 text-sm text-ink outline-none transition placeholder:text-muted/60 focus:border-brand/50"
           [placeholder]="i18n.t('block12.feed.search')"
-          [value]="query()"
+          [attr.aria-label]="i18n.t('block12.feed.search')"
+          [value]="searchTerm()"
           data-testid="feed-search-input"
           (input)="onQuery($any($event.target).value)"
+          (keydown)="onSearchKeydown($event)"
         />
       </label>
-      @if (query().trim().length > 0 && query().trim().length < 2) {
+      @if (searchTerm().trim().length > 0 && searchTerm().trim().length < 2) {
         <p class="text-xs text-muted">{{ i18n.t('block12.search.minChars') }}</p>
       }
-      @if (searching()) {
-        <app-skeleton variant="table" />
-      } @else if (results(); as found) {
-        @if (!hasResults(found)) {
-          <p class="text-sm text-muted" role="status">{{ i18n.t('block12.search.empty', { q: query().trim() }) }}</p>
-        } @else {
-          @if (found.events.length > 0) {
-            <section>
-              <h3 class="mb-1 text-xs font-semibold uppercase tracking-[0.16em] text-muted">{{ i18n.t('block12.search.events') }}</h3>
-              @for (event of found.events; track event.id) {
-                <a [routerLink]="eventLink(event)" class="flex min-h-11 items-center gap-3 rounded-xl px-2 hover:bg-surface-raised" (click)="closeSearch()">
-                  <fa-icon [icon]="icons['calendar']" class="text-brand" aria-hidden="true" />
-                  <span class="min-w-0 flex-1 truncate text-sm text-ink">{{ event.title }}</span>
-                  <span class="shrink-0 text-xs text-muted">{{ i18n.shortDate(event.starts_at, event.timezone) }}</span>
-                </a>
-              }
-            </section>
-          }
-          @if (found.communities.length > 0) {
-            <section>
-              <h3 class="mb-1 text-xs font-semibold uppercase tracking-[0.16em] text-muted">{{ i18n.t('block12.search.communities') }}</h3>
-              @for (community of found.communities; track community.id) {
-                <a [routerLink]="['/comunidade', community.slug]" class="flex min-h-11 items-center gap-3 rounded-xl px-2 hover:bg-surface-raised" (click)="closeSearch()">
-                  <fa-icon [icon]="icons['globe']" class="text-brand" aria-hidden="true" />
-                  <span class="min-w-0 flex-1 truncate text-sm text-ink">{{ community.name }}</span>
-                </a>
-              }
-            </section>
-          }
-          @if (found.people.length > 0) {
-            <section>
-              <h3 class="mb-1 text-xs font-semibold uppercase tracking-[0.16em] text-muted">{{ i18n.t('block12.search.people') }}</h3>
-              @for (person of found.people; track person.id) {
-                <button type="button" class="flex min-h-11 w-full items-center gap-3 rounded-xl px-2 text-left hover:bg-surface-raised" (click)="openPerson(person)">
-                  <app-avatar [name]="person.display_name || '?'" [imageUrl]="person.avatar_url" size="sm" />
-                  <span class="min-w-0 flex-1 truncate text-sm text-ink">{{ person.display_name }}</span>
-                </button>
-              }
-            </section>
-          }
-        }
-      }
-    </div>
+      <app-search-suggestions
+        [groups]="searchGroups()"
+        [term]="searchTerm()"
+        [activeId]="activeSuggestionId()"
+        listId="feed-search-suggestions"
+        idPrefix="feed-"
+        (picked)="pickSuggestion($event)"
+        (hovered)="hoverSuggestion($event)"
+        (clearRecents)="clearRecents()"
+      />
+    </form>
   </app-modal>
 
   <!-- Partilhar evento existente no feed. -->
